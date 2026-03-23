@@ -1,0 +1,197 @@
+using System;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
+using UnityEngine;
+using App.Shared.Contracts;
+using App.AOT.Infrastructure.DI;
+using App.AOT.YooRuntimeAssets;
+using YooAsset;
+
+namespace App.AOT.HotUpdate
+{
+    /// <summary>
+    /// HybridCLR加载器：加载AOT metadata + HotUpdate DLL，反射调用入口
+    /// </summary>
+    public class HybridClrLoader
+    {
+        private readonly IAppLogger _logger;
+        private readonly YooAssetsRuntime _yooAssets;
+        private readonly IServiceContainer _serviceContainer;
+        private Assembly _hotUpdateAssembly;
+
+        public HybridClrLoader(IAppLogger logger, YooAssetsRuntime yooAssets, IServiceContainer serviceContainer)
+        {
+            _logger = logger;
+            _yooAssets = yooAssets;
+            _serviceContainer = serviceContainer;
+        }
+
+        /// <summary>
+        /// 加载HybridCLR热更代码
+        /// </summary>
+        public async Task LoadAsync()
+        {
+            try
+            {
+                _logger?.LogInfo("HybridClrLoader: 开始加载HybridCLR热更代码...");
+
+#if UNITY_EDITOR
+                // 编辑器模式：代码已经编译，直接调用入口
+                _logger?.LogInfo("HybridClrLoader: 编辑器模式 - 直接调用热更入口");
+                InvokeHotUpdateEntryEditor();
+#else
+                // 1. 加载AOT元数据补充文件
+                await LoadAOTMetadataAsync();
+
+                // 2. 加载HotUpdate DLL
+                await LoadHotUpdateDllAsync();
+
+                // 3. 调用热更入口
+                InvokeHotUpdateEntry();
+#endif
+                await Task.CompletedTask; // 保持异步签名
+
+                _logger?.LogInfo("HybridClrLoader: HybridCLR热更代码加载完成");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError("HybridClrLoader: 加载失败: {0}", ex);
+                throw;
+            }
+        }
+
+        private async Task LoadAOTMetadataAsync()
+        {
+            _logger?.LogInfo("HybridClrLoader: 加载AOT元数据...");
+
+            // TODO: 从YooAssets加载AOT metadata文件
+            // 这里需要根据HybridCLR的实际API来调用
+            // 示例：
+            // var metadataHandle = _yooAssets.LoadAssetAsync<TextAsset>("AOTMetadata");
+            // await metadataHandle.Task;
+            // var metadataBytes = metadataHandle.AssetObject.bytes;
+            // HybridCLR.RuntimeApi.LoadMetadataForAOTAssembly(metadataBytes, HomologousImageMode.SuperSet);
+
+            await Task.Delay(100); // 模拟加载
+            _logger?.LogInfo("HybridClrLoader: AOT元数据加载完成");
+        }
+
+        private async Task LoadHotUpdateDllAsync()
+        {
+            _logger?.LogInfo("HybridClrLoader: 加载HotUpdate DLL...");
+
+            try
+            {
+                // 从YooAssets加载HotUpdate DLL
+                var dllHandle = _yooAssets.LoadAssetAsync<TextAsset>("App.HotUpdate.dll");
+                await dllHandle.Task;
+
+                if (dllHandle.Status != EOperationStatus.Succeed)
+                {
+                    throw new Exception($"加载HotUpdate DLL失败: {dllHandle.GetAssetInfo().Error}");
+                }
+
+                var dllBytes = (dllHandle.AssetObject as TextAsset).bytes;
+
+                // 加载程序集
+                _hotUpdateAssembly = Assembly.Load(dllBytes);
+
+                _logger?.LogInfo("HybridClrLoader: HotUpdate DLL加载完成");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError("HybridClrLoader: 加载HotUpdate DLL失败: {0}", ex);
+                throw;
+            }
+        }
+
+        private void InvokeHotUpdateEntry()
+        {
+            _logger?.LogInfo("HybridClrLoader: 调用热更入口...");
+
+            try
+            {
+                if (_hotUpdateAssembly == null)
+                {
+                    throw new Exception("HotUpdate程序集未加载");
+                }
+
+                // 查找HotUpdateEntry类
+                var entryType = _hotUpdateAssembly.GetType("App.HotUpdate.Entry.HotUpdateEntry");
+                if (entryType == null)
+                {
+                    throw new Exception("未找到HotUpdateEntry类");
+                }
+
+                // 查找Start方法
+                var startMethod = entryType.GetMethod("Start", BindingFlags.Public | BindingFlags.Static);
+                if (startMethod == null)
+                {
+                    throw new Exception("未找到HotUpdateEntry.Start方法");
+                }
+
+                // 调用Start方法，传入ServiceContainer
+                startMethod.Invoke(null, new object[] { _serviceContainer });
+
+                _logger?.LogInfo("HybridClrLoader: 热更入口调用成功");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError("HybridClrLoader: 调用热更入口失败: {0}", ex);
+                throw;
+            }
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 编辑器模式下直接调用热更入口（代码已编译，无需加载 DLL）
+        /// </summary>
+        private void InvokeHotUpdateEntryEditor()
+        {
+            _logger?.LogInfo("HybridClrLoader: 编辑器模式调用热更入口...");
+
+            try
+            {
+                // 在编辑器中，所有程序集都已加载，通过反射查找类型
+                var entryType = Type.GetType("App.HotUpdate.Entry.HotUpdateEntry, App.HotUpdate");
+                if (entryType == null)
+                {
+                    // 尝试从所有已加载的程序集中查找
+                    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        entryType = assembly.GetType("App.HotUpdate.Entry.HotUpdateEntry");
+                        if (entryType != null) break;
+                    }
+                }
+
+                if (entryType == null)
+                {
+                    throw new Exception("未找到HotUpdateEntry类");
+                }
+
+                var startMethod = entryType.GetMethod("Start", BindingFlags.Public | BindingFlags.Static);
+                if (startMethod == null)
+                {
+                    throw new Exception("未找到HotUpdateEntry.Start方法");
+                }
+
+                startMethod.Invoke(null, new object[] { _serviceContainer });
+
+                _logger?.LogInfo("HybridClrLoader: 编辑器模式热更入口调用成功");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError("HybridClrLoader: 编辑器模式调用热更入口失败: {0}", ex);
+                throw;
+            }
+        }
+#endif
+
+        public void Shutdown()
+        {
+            _hotUpdateAssembly = null;
+            _logger?.LogInfo("HybridClrLoader: 已关闭");
+        }
+    }
+}

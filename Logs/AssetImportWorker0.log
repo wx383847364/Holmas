@@ -1,0 +1,1386 @@
+Tuanjie Editor version:  2022.3.62t2 (24637c95313f)
+Branch:                  tuanjie/1.8/staging
+Build type:              Release
+Batch mode:              YES
+macOS version:           Version 15.7.4 (Build 24G517)
+Darwin version:          24.6.0
+Architecture:            arm64
+Running under Rosetta:   NO
+Available memory:        131072 MB
+Using pre-set license
+Pro License: YES
+
+COMMAND LINE ARGUMENTS:
+/Applications/Tuanjie/Hub/Editor/2022.3.62t2/Tuanjie.app/Contents/MacOS/Tuanjie
+-adb2
+-batchMode
+-noUpm
+-disableFMOD
+-name
+AssetImportWorker0
+-projectPath
+/Users/bruce/work/CatFinding
+-logFile
+Logs/AssetImportWorker0.log
+-srvPort
+55008
+Successfully changed project path to: /Users/bruce/work/CatFinding
+/Users/bruce/work/CatFinding
+[Memory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gfx=262144"
+Player connection [8516477504]  Target information:
+
+Player connection [8516477504]  * "[IP] 10.29.189.20 [Port] 0 [Flags] 2 [Guid] 3126331305 [EditorId] 3126331305 [Version] 1048832 [Id] OSXEditor(0,wangxingdeMacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
+
+Player connection [8516477504]  * "[IP] 192.168.90.10 [Port] 0 [Flags] 2 [Guid] 3126331305 [EditorId] 3126331305 [Version] 1048832 [Id] OSXEditor(0,wangxingdeMacBook-Pro.local) [Debug] 1 [PackageName] OSXEditor [ProjectName] Editor" 
+
+Player connection [8516477504] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [8516477504] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+AS: AutoStreaming module initializing.
+[LiveLink] LiveLink library is loaded successfully. Initializing...
+InitScreenManager.Refreshing native plugins compatible for Editor in 3.60 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 2022.3.62t2 (24637c95313f)
+[Subsystems] Discovering subsystems at path /Applications/Tuanjie/Hub/Editor/2022.3.62t2/Tuanjie.app/Contents/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path /Users/bruce/work/CatFinding/Assets
+GfxDevice: creating device client; threaded=0; jobified=0
+ preferred device: Apple M4 Max (high power)
+Metal devices available: 1
+0: Apple M4 Max (high power)
+Using device Apple M4 Max (high power)
+Initializing Metal device caps: Apple M4 Max
+Initialize mono
+Mono path[0] = '/Applications/Tuanjie/Hub/Editor/2022.3.62t2/Tuanjie.app/Contents/Managed'
+Mono path[1] = '/Applications/Tuanjie/Hub/Editor/2022.3.62t2/Tuanjie.app/Contents/MonoBleedingEdge/lib/mono/unityjit-macos'
+Mono config path = '/Applications/Tuanjie/Hub/Editor/2022.3.62t2/Tuanjie.app/Contents/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=0.0.0.0:56032
+Begin MonoManager ReloadAssembly
+Registering precompiled tuanjie dll's ...
+Register platform support module: /Applications/Tuanjie/Hub/Editor/2022.3.62t2/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: /Applications/Tuanjie/Hub/Editor/2022.3.62t2/Tuanjie.app/Contents/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll
+Register platform support module: /Applications/Tuanjie/Hub/Editor/2022.3.62t2/PlaybackEngines/WeixinMiniGameSupport/UnityEditor.WeixinMiniGame.Extensions.dll
+Registered in 0.002374 seconds.
+- Loaded All Assemblies, in  0.143 seconds
+Native extension for WeixinMiniGame target not found
+Native extension for OSXStandalone target not found
+Native extension for WebGL target not found
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.103 seconds
+Domain Reload Profiling: 246ms
+	BeginReloadAssembly (35ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (0ms)
+	RebuildCommonClasses (15ms)
+	RebuildNativeTypeToScriptingClass (6ms)
+	initialDomainReloadingComplete (21ms)
+	LoadAllAssembliesAndSetupDomain (67ms)
+		LoadAssemblies (35ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (65ms)
+			TypeCache.Refresh (65ms)
+				TypeCache.ScanAssembly (58ms)
+			ScanForSourceGeneratedMonoScriptInfo (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (103ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (80ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (4ms)
+			SetLoadedEditorAssemblies (3ms)
+			RefreshPlugins (0ms)
+			BeforeProcessingInitializeOnLoad (1ms)
+			ProcessInitializeOnLoadAttributes (66ms)
+			ProcessInitializeOnLoadMethodAttributes (7ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+========================================================================
+Worker process is ready to serve import requests
+Caller must complete domain reload
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.215 seconds
+Native extension for WeixinMiniGame target not found
+Native extension for OSXStandalone target not found
+Native extension for WebGL target not found
+Package Manager log level set to [2]
+[Package Manager] Server::EnsureServerProcessIsRunning -- launch failed, reason: Unity was launched with the -noUpm command-line argument
+[Package Manager] UpmClient::Send -- Unable to send message (not connected to UPM process).
+[Package Manager] Cannot connect to Unity Package Manager local server
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.260 seconds
+Domain Reload Profiling: 476ms
+	BeginReloadAssembly (45ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (2ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (9ms)
+	RebuildCommonClasses (15ms)
+	RebuildNativeTypeToScriptingClass (6ms)
+	initialDomainReloadingComplete (14ms)
+	LoadAllAssembliesAndSetupDomain (136ms)
+		LoadAssemblies (87ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (71ms)
+			TypeCache.Refresh (64ms)
+				TypeCache.ScanAssembly (57ms)
+			ScanForSourceGeneratedMonoScriptInfo (5ms)
+			ResolveRequiredComponents (2ms)
+	FinalizeReload (261ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (204ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (2ms)
+			SetLoadedEditorAssemblies (2ms)
+			RefreshPlugins (0ms)
+			BeforeProcessingInitializeOnLoad (29ms)
+			ProcessInitializeOnLoadAttributes (166ms)
+			ProcessInitializeOnLoadMethodAttributes (4ms)
+			AfterProcessingInitializeOnLoad (1ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (1ms)
+database is locked
+database is locked
+Refreshing native plugins compatible for Editor in 0.43 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 3114 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 19 unused Assets / (48.6 KB). Loaded Objects now: 3603.
+Memory consumption went from 116.5 MB to 116.5 MB.
+Total: 1.864750 ms (FindLiveObjects: 0.083750 ms CreateObjectMapping: 0.024542 ms MarkObjects: 1.705958 ms  DeleteObjects: 0.050084 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:CustomObjectIndexerAttribute: 299a746012abc5adb0180d4ccda8d3ad -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:SearchIndexIgnoredProperties: e643bd26f0fe6173181afceb89e7c659 -> 
+  custom:AudioImporter_EditorPlatform: 3918e3fc78b5a79bad01e8451be0beb8 -> 
+  custom:framework-osx-AVFoundation: e770b220cccbd017edd2c1fefb359320 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:scripting/monoscript/fileName/IService.cs:  -> ba85a7b25e3b9eeb17399ec3bb3808b6
+  custom:scripting/precompiled-assembly-types:App.HotUpdate:  -> b3d6823f06145ec46eb11d0c198507ce
+  custom:scripting/monoscript/fileName/ITransport.cs:  -> 61654698aa18189823c7e32bc20125a1
+  custom:scripting/monoscript/fileName/HotUpdateEntry.cs:  -> 6669ef7b4b196a0b6eb8428d2942dc5d
+  custom:scripting/precompiled-assembly-types:App.Shared:  -> 8acb4fcbec16284ad14f8ece33e6c711
+========================================================================
+Received Import Request.
+  Time since last request: 439043.506894 seconds.
+  path: Assets/Scripts/App.Shared/App.Shared.asmdef
+  artifactKey: Guid(373b57f99032e4a7585e889bf8e5d79b) Importer(ScriptedImporter)
+Start importing Assets/Scripts/App.Shared/App.Shared.asmdef using Guid(373b57f99032e4a7585e889bf8e5d79b) Importer(ScriptedImporter)  -> (artifact id: '587eb22c42c5cef434488d897e681897') in 0.019587 seconds
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 0.000092 seconds.
+  path: Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader
+  artifactKey: Guid(fe393ace9b354375a9cb14cdbbc28be4) Importer(ScriptedImporter)
+Start importing Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader using Guid(fe393ace9b354375a9cb14cdbbc28be4) Importer(ScriptedImporter)  -> (artifact id: '46efc3fcaff663ba19edcfa42c6ec740') in 0.011461 seconds
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 0.000102 seconds.
+  path: Assets/Res/Textures/headicon.png
+  artifactKey: Guid(1eeb7ed4f2e41b242b85f1677d601d28) Importer(ScriptedImporter)
+Start importing Assets/Res/Textures/headicon.png using Guid(1eeb7ed4f2e41b242b85f1677d601d28) Importer(ScriptedImporter)  -> (artifact id: 'c0dd09d117a0106e11fc6b1e95f9f819') in 0.029667 seconds
+Number of asset objects unloaded after import = 3
+========================================================================
+Received Import Request.
+  Time since last request: 0.000052 seconds.
+  path: Assets/Scripts/App.AOT/Infrastructure/Logger/UnityLogger.cs
+  artifactKey: Guid(0d8f3b93c92a1451dac9d0639bb56bfc) Importer(ScriptedImporter)
+Start importing Assets/Scripts/App.AOT/Infrastructure/Logger/UnityLogger.cs using Guid(0d8f3b93c92a1451dac9d0639bb56bfc) Importer(ScriptedImporter)  -> (artifact id: '9aff07774dc40ddb7717811c9400fda3') in 0.002358 seconds
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 0.000081 seconds.
+  path: Assets/Res/Perfabs/UI/LoadingPanel.prefab
+  artifactKey: Guid(dc7332d6795ddb84e8ce1e22c774b673) Importer(ScriptedImporter)
+Start importing Assets/Res/Perfabs/UI/LoadingPanel.prefab using Guid(dc7332d6795ddb84e8ce1e22c774b673) Importer(ScriptedImporter)  -> (artifact id: '876231f944c07b60b16106f21a295a68') in 0.017597 seconds
+Number of asset objects unloaded after import = 32
+========================================================================
+Received Import Request.
+  Time since last request: 0.000025 seconds.
+  path: Assets/Res/Textures/slider_up.png
+  artifactKey: Guid(210c7000e157e0c40b5504c08539fd5c) Importer(ScriptedImporter)
+Start importing Assets/Res/Textures/slider_up.png using Guid(210c7000e157e0c40b5504c08539fd5c) Importer(ScriptedImporter)  -> (artifact id: 'db2d866bba0b7a023264909bfbf2ac97') in 0.006032 seconds
+Number of asset objects unloaded after import = 3
+========================================================================
+Received Import Request.
+  Time since last request: 0.000048 seconds.
+  path: Assets/Res/Font/04B_19__.TTF
+  artifactKey: Guid(3de69472c2fa24c458ca967707139863) Importer(ScriptedImporter)
+Start importing Assets/Res/Font/04B_19__.TTF using Guid(3de69472c2fa24c458ca967707139863) Importer(ScriptedImporter)  -> (artifact id: '50d9b39b4ae28bb69b08be87eaecaa66') in 0.007303 seconds
+Number of asset objects unloaded after import = 3
+========================================================================
+Received Import Request.
+  Time since last request: 0.000052 seconds.
+  path: Assets/Res/Textures/star1.png
+  artifactKey: Guid(0155c023d9eb46e459097e230590e79d) Importer(ScriptedImporter)
+Start importing Assets/Res/Textures/star1.png using Guid(0155c023d9eb46e459097e230590e79d) Importer(ScriptedImporter)  -> (artifact id: 'aa765a01fd794bee4768e94a17c14bd6') in 0.006566 seconds
+Number of asset objects unloaded after import = 3
+========================================================================
+Received Import Request.
+  Time since last request: 0.000049 seconds.
+  path: Assets/Res/Textures/main.png
+  artifactKey: Guid(6a7e08e93500ad942b7d7c44729265ea) Importer(ScriptedImporter)
+Start importing Assets/Res/Textures/main.png using Guid(6a7e08e93500ad942b7d7c44729265ea) Importer(ScriptedImporter)  -> (artifact id: '129feca434af9af214b46b016712b7e1') in 0.006220 seconds
+Number of asset objects unloaded after import = 3
+========================================================================
+Received Import Request.
+  Time since last request: 0.000073 seconds.
+  path: Assets/Scripts/App.AOT/YooRuntimeAssets/YooAssetsRuntime.cs
+  artifactKey: Guid(9dbcc4a57b869496496d5e20b62ac35e) Importer(ScriptedImporter)
+Start importing Assets/Scripts/App.AOT/YooRuntimeAssets/YooAssetsRuntime.cs using Guid(9dbcc4a57b869496496d5e20b62ac35e) Importer(ScriptedImporter)  -> (artifact id: '98efa303059662d13f486e483643e71a') in 0.001679 seconds
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 0.000108 seconds.
+  path: Assets/Scripts/App.Shared/Contracts/IService.cs
+  artifactKey: Guid(0b4f38515c02f48a9af9ca5f904a2ede) Importer(ScriptedImporter)
+Start importing Assets/Scripts/App.Shared/Contracts/IService.cs using Guid(0b4f38515c02f48a9af9ca5f904a2ede) Importer(ScriptedImporter)  -> (artifact id: '5f227e9ab58afd52edfabeb402c4122f') in 0.001494 seconds
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 0.000070 seconds.
+  path: Assets/Res/Textures/Roll.png
+  artifactKey: Guid(8d0c0f4701e5a504e92f669c0ef046b1) Importer(ScriptedImporter)
+Start importing Assets/Res/Textures/Roll.png using Guid(8d0c0f4701e5a504e92f669c0ef046b1) Importer(ScriptedImporter)  -> (artifact id: '92104fbcd905f22ec580e17dc4c36815') in 0.006248 seconds
+Number of asset objects unloaded after import = 3
+========================================================================
+Received Import Request.
+  Time since last request: 0.000038 seconds.
+  path: Assets/TextMesh Pro/Fonts/LiberationSans.ttf
+  artifactKey: Guid(e3265ab4bf004d28a9537516768c1c75) Importer(ScriptedImporter)
+Start importing Assets/TextMesh Pro/Fonts/LiberationSans.ttf using Guid(e3265ab4bf004d28a9537516768c1c75) Importer(ScriptedImporter)  -> (artifact id: '641e85215045faec4cdb73b5a0a077b6') in 0.003574 seconds
+Number of asset objects unloaded after import = 3
+========================================================================
+Received Prepare
+Caller must complete domain reload
+Begin MonoManager ReloadAssembly
+Thread 0x33f01f000 may have been prematurely finalized
+- Loaded All Assemblies, in  0.165 seconds
+Native extension for WeixinMiniGame target not found
+Native extension for OSXStandalone target not found
+Native extension for WebGL target not found
+[Package Manager] Server::EnsureServerProcessIsRunning -- launch failed, reason: Unity was launched with the -noUpm command-line argument
+[Package Manager] UpmClient::Send -- Unable to send message (not connected to UPM process).
+[Package Manager] Cannot connect to Unity Package Manager local server
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.314 seconds
+Domain Reload Profiling: 479ms
+	BeginReloadAssembly (58ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (2ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (15ms)
+	RebuildCommonClasses (15ms)
+	RebuildNativeTypeToScriptingClass (6ms)
+	initialDomainReloadingComplete (9ms)
+	LoadAllAssembliesAndSetupDomain (78ms)
+		LoadAssemblies (85ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (14ms)
+			TypeCache.Refresh (8ms)
+				TypeCache.ScanAssembly (3ms)
+			ScanForSourceGeneratedMonoScriptInfo (4ms)
+			ResolveRequiredComponents (2ms)
+	FinalizeReload (314ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (196ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (2ms)
+			SetLoadedEditorAssemblies (2ms)
+			RefreshPlugins (0ms)
+			BeforeProcessingInitializeOnLoad (33ms)
+			ProcessInitializeOnLoadAttributes (155ms)
+			ProcessInitializeOnLoadMethodAttributes (4ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (2ms)
+Refreshing native plugins compatible for Editor in 0.49 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 3618 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 15 unused Assets / (29.3 KB). Loaded Objects now: 4120.
+Memory consumption went from 132.7 MB to 132.7 MB.
+Total: 1.794750 ms (FindLiveObjects: 0.108792 ms CreateObjectMapping: 0.031250 ms MarkObjects: 1.628375 ms  DeleteObjects: 0.025708 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:scripting/monoscript/fileName/ScannerDefine.cs: c8596861960bb3be7ca505748ce134ff -> 
+  custom:scripting/monoscript/fileName/IFileSystem.cs: 5a6abb33207ec564e64ba1e6c5846da2 -> 
+  custom:scripting/monoscript/fileName/BufferWriter.cs: 63cd59ea6a2fe4e4e91fdbeeebbde543 -> 
+  custom:scripting/monoscript/fileName/RawBundleLoadAssetOperation.cs: 990c6718238ef761e16a8afa03d2d8bf -> 
+  custom:scripting/monoscript/fileName/BuildParameters.cs: 75f861defb8d41581a1963b6fab85994 -> 
+  custom:scripting/monoscript/fileName/IBuildTasks.cs: ad73a7c5af5769af35e7121ce421c767 -> 
+  custom:scripting/monoscript/fileName/DownloadSystemHelper.cs: 5986706f2918944e4e0939c537b565fd -> 
+  custom:scripting/precompiled-assembly-types:Unity.ScriptableBuildPipeline: d3013a7ac4c7a8a2426d0dffcf800074 -> 
+  custom:scripting/monoscript/fileName/TickManager.cs: aa85aed89a0a94071347ebbbf100e7c8 -> 
+  custom:scripting/monoscript/fileName/TaskEncryption_SBP.cs: a9dea624c8a135e29b3b081ee0db5a6c -> 
+  custom:scripting/monoscript/fileName/PackageInvokeBuildResult.cs: 733f09a13b07e1a60828f010cbe88865 -> 
+  custom:scripting/monoscript/fileName/UxmlLoader.cs: 581e2e6b038aa0ba08f7fcb8925d6620 -> 
+  custom:scripting/monoscript/fileName/TaskCreateCatalog_RFBP.cs: a5dcc2d804468cd6be4565a3e6282627 -> 
+  custom:scripting/monoscript/fileName/DefaultCacheFileSystemDefine.cs: d4a679c9f77a3df02fc024b03ce98f2d -> 
+  custom:scripting/monoscript/fileName/PatchOperationHandler.cs: 2ce96a864335361952234f8deb6686ce -> 
+  custom:scripting/monoscript/fileName/DebugOperationInfo.cs: 545977dbb91a3ac825055c0557721e84 -> 
+  custom:scripting/monoscript/fileName/TrackerExtensions.cs: 05c6facd03e82ea85ea8497944d142b2 -> 
+  custom:scripting/monoscript/fileName/AssetBundleBuilderHelper.cs: 2601d90396f1debe251aebd49a3c6ea1 -> 
+  custom:scripting/monoscript/fileName/IActiveRule.cs: 1643085ec6491bc9f25b88e90cd7e6da -> 
+  custom:scripting/monoscript/fileName/RequestWebServerPackageVersionOperation.cs: de87c1f74d14df357fe4dc0cc0d146af -> 
+  custom:scripting/monoscript/fileName/GameAsyncOperation.cs: f78d18f4f0b2d31e98606e35eae66c02 -> 
+  custom:scripting/monoscript/fileName/UnityWebTextRequestOperation.cs: f042eb013c252cebb05870399e70ef94 -> 
+  custom:scripting/monoscript/fileName/DefaultBuildinFileSystemDefine.cs: d70f99cbdc178b3f4cd4b31c4a995763 -> 
+  custom:scripting/monoscript/fileName/DebuggerBundleListViewer.cs: 6804a20c8c2f956f8b7cb4f1f93d6089 -> 
+  custom:scripting/monoscript/fileName/InstantiateOperation.cs: c99894bb55527a5905f6cd8bcbc04e92 -> 
+  custom:scripting/monoscript/fileName/AssetArtScannerWindow.cs: 56d9b495b054fb8e0112b43bb827be0d -> 
+  custom:scripting/monoscript/fileName/ReportSummary.cs: 700bc4f814f361cb12142ba30e49e500 -> 
+  custom:scripting/monoscript/fileName/SceneDataWriteOperation.cs: 62fc06a44a6276d74f5ce5527ac1c0e7 -> 
+  custom:scripting/monoscript/fileName/YooUtility.cs: 5dec77d6ab1d89f3dc12cfc3d5bf67b4 -> 
+  custom:scripting/monoscript/fileName/ClearAllCacheBundleFilesOperation.cs: 238eeee22edd93fd56b6809cd1aa2456 -> 
+  custom:scripting/monoscript/fileName/RequestWebPackageHashOperation.cs: d61d26594bb98fbf6ce9c7859dfd3427 -> 
+  custom:scripting/monoscript/fileName/RawBundleLoadSceneOperation.cs: 74cb56fd59d138116b9a455e706f7c86 -> 
+  custom:scripting/monoscript/fileName/BuildCache.cs: ed18a1a079f7380eac8245801a570733 -> 
+  custom:scripting/monoscript/fileName/AssetBundleReporterWindow.cs: 0bb9d6a34525cd1dbe66c3a7ccc9b4ec -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:scripting/monoscript/fileName/BuildParametersContext.cs: 85ba1e232bfdf13003f730e5945f39fc -> 
+  custom:scripting/monoscript/fileName/ISearchCommand.cs: 72b92c439232d46a94248732545f38c4 -> 
+  custom:scripting/monoscript/fileName/PostWritingCallback.cs: 554018e4e98d586ae4dba2461cc09229 -> 
+  custom:scripting/monoscript/fileName/UIElementsCursor.cs: 2fbeab93175bc6d9c5dca01e1bee1cf4 -> 
+  custom:scripting/monoscript/fileName/SpookyHash.cs: ced234d9ef31626b6b07f6aab873119b -> 
+  custom:scripting/monoscript/fileName/AssetBundleLoadAllAssetsOperation.cs: 93266aafc6dd7553208eefd37a1eae0a -> 
+  custom:scripting/monoscript/fileName/AssetArtScannerSettingData.cs: e7e491bce685a805069dcab65a2bea3d -> 
+  custom:scripting/monoscript/fileName/PreviewSceneDependencyData.cs: 0aa0e9fad79dc24aadab25b9d7a9b9a5 -> 
+  custom:scripting/monoscript/fileName/TaskCopyBuildinFiles_BBP.cs: 6a033ce219087d445074581865c5ee54 -> 
+  custom:scripting/monoscript/fileName/BuiltinBuildPipeline.cs: 519ec2327a4fd3f29e9802a7fc71b608 -> 
+  custom:scripting/monoscript/fileName/EventBus.cs: e71677de859da9395b11aabfea683181 -> 44116646ae5a8e68b53a6428a288d598
+  custom:scripting/monoscript/fileName/RemoteCommand.cs: 279cd2525c791908c5616c7bc45b2b33 -> 
+  custom:scripting/monoscript/fileName/ToggleFoldout.cs: fdc5797a7fbbe441b6edf4e2e0988b60 -> 
+  custom:scripting/monoscript/fileName/DCFSRequestPackageVersionOperation.cs: 27dcc5318a68ca5f8ec8ce53e31f0f17 -> 
+  custom:scripting/monoscript/fileName/IFilterRule.cs: 114c4bc8390d91c769a74824c89018fc -> 
+  custom:scripting/monoscript/fileName/ColumnStyle.cs: 9e9e7662ce5b1db5117d9b35bb1ae5cf -> 
+  custom:scripting/monoscript/fileName/GenerateSubAssetPathMaps.cs: c7987fa236ddbc39e6da8bcfe285d7c7 -> 
+  custom:scripting/monoscript/fileName/TaskCreateReport.cs: c51e52d1873b5b8c493a8c5f12149587 -> 
+  custom:scripting/monoscript/fileName/SubAssetsHandle.cs: 4e9364c2230acdedc34fb19cb0475a9d -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorGroup.cs: d0ce3bae8756e22de9c0dbed9e289dcd -> 
+  custom:scripting/monoscript/fileName/UnityWebCacheRequestOperation.cs: 64123fd1ae3e37d552f374f89a2971cd -> 
+  custom:scripting/monoscript/fileName/VersionedCallbackAttribute.cs: 792d43fefe55909e52271f20ce4bd5db -> 
+  custom:scripting/monoscript/fileName/CRC32Algorithm.cs: 3594ad065012286de7e61521d08462c5 -> 
+  custom:scripting/monoscript/fileName/BuildLog.cs: f381a35baf9bd9880d2d4023ad70717e -> 
+  custom:scripting/monoscript/fileName/AsyncOperationBase.cs: c90dfd8f682134253e4a17d291ce6a29 -> 
+  custom:scripting/monoscript/fileName/BundleInfo.cs: dce79bf3c8f319ce627c0cd1cefab23e -> 
+  custom:scripting/monoscript/fileName/ContentFileIdentifiers.cs: 7655f22dc8e01297e0fa51cc343ac6c9 -> 
+  custom:scripting/monoscript/fileName/BundleExplictObjectLayout.cs: 7ebaaae109881757a2cd1a5aaeb77811 -> 
+  custom:scripting/monoscript/fileName/IDependencyData.cs: 35a83d3a80674af5f8ca402d71bd60d0 -> 
+  custom:scripting/monoscript/fileName/AssetPathCell.cs: ea451d4c18b38a1963bc757331986d5e -> 
+  custom:scripting/monoscript/fileName/TaskCreateReport_BBP.cs: 0b3b84a73ac9571fe23dee27d175c0a4 -> 
+  custom:scripting/monoscript/fileName/LoadWebAssetBundleOperation.cs: f01431b95ea5070e46685e6e57aa30b7 -> 
+  custom:scripting/monoscript/fileName/DefaultPackRule.cs: 944233ce50afdd285fe5c609caeda279 -> 
+  custom:scripting/monoscript/fileName/UnityVirtualBundleRequestOperation.cs: 0ce7efead889f1a492894bb599b42a44 -> 
+  custom:scripting/monoscript/fileName/ScanReportCombiner.cs: 7c79a7e5aa2009fa9a81c8e87ac3ae5c -> 
+  custom:scripting/monoscript/fileName/ReportElement.cs: 2af576b5c069ab5550f8b3d97c0916b0 -> 
+  custom:scripting/monoscript/fileName/ResourceManager.cs: 2284d22c4877ab4fe83ad66e2e5399ee -> 
+  custom:scripting/monoscript/fileName/BuildResults.cs: ea29098741349f66a5c13be22430b91a -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:scripting/monoscript/fileName/AppLifetime.cs: 52bc1e40a3ce98396eddafc73e7528ac -> 
+  custom:scripting/monoscript/fileName/DownloadVirutalBundleOperation.cs: 0573710326447bd51649ea5b6eaed761 -> 
+  custom:scripting/monoscript/fileName/IAddressRule.cs: ead2cc6e7008976642ed14bbecf6a1f5 -> 
+  custom:scripting/monoscript/fileName/ScriptableBuildPipeline.cs: 3c3b1c06634bac11272de55f7c802c38 -> 
+  custom:scripting/monoscript/fileName/HashStream.cs: 79ad716994d62b2c0cafd2bf9cc6c712 -> 
+  custom:scripting/monoscript/fileName/DWRFSLoadBundleOperation.cs: 66c00fcf4aea98d95da64163928269ba -> 
+  custom:scripting/monoscript/fileName/HybridClrLoader.cs: 58a325a24bb5338fa916a07a2b714702 -> 
+  custom:scripting/monoscript/fileName/TaskVerifyBuildResult_SBP.cs: 047a5a396434be37aee0b6b15f967132 -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest_BBP.cs: b27a3b8207af0a393f959035bb98a299 -> 
+  custom:scripting/monoscript/fileName/BuildContext.cs: 0afd91a4f04e0ad71f285291fed59eed -> 
+  custom:scripting/monoscript/fileName/PackageAsset.cs: b6e8b7527e6bb8c3c4c9a963cb452fb6 -> 
+  custom:scripting/monoscript/fileName/DefaultBuildTasks.cs: b93cbe91f00034105b24705dc67fc837 -> 
+  custom:scripting/monoscript/fileName/LoadBuildinPackageManifestOperation.cs: 708a64d005d5be321bee95beb5c1f72f -> 
+  custom:scripting/monoscript/fileName/BuiltinBuildPipelineViewer.cs: 505d5ede3613d45aa2b1f3d7c00dc2a8 -> 
+  custom:scripting/monoscript/fileName/DefaultEditorFileSystemDefine.cs: b2b8ab43b075c8472e00366daabb837b -> 
+  custom:scripting/monoscript/fileName/YooAssetSettings.cs: 232782dc97d7385dab0c9594e598dd2d -> 
+  custom:scripting/monoscript/fileName/HomePage.cs: 4c4fd55e89ff9417d766263cad98e237 -> 
+  custom:scripting/monoscript/fileName/UnityWebDataRequestOperation.cs: 404a230fd1529bce2e1aa1330f84e98d -> 
+  custom:scripting/monoscript/fileName/CreateBuiltInShadersBundle.cs: e4f12aa9a6b849b3a7861bf492376679 -> 
+  custom:scripting/monoscript/fileName/TaskVerifyBuildResult_BBP.cs: 98f1925d4f323f92075b7545fdcdbbec -> 
+  custom:scripting/monoscript/fileName/UnityWebFileRequestOperation.cs: bea9a37ac2b6b19313cda550311ac800 -> 
+  custom:scripting/monoscript/fileName/UnityDownloadFileOperation.cs: cd40d707ce7b8aad5072f0be94a184b4 -> 
+  custom:scripting/monoscript/fileName/PlayerSettingsApi.cs: e8704eb198d8f61f68729b362e34f254 -> 
+  custom:scripting/monoscript/fileName/ValidationMethods.cs: 0ca38beb753f491a65475578d824a594 -> 
+  custom:scripting/monoscript/fileName/LoadEditorPackageVersionOperation.cs: 6aec452d46a787e48bdf9766d32e0eca -> 
+  custom:scripting/monoscript/fileName/GenerateLinkXml.cs: 438676c0a3ae847305e5461d0d0dfb13 -> 
+  custom:scripting/monoscript/fileName/AuthContext.cs: 377157d1c372f3a97dcc79c358a712d7 -> 
+  custom:scripting/monoscript/fileName/SettingLoader.cs: 5401bb33b9a97d34eddc25226ee86ff2 -> 
+  custom:scripting/monoscript/fileName/IContextObject.cs: fac38ce75c57d87a765e48fb8f4821f9 -> 
+  custom:scripting/monoscript/fileName/DefaultEncryptionServices.cs: df3b4958a2477c3c8654095c09be03a4 -> 
+  custom:scripting/monoscript/fileName/WeChatBridge.cs: fb15f133fe309dbd1a5227d9f37798d3 -> 
+  custom:scripting/monoscript/fileName/AssetBundleWriteOperation.cs: db3d146633bcf83272b8d8ec27708373 -> 
+  custom:scripting/monoscript/fileName/DefaultManifestServices.cs: 4f3aefc506fce0d2b25244fb4d56fc6c -> 
+  custom:scripting/monoscript/fileName/DownloadPackageHashOperation.cs: 5ba97f5f7dd98353e46c59c143751d3c -> 
+  custom:scripting/monoscript/fileName/ReportHeader.cs: 79497287d49e7386d0e2291a07811266 -> 
+  custom:scripting/monoscript/fileName/DisplayNameAttribute.cs: 4953e3fbf7bdb43150fd4e7efbb09dd6 -> 
+  custom:scripting/monoscript/fileName/ReportBundleInfo.cs: d8388f77658ef2b2f8c4b58c9ef7ee75 -> 
+  custom:scripting/monoscript/fileName/IManifestRestoreServices.cs: 29f87d48d5e29e69a84a98262049ae02 -> 
+  custom:scripting/monoscript/fileName/EditorSimulateBuildPipeline.cs: 03d7ffc4d93a94da6e2e7e674a7add25 -> 
+  custom:scripting/monoscript/fileName/UIElementsIcon.cs: 301defff2949c1597e6a491e4e7d7530 -> 
+  custom:scripting/monoscript/fileName/ExtensionMethods.cs: 4642d9c802c70c033ea67f5c9fc06bdb -> 
+  custom:scripting/precompiled-assembly-types:Unity.ScriptableBuildPipeline.Editor: c2f5237ed736426b1896b48005260883 -> 
+  custom:scripting/monoscript/fileName/YooAssetSettingsData.cs: e91ab4327dcec67344dcaa6f080710c3 -> 
+  custom:scripting/monoscript/fileName/NetClient.cs: 5fe04085e8622790a07a0101159baa79 -> 
+  custom:scripting/monoscript/fileName/RequestBuildinPackageVersionOperation.cs: 7c48e92e4f482816eed4f1c17f209b30 -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo_RFBP.cs: a3d605c9af0b4ad3d30ef07c7436ca38 -> 
+  custom:scripting/monoscript/fileName/IPackRule.cs: 51cffd916549ae0a855911fc2cf0d12f -> 
+  custom:scripting/precompiled-assembly-types:YooAsset: 6db7aed2f5f13fedfe70bb93deeb5f64 -> 
+  custom:scripting/monoscript/fileName/FileSystemParametersDefine.cs: 21866d4e0bb8a7f390f5ffe85bf7c144 -> 
+  custom:scripting/monoscript/fileName/FSLoadSceneOperation.cs: fa292d9c3923077350551940f799a453 -> 
+  custom:scripting/monoscript/fileName/SubAssetsProvider.cs: b3a1f41227d82e6b974ed4e05bdc833a -> 
+  custom:scripting/monoscript/fileName/LoadBuildinCatalogFileOperation.cs: d41ab8bd25eff7939c5e4a391e660dbe -> 
+  custom:scripting/monoscript/fileName/HandleFactory.cs: 465643bf11111d7a34d6756003dd55bf -> 
+  custom:scripting/monoscript/fileName/VerifyFileElement.cs: c524cea6ac9d637c9119b121235b51d5 -> 
+  custom:scripting/monoscript/fileName/LinkXMLGenerator.cs: ae9b4e49cd6473e74c6d00b7a9a5576c -> 
+  custom:scripting/monoscript/fileName/EditorSimulateModeHelper.cs: 219a25b7ea9d0cac067c44f620fd4fd4 -> 
+  custom:scripting/monoscript/fileName/GameBootstrap.cs: 92b33f53e7db4956b37e5956321a7254 -> 
+  custom:scripting/monoscript/fileName/HashingMethods.cs: 715cdfdde81dd1627a447579d5c1a2a8 -> 
+  custom:scripting/monoscript/fileName/GraphicsSettingsApi.cs: e643b869c2bd158e219684eb7bac7d5a -> 
+  custom:scripting/monoscript/fileName/SceneRawWriteOperation.cs: 5a20bbe9c2135f3c677809d25231ee39 -> 
+  custom:scripting/monoscript/fileName/VirtualBundleLoadAllAssetsOperation.cs: 57522fc4f9ff1ad9cbcbc9a5736a5b91 -> 
+  custom:scripting/monoscript/fileName/AssetBundleLoadSubAssetsOperation.cs: e6328c58ead9518557570a6ed7eccaaf -> 
+  custom:scripting/monoscript/fileName/IIgnoreRule.cs: 6b8d9170df0c8b19bacb9902a191c835 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorConfig.cs: 2454e6657d702abed0210923290312e5 -> 
+  custom:scripting/monoscript/fileName/RequestWebPackageVersionOperation.cs: 4ec2b422ac517966385304e1376edcbd -> 
+  custom:scripting/monoscript/fileName/PrefabPackedIdentifiers.cs: 88eee9e87bb381ef74e5d164ea9612c4 -> 
+  custom:scripting/monoscript/fileName/BufferReader.cs: c0ed6a8510ff697c5b0a4888d84fd04c -> 
+  custom:scripting/monoscript/fileName/DefaultUnpackRemoteServices.cs: 1687ada75a5a567f7b2cd8bfa87fe6e2 -> 
+  custom:scripting/monoscript/fileName/PackageManifest.cs: 3f7f122c93e129e107b0b39512db99b2 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorPackage.cs: 7bbb4b89894cd470f1c6a7b9c4d4b075 -> 
+  custom:scripting/monoscript/fileName/TaskCachingUtility.cs: 2abbe35728db88bbaa201e6c478a95f2 -> 
+  custom:scripting/monoscript/fileName/CalculateSceneDependencyData.cs: 104fc632ee9eb1eac0995150ef581054 -> 
+  custom:scripting/monoscript/fileName/BuildContent.cs: 8b98bc58cf5574343dc7ddad95d66a2a -> 
+  custom:scripting/monoscript/fileName/InitializeParameters.cs: 2336742463538825134e9256ff911716 -> 
+  custom:scripting/monoscript/fileName/DefaultWebServerFileSystem.cs: 8d2b163a2b3b1946f994df48115d6b9a -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorSettingData.cs: 945338802145465243cf852e3b4c83be -> 
+  custom:scripting/monoscript/fileName/TaskPrepare_RFBP.cs: 180f648db58a5c0bf1dad3fccc2af2d6 -> 
+  custom:CustomObjectIndexerAttribute: 299a746012abc5adb0180d4ccda8d3ad -> 
+  custom:scripting/monoscript/fileName/DefaultEditorFileSystem.cs: f3bf702b800e475f6035b0e9033ab83f -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo_BBP.cs: 955b3f1ca62303e4b2dcaaaec61d12ea -> 
+  custom:scripting/monoscript/fileName/CreateMonoScriptBundle.cs: 2583ca987d667d4dd92571cf56d8871f -> 
+  custom:scripting/monoscript/fileName/YooLogger.cs: 4350a78c10835e8536afcee8d1d9c98a -> 
+  custom:scripting/monoscript/fileName/CollectAssetInfo.cs: ad0c7072677b25a652c16a9f2ae61b46 -> 
+  custom:scripting/monoscript/fileName/TaskCreateReport_RFBP.cs: d93ef517540a8424f0e1fb19ff7157e2 -> 
+  custom:scripting/monoscript/fileName/StripUnusedSpriteSources.cs: 8e0de493596d68c81f185a4c7e2ecc3e -> 
+  custom:scripting/monoscript/fileName/BuildAssetInfo.cs: d203397ae6d41e030e872b3cb5002cf3 -> 
+  custom:scripting/monoscript/fileName/TaskCreateCatalog.cs: da137c3122082fee665bf0b0470412f3 -> 
+  custom:scripting/monoscript/fileName/TaskPrepare_SBP.cs: 9f68350822df162b1dd65c33823cf283 -> 
+  custom:scripting/monoscript/fileName/RawBundleResult.cs: 186d7cf4728a22784e38281b3bd55898 -> 
+  custom:scripting/monoscript/fileName/TaskBuilding_RFBP.cs: 0f2788065406d5764c39de4fe081a1d7 -> 
+  custom:scripting/monoscript/fileName/ServiceContainer.cs: c0927dcc7dcfda1550d49d5401224248 -> 
+  custom:scripting/monoscript/fileName/ProgressTracker.cs: 7cf527e59ae90a5de1d1297f2cf5b5d9 -> 
+  custom:scripting/monoscript/fileName/ScriptableBuildParameters.cs: b85995be370b270c676250c5afcfbce6 -> 
+  custom:scripting/monoscript/fileName/UnityLogger.cs: 3bae803489c700b5e6a454e66a0a6ef4 -> 
+  custom:scripting/monoscript/fileName/DownloaderOperation.cs: bef40bee7493594727645fc2d0ee71c1 -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest_ESBP.cs: 8645d33bb6d3480ebe5e1ef7cfee1b24 -> 
+  custom:scripting/monoscript/fileName/ScannerSchema.cs: 75c59551cf4f9c01616b783364fab44e -> 
+  custom:scripting/monoscript/fileName/DBFSInitializeOperation.cs: 085452533a81575f288212fde07d34c8 -> 
+  custom:scripting/monoscript/fileName/QualitySettingsApi.cs: 8a81ef3b39ef7374ffa2c64379a5666c -> 
+  custom:scripting/monoscript/fileName/GenerateBundleCommands.cs: df8cc1862a26a9b8b8065412bf4da3d1 -> 
+  custom:scripting/monoscript/fileName/SearchCompare.cs: 3d77dbcaae6890f51268b041ea91addd -> 
+  custom:scripting/monoscript/fileName/PostPackingCallback.cs: f0f64a598e599b8fee359c8bbbbb7967 -> 
+  custom:scripting/monoscript/fileName/AssetHandle.cs: d69e051124b2ef5c7ab8c389bbeffd65 -> 
+  custom:scripting/monoscript/fileName/TreeViewer.cs: 3714cfe5d16a4958efa7e06a0f6518b5 -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:scripting/monoscript/fileName/DeSerializer.cs: 42de108158a2d64cff75d55be619c3d6 -> 
+  custom:scripting/monoscript/fileName/ProgressLoggingTracker.cs: 5d288d40f7eb670174353f8188801c70 -> 
+  custom:scripting/monoscript/fileName/DEFSLoadPackageManifestOperation.cs: de87452adb2260bc54498de298e7fab1 -> 
+  custom:scripting/monoscript/fileName/TaskGetBuildMap_RFBP.cs: 389a76f0afc4c2c90832ca79dccb159a -> 
+  custom:scripting/monoscript/fileName/IBuildResults.cs: 8b5b87d2e7d0fe52b18dffb583edf526 -> 
+  custom:scripting/monoscript/fileName/DownloadStatus.cs: 64c933f1eb36397cf6a412c88a3637c9 -> 
+  custom:scripting/monoscript/fileName/VirtualBundleLoadSceneOperation.cs: 89229efea36cc7de1b860b2c31438c5d -> 
+  custom:scripting/precompiled-assembly-types:YooAsset.Editor: 07a2cae43db0775750d83e9161a62de8 -> 
+  custom:scripting/monoscript/fileName/DefaultUnpackFileSystemDefine.cs: bf0ab1cb14ac438bbc464a428902ffe0 -> 
+  custom:scripting/monoscript/fileName/TaskEncryption_BBP.cs: a44930b4acb6f1a0fc5e651f6f14dff1 -> 
+  custom:scripting/monoscript/fileName/FilePersistenceProvider.cs: 9f958992df069f72bb937127de25af86 -> 
+  custom:scripting/monoscript/fileName/ClusterBuildLayout.cs: 5771ce961e5c856dda3162f7e7866c51 -> 
+  custom:scripting/monoscript/fileName/DumpToText.cs: 2dfe9c7754fbb721de687736d394e422 -> 
+  custom:scripting/monoscript/fileName/ButtonCell.cs: cf139935eb01a103ef7d856a645739d1 -> 
+  custom:scripting/monoscript/fileName/SingleValueCell.cs: e4c1b53dbe29c597a2ae5468ceed7ddb -> 
+  custom:scripting/monoscript/fileName/TaskGetBuildMap_BBP.cs: 316aadd7dcf150e44453c404d230757a -> 
+  custom:scripting/monoscript/fileName/AllAssetsProvider.cs: e45a25ffca1b2b74a053b06088778364 -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest_RFBP.cs: 815d3f79558fe9416182306c88e74a93 -> 
+  custom:scripting/monoscript/fileName/EditorDefine.cs: 33ea48f98ada7a5fb704e7091df58378 -> 
+  custom:scripting/monoscript/fileName/ScriptableBuildPipelineViewer.cs: f5d443d6c9d70df381c583dee6b2d8f7 -> 
+  custom:scripting/monoscript/fileName/AssetBundleInspector.cs: 889653d0d1cc752709989412fa082c11 -> 
+  custom:scripting/monoscript/fileName/RuleDisplayName.cs: 13a41cf4aab74156e069a7dc2a29db8b -> 
+  custom:scripting/monoscript/fileName/IWebDecryptionServices.cs: daf85effae63479bca18973d00a09283 -> 
+  custom:scripting/monoscript/fileName/RawFileBuildPipeline.cs: e03a29e92f9307267486037ad8b698be -> 
+  custom:scripting/monoscript/fileName/FSClearCacheFilesOperation.cs: c1ba3aad2c0a1c237e2c8f701ddb8495 -> 
+  custom:scripting/monoscript/fileName/RawBundleLoadAllAssetsOperation.cs: e57f8096ae8c6141234c5b0f1910de56 -> 
+  custom:scripting/monoscript/fileName/AssetBundleBuilderSetting.cs: 14d987a130caffcba8750597be485f76 -> 
+  custom:scripting/monoscript/fileName/AssetProvider.cs: 896d71fbeb6d1a475b61a316a8804f02 -> 
+  custom:scripting/monoscript/fileName/ClearAllCacheManifestFilesOperation.cs: 387e739a5ce057106a0bf1f8a27bee2f -> 
+  custom:scripting/monoscript/fileName/HashingHelpers.cs: 0f7aeced044c9bfbe971ac41bd6b1b1e -> 
+  custom:scripting/monoscript/fileName/PackageInvokeBuilder.cs: f77ad40907990c1a9cc10544c231eca9 -> 
+  custom:scripting/monoscript/fileName/RemotePlayerConnection.cs: da542ad8f37a629280873c44019dce7e -> 
+  custom:scripting/monoscript/fileName/FileCompressor.cs: 9e176c2b40f10af0783acadfcf93a0a6 -> 
+  custom:scripting/monoscript/fileName/BuildCacheUtility.cs: 2743f002ee5eaa2b245807c6d3986866 -> 
+  custom:scripting/monoscript/fileName/ContentPipeline.cs: 0099978ab3154e75ec02b02af05e3647 -> 
+  custom:scripting/monoscript/fileName/IBuildSpriteData.cs: 70fcaabd919c2d8ed3f211908205c540 -> 
+  custom:scripting/monoscript/fileName/AssetBundleBuilder.cs: 66026cb25f59730dd66d64c17a72bd7d -> 
+  custom:scripting/monoscript/fileName/DCFSLoadBundleOperation.cs: a4ae0c8c16228c6bafda0632d2366789 -> 
+  custom:scripting/monoscript/fileName/DefaultActiveRule.cs: f4f24b066cafca515ec1235794c6a806 -> 
+  custom:scripting/monoscript/fileName/ClearUnusedCacheBundleFilesOperation.cs: bca464223e7f7b042d1b67ba0e2574ca -> 
+  custom:scripting/monoscript/fileName/RemoteDebuggerDefine.cs: 480b2d281d14c1369fe528a4e867f72a -> 
+  custom:scripting/monoscript/fileName/LoadEditorPackageManifestOperation.cs: 466cb65ae029295e2cd080f778549e89 -> 
+  custom:scripting/monoscript/fileName/BuildCallbacks.cs: e372553ccc5bfd1dd2d4f86e3433b7ac -> 
+  custom:scripting/monoscript/fileName/CompatibilityAssetBundleManifest.cs: 8c821441185b5b6a41b701764a9456f7 -> 
+  custom:scripting/monoscript/fileName/AssetBundleBuilderWindow.cs: a46a3180522c86cbc00e95c5d27375b3 -> 
+  custom:scripting/monoscript/fileName/DebugPackageData.cs: 36103500d03e897f5f8e61a9d83f19fd -> 
+  custom:scripting/monoscript/fileName/LoadWebEncryptAssetBundleOperation.cs: 305d19a933ab7aa9b822434fd738ae3a -> 
+  custom:scripting/monoscript/fileName/BuildTasksRunner.cs: 6061ed342a325c9c185a4b35bbfe23f3 -> 
+  custom:scripting/monoscript/fileName/IBundleQuery.cs: d61c15afb00502c811e7fd4d6462c2c5 -> 
+  custom:scripting/monoscript/fileName/VirtualBundleLoadAssetOperation.cs: 90ab5421a139a53cf7782320ef91b885 -> 
+  custom:scripting/monoscript/fileName/BuildExtendedAssetData.cs: 646a6ec8dded2f210e51a6a26a267c53 -> 
+  custom:scripting/monoscript/fileName/RequestPackageVersionOperation.cs: 643c88e19acddade3a8fc22fd926a8dd -> 
+  custom:scripting/monoscript/fileName/DBFSLoadPackageManifestOperation.cs: a27ac40aebcaa394935cdd81c252df00 -> 
+  custom:scripting/monoscript/fileName/OperationSystem.cs: 669217e9ff4010ac66741203de2f85b0 -> 
+  custom:scripting/monoscript/fileName/DebugProviderInfo.cs: 164444c05af924be7e9e4e58e6b6bfe5 -> 
+  custom:scripting/monoscript/fileName/DEFSLoadBundleOperation.cs: 7b1f974bd0ef3ef6b92e049ef5e4d141 -> 
+  custom:scripting/monoscript/fileName/UpdatePackageManifestOperation.cs: 8fbd115a2c3697cc171a682a6e2d3961 -> 
+  custom:scripting/monoscript/fileName/BuildProfiler.cs: 20a6883e13cfb1c377baf8d9ad7c7108 -> 
+  custom:scripting/monoscript/fileName/BuildPipelineViewerBase.cs: f7505a1d0911592edb1dfe6630d173c9 -> 
+  custom:scripting/monoscript/fileName/ManifestTools.cs: f7c6fac69c839939b0ae10aeb7940ecd -> 
+  custom:scripting/monoscript/fileName/LoadBundleFileOperation.cs: de0f361e74655a45a445a7f6cb38bc81 -> 
+  custom:scripting/monoscript/fileName/BuildMapContext.cs: 269b331ae63a8544dc38a88d077af4cf -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:scripting/monoscript/fileName/FSRequestPackageVersionOperation.cs: 012d84e9033a04e41fdb7d2b8e1dd960 -> 
+  custom:scripting/monoscript/fileName/UnloadAllAssetsOperation.cs: edf4d181505ddae62eee29c9e6719ae8 -> 
+  custom:scripting/monoscript/fileName/ResourcePackage.cs: c00e78530031b0d5576e1bfd9adc9fc2 -> 
+  custom:scripting/monoscript/fileName/DBFSRequestPackageVersionOperation.cs: 8b62656d84828beb91603a127dd7640f -> 
+  custom:scripting/monoscript/fileName/RecordFileElement.cs: 96e4e89f258d1eb1cc95ff0bb3595695 -> 
+  custom:scripting/monoscript/fileName/LoadWebNormalAssetBundleOperation.cs: 4fa267ec186a5f704ce8ea84b4fe9acc -> 
+  custom:scripting/monoscript/fileName/IBuildContext.cs: 5ff9d28c8d4a4f1b753bc76a607083bf -> 
+  custom:scripting/monoscript/fileName/FileSystemParameters.cs: 86a818d219b23342dab9100ded3c104c -> 
+  custom:scripting/monoscript/fileName/HandleBase.cs: 94111d5bb4071aeb66140ec40ef3b579 -> 
+  custom:scripting/monoscript/fileName/RequestRemotePackageVersionOperation.cs: f954c2d788879dcc40f70c7188993c14 -> 
+  custom:scripting/monoscript/fileName/DefaultAddressRule.cs: 6cc8f64006d7473f8260cd23fc85e80f -> 
+  custom:scripting/monoscript/fileName/PackageInvokeBuildParam.cs: 7d25bd786271a5d5f7777efc28aa98d5 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:scripting/monoscript/fileName/TaskCreatePackage_SBP.cs: 2b10b481644592908781de5bee8556a0 -> 
+  custom:scripting/monoscript/fileName/IBundleExplictObjectLayout.cs: ddaeb79a7a717f820f674015296294c0 -> 
+  custom:scripting/monoscript/fileName/PostDependencyCallback.cs: eb19b86cfe0872246c64c5aa303dec70 -> 
+  custom:scripting/monoscript/fileName/YooAssetsRuntime.cs: 2735daaeb2639b18bb9d48b8018c3435 -> 
+  custom:scripting/monoscript/fileName/TreeNode.cs: 6d81f8987db156af841df8aaa5f33243 -> 
+  custom:scripting/monoscript/fileName/RebuildSpriteAtlasCache.cs: 4336dcac6b167662dc27a4b8cb534249 -> 
+  custom:scripting/monoscript/fileName/PackageDetail.cs: 1b414a1dc6f18c08a85afd3baf8dac31 -> 
+  custom:scripting/monoscript/fileName/ICopyLocalFileServices.cs: 6e2b5ec36e0845f27968552e016a1928 -> 
+  custom:scripting/monoscript/fileName/TaskGetBuildMap_SBP.cs: e3297bce37cbc1bfa79674d1c19528e1 -> 
+  custom:scripting/monoscript/fileName/TaskCreatePackage_BBP.cs: 6f7ea23258816a8fcc8ae6bd18ccb409 -> 
+  custom:scripting/monoscript/fileName/FSLoadAssetOperation.cs: b2fc177aa625d7699b66c308f48eafd5 -> 
+  custom:scripting/monoscript/fileName/SearchKeyword.cs: e0780cde8d9047314b19a37ffee7a3b0 -> 
+  custom:scripting/monoscript/fileName/DefaultWebRemoteFileSystem.cs: 05b720eeeb0d725e8afa325ee79fe41f -> 
+  custom:scripting/monoscript/fileName/DWRFSLoadPackageManifestOperation.cs: 082a366f69989eeba7136be02cb915cc -> 
+  custom:scripting/monoscript/fileName/ToggleRecord.cs: 5a1414adcb78e96d8697d3c343f2d7ee -> 
+  custom:scripting/monoscript/fileName/BundleDetails.cs: c2ce173f3479298f0c344c217d376d24 -> 
+  custom:scripting/monoscript/fileName/AssetArtScannerConfig.cs: c3d030f5f252eee4d1ef3d23643ef09b -> 
+  custom:SearchIndexIgnoredProperties: e643bd26f0fe6173181afceb89e7c659 -> 
+  custom:scripting/monoscript/fileName/UpdateBundleObjectLayout.cs: d3e8743e5c2de0c9b031ff5de45c2faa -> 
+  custom:scripting/monoscript/fileName/DEFSRequestPackageVersionOperation.cs: 2b043efe9eddac728b7ac341efe36e20 -> 
+  custom:scripting/monoscript/fileName/ReflectionExtensions.cs: 18deef64260ff7f38d0791626801b560 -> 
+  custom:scripting/monoscript/fileName/TaskCopyBuildinFiles_SBP.cs: fd41248d60147866f8f7c6be85851162 -> 
+  custom:scripting/monoscript/fileName/USerialize.cs: 6f1fb90844e336a2331e02dcaf45180a -> 
+  custom:AudioImporter_EditorPlatform: 3918e3fc78b5a79bad01e8451be0beb8 -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo_ESBP.cs: a1534fdc5974c19764d22b084c1a522e -> 
+  custom:scripting/monoscript/fileName/RequestWebServerPackageHashOperation.cs: 94cce4343a620a9f3c62cd0a91bb675e -> 
+  custom:scripting/monoscript/fileName/LoadWebServerPackageManifestOperation.cs: 9bfd2633153d1177f9902e964f495509 -> 
+  custom:scripting/monoscript/fileName/YooAssetsDriver.cs: b9f47c82f00f33a81f10b9f02503abb9 -> 
+  custom:scripting/monoscript/fileName/AssetDependencyDatabase.cs: f39973ec5a0eb190ba81e22110535af9 -> 
+  custom:scripting/monoscript/fileName/TaskCopyBuildinFiles.cs: 4fccc973afd87447e3084da9cfb6667b -> 
+  custom:scripting/monoscript/fileName/DownloadPackageManifestOperation.cs: 4157092bcb68ba635cc95ef73fb8a36e -> 
+  custom:scripting/monoscript/fileName/CatalogTools.cs: 5a5b5e72265466194d146f4173e05382 -> 
+  custom:scripting/monoscript/fileName/IPlayMode.cs: b7df7fb3866a89b552fbd11691f85e1b -> 
+  custom:scripting/monoscript/fileName/DefaultTableData.cs: cba1772cd7f0d958d6704c8f4b68eb27 -> 
+  custom:scripting/monoscript/fileName/LoadWebServerCatalogFileOperation.cs: b6291bce92a4e4487da4ed05b8677aee -> 
+  custom:scripting/monoscript/fileName/IBuildContent.cs: 985433c3d816b7fe3356ac6fdd88a9c1 -> 
+  custom:scripting/monoscript/fileName/PreDownloadContentOperation.cs: f4aab0a7bf18a75605c171d5ab6a2780 -> 
+  custom:scripting/monoscript/fileName/PlayModeImpl.cs: 119e34df7d852f5add145b915b9587a6 -> 
+  custom:scripting/monoscript/fileName/DefaultSearchSystem.cs: 825a1d499c3bbf5a339706837e69a592 -> 
+  custom:scripting/monoscript/fileName/BuildBundleInfo.cs: 0bcc251c6ff4f2096e2054e4e66df0ff -> 
+  custom:scripting/monoscript/fileName/DebugBundleInfo.cs: 3c3daa87edae9c36b83910f39651186d -> 
+  custom:scripting/monoscript/fileName/AssetBundleLoadAssetOperation.cs: e0e424e695dbac42472c2249facca050 -> 
+  custom:scripting/monoscript/fileName/UnityWebRequestOperation.cs: 7e3cd60f87576989108db3dbb4e74241 -> 
+  custom:scripting/monoscript/fileName/IBuildParameters.cs: 5444d4b7b91f8f230014e0b0f1d671dc -> 
+  custom:scripting/monoscript/fileName/CopyBuildinFileOperation.cs: 98584cbf428bdbe6cdda60b6647b66c7 -> 
+  custom:scripting/monoscript/fileName/DestroyOperation.cs: 54d82add4dc8f437971bf73dd158e5f2 -> 
+  custom:scripting/monoscript/fileName/UnityDownloadResumeFileOperation.cs: d10a1ab0bb47bc33052aab58e2b85f54 -> 
+  custom:scripting/monoscript/fileName/PackageBundle.cs: defb9c7f42fbf31479311e21b9c3df5d -> 
+  custom:scripting/monoscript/fileName/CacheEntry.cs: 184ec4582c6a111a6d76b26e9882d8ac -> 
+  custom:scripting/monoscript/fileName/ScanReportConfig.cs: 160bb8a2f80a8e8e7fbb5f0d6982b15b -> 
+  custom:scripting/monoscript/fileName/CalculateCustomDependencyData.cs: 60157e862b4f285cab819b205d1dcc68 -> 
+  custom:scripting/monoscript/fileName/BuildRunner.cs: b5c505923ad18556774584da2b2da3e9 -> 
+  custom:scripting/monoscript/fileName/RawWriteOperation.cs: 0c25d4a5522f2e528b1c316a8854d37d -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorSetting.cs: 57c83457b7daa5fd0121a4df9a0b19a8 -> 
+  custom:scripting/monoscript/fileName/DCFSLoadPackageManifestOperation.cs: b41fae2b7f8c82f1ad938809318c7315 -> 
+  custom:scripting/monoscript/fileName/RemoteDebuggerInRuntime.cs: 21d42d4a89472cf260e4b412a8ca80aa -> 
+  custom:scripting/monoscript/fileName/BuildPipelineAttribute.cs: 388d09d6fea4a510e427f36a7f57e4e2 -> 
+  custom:scripting/monoscript/fileName/IObjectDependencyData.cs: dab6b9b0a9d3dcde7acff38a7870ced5 -> 
+  custom:scripting/monoscript/fileName/DebuggerOperationListViewer.cs: 46857746463afec49c8e51e87bfd5b9a -> 
+  custom:scripting/monoscript/fileName/PostScriptsCallback.cs: 1cec4066ff38f9052245bd85d91b727c -> 
+  custom:scripting/monoscript/fileName/VirtualBundleLoadSubAssetsOperation.cs: 2d65cc8eae565f31f1ac36b3aaad363f -> 
+  custom:scripting/monoscript/fileName/HttpTransport.cs: 2459f3c59724549901fc227fe3f4974f -> 
+  custom:scripting/monoscript/fileName/IDeterministicIdentifiers.cs: 9fdfcaea74e444a0ad0fcc5b015d955f -> 
+  custom:scripting/monoscript/fileName/DefaultUnpackFileSystem.cs: 016f0548d89cd473e21c1faa9171b1ce -> 
+  custom:scripting/monoscript/fileName/ToggleDisplay.cs: 66e917c275d39c734fea1d485b6978b6 -> 
+  custom:scripting/monoscript/fileName/Preferences.cs: 94e017b2eb5287f154bb9408b15c0487 -> 
+  custom:scripting/monoscript/fileName/DWRFSInitializeOperation.cs: a7609a151631cf35868f8035019924eb -> 
+  custom:scripting/monoscript/fileName/ReporterAssetListViewer.cs: 32c4ff5321e7cb3e5cbfa43c12ff8ae3 -> 
+  custom:scripting/monoscript/fileName/TaskCreatePackage_RFBP.cs: 3cfdcb85d63c4c0ba4f85f89725917b9 -> 
+  custom:scripting/monoscript/fileName/DBFSLoadBundleOperation.cs: dfe2c916e9107994bb1c6c708dd8b7f9 -> 
+  custom:scripting/monoscript/fileName/IProgressTracker.cs: 59e48e9e64fc66dccd13c436990f26d1 -> 
+  custom:scripting/monoscript/fileName/TableColumn.cs: 66944686febc32402ad7c3566cb44016 -> 
+  custom:scripting/monoscript/fileName/AssetDependencyCache.cs: 94d7afaafca6561aad6c5f0544e47c30 -> 
+  custom:scripting/monoscript/fileName/DefaultIgnoreRule.cs: fca3501d5fe5c2be4ac718389c6c3a50 -> 
+  custom:scripting/monoscript/fileName/DeserializeManifestOperation.cs: a2e324c02fe59e7ae04222543a98e2ba -> 
+  custom:scripting/monoscript/fileName/FileVerifyHelper.cs: 9e961402ba3777c3e427fba85dc64906 -> 
+  custom:scripting/monoscript/fileName/DefaultFilterRule.cs: fb82e83ad78fa5da049133225efea8ad -> 
+  custom:scripting/monoscript/fileName/LinearPackedIdentifiers.cs: f2ab3362c1bcc1efe300438e2ca25a9c -> 
+  custom:scripting/monoscript/fileName/CommonStrings.cs: c37303b8ea4b24be7afe89e3c1f096f3 -> 
+  custom:scripting/monoscript/fileName/SBPBuildTasks.cs: 77b5961a6927edfc48549d4f3a448841 -> 
+  custom:scripting/monoscript/fileName/ManifestDefine.cs: 7971011e65f319d87694806b6ff66fa6 -> 
+  custom:scripting/monoscript/fileName/RawFileBuildParameters.cs: b8bf32a713d9ddcee0327f74c91d6b68 -> 
+  custom:scripting/monoscript/fileName/LoadEditorPackageHashOperation.cs: 0c267fd12db569aa4af13e99d1517adf -> 
+  custom:scripting/monoscript/fileName/ReporterBundleListViewer.cs: 0bc1e05d3dfbd9217c18446afc4d2e65 -> 
+  custom:scripting/monoscript/fileName/ScannerResult.cs: 0f1513e74859800769dcf543418b28c1 -> 
+  custom:scripting/monoscript/fileName/AssetArtScannerSetting.cs: 04bfec6ef50cd4215e760606bcba3571 -> 
+  custom:scripting/monoscript/fileName/TaskPrepare_ESBP.cs: 4d8414f2218342bca763a2b3027c46d2 -> 
+  custom:scripting/monoscript/fileName/VirtualBundleResult.cs: b9eb75c11c9cd795c6d843fedca03d18 -> 
+  custom:scripting/monoscript/fileName/TaskCreateReport_SBP.cs: adb80da6944d09a0f802f4e54cc69599 -> 
+  custom:scripting/monoscript/fileName/DWRFSRequestPackageVersionOperation.cs: 8c3f5332c649c89c62d00643c9a3ed58 -> 
+  custom:scripting/monoscript/fileName/TempFileElement.cs: 335f5c66d39d89be52fdaf2411228f99 -> 
+  custom:scripting/monoscript/fileName/TaskGetBuildMap.cs: 3047618a5c1823a459b822567c9614db -> 
+  custom:scripting/monoscript/fileName/FSLoadAllAssetsOperation.cs: 31ca1aae3b8eecd490e35216055a2266 -> 
+  custom:scripting/monoscript/fileName/RemoteEditorConnection.cs: 939aec25bd23a8705fa746fef83acd36 -> 
+  custom:scripting/monoscript/fileName/CompletedProvider.cs: 9dbd66f6df4011beec02b025ad1e6d65 -> 
+  custom:scripting/monoscript/fileName/CollectCommand.cs: b4554c9014743eb38b02252aa1757ec5 -> 
+  custom:framework-osx-AVFoundation: e770b220cccbd017edd2c1fefb359320 -> 
+  custom:scripting/monoscript/fileName/TaskBuilding_SBP.cs: 9b82923d3bdda73591a3425ec531d42b -> 
+  custom:scripting/monoscript/fileName/InitializationOperation.cs: 453d8dda2eb6a58e3de3ee4285b3306f -> 
+  custom:scripting/monoscript/fileName/BuildPlayerScripts.cs: 0f2fc29cfe25da306bd11569a87e99c9 -> 
+  custom:scripting/monoscript/fileName/IDecryptionServices.cs: e3b2c49806abe69df5b25f1a87b9aa84 -> 
+  custom:scripting/monoscript/fileName/FSLoadBundleOperation.cs: 1512a91c7fa14c7f39ac5b430284a3f5 -> 
+  custom:scripting/monoscript/fileName/TaskEncryption_RFBP.cs: e79d4b4ae53e1f79ee5143eabd035ad6 -> 
+  custom:scripting/monoscript/fileName/BuildWriteData.cs: 2cea0300b77fdbda33a3d90a3f600b08 -> 
+  custom:scripting/monoscript/fileName/AssetBundleDebuggerWindow.cs: 1ac7340fb2e586f6628a577c78827c32 -> 
+  custom:scripting/monoscript/fileName/EditorSimulateBuildParameters.cs: 70a7be88104bfca2a628d0788c55d928 -> 
+  custom:scripting/monoscript/fileName/VerifyCacheFilesOperation.cs: 79e331f0460ba870bd845b4e5e2be554 -> 
+  custom:scripting/monoscript/fileName/AssetObjectCell.cs: 64cf5db7b0ee1b9adf17250943f801ae -> 
+  custom:scripting/monoscript/fileName/BuildResult.cs: d8d2b866533723a753da10dc924f801f -> 
+  custom:scripting/monoscript/fileName/BuildLogger.cs: b9d8388fec3c0769797110715bcda48f -> 
+  custom:scripting/monoscript/fileName/AssetBundleResult.cs: 1710546daeddc858b41a6e921d4ce799 -> 
+  custom:scripting/monoscript/fileName/UnloadUnusedAssetsOperation.cs: 83c76ef4081d9b90c304fa8c9f2ed2f3 -> 
+  custom:scripting/monoscript/fileName/BuildSpriteData.cs: c829088ed78bbbb541c4780bcaac9f9e -> 
+  custom:scripting/monoscript/fileName/AssetBundleLoadSceneOperation.cs: 05956b3f6e717c64e6da4c61b569030f -> 
+  custom:scripting/monoscript/fileName/FSLoadPackageManifestOperation.cs: 688db379adef71557a8cb80fec7b9b6d -> 
+  custom:scripting/precompiled-assembly-types:App.AOT: 7b3e2dfe78a563a12bc3e853ffffa830 -> 
+  custom:scripting/monoscript/fileName/AssetArtScanner.cs: c611fba08c4b643c76e5995f6f8489e5 -> 
+  custom:scripting/monoscript/fileName/IBuildCache.cs: b89b6b1c01287101de59d979a61eafa2 -> 
+  custom:scripting/monoscript/fileName/EditorSimulateBuildPipelineViewer.cs: b9a63434f1a91b54bbf0380c4ac64417 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:scripting/monoscript/fileName/WebRequestCounter.cs: a415d5c140522e0469b09ed4d5b5a694 -> 
+  custom:scripting/monoscript/fileName/DefaultBuildinFileSystem.cs: 178cf9c7b33770aef6ee1a2d94836656 -> 
+  custom:scripting/monoscript/fileName/ReorderableListView.cs: e5d0a0e62a47cd235e292d099ccb9ca4 -> 
+  custom:scripting/monoscript/fileName/ContextInjector.cs: be93aa05045a7a9adf91118021d7b9ef -> 
+  custom:scripting/monoscript/fileName/ReportScanInfo.cs: ac74a18853dba7475a9ff9f87df4505c -> 
+  custom:scripting/monoscript/fileName/IWriteOperation.cs: f992fc85bf839520185f31965947c71e -> 
+  custom:scripting/monoscript/fileName/ClearCacheFilesOperation.cs: 45b60fb4a2fc45efd779b6ac6141f4b4 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:scripting/monoscript/fileName/SwitchToBuildPlatform.cs: 302951eb00ef533a7f8d4e2af60b1dbb -> 
+  custom:scripting/monoscript/fileName/ArchiveAndCompressBundles.cs: a4f30b836ec7f461da7b1d8eed932e91 -> 
+  custom:scripting/monoscript/fileName/DebugReport.cs: 71b8a94c6b48b309226e0ebcfb15fa9e -> 
+  custom:scripting/monoscript/fileName/AssetBundleSimulateBuilder.cs: 12a459c9d57b76cf42a75d21a245cef0 -> 
+  custom:scripting/monoscript/fileName/ITableCell.cs: 92b3875bee388ba2ee8406db0650a349 -> 
+  custom:scripting/monoscript/fileName/RawFileHandle.cs: 38bc98408a8267547893ee172f1790eb -> 
+  custom:scripting/monoscript/fileName/MD4.cs: 78155ea9dc73b12fc02ca5bf12ab1a89 -> eb4100b4258ba66e68a6a8330d8ed4cc
+  custom:scripting/monoscript/fileName/TaskGetBuildMap_ESBP.cs: a233bd80e23e3262804abc6c3807d613 -> 
+  custom:scripting/monoscript/fileName/TaskPrepare_BBP.cs: cf99b58f2f7f6e276133fe1e852dec86 -> 
+  custom:scripting/monoscript/fileName/SceneBundleWriteOperation.cs: 32514961e31a58db7f78c6fb8757c75f -> 
+  custom:scripting/monoscript/fileName/FSInitializeFileSystemOperation.cs: 09bf3f619570c0b0f919675bc402848c -> 
+  custom:scripting/monoscript/fileName/ClearCacheBundleFilesByTagsOperaiton.cs: b5b8196ef5edc5e0b43562fac733b8da -> 
+  custom:scripting/monoscript/fileName/IRemoteServices.cs: cbca063018c0ffa2e61d58c9c5eaa1b1 -> 
+  custom:scripting/monoscript/fileName/IntegerValueCell.cs: abe0ef12ed2d592e5f2a7c1e1a885c77 -> 
+  custom:scripting/monoscript/fileName/LoadCachePackageHashOperation.cs: 67918306b79a86f229f5495877638947 -> 
+  custom:scripting/monoscript/fileName/ProviderOperation.cs: b930a394752fdc5ba86a6e22b69e74ff -> 
+  custom:scripting/monoscript/fileName/RemotePlayerSession.cs: 62e83640983aa134f14d73f29f93cba3 -> 
+  custom:scripting/monoscript/fileName/IBuildLog.cs: 543b8847c6c9094f2d90357f2bde8b30 -> 
+  custom:scripting/monoscript/fileName/BooleanValueCell.cs: 4ce51f2e59701848c71cb64aebc8715b -> 
+  custom:scripting/monoscript/fileName/AssetArtReporterWindow.cs: 506fcff1d68e84f08300797d71ae7586 -> 
+  custom:scripting/monoscript/fileName/FSLoadSubAssetsOperation.cs: 90c9f9a0b76a70263f92b5dce6c2823f -> 
+  custom:scripting/monoscript/fileName/IAssetRepresentationData.cs: 4fd3029c6ddc21ad01839cd63f7e8552 -> 
+  custom:scripting/monoscript/fileName/AppendBundleHash.cs: 4b529c191f72e41deab5ef0b8d08bb2f -> 
+  custom:scripting/monoscript/fileName/AssetBundleRecorder.cs: f9ff69f460f901490504e76dc981a7c0 -> 
+  custom:scripting/monoscript/fileName/IBuildPipeline.cs: 45044e1b38103f10b26b9ce1c93cbeed -> 
+  custom:scripting/monoscript/fileName/YooAssetsExtension.cs: 60d5cb420e7f846ea3aea443710d89a8 -> 
+  custom:scripting/monoscript/fileName/UIElementsTools.cs: bbca8892b3a315400854d8c8a3372fc1 -> 
+  custom:scripting/monoscript/fileName/DWSFSInitializeOperation.cs: 2b39c1da825d98339f6eed88e7945c62 -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo_SBP.cs: 27ab16c95fb4ed0b060907ca7effc9e4 -> 
+  custom:scripting/monoscript/fileName/Serializer.cs: 6c1de1ff1b6b7616ec79b8ee1445add4 -> d7df1b97d0a3bd0bb98fd4d2d5bf5d29
+  custom:scripting/monoscript/fileName/DefaultBuildinFileCatalog.cs: dc0ae783e79f77e65092213fff3b4915 -> 
+  custom:scripting/monoscript/fileName/AssetInfo.cs: cb71ddecafa74902a796d6016adbaf2c -> 
+  custom:scripting/monoscript/fileName/SceneProvider.cs: 6139709953ad3968a3bcf742e7b57ff9 -> 
+  custom:scripting/monoscript/fileName/ApplicationFootPrint.cs: a116da9ff812b26c16729b847ded8d98 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorWindow.cs: d4c6bafc92cb82dd30d72e2c55450ef4 -> 
+  custom:scripting/monoscript/fileName/GenerateBundlePacking.cs: e605bef1aeac04a952cb03f12b7d1b74 -> 
+  custom:scripting/monoscript/fileName/RequestBuildinPackageHashOperation.cs: 70953b8e015e80990c6061b3c63db98c -> 
+  custom:scripting/monoscript/fileName/RawfileBuildPipelineViewer.cs: 60f45524d69cd58ad84450cf639a6689 -> 
+  custom:scripting/monoscript/fileName/DownloadPackageBundleOperation.cs: 0ec687036a40ba062352427c4fe44121 -> 
+  custom:scripting/monoscript/fileName/SceneHandle.cs: 87a5324ee63c80f2dd0068a199a57d5d -> 
+  custom:scripting/monoscript/fileName/ITableData.cs: e0b2cbb1d667507c9dce480f7f1a0959 -> 
+  custom:scripting/monoscript/fileName/ReportIndependAsset.cs: 1dac6eb5251bdfa81e6dbfcb5662f661 -> 
+  custom:scripting/monoscript/fileName/TaskCopyBuildinFiles_RFBP.cs: 7bb573e8e8c6ec76a8f99f586ae29031 -> 
+  custom:scripting/monoscript/fileName/BuiltinBuildParameters.cs: 882479af13ea33d193f6283fcd2b3f7e -> 
+  custom:scripting/monoscript/fileName/DownloadCenterOperation.cs: cdd581e837f5d3bee88d6b3457d8953e -> 
+  custom:scripting/monoscript/fileName/BundleResult.cs: 72f5d085c05aa5679cf69fd2c36e0152 -> 
+  custom:scripting/monoscript/fileName/IBuildTask.cs: 8c2dcc1472be7341025ec28aeffdf148 -> 
+  custom:scripting/monoscript/fileName/GenerateBundleMaps.cs: 9a1c9e701ac353a3e9f794fda78e0a1c -> 
+  custom:scripting/monoscript/fileName/SceneStateCleanup.cs: 31db7f5f98e9a1c904a3b9e4c43aa24b -> 
+  custom:scripting/monoscript/fileName/TaskEncryption.cs: 0ee74ee90269122f37de3a6fdcfe20a2 -> 
+  custom:scripting/monoscript/fileName/UnityAssetBundleRequestOperation.cs: cc7bfc2d25069c347b44c9455f963d0d -> 
+  custom:scripting/monoscript/fileName/DownloadDefine.cs: 26da1aa85d3ffc9bf7b88ef6058149b7 -> 
+  custom:scripting/monoscript/fileName/VerifyTempFileOperation.cs: abb9600223ba9eafd714d7e9985f61d2 -> 
+  custom:scripting/monoscript/fileName/ReportAssetInfo.cs: f551b788e3dda0b878ce507ede152825 -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo.cs: e28714e4a2be4c745cb1baa67b8a80a2 -> 
+  custom:scripting/monoscript/fileName/DebuggerAssetListViewer.cs: c4aae01b1cc90c1420aff6bfd2e6adb3 -> 
+  custom:scripting/monoscript/fileName/IWriteData.cs: f2a238486c9cc3a5a9e531c07d54f232 -> 
+  custom:scripting/monoscript/fileName/UnloadSceneOperation.cs: 8345287c6aa7b0eea6e8ceeccf043f3f -> 
+  custom:scripting/monoscript/fileName/UnityDownloadLocalFileOperation.cs: 4e1c86e3a7116ca893c968a541d88ea3 -> 
+  custom:scripting/monoscript/fileName/YooAssets.cs: 60d5cb420e7f846ea3aea443710d89a8 -> 
+  custom:scripting/monoscript/fileName/BuildInterfacesWrapper.cs: aeca1257cd6ce17b667e21eeaeaba2db -> 
+  custom:scripting/monoscript/fileName/WriteSerializedFiles.cs: 9c94ef6dac7108c5c9e0e92e832d5652 -> 
+  custom:scripting/monoscript/fileName/DefaultCacheFileSystem.cs: 7947eaf885f4181314733ed940985033 -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest_SBP.cs: 8b16732bf7d9527bdbcb1cb3d835dadd -> 
+  custom:scripting/monoscript/fileName/CollectResult.cs: 13e01d58a7d0fec62f87999474e35c00 -> 
+  custom:scripting/monoscript/fileName/DWSFSLoadBundleOperation.cs: 7a7fbc1133ba87d759896194c81cbb1f -> 
+  custom:scripting/monoscript/fileName/IEncryptionServices.cs: 330d3bd391d88987f4be1b2c4544637f -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:scripting/monoscript/fileName/ThreadingManager.cs: c9fc7fb2e109a60745bd85a84c04e0b5 -> 
+  custom:scripting/monoscript/fileName/DWSFSLoadPackageManifestOperation.cs: 7a9ee9b115c2d33f800658b655f5cdb0 -> 
+  custom:scripting/monoscript/fileName/ScanReport.cs: 1f07aba651a39d2c93b0fad62b82fe72 -> 
+  custom:scripting/monoscript/fileName/LoadWebPackageManifestOperation.cs: 6b1345f91189baa8967ce13bdfb2a402 -> 
+  custom:scripting/monoscript/fileName/SearchCacheFilesOperation.cs: 018ec8d98aed6378c262996bb6d2b756 -> 
+  custom:scripting/monoscript/fileName/AllAssetsHandle.cs: f791fcab3b3757fb621d9394e5139461 -> 
+  custom:scripting/monoscript/fileName/UnityDownloadNormalFileOperation.cs: 7bf002bc7a261cd330e66c2685fc8917 -> 
+  custom:scripting/monoscript/fileName/DWSFSRequestPackageVersionOperation.cs: 5a55b4c189abb9fb65e2f7c54fecf80a -> 
+  custom:scripting/monoscript/fileName/BuildReport.cs: f6178b8dd50e599f137327706d65d880 -> 
+  custom:scripting/monoscript/fileName/StringValueCell.cs: 6c0dc81b88d944847d352db01e0af239 -> 
+  custom:scripting/monoscript/fileName/DCFSInitializeOperation.cs: aaaec8b19459d065b68b2cac083b46b5 -> 
+  custom:scripting/monoscript/fileName/ClearCacheBundleFilesByLocationsOperaiton.cs: 1aba2556c115be901273e9434f8af412 -> 
+  custom:scripting/monoscript/fileName/TaskCreateCatalog_SBP.cs: 51abef95075827ee50d50f3a7e3d9e48 -> 
+  custom:scripting/monoscript/fileName/RawFileProvider.cs: feb521f452f3de4479ec4285ea2d9f73 -> 
+  custom:scripting/monoscript/fileName/ReporterSummaryViewer.cs: 527356d22505526c0ce22ad235cf3584 -> 
+  custom:scripting/monoscript/fileName/ClearUnusedCacheManifestFilesOperation.cs: 05c1cff3fd8cd94113f7c4c1b1b45fdc -> 
+  custom:scripting/monoscript/fileName/BuildDependencyData.cs: e86421eb6cd5a56c2f29fe865b6f6634 -> 
+  custom:scripting/monoscript/fileName/AssetArtCollector.cs: 14031eeb3de172d1ae89d3bde3b6d1d5 -> 
+  custom:scripting/monoscript/fileName/EditorTools.cs: 54e2705aa65d656e6d2098472a2968bc -> 
+  custom:scripting/monoscript/fileName/CompatibilityBuildPipeline.cs: facf82cb07a5c10c38b56a00da8757a5 -> 
+  custom:scripting/monoscript/fileName/LoadCachePackageManifestOperation.cs: 83b672cc645de3609777750c4d42d7cd -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest.cs: 16c67ddd702e407776533344af419ac8 -> 
+  custom:scripting/monoscript/fileName/TaskBuilding_BBP.cs: 551e82fb2d3baa4cdacee8c6fb65e873 -> 
+  custom:scripting/monoscript/fileName/ResizeHandle.cs: 423865153d7e364742c8081f04757f0c -> 
+  custom:scripting/monoscript/fileName/CatalogDefine.cs: e224e4a1ed8890379cfd234e020e9f58 -> 
+  custom:scripting/monoscript/fileName/RawBundleLoadSubAssetsOperation.cs: 24a22a8871454dd12cdaaf00dc013d59 -> 
+  custom:scripting/monoscript/fileName/DEFSInitializeOperation.cs: 4e7728d7c22dcb19dc98dfe3d28dcd36 -> 
+  custom:scripting/monoscript/fileName/TaskCreateCatalog_BBP.cs: 139bca65b0551f59cf6a5fe3b6cca86e -> 
+  custom:scripting/monoscript/fileName/SchemaInspector.cs: 6a4fad86be08a00501ae2e5cca2cdbf1 -> 
+  custom:scripting/monoscript/fileName/FSDownloadFileOperation.cs: 1b845538268ec3edbd05a0e23b0a8779 -> 
+  custom:scripting/monoscript/fileName/TableViewer.cs: e94e8288c79a8b31bb9d433b2f018257 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollector.cs: 340da094351ac08c6eb13819e1fa3ab3 -> 
+  custom:scripting/monoscript/fileName/IManifestProcessServices.cs: 6d8358b78a9fc24570bc0cc0fe2cbf0d -> 
+  custom:scripting/monoscript/fileName/CalculateAssetDependencyData.cs: 3543034cff244684ebe2b35b7e56cabb -> 
+  custom:scripting/monoscript/fileName/Unity5PackedIdentifiers.cs: 2fef534b6f5a3f203548e50e8ca6fb59 -> 
+========================================================================
+Received Prepare
+Caller must complete domain reload
+Begin MonoManager ReloadAssembly
+Thread 0x33f01f000 may have been prematurely finalized
+- Loaded All Assemblies, in  0.152 seconds
+Native extension for WeixinMiniGame target not found
+Native extension for OSXStandalone target not found
+Native extension for WebGL target not found
+[Package Manager] Server::EnsureServerProcessIsRunning -- launch failed, reason: Unity was launched with the -noUpm command-line argument
+[Package Manager] UpmClient::Send -- Unable to send message (not connected to UPM process).
+[Package Manager] Cannot connect to Unity Package Manager local server
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.320 seconds
+Domain Reload Profiling: 472ms
+	BeginReloadAssembly (52ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (2ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (13ms)
+	RebuildCommonClasses (15ms)
+	RebuildNativeTypeToScriptingClass (6ms)
+	initialDomainReloadingComplete (9ms)
+	LoadAllAssembliesAndSetupDomain (71ms)
+		LoadAssemblies (81ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (10ms)
+			TypeCache.Refresh (4ms)
+				TypeCache.ScanAssembly (0ms)
+			ScanForSourceGeneratedMonoScriptInfo (3ms)
+			ResolveRequiredComponents (2ms)
+	FinalizeReload (320ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (195ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (2ms)
+			SetLoadedEditorAssemblies (2ms)
+			RefreshPlugins (0ms)
+			BeforeProcessingInitializeOnLoad (32ms)
+			ProcessInitializeOnLoadAttributes (153ms)
+			ProcessInitializeOnLoadMethodAttributes (4ms)
+			AfterProcessingInitializeOnLoad (1ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (2ms)
+Refreshing native plugins compatible for Editor in 0.82 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 3625 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 14 unused Assets / (28.5 KB). Loaded Objects now: 4129.
+Memory consumption went from 141.8 MB to 141.8 MB.
+Total: 1.787625 ms (FindLiveObjects: 0.087417 ms CreateObjectMapping: 0.032292 ms MarkObjects: 1.645208 ms  DeleteObjects: 0.022375 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:scripting/monoscript/fileName/ScannerDefine.cs: c8596861960bb3be7ca505748ce134ff -> 
+  custom:scripting/monoscript/fileName/IFileSystem.cs: 5a6abb33207ec564e64ba1e6c5846da2 -> 
+  custom:scripting/monoscript/fileName/BufferWriter.cs: 63cd59ea6a2fe4e4e91fdbeeebbde543 -> 
+  custom:scripting/monoscript/fileName/RawBundleLoadAssetOperation.cs: 990c6718238ef761e16a8afa03d2d8bf -> 
+  custom:scripting/monoscript/fileName/BuildParameters.cs: 75f861defb8d41581a1963b6fab85994 -> 
+  custom:scripting/monoscript/fileName/IBuildTasks.cs: ad73a7c5af5769af35e7121ce421c767 -> 
+  custom:scripting/monoscript/fileName/DownloadSystemHelper.cs: 5986706f2918944e4e0939c537b565fd -> 
+  custom:scripting/precompiled-assembly-types:Unity.ScriptableBuildPipeline: d3013a7ac4c7a8a2426d0dffcf800074 -> 
+  custom:scripting/monoscript/fileName/TickManager.cs: aa85aed89a0a94071347ebbbf100e7c8 -> 
+  custom:scripting/monoscript/fileName/TaskEncryption_SBP.cs: a9dea624c8a135e29b3b081ee0db5a6c -> 
+  custom:scripting/monoscript/fileName/PackageInvokeBuildResult.cs: 733f09a13b07e1a60828f010cbe88865 -> 
+  custom:scripting/monoscript/fileName/UxmlLoader.cs: 581e2e6b038aa0ba08f7fcb8925d6620 -> 
+  custom:scripting/monoscript/fileName/TaskCreateCatalog_RFBP.cs: a5dcc2d804468cd6be4565a3e6282627 -> 
+  custom:scripting/monoscript/fileName/DefaultCacheFileSystemDefine.cs: d4a679c9f77a3df02fc024b03ce98f2d -> 
+  custom:scripting/monoscript/fileName/PatchOperationHandler.cs: 2ce96a864335361952234f8deb6686ce -> 
+  custom:scripting/monoscript/fileName/DebugOperationInfo.cs: 545977dbb91a3ac825055c0557721e84 -> 
+  custom:scripting/monoscript/fileName/TrackerExtensions.cs: 05c6facd03e82ea85ea8497944d142b2 -> 
+  custom:scripting/monoscript/fileName/AssetBundleBuilderHelper.cs: 2601d90396f1debe251aebd49a3c6ea1 -> 
+  custom:scripting/monoscript/fileName/IActiveRule.cs: 1643085ec6491bc9f25b88e90cd7e6da -> 
+  custom:scripting/monoscript/fileName/RequestWebServerPackageVersionOperation.cs: de87c1f74d14df357fe4dc0cc0d146af -> 
+  custom:scripting/monoscript/fileName/GameAsyncOperation.cs: f78d18f4f0b2d31e98606e35eae66c02 -> 
+  custom:scripting/monoscript/fileName/UnityWebTextRequestOperation.cs: f042eb013c252cebb05870399e70ef94 -> 
+  custom:scripting/monoscript/fileName/DefaultBuildinFileSystemDefine.cs: d70f99cbdc178b3f4cd4b31c4a995763 -> 
+  custom:scripting/monoscript/fileName/DebuggerBundleListViewer.cs: 6804a20c8c2f956f8b7cb4f1f93d6089 -> 
+  custom:scripting/monoscript/fileName/InstantiateOperation.cs: c99894bb55527a5905f6cd8bcbc04e92 -> 
+  custom:scripting/monoscript/fileName/AssetArtScannerWindow.cs: 56d9b495b054fb8e0112b43bb827be0d -> 
+  custom:scripting/monoscript/fileName/ReportSummary.cs: 700bc4f814f361cb12142ba30e49e500 -> 
+  custom:scripting/monoscript/fileName/SceneDataWriteOperation.cs: 62fc06a44a6276d74f5ce5527ac1c0e7 -> 
+  custom:scripting/monoscript/fileName/YooUtility.cs: 5dec77d6ab1d89f3dc12cfc3d5bf67b4 -> 
+  custom:scripting/monoscript/fileName/ClearAllCacheBundleFilesOperation.cs: 238eeee22edd93fd56b6809cd1aa2456 -> 
+  custom:scripting/monoscript/fileName/RequestWebPackageHashOperation.cs: d61d26594bb98fbf6ce9c7859dfd3427 -> 
+  custom:scripting/monoscript/fileName/RawBundleLoadSceneOperation.cs: 74cb56fd59d138116b9a455e706f7c86 -> 
+  custom:scripting/monoscript/fileName/BuildCache.cs: ed18a1a079f7380eac8245801a570733 -> 
+  custom:scripting/monoscript/fileName/AssetBundleReporterWindow.cs: 0bb9d6a34525cd1dbe66c3a7ccc9b4ec -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:scripting/monoscript/fileName/BuildParametersContext.cs: 85ba1e232bfdf13003f730e5945f39fc -> 
+  custom:scripting/monoscript/fileName/ISearchCommand.cs: 72b92c439232d46a94248732545f38c4 -> 
+  custom:scripting/monoscript/fileName/PostWritingCallback.cs: 554018e4e98d586ae4dba2461cc09229 -> 
+  custom:scripting/monoscript/fileName/UIElementsCursor.cs: 2fbeab93175bc6d9c5dca01e1bee1cf4 -> 
+  custom:scripting/monoscript/fileName/SpookyHash.cs: ced234d9ef31626b6b07f6aab873119b -> 
+  custom:scripting/monoscript/fileName/AssetBundleLoadAllAssetsOperation.cs: 93266aafc6dd7553208eefd37a1eae0a -> 
+  custom:scripting/monoscript/fileName/AssetArtScannerSettingData.cs: e7e491bce685a805069dcab65a2bea3d -> 
+  custom:scripting/monoscript/fileName/PreviewSceneDependencyData.cs: 0aa0e9fad79dc24aadab25b9d7a9b9a5 -> 
+  custom:scripting/monoscript/fileName/TaskCopyBuildinFiles_BBP.cs: 6a033ce219087d445074581865c5ee54 -> 
+  custom:scripting/monoscript/fileName/BuiltinBuildPipeline.cs: 519ec2327a4fd3f29e9802a7fc71b608 -> 
+  custom:scripting/monoscript/fileName/EventBus.cs: e71677de859da9395b11aabfea683181 -> 44116646ae5a8e68b53a6428a288d598
+  custom:scripting/monoscript/fileName/RemoteCommand.cs: 279cd2525c791908c5616c7bc45b2b33 -> 
+  custom:scripting/monoscript/fileName/ToggleFoldout.cs: fdc5797a7fbbe441b6edf4e2e0988b60 -> 
+  custom:scripting/monoscript/fileName/DCFSRequestPackageVersionOperation.cs: 27dcc5318a68ca5f8ec8ce53e31f0f17 -> 
+  custom:scripting/monoscript/fileName/IFilterRule.cs: 114c4bc8390d91c769a74824c89018fc -> 
+  custom:scripting/monoscript/fileName/ColumnStyle.cs: 9e9e7662ce5b1db5117d9b35bb1ae5cf -> 
+  custom:scripting/monoscript/fileName/GenerateSubAssetPathMaps.cs: c7987fa236ddbc39e6da8bcfe285d7c7 -> 
+  custom:scripting/monoscript/fileName/TaskCreateReport.cs: c51e52d1873b5b8c493a8c5f12149587 -> 
+  custom:scripting/monoscript/fileName/SubAssetsHandle.cs: 4e9364c2230acdedc34fb19cb0475a9d -> 
+  custom:scripting/monoscript/fileName/MinesweeperSceneBuilder.cs: e4869d384b52c07208e8d6a77ccc4192 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorGroup.cs: d0ce3bae8756e22de9c0dbed9e289dcd -> 
+  custom:scripting/monoscript/fileName/UnityWebCacheRequestOperation.cs: 64123fd1ae3e37d552f374f89a2971cd -> 
+  custom:scripting/monoscript/fileName/VersionedCallbackAttribute.cs: 792d43fefe55909e52271f20ce4bd5db -> 
+  custom:scripting/monoscript/fileName/CRC32Algorithm.cs: 3594ad065012286de7e61521d08462c5 -> 
+  custom:scripting/monoscript/fileName/CellView.cs: 4fc1c743c769bc6432101e6f0bbed165 -> 
+  custom:scripting/monoscript/fileName/BuildLog.cs: f381a35baf9bd9880d2d4023ad70717e -> 
+  custom:scripting/monoscript/fileName/AsyncOperationBase.cs: c90dfd8f682134253e4a17d291ce6a29 -> 
+  custom:scripting/monoscript/fileName/BundleInfo.cs: dce79bf3c8f319ce627c0cd1cefab23e -> 
+  custom:scripting/monoscript/fileName/ContentFileIdentifiers.cs: 7655f22dc8e01297e0fa51cc343ac6c9 -> 
+  custom:scripting/monoscript/fileName/BundleExplictObjectLayout.cs: 7ebaaae109881757a2cd1a5aaeb77811 -> 
+  custom:scripting/monoscript/fileName/IDependencyData.cs: 35a83d3a80674af5f8ca402d71bd60d0 -> 
+  custom:scripting/monoscript/fileName/AssetPathCell.cs: ea451d4c18b38a1963bc757331986d5e -> 
+  custom:scripting/monoscript/fileName/TaskCreateReport_BBP.cs: 0b3b84a73ac9571fe23dee27d175c0a4 -> 
+  custom:scripting/monoscript/fileName/LoadWebAssetBundleOperation.cs: f01431b95ea5070e46685e6e57aa30b7 -> 
+  custom:scripting/monoscript/fileName/DefaultPackRule.cs: 944233ce50afdd285fe5c609caeda279 -> 
+  custom:scripting/monoscript/fileName/UnityVirtualBundleRequestOperation.cs: 0ce7efead889f1a492894bb599b42a44 -> 
+  custom:scripting/monoscript/fileName/ScanReportCombiner.cs: 7c79a7e5aa2009fa9a81c8e87ac3ae5c -> 
+  custom:scripting/monoscript/fileName/ReportElement.cs: 2af576b5c069ab5550f8b3d97c0916b0 -> 
+  custom:scripting/monoscript/fileName/ResourceManager.cs: 2284d22c4877ab4fe83ad66e2e5399ee -> 
+  custom:scripting/monoscript/fileName/BuildResults.cs: ea29098741349f66a5c13be22430b91a -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:scripting/monoscript/fileName/AppLifetime.cs: 52bc1e40a3ce98396eddafc73e7528ac -> 
+  custom:scripting/monoscript/fileName/DownloadVirutalBundleOperation.cs: 0573710326447bd51649ea5b6eaed761 -> 
+  custom:scripting/monoscript/fileName/IAddressRule.cs: ead2cc6e7008976642ed14bbecf6a1f5 -> 
+  custom:scripting/monoscript/fileName/ScriptableBuildPipeline.cs: 3c3b1c06634bac11272de55f7c802c38 -> 
+  custom:scripting/monoscript/fileName/HashStream.cs: 79ad716994d62b2c0cafd2bf9cc6c712 -> 
+  custom:scripting/monoscript/fileName/DWRFSLoadBundleOperation.cs: 66c00fcf4aea98d95da64163928269ba -> 
+  custom:scripting/monoscript/fileName/HybridClrLoader.cs: 58a325a24bb5338fa916a07a2b714702 -> 
+  custom:scripting/monoscript/fileName/TaskVerifyBuildResult_SBP.cs: 047a5a396434be37aee0b6b15f967132 -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest_BBP.cs: b27a3b8207af0a393f959035bb98a299 -> 
+  custom:scripting/monoscript/fileName/BuildContext.cs: 0afd91a4f04e0ad71f285291fed59eed -> 
+  custom:scripting/monoscript/fileName/PackageAsset.cs: b6e8b7527e6bb8c3c4c9a963cb452fb6 -> 
+  custom:scripting/monoscript/fileName/DefaultBuildTasks.cs: b93cbe91f00034105b24705dc67fc837 -> 
+  custom:scripting/monoscript/fileName/LoadBuildinPackageManifestOperation.cs: 708a64d005d5be321bee95beb5c1f72f -> 
+  custom:scripting/monoscript/fileName/BuiltinBuildPipelineViewer.cs: 505d5ede3613d45aa2b1f3d7c00dc2a8 -> 
+  custom:scripting/monoscript/fileName/DefaultEditorFileSystemDefine.cs: b2b8ab43b075c8472e00366daabb837b -> 
+  custom:scripting/monoscript/fileName/YooAssetSettings.cs: 232782dc97d7385dab0c9594e598dd2d -> 
+  custom:scripting/monoscript/fileName/HomePage.cs: 4c4fd55e89ff9417d766263cad98e237 -> 
+  custom:scripting/monoscript/fileName/UnityWebDataRequestOperation.cs: 404a230fd1529bce2e1aa1330f84e98d -> 
+  custom:scripting/monoscript/fileName/CreateBuiltInShadersBundle.cs: e4f12aa9a6b849b3a7861bf492376679 -> 
+  custom:scripting/monoscript/fileName/TaskVerifyBuildResult_BBP.cs: 98f1925d4f323f92075b7545fdcdbbec -> 
+  custom:scripting/monoscript/fileName/UnityWebFileRequestOperation.cs: bea9a37ac2b6b19313cda550311ac800 -> 
+  custom:scripting/monoscript/fileName/UnityDownloadFileOperation.cs: cd40d707ce7b8aad5072f0be94a184b4 -> 
+  custom:scripting/monoscript/fileName/PlayerSettingsApi.cs: e8704eb198d8f61f68729b362e34f254 -> 
+  custom:scripting/monoscript/fileName/ValidationMethods.cs: 0ca38beb753f491a65475578d824a594 -> 
+  custom:scripting/monoscript/fileName/LoadEditorPackageVersionOperation.cs: 6aec452d46a787e48bdf9766d32e0eca -> 
+  custom:scripting/monoscript/fileName/GenerateLinkXml.cs: 438676c0a3ae847305e5461d0d0dfb13 -> 
+  custom:scripting/monoscript/fileName/AuthContext.cs: 377157d1c372f3a97dcc79c358a712d7 -> 
+  custom:scripting/monoscript/fileName/SettingLoader.cs: 5401bb33b9a97d34eddc25226ee86ff2 -> 
+  custom:scripting/monoscript/fileName/IContextObject.cs: fac38ce75c57d87a765e48fb8f4821f9 -> 
+  custom:scripting/monoscript/fileName/DefaultEncryptionServices.cs: df3b4958a2477c3c8654095c09be03a4 -> 
+  custom:scripting/monoscript/fileName/WeChatBridge.cs: fb15f133fe309dbd1a5227d9f37798d3 -> 
+  custom:scripting/monoscript/fileName/AssetBundleWriteOperation.cs: db3d146633bcf83272b8d8ec27708373 -> 
+  custom:scripting/monoscript/fileName/DefaultManifestServices.cs: 4f3aefc506fce0d2b25244fb4d56fc6c -> 
+  custom:scripting/monoscript/fileName/DownloadPackageHashOperation.cs: 5ba97f5f7dd98353e46c59c143751d3c -> 
+  custom:scripting/monoscript/fileName/ReportHeader.cs: 79497287d49e7386d0e2291a07811266 -> 
+  custom:scripting/monoscript/fileName/DisplayNameAttribute.cs: 4953e3fbf7bdb43150fd4e7efbb09dd6 -> 
+  custom:scripting/monoscript/fileName/ReportBundleInfo.cs: d8388f77658ef2b2f8c4b58c9ef7ee75 -> 
+  custom:scripting/monoscript/fileName/IManifestRestoreServices.cs: 29f87d48d5e29e69a84a98262049ae02 -> 
+  custom:scripting/monoscript/fileName/EditorSimulateBuildPipeline.cs: 03d7ffc4d93a94da6e2e7e674a7add25 -> 
+  custom:scripting/monoscript/fileName/UIElementsIcon.cs: 301defff2949c1597e6a491e4e7d7530 -> 
+  custom:scripting/monoscript/fileName/ExtensionMethods.cs: 4642d9c802c70c033ea67f5c9fc06bdb -> 
+  custom:scripting/precompiled-assembly-types:Unity.ScriptableBuildPipeline.Editor: c2f5237ed736426b1896b48005260883 -> 
+  custom:scripting/monoscript/fileName/YooAssetSettingsData.cs: e91ab4327dcec67344dcaa6f080710c3 -> 
+  custom:scripting/monoscript/fileName/NetClient.cs: 5fe04085e8622790a07a0101159baa79 -> 
+  custom:scripting/monoscript/fileName/RequestBuildinPackageVersionOperation.cs: 7c48e92e4f482816eed4f1c17f209b30 -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo_RFBP.cs: a3d605c9af0b4ad3d30ef07c7436ca38 -> 
+  custom:scripting/monoscript/fileName/IPackRule.cs: 51cffd916549ae0a855911fc2cf0d12f -> 
+  custom:scripting/precompiled-assembly-types:YooAsset: 6db7aed2f5f13fedfe70bb93deeb5f64 -> 
+  custom:scripting/monoscript/fileName/FileSystemParametersDefine.cs: 21866d4e0bb8a7f390f5ffe85bf7c144 -> 
+  custom:scripting/monoscript/fileName/FSLoadSceneOperation.cs: fa292d9c3923077350551940f799a453 -> 
+  custom:scripting/monoscript/fileName/SubAssetsProvider.cs: b3a1f41227d82e6b974ed4e05bdc833a -> 
+  custom:scripting/monoscript/fileName/LoadBuildinCatalogFileOperation.cs: d41ab8bd25eff7939c5e4a391e660dbe -> 
+  custom:scripting/monoscript/fileName/HandleFactory.cs: 465643bf11111d7a34d6756003dd55bf -> 
+  custom:scripting/monoscript/fileName/VerifyFileElement.cs: c524cea6ac9d637c9119b121235b51d5 -> 
+  custom:scripting/monoscript/fileName/LinkXMLGenerator.cs: ae9b4e49cd6473e74c6d00b7a9a5576c -> 
+  custom:scripting/monoscript/fileName/EditorSimulateModeHelper.cs: 219a25b7ea9d0cac067c44f620fd4fd4 -> 
+  custom:scripting/monoscript/fileName/GameBootstrap.cs: 92b33f53e7db4956b37e5956321a7254 -> 
+  custom:scripting/monoscript/fileName/HashingMethods.cs: 715cdfdde81dd1627a447579d5c1a2a8 -> 
+  custom:scripting/monoscript/fileName/GraphicsSettingsApi.cs: e643b869c2bd158e219684eb7bac7d5a -> 
+  custom:scripting/monoscript/fileName/SceneRawWriteOperation.cs: 5a20bbe9c2135f3c677809d25231ee39 -> 
+  custom:scripting/monoscript/fileName/VirtualBundleLoadAllAssetsOperation.cs: 57522fc4f9ff1ad9cbcbc9a5736a5b91 -> 
+  custom:scripting/monoscript/fileName/AssetBundleLoadSubAssetsOperation.cs: e6328c58ead9518557570a6ed7eccaaf -> 
+  custom:scripting/monoscript/fileName/IIgnoreRule.cs: 6b8d9170df0c8b19bacb9902a191c835 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorConfig.cs: 2454e6657d702abed0210923290312e5 -> 
+  custom:scripting/monoscript/fileName/RequestWebPackageVersionOperation.cs: 4ec2b422ac517966385304e1376edcbd -> 
+  custom:scripting/monoscript/fileName/PrefabPackedIdentifiers.cs: 88eee9e87bb381ef74e5d164ea9612c4 -> 
+  custom:scripting/monoscript/fileName/BufferReader.cs: c0ed6a8510ff697c5b0a4888d84fd04c -> 
+  custom:scripting/monoscript/fileName/DefaultUnpackRemoteServices.cs: 1687ada75a5a567f7b2cd8bfa87fe6e2 -> 
+  custom:scripting/monoscript/fileName/PackageManifest.cs: 3f7f122c93e129e107b0b39512db99b2 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorPackage.cs: 7bbb4b89894cd470f1c6a7b9c4d4b075 -> 
+  custom:scripting/monoscript/fileName/TaskCachingUtility.cs: 2abbe35728db88bbaa201e6c478a95f2 -> 
+  custom:scripting/monoscript/fileName/CalculateSceneDependencyData.cs: 104fc632ee9eb1eac0995150ef581054 -> 
+  custom:scripting/monoscript/fileName/BuildContent.cs: 8b98bc58cf5574343dc7ddad95d66a2a -> 
+  custom:scripting/monoscript/fileName/InitializeParameters.cs: 2336742463538825134e9256ff911716 -> 
+  custom:scripting/monoscript/fileName/DefaultWebServerFileSystem.cs: 8d2b163a2b3b1946f994df48115d6b9a -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorSettingData.cs: 945338802145465243cf852e3b4c83be -> 
+  custom:scripting/monoscript/fileName/TaskPrepare_RFBP.cs: 180f648db58a5c0bf1dad3fccc2af2d6 -> 
+  custom:CustomObjectIndexerAttribute: 299a746012abc5adb0180d4ccda8d3ad -> 
+  custom:scripting/monoscript/fileName/DefaultEditorFileSystem.cs: f3bf702b800e475f6035b0e9033ab83f -> 
+  custom:scripting/monoscript/fileName/MinesweeperTerrainData.cs: 1ab7e2fcbb7fdfe195e080b8387129eb -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo_BBP.cs: 955b3f1ca62303e4b2dcaaaec61d12ea -> 
+  custom:scripting/monoscript/fileName/CreateMonoScriptBundle.cs: 2583ca987d667d4dd92571cf56d8871f -> 
+  custom:scripting/monoscript/fileName/YooLogger.cs: 4350a78c10835e8536afcee8d1d9c98a -> 
+  custom:scripting/monoscript/fileName/CollectAssetInfo.cs: ad0c7072677b25a652c16a9f2ae61b46 -> 
+  custom:scripting/monoscript/fileName/TaskCreateReport_RFBP.cs: d93ef517540a8424f0e1fb19ff7157e2 -> 
+  custom:scripting/monoscript/fileName/StripUnusedSpriteSources.cs: 8e0de493596d68c81f185a4c7e2ecc3e -> 
+  custom:scripting/monoscript/fileName/BuildAssetInfo.cs: d203397ae6d41e030e872b3cb5002cf3 -> 
+  custom:scripting/monoscript/fileName/TaskCreateCatalog.cs: da137c3122082fee665bf0b0470412f3 -> 
+  custom:scripting/monoscript/fileName/TaskPrepare_SBP.cs: 9f68350822df162b1dd65c33823cf283 -> 
+  custom:scripting/monoscript/fileName/RawBundleResult.cs: 186d7cf4728a22784e38281b3bd55898 -> 
+  custom:scripting/monoscript/fileName/TaskBuilding_RFBP.cs: 0f2788065406d5764c39de4fe081a1d7 -> 
+  custom:scripting/monoscript/fileName/ServiceContainer.cs: c0927dcc7dcfda1550d49d5401224248 -> 
+  custom:scripting/monoscript/fileName/ProgressTracker.cs: 7cf527e59ae90a5de1d1297f2cf5b5d9 -> 
+  custom:scripting/monoscript/fileName/ScriptableBuildParameters.cs: b85995be370b270c676250c5afcfbce6 -> 
+  custom:scripting/monoscript/fileName/UnityLogger.cs: 3bae803489c700b5e6a454e66a0a6ef4 -> 
+  custom:scripting/monoscript/fileName/DownloaderOperation.cs: bef40bee7493594727645fc2d0ee71c1 -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest_ESBP.cs: 8645d33bb6d3480ebe5e1ef7cfee1b24 -> 
+  custom:scripting/monoscript/fileName/ScannerSchema.cs: 75c59551cf4f9c01616b783364fab44e -> 
+  custom:scripting/monoscript/fileName/DBFSInitializeOperation.cs: 085452533a81575f288212fde07d34c8 -> 
+  custom:scripting/monoscript/fileName/QualitySettingsApi.cs: 8a81ef3b39ef7374ffa2c64379a5666c -> 
+  custom:scripting/monoscript/fileName/GenerateBundleCommands.cs: df8cc1862a26a9b8b8065412bf4da3d1 -> 
+  custom:scripting/monoscript/fileName/SearchCompare.cs: 3d77dbcaae6890f51268b041ea91addd -> 
+  custom:scripting/monoscript/fileName/PostPackingCallback.cs: f0f64a598e599b8fee359c8bbbbb7967 -> 
+  custom:scripting/monoscript/fileName/AssetHandle.cs: d69e051124b2ef5c7ab8c389bbeffd65 -> 
+  custom:scripting/monoscript/fileName/TreeViewer.cs: 3714cfe5d16a4958efa7e06a0f6518b5 -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:scripting/monoscript/fileName/DeSerializer.cs: 42de108158a2d64cff75d55be619c3d6 -> 
+  custom:scripting/monoscript/fileName/ProgressLoggingTracker.cs: 5d288d40f7eb670174353f8188801c70 -> 
+  custom:scripting/monoscript/fileName/DEFSLoadPackageManifestOperation.cs: de87452adb2260bc54498de298e7fab1 -> 
+  custom:scripting/monoscript/fileName/TaskGetBuildMap_RFBP.cs: 389a76f0afc4c2c90832ca79dccb159a -> 
+  custom:scripting/monoscript/fileName/IBuildResults.cs: 8b5b87d2e7d0fe52b18dffb583edf526 -> 
+  custom:scripting/monoscript/fileName/DownloadStatus.cs: 64c933f1eb36397cf6a412c88a3637c9 -> 
+  custom:scripting/monoscript/fileName/VirtualBundleLoadSceneOperation.cs: 89229efea36cc7de1b860b2c31438c5d -> 
+  custom:scripting/precompiled-assembly-types:YooAsset.Editor: 07a2cae43db0775750d83e9161a62de8 -> 
+  custom:scripting/monoscript/fileName/DefaultUnpackFileSystemDefine.cs: bf0ab1cb14ac438bbc464a428902ffe0 -> 
+  custom:scripting/monoscript/fileName/TaskEncryption_BBP.cs: a44930b4acb6f1a0fc5e651f6f14dff1 -> 
+  custom:scripting/monoscript/fileName/FilePersistenceProvider.cs: 9f958992df069f72bb937127de25af86 -> 
+  custom:scripting/monoscript/fileName/ClusterBuildLayout.cs: 5771ce961e5c856dda3162f7e7866c51 -> 
+  custom:scripting/monoscript/fileName/DumpToText.cs: 2dfe9c7754fbb721de687736d394e422 -> 
+  custom:scripting/monoscript/fileName/ButtonCell.cs: cf139935eb01a103ef7d856a645739d1 -> 
+  custom:scripting/monoscript/fileName/SingleValueCell.cs: e4c1b53dbe29c597a2ae5468ceed7ddb -> 
+  custom:scripting/monoscript/fileName/TaskGetBuildMap_BBP.cs: 316aadd7dcf150e44453c404d230757a -> 
+  custom:scripting/monoscript/fileName/AllAssetsProvider.cs: e45a25ffca1b2b74a053b06088778364 -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest_RFBP.cs: 815d3f79558fe9416182306c88e74a93 -> 
+  custom:scripting/monoscript/fileName/EditorDefine.cs: 33ea48f98ada7a5fb704e7091df58378 -> 
+  custom:scripting/monoscript/fileName/ScriptableBuildPipelineViewer.cs: f5d443d6c9d70df381c583dee6b2d8f7 -> 
+  custom:scripting/monoscript/fileName/AssetBundleInspector.cs: 889653d0d1cc752709989412fa082c11 -> 
+  custom:scripting/monoscript/fileName/RuleDisplayName.cs: 13a41cf4aab74156e069a7dc2a29db8b -> 
+  custom:scripting/monoscript/fileName/IWebDecryptionServices.cs: daf85effae63479bca18973d00a09283 -> 
+  custom:scripting/monoscript/fileName/RawFileBuildPipeline.cs: e03a29e92f9307267486037ad8b698be -> 
+  custom:scripting/monoscript/fileName/FSClearCacheFilesOperation.cs: c1ba3aad2c0a1c237e2c8f701ddb8495 -> 
+  custom:scripting/monoscript/fileName/RawBundleLoadAllAssetsOperation.cs: e57f8096ae8c6141234c5b0f1910de56 -> 
+  custom:scripting/monoscript/fileName/AssetBundleBuilderSetting.cs: 14d987a130caffcba8750597be485f76 -> 
+  custom:scripting/monoscript/fileName/AssetProvider.cs: 896d71fbeb6d1a475b61a316a8804f02 -> 
+  custom:scripting/monoscript/fileName/ClearAllCacheManifestFilesOperation.cs: 387e739a5ce057106a0bf1f8a27bee2f -> 
+  custom:scripting/monoscript/fileName/HashingHelpers.cs: 0f7aeced044c9bfbe971ac41bd6b1b1e -> 
+  custom:scripting/monoscript/fileName/PackageInvokeBuilder.cs: f77ad40907990c1a9cc10544c231eca9 -> 
+  custom:scripting/monoscript/fileName/RemotePlayerConnection.cs: da542ad8f37a629280873c44019dce7e -> 
+  custom:scripting/monoscript/fileName/FileCompressor.cs: 9e176c2b40f10af0783acadfcf93a0a6 -> 
+  custom:scripting/monoscript/fileName/BuildCacheUtility.cs: 2743f002ee5eaa2b245807c6d3986866 -> 
+  custom:scripting/monoscript/fileName/ContentPipeline.cs: 0099978ab3154e75ec02b02af05e3647 -> 
+  custom:scripting/monoscript/fileName/IBuildSpriteData.cs: 70fcaabd919c2d8ed3f211908205c540 -> 
+  custom:scripting/monoscript/fileName/AssetBundleBuilder.cs: 66026cb25f59730dd66d64c17a72bd7d -> 
+  custom:scripting/monoscript/fileName/DCFSLoadBundleOperation.cs: a4ae0c8c16228c6bafda0632d2366789 -> 
+  custom:scripting/monoscript/fileName/DefaultActiveRule.cs: f4f24b066cafca515ec1235794c6a806 -> 
+  custom:scripting/monoscript/fileName/ClearUnusedCacheBundleFilesOperation.cs: bca464223e7f7b042d1b67ba0e2574ca -> 
+  custom:scripting/monoscript/fileName/RemoteDebuggerDefine.cs: 480b2d281d14c1369fe528a4e867f72a -> 
+  custom:scripting/monoscript/fileName/LoadEditorPackageManifestOperation.cs: 466cb65ae029295e2cd080f778549e89 -> 
+  custom:scripting/monoscript/fileName/BuildCallbacks.cs: e372553ccc5bfd1dd2d4f86e3433b7ac -> 
+  custom:scripting/monoscript/fileName/CompatibilityAssetBundleManifest.cs: 8c821441185b5b6a41b701764a9456f7 -> 
+  custom:scripting/monoscript/fileName/AssetBundleBuilderWindow.cs: a46a3180522c86cbc00e95c5d27375b3 -> 
+  custom:scripting/monoscript/fileName/DebugPackageData.cs: 36103500d03e897f5f8e61a9d83f19fd -> 
+  custom:scripting/monoscript/fileName/LoadWebEncryptAssetBundleOperation.cs: 305d19a933ab7aa9b822434fd738ae3a -> 
+  custom:scripting/monoscript/fileName/BuildTasksRunner.cs: 6061ed342a325c9c185a4b35bbfe23f3 -> 
+  custom:scripting/monoscript/fileName/IBundleQuery.cs: d61c15afb00502c811e7fd4d6462c2c5 -> 
+  custom:scripting/monoscript/fileName/VirtualBundleLoadAssetOperation.cs: 90ab5421a139a53cf7782320ef91b885 -> 
+  custom:scripting/monoscript/fileName/BuildExtendedAssetData.cs: 646a6ec8dded2f210e51a6a26a267c53 -> 
+  custom:scripting/monoscript/fileName/RequestPackageVersionOperation.cs: 643c88e19acddade3a8fc22fd926a8dd -> 
+  custom:scripting/monoscript/fileName/DBFSLoadPackageManifestOperation.cs: a27ac40aebcaa394935cdd81c252df00 -> 
+  custom:scripting/monoscript/fileName/OperationSystem.cs: 669217e9ff4010ac66741203de2f85b0 -> 
+  custom:scripting/monoscript/fileName/DebugProviderInfo.cs: 164444c05af924be7e9e4e58e6b6bfe5 -> 
+  custom:scripting/monoscript/fileName/DEFSLoadBundleOperation.cs: 7b1f974bd0ef3ef6b92e049ef5e4d141 -> 
+  custom:scripting/monoscript/fileName/UpdatePackageManifestOperation.cs: 8fbd115a2c3697cc171a682a6e2d3961 -> 
+  custom:scripting/monoscript/fileName/BuildProfiler.cs: 20a6883e13cfb1c377baf8d9ad7c7108 -> 
+  custom:scripting/monoscript/fileName/BuildPipelineViewerBase.cs: f7505a1d0911592edb1dfe6630d173c9 -> 
+  custom:scripting/monoscript/fileName/ManifestTools.cs: f7c6fac69c839939b0ae10aeb7940ecd -> 
+  custom:scripting/monoscript/fileName/LoadBundleFileOperation.cs: de0f361e74655a45a445a7f6cb38bc81 -> 
+  custom:scripting/monoscript/fileName/BuildMapContext.cs: 269b331ae63a8544dc38a88d077af4cf -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:scripting/monoscript/fileName/FSRequestPackageVersionOperation.cs: 012d84e9033a04e41fdb7d2b8e1dd960 -> 
+  custom:scripting/monoscript/fileName/UnloadAllAssetsOperation.cs: edf4d181505ddae62eee29c9e6719ae8 -> 
+  custom:scripting/monoscript/fileName/ResourcePackage.cs: c00e78530031b0d5576e1bfd9adc9fc2 -> 
+  custom:scripting/monoscript/fileName/DBFSRequestPackageVersionOperation.cs: 8b62656d84828beb91603a127dd7640f -> 
+  custom:scripting/monoscript/fileName/RecordFileElement.cs: 96e4e89f258d1eb1cc95ff0bb3595695 -> 
+  custom:scripting/monoscript/fileName/LoadWebNormalAssetBundleOperation.cs: 4fa267ec186a5f704ce8ea84b4fe9acc -> 
+  custom:scripting/monoscript/fileName/IBuildContext.cs: 5ff9d28c8d4a4f1b753bc76a607083bf -> 
+  custom:scripting/monoscript/fileName/FileSystemParameters.cs: 86a818d219b23342dab9100ded3c104c -> 
+  custom:scripting/monoscript/fileName/HandleBase.cs: 94111d5bb4071aeb66140ec40ef3b579 -> 
+  custom:scripting/monoscript/fileName/RequestRemotePackageVersionOperation.cs: f954c2d788879dcc40f70c7188993c14 -> 
+  custom:scripting/monoscript/fileName/DefaultAddressRule.cs: 6cc8f64006d7473f8260cd23fc85e80f -> 
+  custom:scripting/monoscript/fileName/PackageInvokeBuildParam.cs: 7d25bd786271a5d5f7777efc28aa98d5 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:scripting/monoscript/fileName/TaskCreatePackage_SBP.cs: 2b10b481644592908781de5bee8556a0 -> 
+  custom:scripting/monoscript/fileName/IBundleExplictObjectLayout.cs: ddaeb79a7a717f820f674015296294c0 -> 
+  custom:scripting/monoscript/fileName/PostDependencyCallback.cs: eb19b86cfe0872246c64c5aa303dec70 -> 
+  custom:scripting/monoscript/fileName/YooAssetsRuntime.cs: 2735daaeb2639b18bb9d48b8018c3435 -> 
+  custom:scripting/monoscript/fileName/TreeNode.cs: 6d81f8987db156af841df8aaa5f33243 -> 
+  custom:scripting/monoscript/fileName/RebuildSpriteAtlasCache.cs: 4336dcac6b167662dc27a4b8cb534249 -> 
+  custom:scripting/monoscript/fileName/PackageDetail.cs: 1b414a1dc6f18c08a85afd3baf8dac31 -> 
+  custom:scripting/monoscript/fileName/ICopyLocalFileServices.cs: 6e2b5ec36e0845f27968552e016a1928 -> 
+  custom:scripting/monoscript/fileName/TaskGetBuildMap_SBP.cs: e3297bce37cbc1bfa79674d1c19528e1 -> 
+  custom:scripting/monoscript/fileName/TaskCreatePackage_BBP.cs: 6f7ea23258816a8fcc8ae6bd18ccb409 -> 
+  custom:scripting/monoscript/fileName/FSLoadAssetOperation.cs: b2fc177aa625d7699b66c308f48eafd5 -> 
+  custom:scripting/monoscript/fileName/SearchKeyword.cs: e0780cde8d9047314b19a37ffee7a3b0 -> 
+  custom:scripting/monoscript/fileName/DefaultWebRemoteFileSystem.cs: 05b720eeeb0d725e8afa325ee79fe41f -> 
+  custom:scripting/monoscript/fileName/DWRFSLoadPackageManifestOperation.cs: 082a366f69989eeba7136be02cb915cc -> 
+  custom:scripting/monoscript/fileName/ToggleRecord.cs: 5a1414adcb78e96d8697d3c343f2d7ee -> 
+  custom:scripting/monoscript/fileName/BundleDetails.cs: c2ce173f3479298f0c344c217d376d24 -> 
+  custom:scripting/monoscript/fileName/AssetArtScannerConfig.cs: c3d030f5f252eee4d1ef3d23643ef09b -> 
+  custom:SearchIndexIgnoredProperties: e643bd26f0fe6173181afceb89e7c659 -> 
+  custom:scripting/monoscript/fileName/UpdateBundleObjectLayout.cs: d3e8743e5c2de0c9b031ff5de45c2faa -> 
+  custom:scripting/monoscript/fileName/DEFSRequestPackageVersionOperation.cs: 2b043efe9eddac728b7ac341efe36e20 -> 
+  custom:scripting/monoscript/fileName/ReflectionExtensions.cs: 18deef64260ff7f38d0791626801b560 -> 
+  custom:scripting/monoscript/fileName/TaskCopyBuildinFiles_SBP.cs: fd41248d60147866f8f7c6be85851162 -> 
+  custom:scripting/monoscript/fileName/USerialize.cs: 6f1fb90844e336a2331e02dcaf45180a -> 
+  custom:AudioImporter_EditorPlatform: 3918e3fc78b5a79bad01e8451be0beb8 -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo_ESBP.cs: a1534fdc5974c19764d22b084c1a522e -> 
+  custom:scripting/monoscript/fileName/RequestWebServerPackageHashOperation.cs: 94cce4343a620a9f3c62cd0a91bb675e -> 
+  custom:scripting/monoscript/fileName/LoadWebServerPackageManifestOperation.cs: 9bfd2633153d1177f9902e964f495509 -> 
+  custom:scripting/monoscript/fileName/YooAssetsDriver.cs: b9f47c82f00f33a81f10b9f02503abb9 -> 
+  custom:scripting/monoscript/fileName/AssetDependencyDatabase.cs: f39973ec5a0eb190ba81e22110535af9 -> 
+  custom:scripting/monoscript/fileName/TaskCopyBuildinFiles.cs: 4fccc973afd87447e3084da9cfb6667b -> 
+  custom:scripting/monoscript/fileName/DownloadPackageManifestOperation.cs: 4157092bcb68ba635cc95ef73fb8a36e -> 
+  custom:scripting/monoscript/fileName/CatalogTools.cs: 5a5b5e72265466194d146f4173e05382 -> 
+  custom:scripting/monoscript/fileName/IPlayMode.cs: b7df7fb3866a89b552fbd11691f85e1b -> 
+  custom:scripting/monoscript/fileName/DefaultTableData.cs: cba1772cd7f0d958d6704c8f4b68eb27 -> 
+  custom:scripting/monoscript/fileName/LoadWebServerCatalogFileOperation.cs: b6291bce92a4e4487da4ed05b8677aee -> 
+  custom:scripting/monoscript/fileName/IBuildContent.cs: 985433c3d816b7fe3356ac6fdd88a9c1 -> 
+  custom:scripting/monoscript/fileName/PreDownloadContentOperation.cs: f4aab0a7bf18a75605c171d5ab6a2780 -> 
+  custom:scripting/monoscript/fileName/PlayModeImpl.cs: 119e34df7d852f5add145b915b9587a6 -> 
+  custom:scripting/monoscript/fileName/DefaultSearchSystem.cs: 825a1d499c3bbf5a339706837e69a592 -> 
+  custom:scripting/monoscript/fileName/BuildBundleInfo.cs: 0bcc251c6ff4f2096e2054e4e66df0ff -> 
+  custom:scripting/monoscript/fileName/DebugBundleInfo.cs: 3c3daa87edae9c36b83910f39651186d -> 
+  custom:scripting/monoscript/fileName/AssetBundleLoadAssetOperation.cs: e0e424e695dbac42472c2249facca050 -> 
+  custom:scripting/monoscript/fileName/UnityWebRequestOperation.cs: 7e3cd60f87576989108db3dbb4e74241 -> 
+  custom:scripting/monoscript/fileName/IBuildParameters.cs: 5444d4b7b91f8f230014e0b0f1d671dc -> 
+  custom:scripting/monoscript/fileName/CopyBuildinFileOperation.cs: 98584cbf428bdbe6cdda60b6647b66c7 -> 
+  custom:scripting/monoscript/fileName/DestroyOperation.cs: 54d82add4dc8f437971bf73dd158e5f2 -> 
+  custom:scripting/monoscript/fileName/UnityDownloadResumeFileOperation.cs: d10a1ab0bb47bc33052aab58e2b85f54 -> 
+  custom:scripting/monoscript/fileName/PackageBundle.cs: defb9c7f42fbf31479311e21b9c3df5d -> 
+  custom:scripting/monoscript/fileName/CacheEntry.cs: 184ec4582c6a111a6d76b26e9882d8ac -> 
+  custom:scripting/monoscript/fileName/ScanReportConfig.cs: 160bb8a2f80a8e8e7fbb5f0d6982b15b -> 
+  custom:scripting/monoscript/fileName/CalculateCustomDependencyData.cs: 60157e862b4f285cab819b205d1dcc68 -> 
+  custom:scripting/monoscript/fileName/BuildRunner.cs: b5c505923ad18556774584da2b2da3e9 -> 
+  custom:scripting/monoscript/fileName/RawWriteOperation.cs: 0c25d4a5522f2e528b1c316a8854d37d -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorSetting.cs: 57c83457b7daa5fd0121a4df9a0b19a8 -> 
+  custom:scripting/monoscript/fileName/DCFSLoadPackageManifestOperation.cs: b41fae2b7f8c82f1ad938809318c7315 -> 
+  custom:scripting/monoscript/fileName/RemoteDebuggerInRuntime.cs: 21d42d4a89472cf260e4b412a8ca80aa -> 
+  custom:scripting/monoscript/fileName/BuildPipelineAttribute.cs: 388d09d6fea4a510e427f36a7f57e4e2 -> 
+  custom:scripting/monoscript/fileName/IObjectDependencyData.cs: dab6b9b0a9d3dcde7acff38a7870ced5 -> 
+  custom:scripting/monoscript/fileName/DebuggerOperationListViewer.cs: 46857746463afec49c8e51e87bfd5b9a -> 
+  custom:scripting/monoscript/fileName/PostScriptsCallback.cs: 1cec4066ff38f9052245bd85d91b727c -> 
+  custom:scripting/monoscript/fileName/VirtualBundleLoadSubAssetsOperation.cs: 2d65cc8eae565f31f1ac36b3aaad363f -> 
+  custom:scripting/monoscript/fileName/HttpTransport.cs: 2459f3c59724549901fc227fe3f4974f -> 
+  custom:scripting/monoscript/fileName/IDeterministicIdentifiers.cs: 9fdfcaea74e444a0ad0fcc5b015d955f -> 
+  custom:scripting/monoscript/fileName/DefaultUnpackFileSystem.cs: 016f0548d89cd473e21c1faa9171b1ce -> 
+  custom:scripting/monoscript/fileName/ToggleDisplay.cs: 66e917c275d39c734fea1d485b6978b6 -> 
+  custom:scripting/monoscript/fileName/Preferences.cs: 94e017b2eb5287f154bb9408b15c0487 -> 
+  custom:scripting/monoscript/fileName/DWRFSInitializeOperation.cs: a7609a151631cf35868f8035019924eb -> 
+  custom:scripting/monoscript/fileName/ReporterAssetListViewer.cs: 32c4ff5321e7cb3e5cbfa43c12ff8ae3 -> 
+  custom:scripting/monoscript/fileName/TaskCreatePackage_RFBP.cs: 3cfdcb85d63c4c0ba4f85f89725917b9 -> 
+  custom:scripting/monoscript/fileName/DBFSLoadBundleOperation.cs: dfe2c916e9107994bb1c6c708dd8b7f9 -> 
+  custom:scripting/monoscript/fileName/IProgressTracker.cs: 59e48e9e64fc66dccd13c436990f26d1 -> 
+  custom:scripting/monoscript/fileName/TableColumn.cs: 66944686febc32402ad7c3566cb44016 -> 
+  custom:scripting/monoscript/fileName/AssetDependencyCache.cs: 94d7afaafca6561aad6c5f0544e47c30 -> 
+  custom:scripting/monoscript/fileName/DefaultIgnoreRule.cs: fca3501d5fe5c2be4ac718389c6c3a50 -> 
+  custom:scripting/monoscript/fileName/DeserializeManifestOperation.cs: a2e324c02fe59e7ae04222543a98e2ba -> 
+  custom:scripting/monoscript/fileName/FileVerifyHelper.cs: 9e961402ba3777c3e427fba85dc64906 -> 
+  custom:scripting/monoscript/fileName/DefaultFilterRule.cs: fb82e83ad78fa5da049133225efea8ad -> 
+  custom:scripting/monoscript/fileName/LinearPackedIdentifiers.cs: f2ab3362c1bcc1efe300438e2ca25a9c -> 
+  custom:scripting/monoscript/fileName/CommonStrings.cs: c37303b8ea4b24be7afe89e3c1f096f3 -> 
+  custom:scripting/monoscript/fileName/SBPBuildTasks.cs: 77b5961a6927edfc48549d4f3a448841 -> 
+  custom:scripting/monoscript/fileName/ManifestDefine.cs: 7971011e65f319d87694806b6ff66fa6 -> 
+  custom:scripting/monoscript/fileName/RawFileBuildParameters.cs: b8bf32a713d9ddcee0327f74c91d6b68 -> 
+  custom:scripting/monoscript/fileName/LoadEditorPackageHashOperation.cs: 0c267fd12db569aa4af13e99d1517adf -> 
+  custom:scripting/monoscript/fileName/ReporterBundleListViewer.cs: 0bc1e05d3dfbd9217c18446afc4d2e65 -> 
+  custom:scripting/monoscript/fileName/ScannerResult.cs: 0f1513e74859800769dcf543418b28c1 -> 
+  custom:scripting/monoscript/fileName/AssetArtScannerSetting.cs: 04bfec6ef50cd4215e760606bcba3571 -> 
+  custom:scripting/monoscript/fileName/TaskPrepare_ESBP.cs: 4d8414f2218342bca763a2b3027c46d2 -> 
+  custom:scripting/monoscript/fileName/VirtualBundleResult.cs: b9eb75c11c9cd795c6d843fedca03d18 -> 
+  custom:scripting/monoscript/fileName/TaskCreateReport_SBP.cs: adb80da6944d09a0f802f4e54cc69599 -> 
+  custom:scripting/monoscript/fileName/DWRFSRequestPackageVersionOperation.cs: 8c3f5332c649c89c62d00643c9a3ed58 -> 
+  custom:scripting/monoscript/fileName/TempFileElement.cs: 335f5c66d39d89be52fdaf2411228f99 -> 
+  custom:scripting/monoscript/fileName/TaskGetBuildMap.cs: 3047618a5c1823a459b822567c9614db -> 
+  custom:scripting/monoscript/fileName/FSLoadAllAssetsOperation.cs: 31ca1aae3b8eecd490e35216055a2266 -> 
+  custom:scripting/monoscript/fileName/RemoteEditorConnection.cs: 939aec25bd23a8705fa746fef83acd36 -> 
+  custom:scripting/monoscript/fileName/CompletedProvider.cs: 9dbd66f6df4011beec02b025ad1e6d65 -> 
+  custom:scripting/monoscript/fileName/CollectCommand.cs: b4554c9014743eb38b02252aa1757ec5 -> 
+  custom:framework-osx-AVFoundation: e770b220cccbd017edd2c1fefb359320 -> 
+  custom:scripting/monoscript/fileName/TaskBuilding_SBP.cs: 9b82923d3bdda73591a3425ec531d42b -> 
+  custom:scripting/monoscript/fileName/InitializationOperation.cs: 453d8dda2eb6a58e3de3ee4285b3306f -> 
+  custom:scripting/monoscript/fileName/BuildPlayerScripts.cs: 0f2fc29cfe25da306bd11569a87e99c9 -> 
+  custom:scripting/monoscript/fileName/IDecryptionServices.cs: e3b2c49806abe69df5b25f1a87b9aa84 -> 
+  custom:scripting/monoscript/fileName/FSLoadBundleOperation.cs: 1512a91c7fa14c7f39ac5b430284a3f5 -> 
+  custom:scripting/monoscript/fileName/TaskEncryption_RFBP.cs: e79d4b4ae53e1f79ee5143eabd035ad6 -> 
+  custom:scripting/monoscript/fileName/BuildWriteData.cs: 2cea0300b77fdbda33a3d90a3f600b08 -> 
+  custom:scripting/monoscript/fileName/AssetBundleDebuggerWindow.cs: 1ac7340fb2e586f6628a577c78827c32 -> 
+  custom:scripting/monoscript/fileName/EditorSimulateBuildParameters.cs: 70a7be88104bfca2a628d0788c55d928 -> 
+  custom:scripting/monoscript/fileName/VerifyCacheFilesOperation.cs: 79e331f0460ba870bd845b4e5e2be554 -> 
+  custom:scripting/monoscript/fileName/AssetObjectCell.cs: 64cf5db7b0ee1b9adf17250943f801ae -> 
+  custom:scripting/monoscript/fileName/BuildResult.cs: d8d2b866533723a753da10dc924f801f -> 
+  custom:scripting/monoscript/fileName/BuildLogger.cs: b9d8388fec3c0769797110715bcda48f -> 
+  custom:scripting/monoscript/fileName/AssetBundleResult.cs: 1710546daeddc858b41a6e921d4ce799 -> 
+  custom:scripting/monoscript/fileName/UnloadUnusedAssetsOperation.cs: 83c76ef4081d9b90c304fa8c9f2ed2f3 -> 
+  custom:scripting/monoscript/fileName/BuildSpriteData.cs: c829088ed78bbbb541c4780bcaac9f9e -> 
+  custom:scripting/monoscript/fileName/AssetBundleLoadSceneOperation.cs: 05956b3f6e717c64e6da4c61b569030f -> 
+  custom:scripting/monoscript/fileName/FSLoadPackageManifestOperation.cs: 688db379adef71557a8cb80fec7b9b6d -> 
+  custom:scripting/precompiled-assembly-types:App.AOT: 7b3e2dfe78a563a12bc3e853ffffa830 -> 
+  custom:scripting/monoscript/fileName/GameUI.cs: 6032e6b03b34488d04d3c6d78cf1ab05 -> 
+  custom:scripting/monoscript/fileName/AssetArtScanner.cs: c611fba08c4b643c76e5995f6f8489e5 -> 
+  custom:scripting/monoscript/fileName/IBuildCache.cs: b89b6b1c01287101de59d979a61eafa2 -> 
+  custom:scripting/monoscript/fileName/EditorSimulateBuildPipelineViewer.cs: b9a63434f1a91b54bbf0380c4ac64417 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:scripting/monoscript/fileName/WebRequestCounter.cs: a415d5c140522e0469b09ed4d5b5a694 -> 
+  custom:scripting/monoscript/fileName/DefaultBuildinFileSystem.cs: 178cf9c7b33770aef6ee1a2d94836656 -> 
+  custom:scripting/monoscript/fileName/ReorderableListView.cs: e5d0a0e62a47cd235e292d099ccb9ca4 -> 
+  custom:scripting/monoscript/fileName/ContextInjector.cs: be93aa05045a7a9adf91118021d7b9ef -> 
+  custom:scripting/monoscript/fileName/ReportScanInfo.cs: ac74a18853dba7475a9ff9f87df4505c -> 
+  custom:scripting/monoscript/fileName/IWriteOperation.cs: f992fc85bf839520185f31965947c71e -> 
+  custom:scripting/monoscript/fileName/ClearCacheFilesOperation.cs: 45b60fb4a2fc45efd779b6ac6141f4b4 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:scripting/monoscript/fileName/SwitchToBuildPlatform.cs: 302951eb00ef533a7f8d4e2af60b1dbb -> 
+  custom:scripting/monoscript/fileName/ArchiveAndCompressBundles.cs: a4f30b836ec7f461da7b1d8eed932e91 -> 
+  custom:scripting/monoscript/fileName/DebugReport.cs: 71b8a94c6b48b309226e0ebcfb15fa9e -> 
+  custom:scripting/monoscript/fileName/AssetBundleSimulateBuilder.cs: 12a459c9d57b76cf42a75d21a245cef0 -> 
+  custom:scripting/monoscript/fileName/ITableCell.cs: 92b3875bee388ba2ee8406db0650a349 -> 
+  custom:scripting/monoscript/fileName/RawFileHandle.cs: 38bc98408a8267547893ee172f1790eb -> 
+  custom:scripting/monoscript/fileName/MD4.cs: 78155ea9dc73b12fc02ca5bf12ab1a89 -> eb4100b4258ba66e68a6a8330d8ed4cc
+  custom:scripting/monoscript/fileName/TaskGetBuildMap_ESBP.cs: a233bd80e23e3262804abc6c3807d613 -> 
+  custom:scripting/monoscript/fileName/TaskPrepare_BBP.cs: cf99b58f2f7f6e276133fe1e852dec86 -> 
+  custom:scripting/monoscript/fileName/SceneBundleWriteOperation.cs: 32514961e31a58db7f78c6fb8757c75f -> 
+  custom:scripting/monoscript/fileName/FSInitializeFileSystemOperation.cs: 09bf3f619570c0b0f919675bc402848c -> 
+  custom:scripting/monoscript/fileName/ClearCacheBundleFilesByTagsOperaiton.cs: b5b8196ef5edc5e0b43562fac733b8da -> 
+  custom:scripting/monoscript/fileName/IRemoteServices.cs: cbca063018c0ffa2e61d58c9c5eaa1b1 -> 
+  custom:scripting/monoscript/fileName/IntegerValueCell.cs: abe0ef12ed2d592e5f2a7c1e1a885c77 -> 
+  custom:scripting/monoscript/fileName/LoadCachePackageHashOperation.cs: 67918306b79a86f229f5495877638947 -> 
+  custom:scripting/monoscript/fileName/ProviderOperation.cs: b930a394752fdc5ba86a6e22b69e74ff -> 
+  custom:scripting/monoscript/fileName/RemotePlayerSession.cs: 62e83640983aa134f14d73f29f93cba3 -> 
+  custom:scripting/monoscript/fileName/IBuildLog.cs: 543b8847c6c9094f2d90357f2bde8b30 -> 
+  custom:scripting/monoscript/fileName/BooleanValueCell.cs: 4ce51f2e59701848c71cb64aebc8715b -> 
+  custom:scripting/monoscript/fileName/AssetArtReporterWindow.cs: 506fcff1d68e84f08300797d71ae7586 -> 
+  custom:scripting/monoscript/fileName/FSLoadSubAssetsOperation.cs: 90c9f9a0b76a70263f92b5dce6c2823f -> 
+  custom:scripting/monoscript/fileName/IAssetRepresentationData.cs: 4fd3029c6ddc21ad01839cd63f7e8552 -> 
+  custom:scripting/monoscript/fileName/AppendBundleHash.cs: 4b529c191f72e41deab5ef0b8d08bb2f -> 
+  custom:scripting/monoscript/fileName/AssetBundleRecorder.cs: f9ff69f460f901490504e76dc981a7c0 -> 
+  custom:scripting/monoscript/fileName/IBuildPipeline.cs: 45044e1b38103f10b26b9ce1c93cbeed -> 
+  custom:scripting/monoscript/fileName/YooAssetsExtension.cs: 60d5cb420e7f846ea3aea443710d89a8 -> 
+  custom:scripting/monoscript/fileName/UIElementsTools.cs: bbca8892b3a315400854d8c8a3372fc1 -> 
+  custom:scripting/monoscript/fileName/DWSFSInitializeOperation.cs: 2b39c1da825d98339f6eed88e7945c62 -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo_SBP.cs: 27ab16c95fb4ed0b060907ca7effc9e4 -> 
+  custom:scripting/monoscript/fileName/Serializer.cs: 6c1de1ff1b6b7616ec79b8ee1445add4 -> d7df1b97d0a3bd0bb98fd4d2d5bf5d29
+  custom:scripting/monoscript/fileName/DefaultBuildinFileCatalog.cs: dc0ae783e79f77e65092213fff3b4915 -> 
+  custom:scripting/monoscript/fileName/AssetInfo.cs: cb71ddecafa74902a796d6016adbaf2c -> 
+  custom:scripting/monoscript/fileName/SceneProvider.cs: 6139709953ad3968a3bcf742e7b57ff9 -> 
+  custom:scripting/monoscript/fileName/ApplicationFootPrint.cs: a116da9ff812b26c16729b847ded8d98 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollectorWindow.cs: d4c6bafc92cb82dd30d72e2c55450ef4 -> 
+  custom:scripting/monoscript/fileName/GenerateBundlePacking.cs: e605bef1aeac04a952cb03f12b7d1b74 -> 
+  custom:scripting/monoscript/fileName/RequestBuildinPackageHashOperation.cs: 70953b8e015e80990c6061b3c63db98c -> 
+  custom:scripting/monoscript/fileName/RawfileBuildPipelineViewer.cs: 60f45524d69cd58ad84450cf639a6689 -> 
+  custom:scripting/monoscript/fileName/DownloadPackageBundleOperation.cs: 0ec687036a40ba062352427c4fe44121 -> 
+  custom:scripting/monoscript/fileName/SceneHandle.cs: 87a5324ee63c80f2dd0068a199a57d5d -> 
+  custom:scripting/monoscript/fileName/ITableData.cs: e0b2cbb1d667507c9dce480f7f1a0959 -> 
+  custom:scripting/monoscript/fileName/ReportIndependAsset.cs: 1dac6eb5251bdfa81e6dbfcb5662f661 -> 
+  custom:scripting/monoscript/fileName/TaskCopyBuildinFiles_RFBP.cs: 7bb573e8e8c6ec76a8f99f586ae29031 -> 
+  custom:scripting/monoscript/fileName/BuiltinBuildParameters.cs: 882479af13ea33d193f6283fcd2b3f7e -> 
+  custom:scripting/monoscript/fileName/DownloadCenterOperation.cs: cdd581e837f5d3bee88d6b3457d8953e -> 
+  custom:scripting/monoscript/fileName/BundleResult.cs: 72f5d085c05aa5679cf69fd2c36e0152 -> 
+  custom:scripting/monoscript/fileName/IBuildTask.cs: 8c2dcc1472be7341025ec28aeffdf148 -> 
+  custom:scripting/monoscript/fileName/GenerateBundleMaps.cs: 9a1c9e701ac353a3e9f794fda78e0a1c -> 
+  custom:scripting/monoscript/fileName/SceneStateCleanup.cs: 31db7f5f98e9a1c904a3b9e4c43aa24b -> 
+  custom:scripting/monoscript/fileName/TaskEncryption.cs: 0ee74ee90269122f37de3a6fdcfe20a2 -> 
+  custom:scripting/monoscript/fileName/UnityAssetBundleRequestOperation.cs: cc7bfc2d25069c347b44c9455f963d0d -> 
+  custom:scripting/monoscript/fileName/DownloadDefine.cs: 26da1aa85d3ffc9bf7b88ef6058149b7 -> 
+  custom:scripting/monoscript/fileName/VerifyTempFileOperation.cs: abb9600223ba9eafd714d7e9985f61d2 -> 
+  custom:scripting/monoscript/fileName/ReportAssetInfo.cs: f551b788e3dda0b878ce507ede152825 -> 
+  custom:scripting/monoscript/fileName/TaskUpdateBundleInfo.cs: e28714e4a2be4c745cb1baa67b8a80a2 -> 
+  custom:scripting/monoscript/fileName/DebuggerAssetListViewer.cs: c4aae01b1cc90c1420aff6bfd2e6adb3 -> 
+  custom:scripting/monoscript/fileName/IWriteData.cs: f2a238486c9cc3a5a9e531c07d54f232 -> 
+  custom:scripting/monoscript/fileName/UnloadSceneOperation.cs: 8345287c6aa7b0eea6e8ceeccf043f3f -> 
+  custom:scripting/monoscript/fileName/UnityDownloadLocalFileOperation.cs: 4e1c86e3a7116ca893c968a541d88ea3 -> 
+  custom:scripting/monoscript/fileName/MinesweeperTerrainEditor.cs: decc5c2dd6be40133e3d0683ce81e2bb -> 
+  custom:scripting/monoscript/fileName/YooAssets.cs: 60d5cb420e7f846ea3aea443710d89a8 -> 
+  custom:scripting/monoscript/fileName/BuildInterfacesWrapper.cs: aeca1257cd6ce17b667e21eeaeaba2db -> 
+  custom:scripting/monoscript/fileName/WriteSerializedFiles.cs: 9c94ef6dac7108c5c9e0e92e832d5652 -> 
+  custom:scripting/monoscript/fileName/DefaultCacheFileSystem.cs: 7947eaf885f4181314733ed940985033 -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest_SBP.cs: 8b16732bf7d9527bdbcb1cb3d835dadd -> 
+  custom:scripting/monoscript/fileName/CollectResult.cs: 13e01d58a7d0fec62f87999474e35c00 -> 
+  custom:scripting/monoscript/fileName/DWSFSLoadBundleOperation.cs: 7a7fbc1133ba87d759896194c81cbb1f -> 
+  custom:scripting/monoscript/fileName/IEncryptionServices.cs: 330d3bd391d88987f4be1b2c4544637f -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:scripting/monoscript/fileName/ThreadingManager.cs: c9fc7fb2e109a60745bd85a84c04e0b5 -> 
+  custom:scripting/monoscript/fileName/DWSFSLoadPackageManifestOperation.cs: 7a9ee9b115c2d33f800658b655f5cdb0 -> 
+  custom:scripting/monoscript/fileName/ScanReport.cs: 1f07aba651a39d2c93b0fad62b82fe72 -> 
+  custom:scripting/precompiled-assembly-types:Assembly-CSharp-Editor: 0958544f4c14529a938ad010dbbf61e8 -> 
+  custom:scripting/monoscript/fileName/LoadWebPackageManifestOperation.cs: 6b1345f91189baa8967ce13bdfb2a402 -> 
+  custom:scripting/monoscript/fileName/SearchCacheFilesOperation.cs: 018ec8d98aed6378c262996bb6d2b756 -> 
+  custom:scripting/monoscript/fileName/AllAssetsHandle.cs: f791fcab3b3757fb621d9394e5139461 -> 
+  custom:scripting/monoscript/fileName/UnityDownloadNormalFileOperation.cs: 7bf002bc7a261cd330e66c2685fc8917 -> 
+  custom:scripting/monoscript/fileName/DWSFSRequestPackageVersionOperation.cs: 5a55b4c189abb9fb65e2f7c54fecf80a -> 
+  custom:scripting/monoscript/fileName/BuildReport.cs: f6178b8dd50e599f137327706d65d880 -> 
+  custom:scripting/monoscript/fileName/StringValueCell.cs: 6c0dc81b88d944847d352db01e0af239 -> 
+  custom:scripting/monoscript/fileName/DCFSInitializeOperation.cs: aaaec8b19459d065b68b2cac083b46b5 -> 
+  custom:scripting/monoscript/fileName/ClearCacheBundleFilesByLocationsOperaiton.cs: 1aba2556c115be901273e9434f8af412 -> 
+  custom:scripting/monoscript/fileName/TaskCreateCatalog_SBP.cs: 51abef95075827ee50d50f3a7e3d9e48 -> 
+  custom:scripting/monoscript/fileName/RawFileProvider.cs: feb521f452f3de4479ec4285ea2d9f73 -> 
+  custom:scripting/monoscript/fileName/ReporterSummaryViewer.cs: 527356d22505526c0ce22ad235cf3584 -> 
+  custom:scripting/monoscript/fileName/MinesweeperGame.cs: 8ad86c67b91129a88be208ac8035e432 -> 
+  custom:scripting/monoscript/fileName/ClearUnusedCacheManifestFilesOperation.cs: 05c1cff3fd8cd94113f7c4c1b1b45fdc -> 
+  custom:scripting/monoscript/fileName/BuildDependencyData.cs: e86421eb6cd5a56c2f29fe865b6f6634 -> 
+  custom:scripting/monoscript/fileName/AssetArtCollector.cs: 14031eeb3de172d1ae89d3bde3b6d1d5 -> 
+  custom:scripting/monoscript/fileName/EditorTools.cs: 54e2705aa65d656e6d2098472a2968bc -> 
+  custom:scripting/monoscript/fileName/CompatibilityBuildPipeline.cs: facf82cb07a5c10c38b56a00da8757a5 -> 
+  custom:scripting/monoscript/fileName/LoadCachePackageManifestOperation.cs: 83b672cc645de3609777750c4d42d7cd -> 
+  custom:scripting/monoscript/fileName/TaskCreateManifest.cs: 16c67ddd702e407776533344af419ac8 -> 
+  custom:scripting/precompiled-assembly-types:Assembly-CSharp: 0df576f740723e354a3c0889cea449b3 -> 
+  custom:scripting/monoscript/fileName/TaskBuilding_BBP.cs: 551e82fb2d3baa4cdacee8c6fb65e873 -> 
+  custom:scripting/monoscript/fileName/ResizeHandle.cs: 423865153d7e364742c8081f04757f0c -> 
+  custom:scripting/monoscript/fileName/CatalogDefine.cs: e224e4a1ed8890379cfd234e020e9f58 -> 
+  custom:scripting/monoscript/fileName/RawBundleLoadSubAssetsOperation.cs: 24a22a8871454dd12cdaaf00dc013d59 -> 
+  custom:scripting/monoscript/fileName/DEFSInitializeOperation.cs: 4e7728d7c22dcb19dc98dfe3d28dcd36 -> 
+  custom:scripting/monoscript/fileName/TaskCreateCatalog_BBP.cs: 139bca65b0551f59cf6a5fe3b6cca86e -> 
+  custom:scripting/monoscript/fileName/SchemaInspector.cs: 6a4fad86be08a00501ae2e5cca2cdbf1 -> 
+  custom:scripting/monoscript/fileName/FSDownloadFileOperation.cs: 1b845538268ec3edbd05a0e23b0a8779 -> 
+  custom:scripting/monoscript/fileName/TableViewer.cs: e94e8288c79a8b31bb9d433b2f018257 -> 
+  custom:scripting/monoscript/fileName/AssetBundleCollector.cs: 340da094351ac08c6eb13819e1fa3ab3 -> 
+  custom:scripting/monoscript/fileName/IManifestProcessServices.cs: 6d8358b78a9fc24570bc0cc0fe2cbf0d -> 
+  custom:scripting/monoscript/fileName/CalculateAssetDependencyData.cs: 3543034cff244684ebe2b35b7e56cabb -> 
+  custom:scripting/monoscript/fileName/Unity5PackedIdentifiers.cs: 2fef534b6f5a3f203548e50e8ca6fb59 -> 

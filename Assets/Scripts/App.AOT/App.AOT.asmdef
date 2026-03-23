@@ -1,0 +1,17 @@
+{
+    "name": "App.AOT",
+    "rootNamespace": "App.AOT",
+    "references": [
+        "App.Shared",
+        "YooAsset"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
