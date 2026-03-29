@@ -11,6 +11,49 @@ ITER_DIR = DOC_ROOT / "迭代记录"
 ITER_INDEX = ITER_DIR / "迭代记录索引.md"
 LONG_INDEX = DOC_ROOT / "长期主文档" / "主文档索引.md"
 
+ALWAYS_REQUIRE_PREFIXES = (
+    "scripts/",
+    "ProjectSettings/",
+    "Packages/",
+    ".githooks/",
+)
+
+REQUIRE_ASSET_EXTENSIONS = {
+    ".cs",
+    ".asmdef",
+    ".prefab",
+    ".unity",
+    ".controller",
+    ".overridecontroller",
+    ".playable",
+}
+
+PURE_RESOURCE_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".tga",
+    ".psd",
+    ".tif",
+    ".tiff",
+    ".exr",
+    ".bmp",
+    ".gif",
+    ".svg",
+    ".wav",
+    ".mp3",
+    ".ogg",
+    ".aiff",
+    ".fbx",
+    ".obj",
+    ".blend",
+    ".mat",
+    ".ttf",
+    ".otf",
+    ".mp4",
+    ".mov",
+}
+
 
 def run_git(*args: str, text: bool = True):
     result = subprocess.run(
@@ -33,17 +76,45 @@ def staged_files() -> list[str]:
     ]
 
 
+def asset_extension(path: str) -> str:
+    return Path(path).suffix.lower()
+
+
+def is_meta_file(path: str) -> bool:
+    return asset_extension(path) == ".meta"
+
+
+def meta_target_extension(path: str) -> str:
+    if not is_meta_file(path):
+        return ""
+    target = Path(path[:-5])
+    return target.suffix.lower()
+
+
 def should_require_iteration_log(path: str) -> bool:
     # 这里把“会影响项目实现或长期规则的改动”都视为需要收尾记录。
-    # doc 自己的改动不触发这条规则，避免纯文档修订被反复卡住。
-    prefixes = (
-        "Assets/",
-        "scripts/",
-        "ProjectSettings/",
-        "Packages/",
-        ".githooks/",
-    )
-    return path.startswith(prefixes)
+    # 纯文档改动和纯资源改动不触发这条规则，避免策划/美术被开发迭代日志误拦。
+    if path.startswith(ALWAYS_REQUIRE_PREFIXES):
+        return True
+
+    if not path.startswith("Assets/"):
+        return False
+
+    ext = asset_extension(path)
+    if ext in REQUIRE_ASSET_EXTENSIONS:
+        return True
+
+    if ext in PURE_RESOURCE_EXTENSIONS:
+        return False
+
+    if is_meta_file(path):
+        target_ext = meta_target_extension(path)
+        if target_ext in REQUIRE_ASSET_EXTENSIONS:
+            return True
+        if target_ext in PURE_RESOURCE_EXTENSIONS:
+            return False
+
+    return False
 
 
 def is_iteration_log(path: str) -> bool:
