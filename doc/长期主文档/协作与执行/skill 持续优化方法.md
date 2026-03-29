@@ -1,4 +1,4 @@
-# 技能持续优化方法
+# skill 持续优化方法
 
 ## Summary
 
@@ -13,7 +13,7 @@
 
 建议新增文档结构：
 
-- 标题：`Skill 持续优化方法`
+- 标题：`skill 持续优化方法`
 - 开头摘要：
   - skill 不是一次写完的
   - 应该随着返工、review、subagent 协作、脚本检查、新模块接入不断迭代
@@ -51,7 +51,7 @@
 
 建议与这些已有文档并列放置：
 - `/Users/bruce/work/Holmas/doc/长期主文档/架构与边界/热更新边界规范_v1.md`
-- `/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/子代理与技能配对表.md`
+- `/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/subagent 与 skill 配对表.md`
 
 ## Test Plan
 

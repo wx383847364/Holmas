@@ -1,4 +1,4 @@
-# 子代理与技能配对表
+# subagent 与 skill 配对表
 
 ## Summary
 
@@ -10,13 +10,13 @@
 - UI/流程类工作再叠加 `unity-ugui-flow-integration`
 - `App.Shared`、`HotUpdate` 入口、UI prefab 这 3 类高冲突区域必须独占
 
-推荐先按 **4 个 subagent** 起步；等你用顺手了，再扩成 8 个长期版编组。
+推荐先按 **5 个 subagent** 起步；等你用顺手了，再扩成 8 个长期版编组。
 
-## 4-Agent 实操版
+## 5-Agent 实操版
 
 ### 1. 边界与骨架 Agent
 
-技能组合：
+skill 组合：
 - `unity-hotupdate-boundary`
 
 职责：
@@ -45,7 +45,7 @@
 
 ### 2. 地图与棋盘 Agent
 
-技能组合：
+skill 组合：
 - `unity-hotupdate-boundary`
 - `findcat-config-pipeline`
 
@@ -76,7 +76,7 @@
 
 ### 3. 任务与长期进度 Agent
 
-技能组合：
+skill 组合：
 - `unity-hotupdate-boundary`
 - `findcat-config-pipeline`
 
@@ -108,7 +108,7 @@
 
 ### 4. UI 与验证 Agent
 
-技能组合：
+skill 组合：
 - `unity-hotupdate-boundary`
 - `unity-ugui-flow-integration`
 
@@ -136,6 +136,37 @@
 - 可跑通的主流程 UI
 - 页面流转和按钮绑定
 - 冒烟验证清单
+
+### 5. 测试与质量保障 Agent
+
+skill 组合：
+- 默认：`unity-hotupdate-boundary`
+- 测地图、任务、配置时：再叠加 `findcat-config-pipeline`
+- 测 UI 流程时：再叠加 `unity-ugui-flow-integration`
+
+职责：
+- 写单元测试、集成测试和验证脚本
+- 校验地图、任务、奖励、时间和配置逻辑是否正确
+- 验证其他 agent 的输入输出、边界和接线是否一致
+- 做冒烟测试和回归验证
+
+允许写入：
+- 测试代码
+- 校验脚本
+- 模拟器
+- QA 文档
+
+禁止写入：
+- `App.Shared`
+- HotUpdate 入口
+- UI prefab
+- 核心业务实现目录
+
+交付物：
+- 单元测试或集成测试代码
+- 覆盖面说明
+- 失败项和风险清单
+- 需要回给哪个 agent 修复的问题列表
 
 ## 8-Agent 长期版
 
@@ -182,20 +213,22 @@
 3. 再并行启动：
 - 地图与棋盘
 - 任务与长期进度
-- 配置管线或长期版里的 2/3/4/5/6 号
-4. UI Agent 在核心输出接口稳定后再全速启动
-5. 最后统一集成和回归
+- 测试与质量保障
+4. UI agent 在核心输出接口稳定后再全速启动
+5. 测试 agent 在功能线产出后持续做验证和回归
+6. 最后统一集成和回归
 
 ## 你给我的指令模板
 
 ### 轻量版模板
 
-“这次按 4 个 subagent 开工。  
+“这次按 5 个 subagent 开工。  
 全部默认遵循 `unity-hotupdate-boundary`。  
 地图和任务相关额外遵循 `findcat-config-pipeline`。  
 UI 相关额外遵循 `unity-ugui-flow-integration`。  
+测试相关按对象叠加 `findcat-config-pipeline` 或 `unity-ugui-flow-integration`。  
 `App.Shared` 和 HotUpdate 入口只能边界 agent 改，UI prefab 只能 UI agent 改。  
-先冻结 DTO，再并行开发，最后统一集成。”
+先冻结 DTO，再并行开发，再由测试 agent 验证，最后统一集成。”
 
 ### 长期版模板
 
@@ -213,12 +246,12 @@ UI agent 额外遵循 `unity-ugui-flow-integration`。
 - 地图 agent 没把任务或 UI 逻辑写进棋盘模型
 - 任务 agent 没把 Presenter/UI 逻辑写进服务层
 - UI agent 没把奖励公式、去重、地图生成写进界面代码
-- QA 能根据 skill 规则识别越层引用、配置污染运行时、UI 直接改业务状态等问题
+- 测试 agent 能根据 skill 规则识别越层引用、配置污染运行时、UI 直接改业务状态等问题
 - 集成阶段不会频繁出现 DTO 改名、入口冲突、prefab 覆盖
 
 ## Assumptions
 
-- 你是第一次正式使用 subagent + skill 协作，所以默认先推荐 4-agent 实操版。
+- 你是第一次正式使用 subagent + skill 协作，所以默认先推荐 5-Agent 实操版。
 - `unity-hotupdate-boundary` 是所有 agent 的基础 skill，不单独省略。
 - `findcat-config-pipeline` 主要服务于表结构、权重、生成、奖励和配置校验。
 - `unity-ugui-flow-integration` 主要服务于 UI 接线和流程编排，不允许它承载核心业务规则。

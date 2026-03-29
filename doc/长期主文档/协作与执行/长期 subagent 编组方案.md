@@ -1,4 +1,4 @@
-# 长期子代理编组方案
+# 长期 subagent 编组方案
 
 ## Summary
 
@@ -14,9 +14,9 @@
 - 离线拜访、广告解锁、时间规则、持久化
 - 整体 UI 流程和 HotUpdate 正式业务入口
 
-## Subagent 拆分
+## subagent 拆分
 
-### 1. Foundation / Boundary Agent
+### 1. Foundation / Boundary agent
 
 职责：
 - 建立正式 `App.HotUpdate` 模块骨架和组合层
@@ -31,7 +31,7 @@
 
 这是唯一必须先串行启动的 agent。
 
-### 2. Config / Content Pipeline Agent
+### 2. Config / Content Pipeline agent
 
 职责：
 - 落地图表、猫表、任务表、玩家等级表、家具/猫窝/培养配置、离线收益配置
@@ -44,7 +44,7 @@
 - 配置加载器与校验器
 - 地图模板到配置输入的映射层
 
-### 3. Board / Level Generation Agent
+### 3. Board / Level Generation agent
 
 职责：
 - 实现棋盘纯逻辑模型
@@ -59,7 +59,7 @@
 
 它不负责任务、UI、存档。
 
-### 4. Task / Mission Agent
+### 4. Task / Mission agent
 
 职责：
 - 实现任务栏 5 槽规则
@@ -74,7 +74,7 @@
 
 它不负责广告时钟和长期存档结算。
 
-### 5. Detective Agency / Meta Progression Agent
+### 5. Detective Agency / Meta Progression agent
 
 职责：
 - 实现侦探社家具、星级/等级关系、猫窝解锁
@@ -87,7 +87,7 @@
 - 猫窝与猫培养数据
 - 元进度结算逻辑
 
-### 6. Time / Persistence / Ads / Offline Agent
+### 6. Time / Persistence / Ads / Offline agent
 
 职责：
 - 统一时间服务、跨天判定、24 小时广告槽位到期
@@ -104,7 +104,7 @@
 注意：
 - 若需要新增 Shared 时间/平台接口，由 1 号 agent 统一落边界，6 号 agent 只消费。
 
-### 7. UI / Flow Agent
+### 7. UI / Flow agent
 
 职责：
 - 负责找猫主界面、任务栏、领奖、地图结算、广告锁槽位展示
@@ -119,7 +119,7 @@
 
 UI 资源必须由它独占，避免 prefab 冲突。
 
-### 8. QA / Simulation / Validation Agent
+### 8. QA / Simulation / Validation agent
 
 职责：
 - 写核心规则测试、deterministic simulation、配置校验

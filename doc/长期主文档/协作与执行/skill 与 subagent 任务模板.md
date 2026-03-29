@@ -1,6 +1,6 @@
-# 技能与子代理任务模板
+# skill 与 subagent 任务模板
 
-## 1. 当前三份 Skill
+## 1. 当前三份 skill
 
 当前项目已经落地三份可用 skill：
 
@@ -14,7 +14,7 @@
 - 涉及表结构、权重、任务生成、地图生成、奖励公式时，再叠加 `findcat-config-pipeline`
 - 涉及 UGUI、Prefab、Presenter、流程接线时，再叠加 `unity-ugui-flow-integration`
 
-## 2. 每份 Skill 的定位
+## 2. 每份 skill 的定位
 
 ### `unity-hotupdate-boundary`
 
@@ -69,7 +69,7 @@
 - 禁止把奖励公式、生成逻辑、持久化逻辑写进 UI
 - 约束 Prefab、Presenter 和流程接线的职责边界
 
-## 3. 三份 Skill 的组合方式
+## 3. 三份 skill 的组合方式
 
 ### 组合 A：架构与边界
 
@@ -130,14 +130,14 @@
 - 跑配置校验
 - 跑 UI 和流程冒烟
 
-## 5. 第一批 Subagent 任务模板
+## 5. 第一批 subagent 任务模板
 
-第一批建议按 4 个 subagent 开工。  
+第一批建议按 5 个 subagent 开工。  
 这是当前项目最稳的起步方式。
 
 ### Agent 1：边界与骨架
 
-技能组合：
+skill 组合：
 
 - `unity-hotupdate-boundary`
 
@@ -192,7 +192,7 @@
 
 ### Agent 2：地图与棋盘
 
-技能组合：
+skill 组合：
 
 - `unity-hotupdate-boundary`
 - `findcat-config-pipeline`
@@ -251,7 +251,7 @@
 
 ### Agent 3：任务与长期进度
 
-技能组合：
+skill 组合：
 
 - `unity-hotupdate-boundary`
 - `findcat-config-pipeline`
@@ -311,7 +311,7 @@
 
 ### Agent 4：UI 与验证
 
-技能组合：
+skill 组合：
 
 - `unity-hotupdate-boundary`
 - `unity-ugui-flow-integration`
@@ -367,12 +367,74 @@
 - 给出一份可复现的冒烟流程
 ```
 
-## 6. 主控 Agent 的集成规则
+### Agent 5：测试与质量保障
+
+skill 组合：
+
+- 默认：`unity-hotupdate-boundary`
+- 测地图、任务、配置时：再叠加 `findcat-config-pipeline`
+- 测 UI 流程时：再叠加 `unity-ugui-flow-integration`
+
+职责：
+
+- 写单元测试、集成测试和验证脚本
+- 校验地图、任务、奖励、时间规则和配置抽取是否正确
+- 验证其他 agent 的实现是否符合边界和输入输出约定
+- 做冒烟测试、回归测试和独立审查
+
+允许写入：
+
+- 测试目录
+- 校验脚本
+- 模拟器
+- QA 文档
+
+禁止写入：
+
+- `App.Shared`
+- HotUpdate 入口
+- UI prefab
+- 核心业务实现目录
+
+交付物：
+
+- 单元测试或集成测试代码
+- 覆盖面说明
+- 失败项和风险清单
+- 需要回给哪个 agent 修复的问题列表
+
+可直接使用的任务模板：
+
+```text
+你负责本项目的测试与质量保障实现。请遵循 $unity-hotupdate-boundary。
+如果测试对象涉及地图、任务、配置，请额外遵循 $findcat-config-pipeline。
+如果测试对象涉及 UI 流程，请额外遵循 $unity-ugui-flow-integration。
+
+目标：
+1. 为当前阶段的核心规则补单元测试、集成测试或验证脚本
+2. 校验其他 agent 的输入输出、边界和关键逻辑是否正确
+3. 输出明确的通过项、失败项、风险和回归建议
+
+约束：
+- 不要修改 App.Shared
+- 不要修改 HotUpdate 入口
+- 不要主改 UI prefab
+- 不要把发现的问题直接改成新的业务实现，优先回给对应 agent 修
+
+交付：
+- 列出你修改的文件
+- 说明这轮覆盖了哪些测试面
+- 列出失败项、风险和回归建议
+- 标出需要哪个 agent 继续处理
+```
+
+## 6. 主控 agent 的集成规则
 
 主控 agent 负责：
 
 - 先让 Agent 1 冻结 DTO 和模块骨架
 - 再让 Agent 2、Agent 3 并行
+- 同时让 Agent 5 提前搭测试骨架，并在功能线产出后持续验证
 - 等核心状态接口稳定后，再启动 Agent 4 的全量接线
 - 最后统一 review、集成和回归
 
@@ -389,12 +451,13 @@
 后续你可以直接这样对我说：
 
 ```text
-这次按 4 个 subagent 开工。
+这次按 5 个 subagent 开工。
 全部默认遵循 $unity-hotupdate-boundary。
 地图和任务相关额外遵循 $findcat-config-pipeline。
 UI 相关额外遵循 $unity-ugui-flow-integration。
+测试相关按对象叠加 $findcat-config-pipeline 或 $unity-ugui-flow-integration。
 App.Shared 和 HotUpdate 入口只能边界 agent 改，UI prefab 只能 UI agent 改。
-先冻结 DTO，再并行开发，最后统一集成。
+先冻结 DTO，再并行开发，再由测试 agent 验证，最后统一集成。
 ```
 
 ## 8. 下一步建议
@@ -403,6 +466,7 @@ App.Shared 和 HotUpdate 入口只能边界 agent 改，UI prefab 只能 UI agen
 
 - 先启动 Agent 1，冻结第一批 DTO 和 HotUpdate 模块骨架
 - 骨架稳定后，再启动 Agent 2 和 Agent 3 并行
+- 同时启动 Agent 5，先补单测和验证脚本，再持续跟进功能回归
 - 最后再让 Agent 4 做 UI 接线和冒烟
 
 这样三份 skill 能真正参与协作，而不是只停留在文档层。
