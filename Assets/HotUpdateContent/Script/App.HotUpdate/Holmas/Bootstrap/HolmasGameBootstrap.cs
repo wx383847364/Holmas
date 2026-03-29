@@ -1,5 +1,9 @@
 using System;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.Meta;
+using App.HotUpdate.Holmas.Progression;
+using App.HotUpdate.Holmas.Tasks.Config;
+using App.HotUpdate.Holmas.Tasks.Services;
 using App.Shared.Contracts;
 
 namespace App.HotUpdate.Holmas.Bootstrap
@@ -44,16 +48,45 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 throw new InvalidOperationException("HolmasGameBootstrap: 启动失败，AOT 提供的基础设施依赖不完整。");
             }
 
+            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger);
+            serviceContainer.RegisterSingleton(gameplayRuntime);
+
             // 这轮先把已确认的共享依赖收敛到统一上下文，给后续地图线和任务线提供稳定挂接点。
             Context = new HolmasApplicationContext(
                 serviceContainer,
                 logger,
                 tickManager,
                 eventBus,
-                assetsRuntime);
+                assetsRuntime,
+                gameplayRuntime);
 
-            // 这里只输出骨架启动日志，不提前塞入地图生成、任务补位、奖励公式等正式玩法逻辑。
-            Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动。");
+            // 这轮已经把地图完成 -> 任务推进 -> 长期进度的运行时编排接入组合层，但仍不提前接 UI。
+            Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动，运行时编排入口已就位。");
+        }
+
+        private static HolmasGameplayRuntime CreateGameplayRuntime(IAppLogger logger)
+        {
+            var taskCatalog = new HolmasTaskCatalog();
+            var metaCatalog = new HolmasMetaCatalog(new[]
+            {
+                new HolmasMetaProgressionDefinition
+                {
+                    AgencyLevel = 1,
+                    MinExperience = 0L,
+                }
+            });
+            var clock = new HolmasSystemUtcClock();
+            var randomSource = new HolmasSystemRandomSource();
+            var metaSource = new HolmasDefaultMetaExperienceSource();
+            var taskProgressService = new HolmasTaskProgressService(taskCatalog, randomSource, clock);
+            var metaProgressionService = new HolmasMetaProgressionService(metaCatalog, metaSource, metaSource);
+            var progressionCoordinator = new HolmasProgressionCoordinator(taskProgressService, metaProgressionService);
+
+            return new HolmasGameplayRuntime(
+                taskProgressService,
+                metaProgressionService,
+                progressionCoordinator,
+                logger);
         }
     }
 }

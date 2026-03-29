@@ -17,13 +17,15 @@ namespace App.HotUpdate.Holmas.Application
             IAppLogger logger,
             ITickManager tickManager,
             IEventBus eventBus,
-            IAssetsRuntime assetsRuntime)
+            IAssetsRuntime assetsRuntime,
+            HolmasGameplayRuntime gameplayRuntime)
         {
             ServiceContainer = serviceContainer;
             Logger = logger;
             TickManager = tickManager;
             EventBus = eventBus;
             AssetsRuntime = assetsRuntime;
+            GameplayRuntime = gameplayRuntime;
         }
 
         /// <summary>
@@ -55,5 +57,11 @@ namespace App.HotUpdate.Holmas.Application
         /// terrain、图标等正式资源后续都应该通过它加载，不直接绕过到 Resources。
         /// </summary>
         public IAssetsRuntime AssetsRuntime { get; }
+
+        /// <summary>
+        /// 当前阶段的 Holmas 运行时编排入口。
+        /// 在不接 UI 的前提下，外层也可以通过它驱动关卡、任务和长期进度。
+        /// </summary>
+        public HolmasGameplayRuntime GameplayRuntime { get; }
     }
 }
