@@ -22,6 +22,7 @@ namespace App.HotUpdate.Holmas.Application
         private readonly HolmasMetaProgressionService _metaProgressionService;
         private readonly HolmasProgressionCoordinator _progressionCoordinator;
         private readonly IAppLogger _logger;
+        private bool _currentLevelCompletionApplied;
 
         public HolmasGameplayRuntime(
             HolmasTaskProgressService taskProgressService,
@@ -100,6 +101,7 @@ namespace App.HotUpdate.Holmas.Application
             CurrentBoardTemplate = TerrainBoardTemplateConverter.Convert(terrainAsset);
             CurrentLevelSnapshot = LevelSnapshotFactory.Create(CurrentBoardTemplate, request);
             CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
+            _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已启动地图 {0}，本局猫数量={1}。", CurrentLevelSnapshot.MapId, CurrentBoardRuntime.TotalCatCount);
             return CurrentBoardRuntime;
         }
@@ -112,6 +114,7 @@ namespace App.HotUpdate.Holmas.Application
             CurrentBoardTemplate = template ?? throw new ArgumentNullException(nameof(template));
             CurrentLevelSnapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
             CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
+            _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已基于现有模板与快照恢复关卡，地图={0}。", CurrentLevelSnapshot.MapId);
             return CurrentBoardRuntime;
         }
@@ -147,10 +150,27 @@ namespace App.HotUpdate.Holmas.Application
                 throw new InvalidOperationException("HolmasGameplayRuntime: 当前没有可结算的关卡快照。");
             }
 
+            if (CurrentBoardRuntime == null)
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前没有启动中的关卡棋盘。");
+            }
+
+            if (!CurrentBoardRuntime.Completed)
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前地图尚未完成，不能重复或提前结算。");
+            }
+
+            if (_currentLevelCompletionApplied)
+            {
+                _logger?.LogWarning("HolmasGameplayRuntime: 当前地图已完成过一次结算，忽略重复结算请求。");
+                return new HolmasProgressionAdvanceResult();
+            }
+
             HolmasProgressionAdvanceResult result = _progressionCoordinator.ApplyMapCompletion(
                 TaskBarState,
                 MetaProgressionState,
                 CurrentLevelSnapshot.SpawnedCats);
+            _currentLevelCompletionApplied = true;
 
             _logger?.LogInfo(
                 "HolmasGameplayRuntime: 已完成地图结算，推进任务 {0} 条，新增完成 {1} 条，长期经验 +{2}。",

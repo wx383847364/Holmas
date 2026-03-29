@@ -58,5 +58,78 @@ namespace Holmas.Tests
             Assert.That(runtime.MetaProgressionState.AgencyLevel, Is.EqualTo(2));
             Assert.That(runtime.MetaProgressionState.ClaimedTaskCount, Is.EqualTo(1));
         }
+
+        [Test]
+        public void HolmasGameplayRuntime_RejectsSettlementBeforeLevelCompleted()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger());
+
+            runtime.RefillAvailableTasks(1);
+
+            var terrain = HolmasTestSupport.CreateTerrain(1, 2);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-2",
+                "terrain://map-2",
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            runtime.StartLevel(terrain, request);
+
+            Assert.Throws<System.InvalidOperationException>(() => runtime.ApplyCurrentLevelCompletion());
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_DoesNotApplyCompletionTwice()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger());
+
+            runtime.RefillAvailableTasks(1);
+
+            var terrain = HolmasTestSupport.CreateTerrain(1, 1);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-repeat",
+                "terrain://map-repeat",
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            runtime.StartLevel(terrain, request);
+            var reveal = runtime.RevealCell(0, out HolmasProgressionAdvanceResult firstResult);
+
+            Assert.That(reveal.Completed, Is.True);
+            Assert.That(firstResult, Is.Not.Null);
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(6));
+
+            HolmasProgressionAdvanceResult secondResult = runtime.ApplyCurrentLevelCompletion();
+
+            Assert.That(secondResult.ProgressedTaskIds, Is.Empty);
+            Assert.That(secondResult.CompletedTaskIds, Is.Empty);
+            Assert.That(secondResult.MetaExperienceGained, Is.EqualTo(0));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(6));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(1));
+        }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
+using App.HotUpdate.Holmas.Terrain;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
 using UnityEngine;
@@ -31,6 +32,68 @@ namespace Holmas.Tests
             Assert.That(snapshot.SpawnedCats.Select(item => item.CellIndex).Distinct().Count(), Is.EqualTo(2));
             Assert.That(snapshot.SpawnedCats.Select(item => item.CellIndex), Is.All.LessThan(2));
             Assert.That(snapshot.Completed, Is.False);
+        }
+
+        [Test]
+        public void LevelSnapshotFactory_InvalidOrEmptyPool_ReturnsCompletedEmptySnapshot()
+        {
+            var template = HolmasTestSupport.CreateBoardTemplate(2, 2);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-invalid-pool",
+                "terrain://invalid-pool",
+                9,
+                1,
+                3,
+                null,
+                new BoardSpawnEntry { CatId = string.Empty, Weight = 1 },
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 0 });
+
+            var snapshot = LevelSnapshotFactory.Create(template, request);
+
+            Assert.That(snapshot.MapId, Is.EqualTo("map-invalid-pool"));
+            Assert.That(snapshot.SpawnedCats, Is.Empty);
+            Assert.That(snapshot.Completed, Is.True);
+            Assert.That(snapshot.RevealedCells, Has.Length.EqualTo(4));
+        }
+
+        [Test]
+        public void LevelSnapshotFactory_NoValidCells_ReturnsCompletedEmptySnapshot()
+        {
+            var template = HolmasTestSupport.CreateBoardTemplate(2, 2, (_, _) => false);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-no-valid-cells",
+                "terrain://no-valid-cells",
+                5,
+                1,
+                4,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            var snapshot = LevelSnapshotFactory.Create(template, request);
+
+            Assert.That(snapshot.SpawnedCats, Is.Empty);
+            Assert.That(snapshot.Completed, Is.True);
+            Assert.That(snapshot.RevealedCells, Has.Length.EqualTo(4));
+        }
+
+        [Test]
+        public void TerrainBoardTemplateConverter_InvalidTerrainTemplate_Throws()
+        {
+            var invalidTerrain = ScriptableObject.CreateInstance<InvalidTerrainDimensionsAsset>();
+
+            var ex = Assert.Throws<System.InvalidOperationException>(() => TerrainBoardTemplateConverter.Convert(invalidTerrain));
+
+            Assert.That(ex.Message, Does.Contain("invalid dimensions"));
+        }
+
+        [Test]
+        public void TerrainBoardTemplateConverter_TryConvertInvalidTerrain_ReturnsFalse()
+        {
+            var invalidTerrain = ScriptableObject.CreateInstance<InvalidTerrainDimensionsAsset>();
+
+            bool success = TerrainBoardTemplateConverter.TryConvert(invalidTerrain, out BoardTemplate template);
+
+            Assert.That(success, Is.False);
+            Assert.That(template, Is.Null);
         }
 
         [Test]
@@ -73,6 +136,23 @@ namespace Holmas.Tests
             Assert.That(found.Completed, Is.True);
             Assert.That(runtime.Completed, Is.True);
             Assert.That(runtime.GetCellState(8).IsFoundCat, Is.True);
+        }
+
+        private sealed class InvalidTerrainDimensionsAsset : ScriptableObject
+        {
+            public int Rows => 0;
+
+            public int Cols => 2;
+
+            public bool GetValid(int row, int col)
+            {
+                return true;
+            }
+
+            public Color32 GetColor(int row, int col)
+            {
+                return new Color32(128, 128, 128, 255);
+            }
         }
     }
 }

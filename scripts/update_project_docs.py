@@ -58,6 +58,18 @@ def extract_section_bullets(path: Path, heading: str):
     return bullets
 
 
+def extract_prefixed_value(path: Path, prefix: str) -> str:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return ""
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(prefix):
+            return stripped.replace(prefix, "", 1).strip()
+    return ""
+
+
 def recent_files(paths, count=3):
     return sorted(paths, key=lambda p: p.stat().st_mtime, reverse=True)[:count]
 
@@ -73,11 +85,11 @@ def parse_iteration_key(path: Path):
 
 def suggest_agent_start(bullets):
     patterns = [
-        (r"Agent\s*1|边界|骨架", "Agent 1：边界与骨架"),
-        (r"Agent\s*2|地图|棋盘", "Agent 2：地图与棋盘"),
-        (r"Agent\s*3|任务|长期进度", "Agent 3：任务与长期进度"),
-        (r"Agent\s*4|UI|联调", "Agent 4：UI 与验证"),
         (r"Agent\s*5|测试|质量", "Agent 5：测试与质量保障"),
+        (r"Agent\s*4|UI|联调", "Agent 4：UI 与验证"),
+        (r"Agent\s*3|任务|长期进度", "Agent 3：任务与长期进度"),
+        (r"Agent\s*2|地图|棋盘", "Agent 2：地图与棋盘"),
+        (r"Agent\s*1|骨架|Shared|入口冻结", "Agent 1：边界与骨架"),
     ]
     for bullet in bullets:
         for pattern, label in patterns:
@@ -101,7 +113,7 @@ def latest_iteration_context(doc_root: Path):
     if stage.startswith("当前阶段："):
         stage = stage.replace("当前阶段：", "", 1).strip()
     mainline = "；".join(item[2:] for item in next_steps[:2]) if next_steps else "暂无"
-    start_agent = suggest_agent_start(next_steps)
+    start_agent = extract_prefixed_value(latest, "- 建议起始 Agent：") or suggest_agent_start(next_steps)
     return {
         "stage": stage,
         "mainline": mainline,
@@ -142,6 +154,45 @@ def scan_iteration_docs(doc_root: Path):
             continue
         files.append(path)
     return files
+
+
+def replace_section_bullets(text: str, heading: str, bullets) -> str:
+    heading_line = f"## {heading}"
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() == heading_line:
+            body_start = i + 1
+            while body_start < len(lines) and lines[body_start].strip() == "":
+                body_start += 1
+            body_end = body_start
+            while body_end < len(lines) and not lines[body_end].startswith("## "):
+                body_end += 1
+
+            new_lines = lines[: i + 1] + [""]
+            new_lines.extend(bullets)
+            if body_end < len(lines):
+                new_lines += [""] + lines[body_end:]
+            return "\n".join(new_lines).rstrip() + "\n"
+
+    block = "\n".join(bullets)
+    return text.rstrip() + f"\n\n{heading_line}\n\n{block}\n"
+
+
+def write_project_overview(doc_root: Path):
+    overview_path = doc_root / LONG_DIR_NAME / "项目总览.md"
+    if not overview_path.exists():
+        return
+
+    context = latest_iteration_context(doc_root)
+    bullets = [
+        f"- 当前阶段：{context['stage']}",
+        f"- 当前主线：{context['mainline']}",
+        f"- 当前建议起点：{context['start_agent']}",
+    ]
+
+    text = overview_path.read_text(encoding="utf-8")
+    text = replace_section_bullets(text, "当前阶段", bullets)
+    overview_path.write_text(text, encoding="utf-8")
 
 
 def write_long_index(doc_root: Path):
@@ -369,6 +420,7 @@ def write_iteration_index(doc_root: Path):
 
 
 def sync_indexes(doc_root: Path):
+    write_project_overview(doc_root)
     write_long_index(doc_root)
     write_iteration_index(doc_root)
 
@@ -482,7 +534,9 @@ def insert_under_heading(text: str, heading: str, block: str) -> str:
             while insert_at < len(lines) and lines[insert_at].strip() == "":
                 insert_at += 1
             block_lines = block.rstrip("\n").splitlines()
-            new_lines = lines[:insert_at] + [""] + block_lines + [""] + lines[insert_at:]
+            new_lines = lines[: i + 1] + [""] + block_lines
+            if insert_at < len(lines):
+                new_lines += [""] + lines[insert_at:]
             return "\n".join(new_lines).rstrip() + "\n"
     return text.rstrip() + f"\n\n{heading_line}\n\n{block.rstrip()}\n"
 
