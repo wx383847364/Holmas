@@ -15,22 +15,7 @@
 ```text
 按长期主文档规则执行。每次完成一个任务后都执行文档维护流程。
 ```
-
-## 如果是人手动执行
-
-每次完成一个任务后，直接运行：
-
-```bash
-bash scripts/finalize_task.sh --summary "本轮完成了什么" --done "已完成项" --next "下一步"
-```
-
-这条命令会自动：
-
-- 更新最新迭代记录
-- 刷新 `项目总览.md` 里的当前阶段入口
-- 同步主文档索引
-- 同步迭代记录索引
-- 暂存 `doc/` 下的文档改动
+ 
 
 ## 什么时候新建新的迭代记录
 
@@ -92,6 +77,22 @@ bash scripts/install_git_hooks.sh
 ```bash
 bash scripts/finalize_task.sh --summary "..." --done "..." --next "..."
 ```
+
+4. 如果还要跑不抢主工程锁的 batchmode 验证，就运行：
+
+```bash
+bash scripts/run_holmas_validation.sh
+```
+
+默认会在临时副本里跑 EditMode + smoke，验证通过后自动删除临时工程，失败时保留现场和日志。
+
+5. 如果 Hub 里已经残留历史临时项目记录，先预览清理范围：
+
+```bash
+bash scripts/clean_hub_temp_projects.sh --dry-run
+```
+
+确认输出都只是 `/private/tmp` 或 `/tmp` 下的 Holmas 临时验证副本后，再正式执行清理。
 
 ## Assumptions
 
