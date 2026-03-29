@@ -1,51 +1,27 @@
 using App.Shared.Contracts;
+using App.HotUpdate.Holmas.Bootstrap;
 
 namespace App.HotUpdate.Entry
 {
     /// <summary>
-    /// 热更入口（去业务版）：仅保留跨层启动与基础Tick示例。
+    /// 热更层总入口。
+    /// AOT 会通过反射调用这里的 Start 方法，HotUpdate 再把控制权交给 Holmas 的正式业务骨架。
     /// </summary>
     public static class HotUpdateEntry
     {
-        private static IServiceContainer _serviceContainer;
-        private static IAppLogger _logger;
-        private static ITickManager _tickManager;
-        private static HotUpdateHeartbeat _heartbeat;
-
+        /// <summary>
+        /// 启动热更层。
+        /// 这里保持入口签名稳定，避免影响 AOT 的反射加载逻辑。
+        /// </summary>
         public static void Start(IServiceContainer serviceContainer)
         {
-            _serviceContainer = serviceContainer;
-            _logger = _serviceContainer.Get<IAppLogger>();
-            _tickManager = _serviceContainer.Get<ITickManager>();
+            var logger = serviceContainer?.Get<IAppLogger>();
+            logger?.LogInfo("HotUpdateEntry: 热更层启动，准备进入 Holmas 业务骨架。");
 
-            _logger?.LogInfo("HotUpdateEntry(Core): 热更层启动");
+            // 这轮只先冻结 DTO 与业务骨架入口，不在这里直接实现地图、任务和 UI 细节。
+            HolmasGameBootstrap.Start(serviceContainer);
 
-            // 示例：注册一个轻量Tick对象，验证AOT <-> HotUpdate跨层可用。
-            _heartbeat = new HotUpdateHeartbeat(_logger);
-            _tickManager?.Register(_heartbeat);
-
-            _logger?.LogInfo("HotUpdateEntry(Core): 初始化完成");
-        }
-
-        private sealed class HotUpdateHeartbeat : ITickable
-        {
-            private readonly IAppLogger _logger;
-            private float _elapsed;
-
-            public HotUpdateHeartbeat(IAppLogger logger)
-            {
-                _logger = logger;
-            }
-
-            public void Tick(float deltaTime)
-            {
-                _elapsed += deltaTime;
-                if (_elapsed >= 5f)
-                {
-                    _elapsed = 0f;
-                    _logger?.LogDebug("HotUpdateHeartbeat: tick");
-                }
-            }
+            logger?.LogInfo("HotUpdateEntry: Holmas 业务骨架接线完成。");
         }
     }
 }
