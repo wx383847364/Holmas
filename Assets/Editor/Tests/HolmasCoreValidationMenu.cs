@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
@@ -8,8 +9,8 @@ using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
+using App.HotUpdate.Holmas.Terrain;
 using App.Shared.Contracts;
-using App.Shared.Holmas.RuntimeData;
 using UnityEditor;
 using UnityEngine;
 
@@ -28,28 +29,37 @@ public static class HolmasCoreValidationMenu
             new HolmasDefaultMetaExperienceSource(),
             new HolmasDefaultMetaExperienceSource());
         var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
-        var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger());
+        var terrain = CreateTerrain(1, 1);
+        var assetsRuntime = new FakeAssetsRuntime(terrain);
+        var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+        var context = new HolmasApplicationContext(
+            new FakeServiceContainer(),
+            new NullLogger(),
+            new FakeTickManager(),
+            new FakeEventBus(),
+            assetsRuntime,
+            runtime);
 
         runtime.RefillAvailableTasks(1);
 
-        var template = CreateBoardTemplate(1, 1);
-        var snapshot = new LevelSnapshot
+        var request = new LevelGenerationRequest
         {
             MapId = "validation-map",
-            TerrainPath = "validation://terrain",
+            TerrainPath = HolmasTerrainAssetPathUtility.BuildAssetPath("validation-map"),
             Seed = 1,
-            SpawnedCats = new List<SpawnedCatData>
+            CatCountMin = 1,
+            CatCountMax = 1,
+            CatPool = new[]
             {
-                new SpawnedCatData
+                new BoardSpawnEntry
                 {
                     CatId = "cat-a",
-                    CellIndex = 0,
+                    Weight = 1,
                 }
-            },
-            RevealedCells = new bool[1],
+            }
         };
 
-        runtime.StartLevel(template, snapshot);
+        context.StartLevelAsync(request).GetAwaiter().GetResult();
         var reveal = runtime.RevealCell(0, out HolmasProgressionAdvanceResult progressionResult);
         var claim = runtime.ClaimTaskReward(0, 1);
 
@@ -108,23 +118,82 @@ public static class HolmasCoreValidationMenu
             });
     }
 
-    private static BoardTemplate CreateBoardTemplate(int rows, int cols)
+    private static UnityEngine.Object CreateTerrain(int rows, int cols)
     {
-        var validMask = new bool[rows * cols];
-        var blockColors = new Color32[rows * cols];
-        for (int i = 0; i < validMask.Length; i++)
+        var terrain = ResolveTerrainType<ScriptableObject>("MinesweeperTerrainData");
+        if (terrain == null)
         {
-            validMask[i] = true;
-            blockColors[i] = new Color32(180, 180, 180, 255);
+            throw new InvalidOperationException("MinesweeperTerrainData was not found or could not be instantiated.");
         }
 
-        return new BoardTemplate
+        InvokeVoid(terrain, "Resize", rows, cols);
+        for (int row = 0; row < rows; row++)
         {
-            Rows = rows,
-            Cols = cols,
-            ValidMask = validMask,
-            BlockColors = blockColors,
-        };
+            for (int col = 0; col < cols; col++)
+            {
+                InvokeVoid(terrain, "SetValid", row, col, true);
+                InvokeVoid(terrain, "SetColor", row, col, new Color32(180, 180, 180, 255));
+            }
+        }
+
+        return terrain;
+    }
+
+    private static T ResolveTerrainType<T>(string simpleName) where T : class
+    {
+        var type = AppDomain.CurrentDomain
+            .GetAssemblies()
+            .SelectMany(GetTypesSafe)
+            .FirstOrDefault(candidate => string.Equals(candidate.Name, simpleName, StringComparison.Ordinal));
+
+        if (type == null)
+        {
+            throw new InvalidOperationException($"Could not resolve type '{simpleName}' from loaded assemblies.");
+        }
+
+        return ScriptableObject.CreateInstance(type) as T;
+    }
+
+    private static void InvokeVoid(object target, string methodName, params object[] arguments)
+    {
+        var method = target.GetType().GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+        if (method == null)
+        {
+            throw new InvalidOperationException($"Could not find method '{methodName}' on '{target.GetType().FullName}'.");
+        }
+
+        method.Invoke(target, arguments);
+    }
+
+    private static IEnumerable<Type> GetTypesSafe(System.Reflection.Assembly assembly)
+    {
+        if (assembly == null)
+        {
+            yield break;
+        }
+
+        Type[] types;
+        try
+        {
+            types = assembly.GetTypes();
+        }
+        catch (System.Reflection.ReflectionTypeLoadException ex)
+        {
+            types = ex.Types;
+        }
+
+        if (types == null)
+        {
+            yield break;
+        }
+
+        foreach (var type in types)
+        {
+            if (type != null)
+            {
+                yield return type;
+            }
+        }
     }
 
     private sealed class ScriptedRandomSource : IHolmasRandomSource
@@ -163,6 +232,92 @@ public static class HolmasCoreValidationMenu
     private sealed class FixedUtcClock : IHolmasUtcClock
     {
         public long UtcNowMilliseconds { get; set; }
+    }
+
+    private sealed class FakeAssetsRuntime : IAssetsRuntime
+    {
+        private readonly UnityEngine.Object _asset;
+
+        public FakeAssetsRuntime(UnityEngine.Object asset)
+        {
+            _asset = asset;
+        }
+
+        public System.Threading.Tasks.Task InitializeAsync()
+        {
+            return System.Threading.Tasks.Task.CompletedTask;
+        }
+
+        public System.Threading.Tasks.Task<bool> RunPatchFlowAsync(string packageVersion = null)
+        {
+            return System.Threading.Tasks.Task.FromResult(true);
+        }
+
+        public System.Threading.Tasks.Task<IAssetHandle> LoadAssetAsync(string location)
+        {
+            return System.Threading.Tasks.Task.FromResult<IAssetHandle>(new FakeAssetHandle(_asset));
+        }
+
+        public void Shutdown()
+        {
+        }
+    }
+
+    private sealed class FakeAssetHandle : IAssetHandle
+    {
+        public FakeAssetHandle(UnityEngine.Object asset)
+        {
+            AssetObject = asset;
+        }
+
+        public UnityEngine.Object AssetObject { get; }
+
+        public void Release()
+        {
+        }
+    }
+
+    private sealed class FakeServiceContainer : IServiceContainer
+    {
+        public void RegisterSingleton<T>(T instance) where T : class
+        {
+        }
+
+        public T Get<T>() where T : class
+        {
+            return null;
+        }
+
+        public bool IsRegistered<T>()
+        {
+            return false;
+        }
+    }
+
+    private sealed class FakeTickManager : ITickManager
+    {
+        public void Register(ITickable tickable)
+        {
+        }
+
+        public void Unregister(ITickable tickable)
+        {
+        }
+    }
+
+    private sealed class FakeEventBus : IEventBus
+    {
+        public void Subscribe<T>(Action<T> handler) where T : class
+        {
+        }
+
+        public void Unsubscribe<T>(Action<T> handler) where T : class
+        {
+        }
+
+        public void Publish<T>(T eventData) where T : class
+        {
+        }
     }
 
     private sealed class NullLogger : IAppLogger
