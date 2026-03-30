@@ -1,3 +1,6 @@
+using System.Threading.Tasks;
+using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.Levels;
 using App.Shared.Contracts;
 
 namespace App.HotUpdate.Holmas.Application
@@ -63,5 +66,24 @@ namespace App.HotUpdate.Holmas.Application
         /// 在不接 UI 的前提下，外层也可以通过它驱动关卡、任务和长期进度。
         /// </summary>
         public HolmasGameplayRuntime GameplayRuntime { get; }
+
+        /// <summary>
+        /// 按 TerrainPath 启动一局地图。
+        /// 组合层先通过正式资源入口加载地形，再交给 HotUpdate 业务逻辑生成运行时棋盘。
+        /// </summary>
+        public Task<BoardRuntime> StartLevelAsync(LevelGenerationRequest request)
+        {
+            if (AssetsRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 IAssetsRuntime。");
+            }
+
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.StartLevelAsync(request);
+        }
     }
 }

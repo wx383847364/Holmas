@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
+using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using UnityEngine;
 
@@ -217,6 +219,33 @@ namespace App.HotUpdate.Holmas.Terrain
             return BuildAssetPath(normalized);
         }
 
+        public static string ResolveTerrainLoadLocation(string terrainPath)
+        {
+            if (string.IsNullOrWhiteSpace(terrainPath))
+            {
+                return string.Empty;
+            }
+
+            string normalized = terrainPath.Replace('\\', '/').Trim();
+            if (HasCustomScheme(normalized))
+            {
+                return string.Empty;
+            }
+
+            if (normalized.StartsWith($"{HotUpdateTerrainDirectory}/", StringComparison.OrdinalIgnoreCase))
+            {
+                return EnsureAssetExtension(normalized);
+            }
+
+            if (normalized.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                string fileName = Path.GetFileName(normalized);
+                return BuildAssetPath(fileName);
+            }
+
+            return BuildAssetPath(normalized);
+        }
+
         private static string NormalizeFileName(string terrainName)
         {
             if (string.IsNullOrWhiteSpace(terrainName))
@@ -243,6 +272,58 @@ namespace App.HotUpdate.Holmas.Terrain
         {
             int schemeIndex = value.IndexOf("://", StringComparison.Ordinal);
             return schemeIndex > 0;
+        }
+    }
+
+    /// <summary>
+    /// 地形资源加载器。
+    /// 负责把归一化后的 TerrainPath 转成可加载 location，再把加载结果交给棋盘模板转换器。
+    /// </summary>
+    public static class HolmasTerrainAssetLoader
+    {
+        public static string ResolveTerrainLoadLocation(string terrainPath)
+        {
+            return HolmasTerrainAssetPathUtility.ResolveTerrainLoadLocation(terrainPath);
+        }
+
+        public static async Task<UnityEngine.Object> LoadTerrainAssetAsync(IAssetsRuntime assetsRuntime, string terrainPath)
+        {
+            if (assetsRuntime == null)
+            {
+                throw new ArgumentNullException(nameof(assetsRuntime));
+            }
+
+            string location = ResolveTerrainLoadLocation(terrainPath);
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                throw new InvalidOperationException($"Terrain path '{terrainPath}' cannot be resolved to a load location.");
+            }
+
+            IAssetHandle handle = await assetsRuntime.LoadAssetAsync(location);
+            if (handle == null)
+            {
+                throw new InvalidOperationException($"Terrain asset '{location}' could not be loaded.");
+            }
+
+            try
+            {
+                if (handle.AssetObject == null)
+                {
+                    throw new InvalidOperationException($"Terrain asset '{location}' could not be loaded.");
+                }
+
+                return handle.AssetObject;
+            }
+            finally
+            {
+                handle.Release();
+            }
+        }
+
+        public static async Task<BoardTemplate> LoadBoardTemplateAsync(IAssetsRuntime assetsRuntime, string terrainPath)
+        {
+            UnityEngine.Object terrainAsset = await LoadTerrainAssetAsync(assetsRuntime, terrainPath);
+            return TerrainBoardTemplateConverter.Convert(terrainAsset);
         }
     }
 }

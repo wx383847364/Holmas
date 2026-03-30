@@ -4,6 +4,7 @@ set -euo pipefail
 
 DRY_RUN=0
 FORCE_WHEN_HUB_RUNNING=0
+SKIP_HUB_RECORD_CLEANUP=0
 
 usage() {
     cat <<'EOF'
@@ -14,7 +15,7 @@ usage() {
   - 只清理 Holmas 验证过程在 /private/tmp 或 /tmp 下留下的临时工程目录
   - 不会处理 /Users/.../work 下的当前项目或任何非 tmp 正式工程
   - 尝试从 Unity Hub / 团结 Hub 的可编辑 JSON 配置中移除对应的临时项目记录
-  - 默认要求先关闭 Hub，避免进程把旧缓存重新写回
+  - 如果 Hub 正在运行，仍会继续删除 /tmp 下的临时工程目录，但会跳过 Hub 记录清理
   - 建议先用 --dry-run 预览，再正式执行
 EOF
 }
@@ -62,9 +63,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 if is_hub_running && [[ "${FORCE_WHEN_HUB_RUNNING}" -ne 1 ]]; then
-    warn "检测到 Unity Hub 或 团结 Hub 仍在运行。请先关闭 Hub，再执行清理。"
-    warn "如果你明确要强制执行，可追加 --force-when-hub-running。"
-    exit 1
+    warn "检测到 Unity Hub 或 团结 Hub 仍在运行。将继续删除 /tmp 下的临时工程目录，但跳过 Hub 记录清理。"
+    warn "如果你明确要在 Hub 运行时也强制改 Hub 记录，可追加 --force-when-hub-running。"
+    SKIP_HUB_RECORD_CLEANUP=1
 fi
 
 TMP_ROOT="/private/tmp"
@@ -129,6 +130,11 @@ else
             warn "跳过非临时或不受信任路径：${path}"
         fi
     done
+fi
+
+if [[ "${SKIP_HUB_RECORD_CLEANUP}" -eq 1 ]]; then
+    warn "已跳过 Hub 记录清理；如需清理最近项目记录，请先关闭 Hub 后再执行一次脚本。"
+    exit 0
 fi
 
 export HUB_CLEANUP_DRY_RUN="${DRY_RUN}"

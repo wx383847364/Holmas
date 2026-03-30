@@ -87,6 +87,17 @@ namespace Holmas.Tests
             Assert.That(actual, Is.EqualTo(expected));
         }
 
+        [TestCase("1", "Assets/HotUpdateContent/Res/1.asset")]
+        [TestCase("Assets/1.asset", "Assets/HotUpdateContent/Res/1.asset")]
+        [TestCase("Assets/HotUpdateContent/Res/3", "Assets/HotUpdateContent/Res/3.asset")]
+        [TestCase("terrain://map-1", "")]
+        public void HolmasTerrainAssetPathUtility_ResolvesTerrainLoadLocation(string input, string expected)
+        {
+            string actual = HolmasTerrainAssetPathUtility.ResolveTerrainLoadLocation(input);
+
+            Assert.That(actual, Is.EqualTo(expected));
+        }
+
         [Test]
         public void TerrainBoardTemplateConverter_InvalidTerrainTemplate_Throws()
         {

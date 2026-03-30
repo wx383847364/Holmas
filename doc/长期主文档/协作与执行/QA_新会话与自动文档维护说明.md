@@ -78,6 +78,8 @@ bash scripts/install_git_hooks.sh
 bash scripts/finalize_task.sh --summary "..." --done "..." --next "..."
 ```
 
+这条命令现在会在文档收尾后，自动尝试清理 `/tmp` 或 `/private/tmp` 下历史遗留的 Holmas 临时验证工程；如果 Hub 正在运行，仍会先删临时目录，只跳过 Hub 最近项目记录清理。
+
 4. 如果还要跑不抢主工程锁的 batchmode 验证，就运行：
 
 ```bash
@@ -86,7 +88,7 @@ bash scripts/run_holmas_validation.sh
 
 默认会在临时副本里跑 EditMode + smoke，验证通过后自动删除临时工程，失败时保留现场和日志。
 
-5. 如果 Hub 里已经残留历史临时项目记录，先预览清理范围：
+5. 如果你只想单独预览或手动清理历史临时项目记录，先预览清理范围：
 
 ```bash
 bash scripts/clean_hub_temp_projects.sh --dry-run

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.Terrain;
+using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using UnityEngine;
 
@@ -17,6 +18,20 @@ namespace App.HotUpdate.Holmas.Levels
         public static LevelSnapshot CreateFromTerrain(UnityEngine.Object terrainAsset, LevelGenerationRequest request)
         {
             BoardTemplate template = TerrainBoardTemplateConverter.Convert(terrainAsset);
+            return Create(template, request);
+        }
+
+        /// <summary>
+        /// 先通过资源服务加载地形，再把地形转换成模板并生成运行时快照。
+        /// </summary>
+        public static async System.Threading.Tasks.Task<LevelSnapshot> CreateFromTerrainAsync(IAssetsRuntime assetsRuntime, LevelGenerationRequest request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            BoardTemplate template = await HolmasTerrainAssetLoader.LoadBoardTemplateAsync(assetsRuntime, request.TerrainPath);
             return Create(template, request);
         }
 

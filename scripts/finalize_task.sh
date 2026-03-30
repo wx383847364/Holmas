@@ -16,17 +16,21 @@ SUMMARY=""
 DONE_ITEMS=()
 RISK_ITEMS=()
 NEXT_ITEMS=()
+SKIP_TEMP_CLEANUP=0
 
 usage() {
     cat <<'EOF'
 用法：
   scripts/finalize_task.sh --summary "本轮摘要" [--done "完成项"] [--risk "风险项"] [--next "下一步"]
   scripts/finalize_task.sh --file "doc/迭代记录/迭代记录_YYYYMMDD_001.md" --summary "本轮摘要"
+  scripts/finalize_task.sh --summary "本轮摘要" --skip-temp-cleanup
 
 说明：
   - 默认写入最新一轮迭代记录
   - 会自动同步主文档索引和迭代记录索引
   - 如果当前目录在 Git 仓库中，会自动暂存 doc/ 下被本次更新影响的文件
+  - 默认会在收尾末尾自动尝试清理 /tmp 或 /private/tmp 下的 Holmas 临时验证工程
+  - 如果 Hub 正在运行或清理失败，只会给出提示，不会中断文档收尾
 EOF
 }
 
@@ -56,6 +60,10 @@ while [[ $# -gt 0 ]]; do
         --next)
             NEXT_ITEMS+=("${2:-}")
             shift 2
+            ;;
+        --skip-temp-cleanup)
+            SKIP_TEMP_CLEANUP=1
+            shift
             ;;
         -h|--help)
             usage
@@ -124,6 +132,16 @@ python3 "${REPO_ROOT}/scripts/update_project_docs.py" --doc-root "${DOC_ROOT}" s
 if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "[info] 暂存文档改动..."
     git -C "${REPO_ROOT}" add doc
+fi
+
+if [[ "${SKIP_TEMP_CLEANUP}" -ne 1 ]]; then
+    CLEAN_SCRIPT="${REPO_ROOT}/scripts/clean_hub_temp_projects.sh"
+    if [[ -f "${CLEAN_SCRIPT}" ]]; then
+        echo "[info] 自动清理历史临时验证工程..."
+        if ! bash "${CLEAN_SCRIPT}"; then
+            echo "[warn] 临时验证工程自动清理未完成，请按提示决定是否手动执行 scripts/clean_hub_temp_projects.sh。" >&2
+        fi
+    fi
 fi
 
 echo "[ok] 文档维护流程已执行完成。"

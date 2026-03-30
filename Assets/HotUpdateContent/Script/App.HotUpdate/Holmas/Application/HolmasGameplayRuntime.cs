@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Meta;
@@ -22,6 +23,7 @@ namespace App.HotUpdate.Holmas.Application
         private readonly HolmasMetaProgressionService _metaProgressionService;
         private readonly HolmasProgressionCoordinator _progressionCoordinator;
         private readonly IAppLogger _logger;
+        private readonly IAssetsRuntime _assetsRuntime;
         private bool _currentLevelCompletionApplied;
 
         public HolmasGameplayRuntime(
@@ -29,11 +31,22 @@ namespace App.HotUpdate.Holmas.Application
             HolmasMetaProgressionService metaProgressionService,
             HolmasProgressionCoordinator progressionCoordinator,
             IAppLogger logger)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, logger, null)
+        {
+        }
+
+        public HolmasGameplayRuntime(
+            HolmasTaskProgressService taskProgressService,
+            HolmasMetaProgressionService metaProgressionService,
+            HolmasProgressionCoordinator progressionCoordinator,
+            IAppLogger logger,
+            IAssetsRuntime assetsRuntime)
         {
             _taskProgressService = taskProgressService ?? throw new ArgumentNullException(nameof(taskProgressService));
             _metaProgressionService = metaProgressionService ?? throw new ArgumentNullException(nameof(metaProgressionService));
             _progressionCoordinator = progressionCoordinator ?? throw new ArgumentNullException(nameof(progressionCoordinator));
             _logger = logger;
+            _assetsRuntime = assetsRuntime;
 
             TaskBarState = _taskProgressService.CreateDefaultTaskBarState();
             MetaProgressionState = _metaProgressionService.CreateState();
@@ -117,6 +130,50 @@ namespace App.HotUpdate.Holmas.Application
             _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已基于现有模板与快照恢复关卡，地图={0}。", CurrentLevelSnapshot.MapId);
             return CurrentBoardRuntime;
+        }
+
+        /// <summary>
+        /// 按关卡请求中的 TerrainPath 先从正式资源入口加载地形，再启动一局新关卡。
+        /// </summary>
+        public async Task<BoardRuntime> StartLevelAsync(LevelGenerationRequest request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            if (_assetsRuntime == null)
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前实例没有接入 IAssetsRuntime，无法按 TerrainPath 启动地图。");
+            }
+
+            string terrainLocation = HolmasTerrainAssetPathUtility.NormalizeStoredTerrainPath(request.TerrainPath);
+            if (string.IsNullOrWhiteSpace(terrainLocation))
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 关卡请求缺少可加载的 TerrainPath。");
+            }
+
+            Task<IAssetHandle> terrainLoadTask = _assetsRuntime.LoadAssetAsync(terrainLocation);
+            if (terrainLoadTask == null)
+            {
+                throw new InvalidOperationException($"HolmasGameplayRuntime: 资源入口返回了空的加载任务 '{terrainLocation}'。");
+            }
+
+            IAssetHandle terrainHandle = await terrainLoadTask;
+            if (terrainHandle == null || terrainHandle.AssetObject == null)
+            {
+                throw new InvalidOperationException($"HolmasGameplayRuntime: 无法从资源入口加载地形 '{terrainLocation}'。");
+            }
+
+            try
+            {
+                _logger?.LogInfo("HolmasGameplayRuntime: 正在按 TerrainPath {0} 启动地图 {1}。", terrainLocation, request.MapId);
+                return StartLevel(terrainHandle.AssetObject, request);
+            }
+            finally
+            {
+                terrainHandle.Release();
+            }
         }
 
         /// <summary>

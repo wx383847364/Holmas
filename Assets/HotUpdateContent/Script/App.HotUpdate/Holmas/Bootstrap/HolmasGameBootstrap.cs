@@ -48,7 +48,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 throw new InvalidOperationException("HolmasGameBootstrap: 启动失败，AOT 提供的基础设施依赖不完整。");
             }
 
-            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger);
+            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime);
             serviceContainer.RegisterSingleton(gameplayRuntime);
 
             // 这轮先把已确认的共享依赖收敛到统一上下文，给后续地图线和任务线提供稳定挂接点。
@@ -64,7 +64,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
             Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动，运行时编排入口已就位。");
         }
 
-        private static HolmasGameplayRuntime CreateGameplayRuntime(IAppLogger logger)
+        private static HolmasGameplayRuntime CreateGameplayRuntime(IAppLogger logger, IAssetsRuntime assetsRuntime)
         {
             var taskCatalog = new HolmasTaskCatalog();
             var metaCatalog = new HolmasMetaCatalog(new[]
@@ -86,7 +86,8 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 taskProgressService,
                 metaProgressionService,
                 progressionCoordinator,
-                logger);
+                logger,
+                assetsRuntime);
         }
     }
 }
