@@ -10,6 +10,7 @@ using App.HotUpdate.Holmas.Tasks.Services;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using UnityEngine;
+using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
 namespace App.HotUpdate.Holmas.Application
 {
@@ -147,7 +148,7 @@ namespace App.HotUpdate.Holmas.Application
                 throw new InvalidOperationException("HolmasGameplayRuntime: 当前实例没有接入 IAssetsRuntime，无法按 TerrainPath 启动地图。");
             }
 
-            string terrainLocation = HolmasTerrainAssetPathUtility.NormalizeStoredTerrainPath(request.TerrainPath);
+            string terrainLocation = TerrainAssetPathUtility.NormalizeStoredTerrainPath(request.TerrainPath);
             if (string.IsNullOrWhiteSpace(terrainLocation))
             {
                 throw new InvalidOperationException("HolmasGameplayRuntime: 关卡请求缺少可加载的 TerrainPath。");

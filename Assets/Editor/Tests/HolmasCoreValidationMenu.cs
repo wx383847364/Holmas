@@ -13,6 +13,7 @@ using App.HotUpdate.Holmas.Terrain;
 using App.Shared.Contracts;
 using UnityEditor;
 using UnityEngine;
+using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
 public static class HolmasCoreValidationMenu
 {
@@ -39,27 +40,32 @@ public static class HolmasCoreValidationMenu
             new FakeEventBus(),
             assetsRuntime,
             runtime);
+        var mapCatalog = new HolmasMapCatalog(
+            new[]
+            {
+                new HolmasMapDefinition
+                {
+                    MapId = "map-1",
+                    TerrainPath = "validation-map",
+                    CatCountMin = 1,
+                    CatCountMax = 1,
+                }
+            });
+        var gateway = new HolmasLevelLaunchGateway(context, new HolmasLevelRequestGenerator(catalog, mapCatalog, new ScriptedRandomSource(0)));
 
         runtime.RefillAvailableTasks(1);
 
-        var request = new LevelGenerationRequest
-        {
-            MapId = "validation-map",
-            TerrainPath = HolmasTerrainAssetPathUtility.BuildAssetPath("validation-map"),
-            Seed = 1,
-            CatCountMin = 1,
-            CatCountMax = 1,
-            CatPool = new[]
+        gateway.StartLevelForPlayerAsync(
+            1,
+            1,
+            new[]
             {
                 new BoardSpawnEntry
                 {
                     CatId = "cat-a",
                     Weight = 1,
                 }
-            }
-        };
-
-        context.StartLevelAsync(request).GetAwaiter().GetResult();
+            }).GetAwaiter().GetResult();
         var reveal = runtime.RevealCell(0, out HolmasProgressionAdvanceResult progressionResult);
         var claim = runtime.ClaimTaskReward(0, 1);
 

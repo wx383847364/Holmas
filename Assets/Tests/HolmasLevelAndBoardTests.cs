@@ -2,10 +2,13 @@ using System.Collections.Generic;
 using System.Linq;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
+using App.HotUpdate.Holmas.Progression;
+using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Terrain;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
 using UnityEngine;
+using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
 namespace Holmas.Tests
 {
@@ -76,13 +79,170 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasLevelRequestGenerator_SelectsMapAndBuildsStableRequest()
+        {
+            var taskCatalog = new HolmasTaskCatalog();
+            taskCatalog.SetPlayerLevels(new[]
+            {
+                new HolmasPlayerLevelDefinition
+                {
+                    PlayerLevel = 1,
+                    UpgradeExp = 0,
+                    TaskTypeIds = new[] { "task-normal" },
+                    TaskTypeWeights = new[] { 1 },
+                    MapIds = new[] { "map-a", "map-b" },
+                    MapWeights = new[] { 1, 3 },
+                }
+            });
+            var mapCatalog = new HolmasMapCatalog(
+                new[]
+                {
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-a",
+                        TerrainPath = "Assets/1.asset",
+                        CatCountMin = 1,
+                        CatCountMax = 2,
+                    },
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-b",
+                        TerrainPath = "2",
+                        CatCountMin = 3,
+                        CatCountMax = 4,
+                    }
+                });
+            var generator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource(1));
+
+            HolmasLevelRequestGenerationResult result = generator.TryGenerateForPlayerLevel(
+                1,
+                99,
+                new[]
+                {
+                    new BoardSpawnEntry { CatId = "cat-a", Weight = 2 },
+                    new BoardSpawnEntry { CatId = "cat-b", Weight = 1 },
+                });
+
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.SelectedMapId, Is.EqualTo("map-b"));
+            Assert.That(result.Request.MapId, Is.EqualTo("map-b"));
+            Assert.That(result.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/2.asset"));
+            Assert.That(result.Request.CatCountMin, Is.EqualTo(3));
+            Assert.That(result.Request.CatCountMax, Is.EqualTo(4));
+            Assert.That(result.Request.CatPool, Has.Count.EqualTo(2));
+        }
+
+        [Test]
+        public void HolmasLevelRequestGenerator_RejectsMissingTerrainPath()
+        {
+            var taskCatalog = new HolmasTaskCatalog();
+            taskCatalog.SetPlayerLevels(new[]
+            {
+                new HolmasPlayerLevelDefinition
+                {
+                    PlayerLevel = 1,
+                    UpgradeExp = 0,
+                    TaskTypeIds = new[] { "task-normal" },
+                    TaskTypeWeights = new[] { 1 },
+                    MapIds = new[] { "map-a" },
+                    MapWeights = new[] { 1 },
+                }
+            });
+            var mapCatalog = new HolmasMapCatalog(
+                new[]
+                {
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-a",
+                        TerrainPath = string.Empty,
+                        CatCountMin = 1,
+                        CatCountMax = 2,
+                    }
+                });
+            var generator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource(0));
+
+            HolmasLevelRequestGenerationResult result = generator.TryGenerateForPlayerLevel(1, 99);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("TerrainPath"));
+        }
+
+        [Test]
+        public void HolmasLevelRequestGenerator_RejectsMissingMapId()
+        {
+            var taskCatalog = new HolmasTaskCatalog();
+            taskCatalog.SetPlayerLevels(new[]
+            {
+                new HolmasPlayerLevelDefinition
+                {
+                    PlayerLevel = 2,
+                    UpgradeExp = 0,
+                    TaskTypeIds = new[] { "task-normal" },
+                    TaskTypeWeights = new[] { 1 },
+                    MapIds = new[] { "missing-map" },
+                    MapWeights = new[] { 1 },
+                }
+            });
+            var mapCatalog = new HolmasMapCatalog(
+                new[]
+                {
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-known",
+                        TerrainPath = "1",
+                        CatCountMin = 1,
+                        CatCountMax = 2,
+                    }
+                });
+            var generator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource(0));
+            HolmasLevelRequestGenerationResult result = generator.TryGenerateForPlayerLevel(2, 123);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("找不到地图配置"));
+        }
+
+        [Test]
+        public void HolmasLevelRequestGenerator_RejectsNoLegalMap()
+        {
+            var taskCatalog = new HolmasTaskCatalog();
+            taskCatalog.SetPlayerLevels(new[]
+            {
+                new HolmasPlayerLevelDefinition
+                {
+                    PlayerLevel = 3,
+                    UpgradeExp = 0,
+                    TaskTypeIds = new[] { "task-normal" },
+                    TaskTypeWeights = new[] { 1 },
+                    MapIds = new[] { "map-a" },
+                    MapWeights = new[] { 0 },
+                }
+            });
+            var mapCatalog = new HolmasMapCatalog(
+                new[]
+                {
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-a",
+                        TerrainPath = "1",
+                        CatCountMin = 1,
+                        CatCountMax = 2,
+                    }
+                });
+            var generator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource(0));
+            HolmasLevelRequestGenerationResult result = generator.TryGenerateForPlayerLevel(3, 456);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("没有合法地图"));
+        }
+
+        [Test]
         [TestCase("Assets/1.asset", "Assets/HotUpdateContent/Res/1.asset")]
         [TestCase("1", "Assets/HotUpdateContent/Res/1.asset")]
         [TestCase("2.asset", "Assets/HotUpdateContent/Res/2.asset")]
         [TestCase("terrain://map-1", "terrain://map-1")]
         public void HolmasTerrainAssetPathUtility_NormalizesTerrainPath(string input, string expected)
         {
-            string actual = HolmasTerrainAssetPathUtility.NormalizeStoredTerrainPath(input);
+            string actual = TerrainAssetPathUtility.NormalizeStoredTerrainPath(input);
 
             Assert.That(actual, Is.EqualTo(expected));
         }
@@ -93,7 +253,7 @@ namespace Holmas.Tests
         [TestCase("terrain://map-1", "")]
         public void HolmasTerrainAssetPathUtility_ResolvesTerrainLoadLocation(string input, string expected)
         {
-            string actual = HolmasTerrainAssetPathUtility.ResolveTerrainLoadLocation(input);
+            string actual = TerrainAssetPathUtility.ResolveTerrainLoadLocation(input);
 
             Assert.That(actual, Is.EqualTo(expected));
         }
@@ -103,7 +263,7 @@ namespace Holmas.Tests
         {
             var invalidTerrain = ScriptableObject.CreateInstance<InvalidTerrainDimensionsAsset>();
 
-            var ex = Assert.Throws<System.InvalidOperationException>(() => TerrainBoardTemplateConverter.Convert(invalidTerrain));
+            var ex = Assert.Throws<System.InvalidOperationException>(() => App.HotUpdate.Holmas.Terrain.TerrainBoardTemplateConverter.Convert(invalidTerrain));
 
             Assert.That(ex.Message, Does.Contain("invalid dimensions"));
         }
@@ -113,7 +273,7 @@ namespace Holmas.Tests
         {
             var invalidTerrain = ScriptableObject.CreateInstance<InvalidTerrainDimensionsAsset>();
 
-            bool success = TerrainBoardTemplateConverter.TryConvert(invalidTerrain, out BoardTemplate template);
+            bool success = App.HotUpdate.Holmas.Terrain.TerrainBoardTemplateConverter.TryConvert(invalidTerrain, out BoardTemplate template);
 
             Assert.That(success, Is.False);
             Assert.That(template, Is.Null);

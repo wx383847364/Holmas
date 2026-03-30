@@ -5,6 +5,7 @@ using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Progression;
+using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Terrain;
@@ -12,6 +13,7 @@ using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
 using UnityEngine;
+using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
 namespace Holmas.Tests
 {
@@ -37,7 +39,7 @@ namespace Holmas.Tests
 
             var request = HolmasTestSupport.CreateRequest(
                 "map-1",
-                HolmasTerrainAssetPathUtility.BuildAssetPath("1"),
+                TerrainAssetPathUtility.BuildAssetPath("1"),
                 1,
                 1,
                 1,
@@ -84,7 +86,7 @@ namespace Holmas.Tests
 
             var request = HolmasTestSupport.CreateRequest(
                 "map-2",
-                HolmasTerrainAssetPathUtility.BuildAssetPath("2"),
+                TerrainAssetPathUtility.BuildAssetPath("2"),
                 1,
                 1,
                 1,
@@ -117,7 +119,7 @@ namespace Holmas.Tests
 
             var request = HolmasTestSupport.CreateRequest(
                 "map-repeat",
-                HolmasTerrainAssetPathUtility.BuildAssetPath("3"),
+                TerrainAssetPathUtility.BuildAssetPath("3"),
                 1,
                 1,
                 1,
@@ -163,7 +165,7 @@ namespace Holmas.Tests
                 runtime);
             var request = HolmasTestSupport.CreateRequest(
                 "map-async",
-                HolmasTerrainAssetPathUtility.BuildAssetPath("1"),
+                TerrainAssetPathUtility.BuildAssetPath("1"),
                 1,
                 1,
                 1,
@@ -171,11 +173,100 @@ namespace Holmas.Tests
 
             BoardRuntime boardRuntime = context.StartLevelAsync(request).GetAwaiter().GetResult();
 
-            Assert.That(assetsRuntime.LastRequestedLocation, Is.EqualTo(HolmasTerrainAssetPathUtility.BuildAssetPath("1")));
+            Assert.That(assetsRuntime.LastRequestedLocation, Is.EqualTo(TerrainAssetPathUtility.BuildAssetPath("1")));
             Assert.That(assetsRuntime.LastHandle.ReleaseCount, Is.EqualTo(1));
             Assert.That(boardRuntime.TotalCatCount, Is.EqualTo(1));
-            Assert.That(runtime.CurrentLevelSnapshot.TerrainPath, Is.EqualTo(HolmasTerrainAssetPathUtility.BuildAssetPath("1")));
+            Assert.That(runtime.CurrentLevelSnapshot.TerrainPath, Is.EqualTo(TerrainAssetPathUtility.BuildAssetPath("1")));
             Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo("map-async"));
+        }
+
+        [Test]
+        public void HolmasLevelLaunchGateway_StartLevelAsync_DelegatesToApplicationContext()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 1);
+            var assetsRuntime = new FakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            var context = new HolmasApplicationContext(
+                new FakeServiceContainer(),
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                assetsRuntime,
+                runtime);
+            var gateway = new HolmasLevelLaunchGateway(context);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-gateway",
+                TerrainAssetPathUtility.BuildAssetPath("1"),
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            BoardRuntime boardRuntime = gateway.StartLevelAsync(request).GetAwaiter().GetResult();
+
+            Assert.That(assetsRuntime.LastRequestedLocation, Is.EqualTo(TerrainAssetPathUtility.BuildAssetPath("1")));
+            Assert.That(assetsRuntime.LastHandle.ReleaseCount, Is.EqualTo(1));
+            Assert.That(boardRuntime.TotalCatCount, Is.EqualTo(1));
+            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo("map-gateway"));
+        }
+
+        [Test]
+        public void HolmasLevelLaunchGateway_StartLevelForPlayerAsync_GeneratesRequestAndLaunchesMap()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var mapCatalog = new HolmasMapCatalog(
+                new[]
+                {
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-1",
+                        TerrainPath = "2",
+                        CatCountMin = 1,
+                        CatCountMax = 2,
+                    }
+                });
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 2);
+            var assetsRuntime = new FakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            var context = new HolmasApplicationContext(
+                new FakeServiceContainer(),
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                assetsRuntime,
+                runtime);
+            var requestGenerator = new HolmasLevelRequestGenerator(catalog, mapCatalog, new ScriptedRandomSource(0));
+            var gateway = new HolmasLevelLaunchGateway(context, requestGenerator);
+
+            BoardRuntime boardRuntime = gateway.StartLevelForPlayerAsync(
+                1,
+                11,
+                new[]
+                {
+                    new BoardSpawnEntry { CatId = "cat-a", Weight = 1 },
+                }).GetAwaiter().GetResult();
+
+            Assert.That(assetsRuntime.LastRequestedLocation, Is.EqualTo(TerrainAssetPathUtility.BuildAssetPath("2")));
+            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo("map-1"));
+            Assert.That(runtime.CurrentLevelSnapshot.Seed, Is.EqualTo(11));
+            Assert.That(boardRuntime.TotalCatCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -193,7 +284,7 @@ namespace Holmas.Tests
             var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger());
             var request = HolmasTestSupport.CreateRequest(
                 "map-missing-loader",
-                HolmasTerrainAssetPathUtility.BuildAssetPath("1"),
+                TerrainAssetPathUtility.BuildAssetPath("1"),
                 1,
                 1,
                 1,
@@ -247,7 +338,7 @@ namespace Holmas.Tests
             var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
             var request = HolmasTestSupport.CreateRequest(
                 "map-missing-asset",
-                HolmasTerrainAssetPathUtility.BuildAssetPath("missing"),
+                TerrainAssetPathUtility.BuildAssetPath("missing"),
                 1,
                 1,
                 1,
@@ -275,7 +366,7 @@ namespace Holmas.Tests
             var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
             var request = HolmasTestSupport.CreateRequest(
                 "map-invalid-type",
-                HolmasTerrainAssetPathUtility.BuildAssetPath("invalid"),
+                TerrainAssetPathUtility.BuildAssetPath("invalid"),
                 1,
                 1,
                 1,

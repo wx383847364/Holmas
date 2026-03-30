@@ -1,0 +1,3 @@
+玩家等级,需要升级的经验,任务id组,任务id组中任务出现权重,地图id数组,地图id权重数组
+playerLevel,upgradeExp,taskTypeIds,taskTypeWeights,mapIds,mapWeights
+1,100,"task_normal_001;task_normal_002","100;50","map_001;map_002","100;80"

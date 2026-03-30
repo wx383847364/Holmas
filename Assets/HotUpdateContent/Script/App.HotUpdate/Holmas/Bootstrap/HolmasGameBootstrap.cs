@@ -1,5 +1,6 @@
 using System;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Config;
@@ -48,7 +49,9 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 throw new InvalidOperationException("HolmasGameBootstrap: 启动失败，AOT 提供的基础设施依赖不完整。");
             }
 
-            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime);
+            var taskCatalog = CreateTaskCatalog();
+            var mapCatalog = CreateMapCatalog();
+            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime, taskCatalog);
             serviceContainer.RegisterSingleton(gameplayRuntime);
 
             // 这轮先把已确认的共享依赖收敛到统一上下文，给后续地图线和任务线提供稳定挂接点。
@@ -60,13 +63,23 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 assetsRuntime,
                 gameplayRuntime);
 
+            // 组合层再提供一层轻量门面，后续真实地图配置生成出的请求可以稳定从这里进入。
+            var levelRequestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new HolmasSystemRandomSource());
+            var levelLaunchGateway = new HolmasLevelLaunchGateway(Context, levelRequestGenerator);
+            serviceContainer.RegisterSingleton(levelRequestGenerator);
+            serviceContainer.RegisterSingleton<IHolmasMapCatalog>(mapCatalog);
+            serviceContainer.RegisterSingleton(levelLaunchGateway);
+            serviceContainer.RegisterSingleton<IHolmasLevelLaunchGateway>(levelLaunchGateway);
+
             // 这轮已经把地图完成 -> 任务推进 -> 长期进度的运行时编排接入组合层，但仍不提前接 UI。
             Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动，运行时编排入口已就位。");
         }
 
-        private static HolmasGameplayRuntime CreateGameplayRuntime(IAppLogger logger, IAssetsRuntime assetsRuntime)
+        private static HolmasGameplayRuntime CreateGameplayRuntime(
+            IAppLogger logger,
+            IAssetsRuntime assetsRuntime,
+            HolmasTaskCatalog taskCatalog)
         {
-            var taskCatalog = new HolmasTaskCatalog();
             var metaCatalog = new HolmasMetaCatalog(new[]
             {
                 new HolmasMetaProgressionDefinition
@@ -88,6 +101,70 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 progressionCoordinator,
                 logger,
                 assetsRuntime);
+        }
+
+        private static HolmasTaskCatalog CreateTaskCatalog()
+        {
+            return new HolmasTaskCatalog(
+                new[]
+                {
+                    new HolmasCatDefinition { CatId = "cat-a", Price = 10 },
+                    new HolmasCatDefinition { CatId = "cat-b", Price = 20 },
+                    new HolmasCatDefinition { CatId = "cat-c", Price = 30 },
+                },
+                new[]
+                {
+                    new HolmasTaskTemplateDefinition
+                    {
+                        TaskTypeId = "task-normal",
+                        CatIdList = new[] { "cat-a", "cat-b", "cat-c" },
+                        CountMin = 1,
+                        CountMax = 1,
+                        RewardArray = Array.Empty<string>(),
+                        LevelRewardFactor = 2f,
+                    }
+                },
+                new[]
+                {
+                    new HolmasPlayerLevelDefinition
+                    {
+                        PlayerLevel = 1,
+                        UpgradeExp = 0,
+                        TaskTypeIds = new[] { "task-normal" },
+                        TaskTypeWeights = new[] { 1 },
+                        MapIds = new[] { "map-1", "map-2", "map-3" },
+                        MapWeights = new[] { 1, 1, 1 },
+                    }
+                });
+        }
+
+        private static HolmasMapCatalog CreateMapCatalog()
+        {
+            return new HolmasMapCatalog(
+                new[]
+                {
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-1",
+                        TerrainPath = "1",
+                        CatCountMin = 1,
+                        CatCountMax = 1,
+                    },
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-2",
+                        TerrainPath = "2",
+                        CatCountMin = 1,
+                        CatCountMax = 2,
+                    },
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-3",
+                        TerrainPath = "3",
+                        CatCountMin = 2,
+                        CatCountMax = 3,
+                    }
+                });
         }
     }
 }

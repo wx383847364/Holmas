@@ -4,6 +4,7 @@ using App.HotUpdate.Holmas.Terrain;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using UnityEngine;
+using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
 namespace App.HotUpdate.Holmas.Levels
 {
@@ -96,7 +97,7 @@ namespace App.HotUpdate.Holmas.Levels
             return new LevelSnapshot
             {
                 MapId = request.MapId ?? string.Empty,
-                TerrainPath = HolmasTerrainAssetPathUtility.NormalizeStoredTerrainPath(request.TerrainPath),
+                TerrainPath = TerrainAssetPathUtility.NormalizeStoredTerrainPath(request.TerrainPath),
                 Seed = request.Seed,
                 SpawnedCats = spawnedCats,
                 RevealedCells = new bool[cellCount],
