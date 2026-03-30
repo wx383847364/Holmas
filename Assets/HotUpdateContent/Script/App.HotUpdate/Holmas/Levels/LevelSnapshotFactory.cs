@@ -81,7 +81,7 @@ namespace App.HotUpdate.Holmas.Levels
             return new LevelSnapshot
             {
                 MapId = request.MapId ?? string.Empty,
-                TerrainPath = request.TerrainPath ?? string.Empty,
+                TerrainPath = HolmasTerrainAssetPathUtility.NormalizeStoredTerrainPath(request.TerrainPath),
                 Seed = request.Seed,
                 SpawnedCats = spawnedCats,
                 RevealedCells = new bool[cellCount],

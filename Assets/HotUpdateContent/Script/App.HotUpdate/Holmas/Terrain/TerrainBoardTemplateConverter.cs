@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using App.Shared.Holmas.RuntimeData;
 using UnityEngine;
@@ -136,6 +137,112 @@ namespace App.HotUpdate.Holmas.Terrain
 
                 return new Color32(128, 128, 128, 255);
             }
+        }
+    }
+
+    /// <summary>
+    /// Holmas 地形资源路径工具。
+    /// 统一把 1/2/3 这类地形资源收敛到 HotUpdateContent/Res 目录，避免路径散落在各处手写。
+    /// </summary>
+    public static class HolmasTerrainAssetPathUtility
+    {
+        public const string HotUpdateTerrainDirectory = "Assets/HotUpdateContent/Res";
+
+        public static string BuildAssetPath(string terrainName)
+        {
+            string fileName = NormalizeFileName(terrainName);
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return string.Empty;
+            }
+
+            return $"{HotUpdateTerrainDirectory}/{fileName}";
+        }
+
+        public static string NormalizeStoredTerrainPath(string terrainPath)
+        {
+            if (string.IsNullOrWhiteSpace(terrainPath))
+            {
+                return string.Empty;
+            }
+
+            string normalized = terrainPath.Replace('\\', '/').Trim();
+            if (HasCustomScheme(normalized))
+            {
+                return normalized;
+            }
+
+            if (normalized.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                if (normalized.StartsWith($"{HotUpdateTerrainDirectory}/", StringComparison.OrdinalIgnoreCase))
+                {
+                    return EnsureAssetExtension(normalized);
+                }
+
+                string fileName = Path.GetFileName(normalized);
+                if (string.IsNullOrEmpty(fileName))
+                {
+                    return normalized;
+                }
+
+                return BuildAssetPath(fileName);
+            }
+
+            return BuildAssetPath(normalized);
+        }
+
+        public static string ResolveEditorLoadPath(string location)
+        {
+            if (string.IsNullOrWhiteSpace(location))
+            {
+                return string.Empty;
+            }
+
+            string normalized = location.Replace('\\', '/').Trim();
+            if (HasCustomScheme(normalized))
+            {
+                return string.Empty;
+            }
+
+            if (normalized.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                if (normalized.StartsWith($"{HotUpdateTerrainDirectory}/", StringComparison.OrdinalIgnoreCase))
+                {
+                    return EnsureAssetExtension(normalized);
+                }
+
+                return BuildAssetPath(Path.GetFileName(normalized));
+            }
+
+            return BuildAssetPath(normalized);
+        }
+
+        private static string NormalizeFileName(string terrainName)
+        {
+            if (string.IsNullOrWhiteSpace(terrainName))
+            {
+                return string.Empty;
+            }
+
+            string normalized = terrainName.Replace('\\', '/').Trim();
+            string fileName = Path.GetFileName(normalized);
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return string.Empty;
+            }
+
+            return EnsureAssetExtension(fileName);
+        }
+
+        private static string EnsureAssetExtension(string value)
+        {
+            return value.EndsWith(".asset", StringComparison.OrdinalIgnoreCase) ? value : value + ".asset";
+        }
+
+        private static bool HasCustomScheme(string value)
+        {
+            int schemeIndex = value.IndexOf("://", StringComparison.Ordinal);
+            return schemeIndex > 0;
         }
     }
 }

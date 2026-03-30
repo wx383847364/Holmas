@@ -76,6 +76,18 @@ namespace Holmas.Tests
         }
 
         [Test]
+        [TestCase("Assets/1.asset", "Assets/HotUpdateContent/Res/1.asset")]
+        [TestCase("1", "Assets/HotUpdateContent/Res/1.asset")]
+        [TestCase("2.asset", "Assets/HotUpdateContent/Res/2.asset")]
+        [TestCase("terrain://map-1", "terrain://map-1")]
+        public void HolmasTerrainAssetPathUtility_NormalizesTerrainPath(string input, string expected)
+        {
+            string actual = HolmasTerrainAssetPathUtility.NormalizeStoredTerrainPath(input);
+
+            Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        [Test]
         public void TerrainBoardTemplateConverter_InvalidTerrainTemplate_Throws()
         {
             var invalidTerrain = ScriptableObject.CreateInstance<InvalidTerrainDimensionsAsset>();

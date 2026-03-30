@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using YooAsset;
 using App.Shared.Contracts;
@@ -123,18 +126,12 @@ namespace App.AOT.YooRuntimeAssets
             if (_isEditorMode)
             {
                 // 编辑器模式：使用 AssetDatabase 直接加载
-                var asset = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(location);
-                
-                // 如果加载失败，尝试添加常见扩展名
-                if (asset == null)
+                UnityEngine.Object asset = null;
+                foreach (var candidate in GetEditorLoadCandidates(location))
                 {
-                    string[] extensions = { ".prefab", ".asset", ".mat", ".png", ".jpg", ".bytes" };
-                    foreach (var ext in extensions)
-                    {
-                        asset = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(location + ext);
-                        if (asset != null)
-                            break;
-                    }
+                    asset = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(candidate);
+                    if (asset != null)
+                        break;
                 }
 
                 if (asset == null)
@@ -215,5 +212,65 @@ namespace App.AOT.YooRuntimeAssets
             YooAssets.Destroy();
             _logger?.LogInfo("YooAssetsRuntime: 已关闭");
         }
+
+#if UNITY_EDITOR
+        private static IEnumerable<string> GetEditorLoadCandidates(string location)
+        {
+            var candidates = new List<string>();
+            string normalized = location.Replace('\\', '/').Trim();
+            string[] extensions = { string.Empty, ".prefab", ".asset", ".mat", ".png", ".jpg", ".bytes" };
+
+            void AddWithExtensions(string basePath)
+            {
+                if (string.IsNullOrWhiteSpace(basePath))
+                    return;
+
+                foreach (var ext in extensions)
+                {
+                    string candidate = basePath.EndsWith(ext, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(ext)
+                        ? basePath
+                        : basePath + ext;
+                    candidates.Add(candidate);
+                }
+            }
+
+            AddWithExtensions(normalized);
+
+            string fileName = Path.GetFileName(normalized);
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                AddWithExtensions($"Assets/HotUpdateContent/Res/{fileName}");
+            }
+
+            string resolvedHotUpdatePath = ResolveHotUpdateTerrainPath(normalized);
+            if (!string.IsNullOrEmpty(resolvedHotUpdatePath))
+            {
+                AddWithExtensions(resolvedHotUpdatePath);
+            }
+
+            return candidates
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static string ResolveHotUpdateTerrainPath(string location)
+        {
+            if (string.IsNullOrWhiteSpace(location))
+                return string.Empty;
+
+            string normalized = location.Replace('\\', '/').Trim();
+            if (normalized.Contains("://", StringComparison.Ordinal))
+                return string.Empty;
+
+            if (normalized.StartsWith("Assets/HotUpdateContent/Res/", StringComparison.OrdinalIgnoreCase))
+                return normalized;
+
+            string fileName = Path.GetFileName(normalized);
+            if (string.IsNullOrEmpty(fileName))
+                return string.Empty;
+
+            return $"Assets/HotUpdateContent/Res/{fileName}";
+        }
+#endif
     }
 }

@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 using UnityEditor;
 
@@ -7,6 +8,7 @@ using UnityEditor;
 /// </summary>
 public class MinesweeperTerrainEditor : EditorWindow
 {
+    private const string DefaultTerrainAssetDirectory = "Assets/HotUpdateContent/Res";
     private MinesweeperTerrainData _terrain;
     private int _editRows = 9;
     private int _editCols = 9;
@@ -210,7 +212,7 @@ public class MinesweeperTerrainEditor : EditorWindow
             Repaint();
             return;
         }
-        path = EditorUtility.SaveFilePanelInProject("保存地形", "Terrain", "asset", "选择保存位置");
+        path = EditorUtility.SaveFilePanelInProject("保存地形", "Terrain", "asset", "选择保存位置", DefaultTerrainAssetDirectory);
         if (string.IsNullOrEmpty(path)) return;
         AssetDatabase.CreateAsset(_terrain, path);
         Repaint();
@@ -218,7 +220,10 @@ public class MinesweeperTerrainEditor : EditorWindow
 
     private void LoadTerrain()
     {
-        string path = EditorUtility.OpenFilePanel("加载地形", Application.dataPath, "asset");
+        string defaultDirectory = Path.Combine(Application.dataPath, "HotUpdateContent/Res");
+        if (!Directory.Exists(defaultDirectory))
+            defaultDirectory = Application.dataPath;
+        string path = EditorUtility.OpenFilePanel("加载地形", defaultDirectory, "asset");
         if (string.IsNullOrEmpty(path)) return;
         if (!path.StartsWith(Application.dataPath))
             path = path.Replace("\\", "/");
