@@ -1,0 +1,397 @@
+﻿{
+    "Version": 1,
+    "Cats": [
+        {
+            "CatId": "1",
+            "CatName": "布偶猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 10
+        },
+        {
+            "CatId": "2",
+            "CatName": "短毛猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 20
+        },
+        {
+            "CatId": "3",
+            "CatName": "波斯猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 30
+        },
+        {
+            "CatId": "4",
+            "CatName": "暹罗猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 40
+        },
+        {
+            "CatId": "5",
+            "CatName": "缅因猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 50
+        },
+        {
+            "CatId": "6",
+            "CatName": "苏格兰折耳猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 60
+        },
+        {
+            "CatId": "7",
+            "CatName": "俄罗斯蓝猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 70
+        },
+        {
+            "CatId": "8",
+            "CatName": "孟加拉豹猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 80
+        },
+        {
+            "CatId": "9",
+            "CatName": "斯芬克斯猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 90
+        },
+        {
+            "CatId": "10",
+            "CatName": "挪威森林猫",
+            "IconPath": "",
+            "Rarity": 1,
+            "Weight": 100,
+            "Price": 100
+        },
+        {
+            "CatId": "11",
+            "CatName": "埃及猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 110
+        },
+        {
+            "CatId": "12",
+            "CatName": "阿比西尼亚猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 120
+        },
+        {
+            "CatId": "13",
+            "CatName": "东方短毛猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 130
+        },
+        {
+            "CatId": "14",
+            "CatName": "德文卷毛猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 140
+        },
+        {
+            "CatId": "15",
+            "CatName": "柯尼斯卷毛猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 150
+        },
+        {
+            "CatId": "16",
+            "CatName": "索马里猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 160
+        },
+        {
+            "CatId": "17",
+            "CatName": "美国卷耳猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 170
+        },
+        {
+            "CatId": "18",
+            "CatName": "西伯利亚猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 180
+        },
+        {
+            "CatId": "19",
+            "CatName": "土耳其梵猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 190
+        },
+        {
+            "CatId": "20",
+            "CatName": "新加坡猫",
+            "IconPath": "",
+            "Rarity": 2,
+            "Weight": 80,
+            "Price": 200
+        },
+        {
+            "CatId": "21",
+            "CatName": "日本短尾猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 210
+        },
+        {
+            "CatId": "22",
+            "CatName": "伯曼猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 220
+        },
+        {
+            "CatId": "23",
+            "CatName": "喜马拉雅猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 230
+        },
+        {
+            "CatId": "24",
+            "CatName": "拉邦猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 240
+        },
+        {
+            "CatId": "25",
+            "CatName": "巴厘猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 250
+        },
+        {
+            "CatId": "26",
+            "CatName": "奥西猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 260
+        },
+        {
+            "CatId": "27",
+            "CatName": "美国短尾猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 270
+        },
+        {
+            "CatId": "28",
+            "CatName": "欧洲缅甸猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 280
+        },
+        {
+            "CatId": "29",
+            "CatName": "美国刚毛猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 290
+        },
+        {
+            "CatId": "30",
+            "CatName": "波米拉猫",
+            "IconPath": "",
+            "Rarity": 3,
+            "Weight": 60,
+            "Price": 300
+        },
+        {
+            "CatId": "31",
+            "CatName": "褴褛猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 310
+        },
+        {
+            "CatId": "32",
+            "CatName": "玩具虎猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 320
+        },
+        {
+            "CatId": "33",
+            "CatName": "塞伦盖蒂猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 330
+        },
+        {
+            "CatId": "34",
+            "CatName": "美国反耳猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 340
+        },
+        {
+            "CatId": "35",
+            "CatName": "曼基康猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 350
+        },
+        {
+            "CatId": "36",
+            "CatName": "拿破仑猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 360
+        },
+        {
+            "CatId": "37",
+            "CatName": "夏特尔猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 370
+        },
+        {
+            "CatId": "38",
+            "CatName": "哈瓦那棕猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 380
+        },
+        {
+            "CatId": "39",
+            "CatName": "科拉特猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 390
+        },
+        {
+            "CatId": "40",
+            "CatName": "东奇尼猫",
+            "IconPath": "",
+            "Rarity": 4,
+            "Weight": 40,
+            "Price": 400
+        },
+        {
+            "CatId": "41",
+            "CatName": "缅甸猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 410
+        },
+        {
+            "CatId": "42",
+            "CatName": "雪鞋猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 420
+        },
+        {
+            "CatId": "43",
+            "CatName": "加州闪亮猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 430
+        },
+        {
+            "CatId": "44",
+            "CatName": "澳大利亚雾猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 440
+        },
+        {
+            "CatId": "45",
+            "CatName": "肯尼亚猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 450
+        },
+        {
+            "CatId": "46",
+            "CatName": "亚洲猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 460
+        },
+        {
+            "CatId": "47",
+            "CatName": "孟买猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 470
+        },
+        {
+            "CatId": "48",
+            "CatName": "中国狸花猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 480
+        },
+        {
+            "CatId": "49",
+            "CatName": "安哥拉猫",
+            "IconPath": "",
+            "Rarity": 5,
+            "Weight": 20,
+            "Price": 490
+        }
+    ]
+}

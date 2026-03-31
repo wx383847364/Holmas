@@ -11,6 +11,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     [Serializable]
     public sealed class HolmasMapDefinition
     {
+        public int MapIndex;
         public string MapId = string.Empty;
         public string TerrainPath = string.Empty;
         public int CatCountMin;

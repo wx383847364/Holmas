@@ -415,6 +415,11 @@ namespace App.HotUpdate.Holmas.Tasks.Services
                     continue;
                 }
 
+                if (template.TaskKind != HolmasTaskKind.Money)
+                {
+                    continue;
+                }
+
                 int countMin = Math.Min(template.CountMin, template.CountMax);
                 int countMax = Math.Max(template.CountMin, template.CountMax);
                 int targetCount = countMax <= 0 ? 0 : _randomSource.Next(Math.Max(0, countMin), countMax + 1);
@@ -429,7 +434,7 @@ namespace App.HotUpdate.Holmas.Tasks.Services
                 {
                     TaskInstanceId = Guid.NewGuid().ToString("N"),
                     SourceTaskTypeId = template.TaskTypeId,
-                    TaskKind = "Normal",
+                    TaskKind = template.TaskKind.ToString(),
                     CatId = catId,
                     TargetCount = targetCount,
                     CurrentCount = 0,

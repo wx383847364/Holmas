@@ -5,13 +5,28 @@ using System.Linq;
 namespace App.HotUpdate.Holmas.Tasks.Config
 {
     /// <summary>
+    /// 任务种类枚举。
+    /// 当前阶段只正式支持 Money，Gamble 先保留字段位，不接奖励逻辑。
+    /// </summary>
+    public enum HolmasTaskKind : byte
+    {
+        Money = 0,
+        Gamble = 1,
+    }
+
+    /// <summary>
     /// 猫配置定义。
     /// 这里只描述静态输入，不承载任何运行时状态。
     /// </summary>
     [Serializable]
     public sealed class HolmasCatDefinition
     {
+        public int CatIndex;
         public string CatId = string.Empty;
+        public string CatName = string.Empty;
+        public string IconPath = string.Empty;
+        public int Rarity;
+        public int Weight = 1;
         public int Price;
     }
 
@@ -21,11 +36,15 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     [Serializable]
     public sealed class HolmasTaskTemplateDefinition
     {
+        public int TaskIndex;
         public string TaskTypeId = string.Empty;
+        public HolmasTaskKind TaskKind = HolmasTaskKind.Money;
         public string[] CatIdList = Array.Empty<string>();
+        public int[] CatIndices = Array.Empty<int>();
         public int CountMax;
         public int CountMin;
         public string[] RewardArray = Array.Empty<string>();
+        public int[] RewardValues = Array.Empty<int>();
         public float LevelRewardFactor = 1f;
     }
 
@@ -35,12 +54,15 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     [Serializable]
     public sealed class HolmasPlayerLevelDefinition
     {
+        public int PlayerLevelIndex;
         public int PlayerLevel;
         public int UpgradeExp;
         public string[] TaskTypeIds = Array.Empty<string>();
         public int[] TaskTypeWeights = Array.Empty<int>();
+        public int[] TaskTypeIndices = Array.Empty<int>();
         public string[] MapIds = Array.Empty<string>();
         public int[] MapWeights = Array.Empty<int>();
+        public int[] MapIndices = Array.Empty<int>();
     }
 
     /// <summary>

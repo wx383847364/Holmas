@@ -1,3 +1,5 @@
 地图id,地图对应的数据地址Path,猫的最大数量max,猫的最小数量mini
 mapId,terrainPath,catCountMax,catCountMin
 map_001,Assets/HotUpdateContent/Res/1.asset,3,1
+map_002,Assets/HotUpdateContent/Res/2.asset,4,2
+map_003,Assets/HotUpdateContent/Res/3.asset,5,3

@@ -49,8 +49,9 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 throw new InvalidOperationException("HolmasGameBootstrap: 启动失败，AOT 提供的基础设施依赖不完整。");
             }
 
-            var taskCatalog = CreateTaskCatalog();
-            var mapCatalog = CreateMapCatalog();
+            HolmasConfigCatalogBundle configBundle = TryLoadConfigBundle(assetsRuntime, logger);
+            var taskCatalog = configBundle?.TaskCatalog ?? CreateFallbackTaskCatalog();
+            var mapCatalog = configBundle?.MapCatalog ?? CreateFallbackMapCatalog();
             HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime, taskCatalog);
             serviceContainer.RegisterSingleton(gameplayRuntime);
 
@@ -67,12 +68,43 @@ namespace App.HotUpdate.Holmas.Bootstrap
             var levelRequestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new HolmasSystemRandomSource());
             var levelLaunchGateway = new HolmasLevelLaunchGateway(Context, levelRequestGenerator);
             serviceContainer.RegisterSingleton(levelRequestGenerator);
+            serviceContainer.RegisterSingleton(taskCatalog);
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(taskCatalog);
             serviceContainer.RegisterSingleton<IHolmasMapCatalog>(mapCatalog);
             serviceContainer.RegisterSingleton(levelLaunchGateway);
             serviceContainer.RegisterSingleton<IHolmasLevelLaunchGateway>(levelLaunchGateway);
 
             // 这轮已经把地图完成 -> 任务推进 -> 长期进度的运行时编排接入组合层，但仍不提前接 UI。
             Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动，运行时编排入口已就位。");
+        }
+
+        private static HolmasConfigCatalogBundle TryLoadConfigBundle(IAssetsRuntime assetsRuntime, IAppLogger logger)
+        {
+            try
+            {
+                var loader = new HolmasConfigRuntimeLoader(assetsRuntime);
+                HolmasConfigLoadResult result = loader.LoadDefaultAsync().GetAwaiter().GetResult();
+                if (!result.Success || result.Bundle == null)
+                {
+                    logger?.LogWarning(
+                        "HolmasGameBootstrap: 未能加载导出的 CSV 二进制配置，回退到内置样例。原因={0}",
+                        result.FailureReason);
+                    return null;
+                }
+
+                logger?.LogInfo(
+                    "HolmasGameBootstrap: 已加载导出的 CSV 二进制配置。maps={0}, tasks={1}, levels={2}, cats={3}",
+                    result.Bundle.Maps.Count,
+                    result.Bundle.TaskTemplates.Count,
+                    result.Bundle.PlayerLevels.Count,
+                    result.Bundle.Cats.Count);
+                return result.Bundle;
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning("HolmasGameBootstrap: 加载导出的 CSV 二进制配置失败，回退到内置样例。{0}", ex.Message);
+                return null;
+            }
         }
 
         private static HolmasGameplayRuntime CreateGameplayRuntime(
@@ -103,20 +135,21 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 assetsRuntime);
         }
 
-        private static HolmasTaskCatalog CreateTaskCatalog()
+        private static HolmasTaskCatalog CreateFallbackTaskCatalog()
         {
             return new HolmasTaskCatalog(
                 new[]
                 {
-                    new HolmasCatDefinition { CatId = "cat-a", Price = 10 },
-                    new HolmasCatDefinition { CatId = "cat-b", Price = 20 },
-                    new HolmasCatDefinition { CatId = "cat-c", Price = 30 },
+                    new HolmasCatDefinition { CatId = "cat-a", CatName = "Cat A", Weight = 1, Price = 10 },
+                    new HolmasCatDefinition { CatId = "cat-b", CatName = "Cat B", Weight = 1, Price = 20 },
+                    new HolmasCatDefinition { CatId = "cat-c", CatName = "Cat C", Weight = 1, Price = 30 },
                 },
                 new[]
                 {
                     new HolmasTaskTemplateDefinition
                     {
                         TaskTypeId = "task-normal",
+                        TaskKind = HolmasTaskKind.Money,
                         CatIdList = new[] { "cat-a", "cat-b", "cat-c" },
                         CountMin = 1,
                         CountMax = 1,
@@ -138,7 +171,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 });
         }
 
-        private static HolmasMapCatalog CreateMapCatalog()
+        private static HolmasMapCatalog CreateFallbackMapCatalog()
         {
             return new HolmasMapCatalog(
                 new[]

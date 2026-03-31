@@ -1,0 +1,41 @@
+{
+    "ExportedAtUtc": "2026-03-30T17:13:49.5417670Z",
+    "Success": true,
+    "BinaryWrittenCount": 2,
+    "SourceFiles": [
+        "Assets/Config/Holmas_MapTable.csv",
+        "Assets/Config/Holmas_CatTable.csv",
+        "Assets/Config/Holmas_TaskTable.csv",
+        "Assets/Config/Holmas_PlayerLevelTable.csv"
+    ],
+    "BundleReports": [
+        {
+            "BundleName": "core",
+            "SourceCsvNames": [
+                "Holmas_MapTable.csv",
+                "Holmas_TaskTable.csv",
+                "Holmas_PlayerLevelTable.csv"
+            ],
+            "PreviewJsonPath": "Assets/Config/json/holmas_core_config.json",
+            "BinaryPath": "Assets/HotUpdateContent/Config/holmas_core_config.bytes",
+            "RowCount": 8,
+            "WarningCount": 1,
+            "ErrorCount": 0
+        },
+        {
+            "BundleName": "cat_meta",
+            "SourceCsvNames": [
+                "Holmas_CatTable.csv"
+            ],
+            "PreviewJsonPath": "Assets/Config/json/holmas_cat_meta.json",
+            "BinaryPath": "Assets/HotUpdateContent/Config/holmas_cat_meta.bytes",
+            "RowCount": 49,
+            "WarningCount": 1,
+            "ErrorCount": 0
+        }
+    ],
+    "Errors": [],
+    "Warnings": [
+        "Assets/Config/Holmas_CatTable.csv: 有猫表行缺少 iconPath，已保留为空字符串。"
+    ]
+}

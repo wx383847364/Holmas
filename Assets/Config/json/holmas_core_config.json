@@ -1,0 +1,103 @@
+﻿{
+    "Version": 1,
+    "Maps": [
+        {
+            "MapId": "map_001",
+            "TerrainPath": "Assets/HotUpdateContent/Res/1.asset",
+            "CatCountMin": 1,
+            "CatCountMax": 3
+        },
+        {
+            "MapId": "map_002",
+            "TerrainPath": "Assets/HotUpdateContent/Res/2.asset",
+            "CatCountMin": 2,
+            "CatCountMax": 4
+        },
+        {
+            "MapId": "map_003",
+            "TerrainPath": "Assets/HotUpdateContent/Res/3.asset",
+            "CatCountMin": 3,
+            "CatCountMax": 5
+        }
+    ],
+    "Tasks": [
+        {
+            "TaskTypeId": "task_normal_001",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1
+            ],
+            "CountMin": 1,
+            "CountMax": 3,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.5
+        },
+        {
+            "TaskTypeId": "task_normal_002",
+            "TaskKind": 0,
+            "CatIndices": [
+                2,
+                3
+            ],
+            "CountMin": 2,
+            "CountMax": 4,
+            "RewardValues": [],
+            "LevelRewardFactor": 2.0
+        },
+        {
+            "TaskTypeId": "task_normal_003",
+            "TaskKind": 0,
+            "CatIndices": [
+                4,
+                5
+            ],
+            "CountMin": 3,
+            "CountMax": 5,
+            "RewardValues": [],
+            "LevelRewardFactor": 2.5
+        }
+    ],
+    "PlayerLevels": [
+        {
+            "PlayerLevel": 1,
+            "UpgradeExp": 100,
+            "TaskTypeIndices": [
+                0,
+                1
+            ],
+            "TaskTypeWeights": [
+                100,
+                50
+            ],
+            "MapIndices": [
+                0,
+                1
+            ],
+            "MapWeights": [
+                100,
+                80
+            ]
+        },
+        {
+            "PlayerLevel": 2,
+            "UpgradeExp": 200,
+            "TaskTypeIndices": [
+                1,
+                2
+            ],
+            "TaskTypeWeights": [
+                80,
+                20
+            ],
+            "MapIndices": [
+                1,
+                2
+            ],
+            "MapWeights": [
+                60,
+                40
+            ]
+        }
+    ]
+}

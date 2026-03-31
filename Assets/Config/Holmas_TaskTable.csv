@@ -1,3 +1,5 @@
-任务种类id,对应的猫的id数组,数量的最大值max,数量的最小值mini,奖励数组,等级奖励系数
-taskTypeId,catIdList,countMax,countMin,rewardArray,levelRewardFactor
-task_normal_001,"cat_001;cat_002",3,1,"10;20",1.5
+任务种类id,任务种类,对应的猫的id数组,数量的最大值max,数量的最小值mini,奖励数组,等级奖励系数
+taskTypeId,taskKind,catIdList,countMax,countMin,rewardArray,levelRewardFactor
+task_normal_001,Money,"1;2",3,1,,1.5
+task_normal_002,Money,"3;4",4,2,,2.0
+task_normal_003,Money,"5;6",5,3,,2.5
