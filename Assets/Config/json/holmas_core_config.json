@@ -4,20 +4,20 @@
         {
             "MapId": "map_001",
             "TerrainPath": "Assets/HotUpdateContent/Res/1.asset",
-            "CatCountMin": 1,
-            "CatCountMax": 3
+            "CatCountMin": 15,
+            "CatCountMax": 20
         },
         {
             "MapId": "map_002",
             "TerrainPath": "Assets/HotUpdateContent/Res/2.asset",
-            "CatCountMin": 2,
-            "CatCountMax": 4
+            "CatCountMin": 15,
+            "CatCountMax": 20
         },
         {
             "MapId": "map_003",
             "TerrainPath": "Assets/HotUpdateContent/Res/3.asset",
-            "CatCountMin": 3,
-            "CatCountMax": 5
+            "CatCountMin": 15,
+            "CatCountMax": 20
         }
     ],
     "Tasks": [
@@ -28,40 +28,36 @@
                 0,
                 1
             ],
-            "CountMin": 1,
+            "CountMin": 2,
             "CountMax": 3,
-            "RewardValues": [],
+            "RewardValues": [
+                10,
+                20
+            ],
             "LevelRewardFactor": 1.5
         },
         {
             "TaskTypeId": "task_normal_002",
             "TaskKind": 0,
             "CatIndices": [
-                2,
-                3
-            ],
-            "CountMin": 2,
-            "CountMax": 4,
-            "RewardValues": [],
-            "LevelRewardFactor": 2.0
-        },
-        {
-            "TaskTypeId": "task_normal_003",
-            "TaskKind": 0,
-            "CatIndices": [
-                4,
-                5
+                0,
+                1,
+                2
             ],
             "CountMin": 3,
             "CountMax": 5,
-            "RewardValues": [],
-            "LevelRewardFactor": 2.5
+            "RewardValues": [
+                10,
+                20,
+                30
+            ],
+            "LevelRewardFactor": 1.5
         }
     ],
     "PlayerLevels": [
         {
             "PlayerLevel": 1,
-            "UpgradeExp": 100,
+            "UpgradeExp": 1,
             "TaskTypeIndices": [
                 0,
                 1
@@ -81,22 +77,90 @@
         },
         {
             "PlayerLevel": 2,
-            "UpgradeExp": 200,
+            "UpgradeExp": 2,
             "TaskTypeIndices": [
-                1,
-                2
+                0,
+                1
             ],
             "TaskTypeWeights": [
-                80,
-                20
+                100,
+                100
             ],
             "MapIndices": [
+                0,
                 1,
                 2
             ],
             "MapWeights": [
-                60,
-                40
+                100,
+                80,
+                60
+            ]
+        },
+        {
+            "PlayerLevel": 3,
+            "UpgradeExp": 3,
+            "TaskTypeIndices": [
+                0,
+                1
+            ],
+            "TaskTypeWeights": [
+                100,
+                100
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                100,
+                80,
+                60
+            ]
+        },
+        {
+            "PlayerLevel": 4,
+            "UpgradeExp": 4,
+            "TaskTypeIndices": [
+                0,
+                1
+            ],
+            "TaskTypeWeights": [
+                100,
+                100
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                100,
+                80,
+                60
+            ]
+        },
+        {
+            "PlayerLevel": 5,
+            "UpgradeExp": 5,
+            "TaskTypeIndices": [
+                0,
+                1
+            ],
+            "TaskTypeWeights": [
+                100,
+                100
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                100,
+                80,
+                60
             ]
         }
     ]

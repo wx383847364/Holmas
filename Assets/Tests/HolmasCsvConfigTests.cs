@@ -25,8 +25,8 @@ namespace Holmas.Tests
             Assert.That(errors, Is.Empty, string.Join(Environment.NewLine, errors));
             Assert.That(tables.Cats, Has.Count.EqualTo(49));
             Assert.That(tables.Maps, Has.Count.EqualTo(3));
-            Assert.That(tables.Tasks, Has.Count.EqualTo(3));
-            Assert.That(tables.Levels, Has.Count.EqualTo(2));
+            Assert.That(tables.Tasks, Has.Count.EqualTo(2));
+            Assert.That(tables.Levels, Has.Count.EqualTo(5));
             Assert.That(tables.Tasks.All(item => string.Equals(item.TaskKind, "Money", StringComparison.Ordinal)), Is.True);
             Assert.That(tables.Cats.All(item => item.Price > 0 && item.Weight > 0 && item.Rarity > 0), Is.True);
         }
@@ -46,15 +46,15 @@ namespace Holmas.Tests
             Assert.That(requestResult.Success, Is.True, requestResult.FailureReason);
             Assert.That(requestResult.SelectedMapId, Is.EqualTo("map_001"));
             Assert.That(requestResult.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/1.asset"));
-            Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(1));
-            Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(3));
+            Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(15));
+            Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(20));
 
-            var terrain = HolmasTestSupport.CreateTerrain(2, 2, (_, _) => true);
+            var terrain = HolmasTestSupport.CreateTerrain(5, 5, (_, _) => true);
             LevelSnapshot snapshot = LevelSnapshotFactory.CreateFromTerrain(terrain, requestResult.Request);
 
             Assert.That(snapshot.MapId, Is.EqualTo("map_001"));
             Assert.That(snapshot.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/1.asset"));
-            Assert.That(snapshot.SpawnedCats.Count, Is.InRange(1, 3));
+            Assert.That(snapshot.SpawnedCats.Count, Is.InRange(15, 20));
             Assert.That(snapshot.SpawnedCats.Select(item => item.CatId).All(catId => catPool.Any(pool => pool.CatId == catId)), Is.True);
 
             var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
@@ -338,23 +338,31 @@ namespace Holmas.Tests
         private static List<CsvTaskRow> LoadTasks(string fileName)
         {
             var rows = ReadCsvTable(fileName);
+            var headerMap = BuildColumnMap(rows[1]);
+            int taskTypeIdCol = GetColumnIndex(headerMap, "taskTypeId");
+            int taskKindCol = GetOptionalColumnIndex(headerMap, "taskKind");
+            int catIdListCol = GetColumnIndex(headerMap, "catIdList");
+            int countMaxCol = GetColumnIndex(headerMap, "countMax");
+            int countMinCol = GetColumnIndex(headerMap, "countMin");
+            int rewardArrayCol = GetOptionalColumnIndex(headerMap, "rewardArray");
+            int levelRewardFactorCol = GetColumnIndex(headerMap, "levelRewardFactor");
             var result = new List<CsvTaskRow>();
             foreach (var row in rows.Skip(2))
             {
-                if (row.Length < 7)
+                if (row.Length == 0)
                 {
                     continue;
                 }
 
                 result.Add(new CsvTaskRow
                 {
-                    TaskTypeId = row[0],
-                    TaskKind = row[1],
-                    CatIdList = SplitCsvList(row[2]),
-                    CountMax = ParseInt(row[3]),
-                    CountMin = ParseInt(row[4]),
-                    RewardArray = SplitCsvList(row[5]),
-                    LevelRewardFactor = ParseFloat(row[6]),
+                    TaskTypeId = GetRowValue(row, taskTypeIdCol),
+                    TaskKind = NormalizeTaskKindText(GetRowValue(row, taskKindCol)),
+                    CatIdList = SplitCsvList(GetRowValue(row, catIdListCol)),
+                    CountMax = ParseInt(GetRowValue(row, countMaxCol)),
+                    CountMin = ParseInt(GetRowValue(row, countMinCol)),
+                    RewardArray = SplitCsvList(GetRowValue(row, rewardArrayCol)),
+                    LevelRewardFactor = ParseFloat(GetRowValue(row, levelRewardFactorCol)),
                 });
             }
 
@@ -438,6 +446,52 @@ namespace Holmas.Tests
 
             values.Add(TrimCell(current.ToString()));
             return values.ToArray();
+        }
+
+        private static Dictionary<string, int> BuildColumnMap(string[] headerRow)
+        {
+            var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            if (headerRow == null)
+            {
+                return map;
+            }
+
+            for (int i = 0; i < headerRow.Length; i++)
+            {
+                string key = TrimCell(headerRow[i]);
+                if (!string.IsNullOrWhiteSpace(key) && !map.ContainsKey(key))
+                {
+                    map[key] = i;
+                }
+            }
+
+            return map;
+        }
+
+        private static int GetColumnIndex(Dictionary<string, int> headerMap, string name)
+        {
+            Assert.That(headerMap.ContainsKey(name), Is.True, $"配置表缺少列: {name}");
+            return headerMap[name];
+        }
+
+        private static int GetOptionalColumnIndex(Dictionary<string, int> headerMap, string name)
+        {
+            return headerMap.TryGetValue(name, out int value) ? value : -1;
+        }
+
+        private static string GetRowValue(string[] row, int index)
+        {
+            if (row == null || index < 0 || index >= row.Length)
+            {
+                return string.Empty;
+            }
+
+            return TrimCell(row[index]);
+        }
+
+        private static string NormalizeTaskKindText(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "Money" : value.Trim();
         }
 
         private static string TrimCell(string value)
@@ -670,9 +724,10 @@ namespace Holmas.Tests
                         errors.Add($"任务表存在重复 taskTypeId: {task.TaskTypeId}");
                     }
 
-                    if (!string.Equals(task.TaskKind, "Money", StringComparison.Ordinal))
+                    string normalizedTaskKind = NormalizeTaskKindText(task.TaskKind);
+                    if (!string.Equals(normalizedTaskKind, "Money", StringComparison.Ordinal))
                     {
-                        errors.Add($"不支持的 taskKind={task.TaskKind}，当前阶段只允许 Money。");
+                        errors.Add($"不支持的 taskKind={normalizedTaskKind}，当前阶段只允许 Money。");
                     }
 
                     if (task.CountMin < 0 || task.CountMax < task.CountMin)

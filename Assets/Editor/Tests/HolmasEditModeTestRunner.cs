@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
@@ -39,6 +41,11 @@ public static class HolmasEditModeTestRunner
 
         if (s_LastResult.FailCount > 0)
         {
+            if (!string.IsNullOrWhiteSpace(s_LastResult.FailureSummary))
+            {
+                Debug.LogError($"Holmas EditMode failed cases:\n{s_LastResult.FailureSummary}");
+            }
+
             throw new InvalidOperationException($"Holmas EditMode tests failed: {s_LastResult.FailCount} failing cases.");
         }
     }
@@ -63,6 +70,7 @@ public static class HolmasEditModeTestRunner
                 SkipCount = result.SkipCount,
                 InconclusiveCount = result.InconclusiveCount,
                 TestCaseCount = result.Test.TestCaseCount,
+                FailureSummary = BuildFailureSummary(result),
             };
         }
 
@@ -82,5 +90,48 @@ public static class HolmasEditModeTestRunner
         public int SkipCount;
         public int InconclusiveCount;
         public int TestCaseCount;
+        public string FailureSummary = string.Empty;
+    }
+
+    private static string BuildFailureSummary(ITestResultAdaptor result)
+    {
+        if (result == null)
+        {
+            return string.Empty;
+        }
+
+        var lines = new List<string>();
+        CollectFailures(result, lines);
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static void CollectFailures(ITestResultAdaptor result, List<string> lines)
+    {
+        if (result == null)
+        {
+            return;
+        }
+
+        if (result.Test != null && !result.HasChildren && result.TestStatus == TestStatus.Failed)
+        {
+            var builder = new StringBuilder();
+            builder.Append(result.Name ?? "(unnamed test)");
+            if (!string.IsNullOrWhiteSpace(result.Message))
+            {
+                builder.Append(" -> ").Append(result.Message.Trim());
+            }
+
+            lines.Add(builder.ToString());
+        }
+
+        if (!result.HasChildren || result.Children == null)
+        {
+            return;
+        }
+
+        foreach (ITestResultAdaptor child in result.Children)
+        {
+            CollectFailures(child, lines);
+        }
     }
 }
