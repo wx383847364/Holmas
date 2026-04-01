@@ -45,7 +45,7 @@ namespace Holmas.Tests
 
             Assert.That(requestResult.Success, Is.True, requestResult.FailureReason);
             Assert.That(requestResult.SelectedMapId, Is.EqualTo("map_001"));
-            Assert.That(requestResult.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/1.asset"));
+            Assert.That(requestResult.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/Map/1.asset"));
             Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(15));
             Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(20));
 
@@ -53,7 +53,7 @@ namespace Holmas.Tests
             LevelSnapshot snapshot = LevelSnapshotFactory.CreateFromTerrain(terrain, requestResult.Request);
 
             Assert.That(snapshot.MapId, Is.EqualTo("map_001"));
-            Assert.That(snapshot.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/1.asset"));
+            Assert.That(snapshot.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/Map/1.asset"));
             Assert.That(snapshot.SpawnedCats.Count, Is.InRange(15, 20));
             Assert.That(snapshot.SpawnedCats.Select(item => item.CatId).All(catId => catPool.Any(pool => pool.CatId == catId)), Is.True);
 

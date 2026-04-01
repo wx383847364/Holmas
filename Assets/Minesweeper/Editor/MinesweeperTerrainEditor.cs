@@ -8,7 +8,7 @@ using UnityEditor;
 /// </summary>
 public class MinesweeperTerrainEditor : EditorWindow
 {
-    private const string DefaultTerrainAssetDirectory = "Assets/HotUpdateContent/Res";
+    private const string DefaultTerrainAssetDirectory = "Assets/HotUpdateContent/Res/Map";
     private MinesweeperTerrainData _terrain;
     private int _editRows = 9;
     private int _editCols = 9;
@@ -220,7 +220,9 @@ public class MinesweeperTerrainEditor : EditorWindow
 
     private void LoadTerrain()
     {
-        string defaultDirectory = Path.Combine(Application.dataPath, "HotUpdateContent/Res");
+        string defaultDirectory = Path.Combine(Application.dataPath, "HotUpdateContent/Res/Map");
+        if (!Directory.Exists(defaultDirectory))
+            defaultDirectory = Path.Combine(Application.dataPath, "HotUpdateContent/Res");
         if (!Directory.Exists(defaultDirectory))
             defaultDirectory = Application.dataPath;
         string path = EditorUtility.OpenFilePanel("加载地形", defaultDirectory, "asset");

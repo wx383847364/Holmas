@@ -144,11 +144,12 @@ namespace App.HotUpdate.Holmas.Terrain
 
     /// <summary>
     /// Holmas 地形资源路径工具。
-    /// 统一把 1/2/3 这类地形资源收敛到 HotUpdateContent/Res 目录，避免路径散落在各处手写。
+    /// 统一把 1/2/3 这类地形资源收敛到 HotUpdateContent/Res/Map 目录，避免路径散落在各处手写。
     /// </summary>
     public static class HolmasTerrainAssetPathUtility
     {
-        public const string HotUpdateTerrainDirectory = "Assets/HotUpdateContent/Res";
+        public const string HotUpdateTerrainRootDirectory = "Assets/HotUpdateContent/Res";
+        public const string HotUpdateTerrainDirectory = "Assets/HotUpdateContent/Res/Map";
 
         public static string BuildAssetPath(string terrainName)
         {
@@ -179,6 +180,11 @@ namespace App.HotUpdate.Holmas.Terrain
                 if (normalized.StartsWith($"{HotUpdateTerrainDirectory}/", StringComparison.OrdinalIgnoreCase))
                 {
                     return EnsureAssetExtension(normalized);
+                }
+
+                if (normalized.StartsWith($"{HotUpdateTerrainRootDirectory}/", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BuildAssetPath(Path.GetFileName(normalized));
                 }
 
                 string fileName = Path.GetFileName(normalized);
@@ -213,6 +219,11 @@ namespace App.HotUpdate.Holmas.Terrain
                     return EnsureAssetExtension(normalized);
                 }
 
+                if (normalized.StartsWith($"{HotUpdateTerrainRootDirectory}/", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BuildAssetPath(Path.GetFileName(normalized));
+                }
+
                 return BuildAssetPath(Path.GetFileName(normalized));
             }
 
@@ -235,6 +246,11 @@ namespace App.HotUpdate.Holmas.Terrain
             if (normalized.StartsWith($"{HotUpdateTerrainDirectory}/", StringComparison.OrdinalIgnoreCase))
             {
                 return EnsureAssetExtension(normalized);
+            }
+
+            if (normalized.StartsWith($"{HotUpdateTerrainRootDirectory}/", StringComparison.OrdinalIgnoreCase))
+            {
+                return BuildAssetPath(Path.GetFileName(normalized));
             }
 
             if (normalized.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))

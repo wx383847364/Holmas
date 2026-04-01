@@ -126,7 +126,7 @@ namespace Holmas.Tests
             Assert.That(result.Success, Is.True);
             Assert.That(result.SelectedMapId, Is.EqualTo("map-b"));
             Assert.That(result.Request.MapId, Is.EqualTo("map-b"));
-            Assert.That(result.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/2.asset"));
+            Assert.That(result.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/Map/2.asset"));
             Assert.That(result.Request.CatCountMin, Is.EqualTo(3));
             Assert.That(result.Request.CatCountMax, Is.EqualTo(4));
             Assert.That(result.Request.CatPool, Has.Count.EqualTo(2));
@@ -236,9 +236,10 @@ namespace Holmas.Tests
         }
 
         [Test]
-        [TestCase("Assets/1.asset", "Assets/HotUpdateContent/Res/1.asset")]
-        [TestCase("1", "Assets/HotUpdateContent/Res/1.asset")]
-        [TestCase("2.asset", "Assets/HotUpdateContent/Res/2.asset")]
+        [TestCase("Assets/1.asset", "Assets/HotUpdateContent/Res/Map/1.asset")]
+        [TestCase("1", "Assets/HotUpdateContent/Res/Map/1.asset")]
+        [TestCase("2.asset", "Assets/HotUpdateContent/Res/Map/2.asset")]
+        [TestCase("Assets/HotUpdateContent/Res/3.asset", "Assets/HotUpdateContent/Res/Map/3.asset")]
         [TestCase("terrain://map-1", "terrain://map-1")]
         public void HolmasTerrainAssetPathUtility_NormalizesTerrainPath(string input, string expected)
         {
@@ -247,9 +248,10 @@ namespace Holmas.Tests
             Assert.That(actual, Is.EqualTo(expected));
         }
 
-        [TestCase("1", "Assets/HotUpdateContent/Res/1.asset")]
-        [TestCase("Assets/1.asset", "Assets/HotUpdateContent/Res/1.asset")]
-        [TestCase("Assets/HotUpdateContent/Res/3", "Assets/HotUpdateContent/Res/3.asset")]
+        [TestCase("1", "Assets/HotUpdateContent/Res/Map/1.asset")]
+        [TestCase("Assets/1.asset", "Assets/HotUpdateContent/Res/Map/1.asset")]
+        [TestCase("Assets/HotUpdateContent/Res/3", "Assets/HotUpdateContent/Res/Map/3.asset")]
+        [TestCase("Assets/HotUpdateContent/Res/Map/3", "Assets/HotUpdateContent/Res/Map/3.asset")]
         [TestCase("terrain://map-1", "")]
         public void HolmasTerrainAssetPathUtility_ResolvesTerrainLoadLocation(string input, string expected)
         {

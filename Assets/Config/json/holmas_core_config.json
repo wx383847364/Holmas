@@ -3,19 +3,19 @@
     "Maps": [
         {
             "MapId": "map_001",
-            "TerrainPath": "Assets/HotUpdateContent/Res/1.asset",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/1.asset",
             "CatCountMin": 15,
             "CatCountMax": 20
         },
         {
             "MapId": "map_002",
-            "TerrainPath": "Assets/HotUpdateContent/Res/2.asset",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/2.asset",
             "CatCountMin": 15,
             "CatCountMax": 20
         },
         {
             "MapId": "map_003",
-            "TerrainPath": "Assets/HotUpdateContent/Res/3.asset",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/3.asset",
             "CatCountMin": 15,
             "CatCountMax": 20
         }

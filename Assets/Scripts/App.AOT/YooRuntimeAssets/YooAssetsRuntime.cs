@@ -239,6 +239,7 @@ namespace App.AOT.YooRuntimeAssets
             string fileName = Path.GetFileName(normalized);
             if (!string.IsNullOrEmpty(fileName))
             {
+                AddWithExtensions($"Assets/HotUpdateContent/Res/Map/{fileName}");
                 AddWithExtensions($"Assets/HotUpdateContent/Res/{fileName}");
             }
 
@@ -262,14 +263,14 @@ namespace App.AOT.YooRuntimeAssets
             if (normalized.Contains("://", StringComparison.Ordinal))
                 return string.Empty;
 
-            if (normalized.StartsWith("Assets/HotUpdateContent/Res/", StringComparison.OrdinalIgnoreCase))
+            if (normalized.StartsWith("Assets/HotUpdateContent/Res/Map/", StringComparison.OrdinalIgnoreCase))
                 return normalized;
 
             string fileName = Path.GetFileName(normalized);
             if (string.IsNullOrEmpty(fileName))
                 return string.Empty;
 
-            return $"Assets/HotUpdateContent/Res/{fileName}";
+            return $"Assets/HotUpdateContent/Res/Map/{fileName}";
         }
 #endif
     }
