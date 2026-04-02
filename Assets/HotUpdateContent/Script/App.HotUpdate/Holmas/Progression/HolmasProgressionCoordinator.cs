@@ -57,6 +57,7 @@ namespace App.HotUpdate.Holmas.Progression
                 result.MetaExperienceGained = _metaProgressionService.ApplyMapCompletion(metaState, spawnedCats);
             }
 
+            result.TaskExperienceGained = 0L;
             return result;
         }
 
@@ -68,6 +69,21 @@ namespace App.HotUpdate.Holmas.Progression
             }
 
             return _metaProgressionService.ApplyTaskClaim(metaState, task.Task);
+        }
+
+        public HolmasProgressionAdvanceResult ApplyOfflineSettlement(HolmasMetaProgressionState metaState, long offlineMilliseconds)
+        {
+            var result = new HolmasProgressionAdvanceResult();
+
+            if (_metaProgressionService != null)
+            {
+                result.OfflineRewardGained = _metaProgressionService.ApplyOfflineSettlement(metaState, offlineMilliseconds);
+            }
+
+            result.TaskExperienceGained = 0L;
+            result.MetaExperienceGained = 0L;
+
+            return result;
         }
     }
 }

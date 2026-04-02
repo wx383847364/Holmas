@@ -14,6 +14,7 @@ namespace App.HotUpdate.Holmas.Application
     {
         Task<BoardRuntime> StartLevelAsync(LevelGenerationRequest request);
         Task<BoardRuntime> StartLevelForPlayerAsync(int playerLevel, int seed, IReadOnlyList<BoardSpawnEntry> catPool = null);
+        Task<BoardRuntime> StartLevelForCurrentPlayerAsync(int seed, IReadOnlyList<BoardSpawnEntry> catPool = null);
     }
 
     /// <summary>
@@ -45,6 +46,16 @@ namespace App.HotUpdate.Holmas.Application
 
             LevelGenerationRequest request = _requestGenerator.GenerateForPlayerLevel(playerLevel, seed, catPool);
             return StartLevelAsync(request);
+        }
+
+        public Task<BoardRuntime> StartLevelForCurrentPlayerAsync(int seed, IReadOnlyList<BoardSpawnEntry> catPool = null)
+        {
+            if (_context == null)
+            {
+                throw new InvalidOperationException("HolmasLevelLaunchGateway: 当前没有可用的应用上下文。");
+            }
+
+            return StartLevelForPlayerAsync(_context.CurrentPlayerLevel, seed, catPool);
         }
     }
 }

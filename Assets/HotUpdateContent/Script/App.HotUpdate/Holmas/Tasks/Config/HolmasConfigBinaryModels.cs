@@ -11,7 +11,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public const int CoreMagic = 0x48434F52; // HCOR
         public const int CatMetaMagic = 0x48434154; // HCAT
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
     }
 
     /// <summary>
@@ -83,8 +83,44 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     }
 
     /// <summary>
+    /// 侦探社等级配置行。
+    /// </summary>
+    [Serializable]
+    public sealed class HolmasMetaLevelRow
+    {
+        public int PlayerLevel;
+        public long MinExperience;
+        public int OfflineRewardPerHour;
+        public int AdUnlockHours;
+        public string Notes = string.Empty;
+    }
+
+    /// <summary>
+    /// 侦探社建筑升级费用序列。
+    /// 每个实例对应一个建筑的一条升级费用曲线。
+    /// </summary>
+    [Serializable]
+    public sealed class HolmasAgencyBuildingCostRow
+    {
+        public int[] Costs = Array.Empty<int>();
+    }
+
+    /// <summary>
+    /// 侦探社建筑配置行。
+    /// </summary>
+    [Serializable]
+    public sealed class HolmasAgencyBuildingRow
+    {
+        public int AgencyStageId;
+        public string[] BuildingIds = Array.Empty<string>();
+        public int[] BuildingUpgradeLevelCaps = Array.Empty<int>();
+        public HolmasAgencyBuildingCostRow[] BuildingUpgradeCosts = Array.Empty<HolmasAgencyBuildingCostRow>();
+        public string Notes = string.Empty;
+    }
+
+    /// <summary>
     /// 核心配置包。
-    /// 包含地图、任务和玩家等级三类正式运行所需的核心表。
+    /// 包含地图、任务、玩家等级与长期成长相关的正式核心表。
     /// </summary>
     [Serializable]
     public sealed class HolmasCoreConfigPackage
@@ -93,6 +129,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public HolmasMapRow[] Maps = Array.Empty<HolmasMapRow>();
         public HolmasTaskRow[] Tasks = Array.Empty<HolmasTaskRow>();
         public HolmasPlayerLevelRow[] PlayerLevels = Array.Empty<HolmasPlayerLevelRow>();
+        public HolmasMetaLevelRow[] MetaLevels = Array.Empty<HolmasMetaLevelRow>();
+        public HolmasAgencyBuildingRow[] AgencyBuildings = Array.Empty<HolmasAgencyBuildingRow>();
     }
 
     /// <summary>
@@ -149,6 +187,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             IReadOnlyList<HolmasMapDefinition> maps,
             IReadOnlyList<HolmasTaskTemplateDefinition> taskTemplates,
             IReadOnlyList<HolmasPlayerLevelDefinition> playerLevels,
+            IReadOnlyList<HolmasMetaLevelRow> metaLevels,
+            IReadOnlyList<HolmasAgencyBuildingRow> agencyBuildings,
             HolmasConfigReport report)
         {
             MapCatalog = mapCatalog;
@@ -157,6 +197,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             Maps = maps ?? Array.Empty<HolmasMapDefinition>();
             TaskTemplates = taskTemplates ?? Array.Empty<HolmasTaskTemplateDefinition>();
             PlayerLevels = playerLevels ?? Array.Empty<HolmasPlayerLevelDefinition>();
+            MetaLevels = metaLevels ?? Array.Empty<HolmasMetaLevelRow>();
+            AgencyBuildings = agencyBuildings ?? Array.Empty<HolmasAgencyBuildingRow>();
             Report = report ?? new HolmasConfigReport();
         }
 
@@ -166,6 +208,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public IReadOnlyList<HolmasMapDefinition> Maps { get; }
         public IReadOnlyList<HolmasTaskTemplateDefinition> TaskTemplates { get; }
         public IReadOnlyList<HolmasPlayerLevelDefinition> PlayerLevels { get; }
+        public IReadOnlyList<HolmasMetaLevelRow> MetaLevels { get; }
+        public IReadOnlyList<HolmasAgencyBuildingRow> AgencyBuildings { get; }
         public HolmasConfigReport Report { get; }
     }
 }

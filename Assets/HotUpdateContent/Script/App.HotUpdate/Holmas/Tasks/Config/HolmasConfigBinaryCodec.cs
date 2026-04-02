@@ -169,6 +169,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             WriteMapRows(writer, package.Maps);
             WriteTaskRows(writer, package.Tasks);
             WritePlayerLevelRows(writer, package.PlayerLevels);
+            WriteMetaLevelRows(writer, package.MetaLevels);
+            WriteAgencyBuildingRows(writer, package.AgencyBuildings);
         }
 
         private static void WriteCatMetaPackage(BinaryWriter writer, HolmasCatMetaPackage package)
@@ -193,6 +195,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 Maps = ReadMapRows(reader),
                 Tasks = ReadTaskRows(reader),
                 PlayerLevels = ReadPlayerLevelRows(reader),
+                MetaLevels = ReadMetaLevelRows(reader),
+                AgencyBuildings = ReadAgencyBuildingRows(reader),
             };
 
             return package;
@@ -380,6 +384,96 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             return rows;
         }
 
+        private static void WriteMetaLevelRows(BinaryWriter writer, HolmasMetaLevelRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasMetaLevelRow>();
+            writer.Write(rows.Length);
+            for (int i = 0; i < rows.Length; i++)
+            {
+                HolmasMetaLevelRow row = rows[i] ?? new HolmasMetaLevelRow();
+                writer.Write(row.PlayerLevel);
+                writer.Write(row.MinExperience);
+                writer.Write(row.OfflineRewardPerHour);
+                writer.Write(row.AdUnlockHours);
+            }
+        }
+
+        private static HolmasMetaLevelRow[] ReadMetaLevelRows(BinaryReader reader)
+        {
+            int count = ReadNonNegativeCount(reader);
+            var rows = new HolmasMetaLevelRow[count];
+            for (int i = 0; i < count; i++)
+            {
+                rows[i] = new HolmasMetaLevelRow
+                {
+                    PlayerLevel = reader.ReadInt32(),
+                    MinExperience = reader.ReadInt64(),
+                    OfflineRewardPerHour = reader.ReadInt32(),
+                    AdUnlockHours = reader.ReadInt32(),
+                };
+            }
+
+            return rows;
+        }
+
+        private static void WriteAgencyBuildingRows(BinaryWriter writer, HolmasAgencyBuildingRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasAgencyBuildingRow>();
+            writer.Write(rows.Length);
+            for (int i = 0; i < rows.Length; i++)
+            {
+                HolmasAgencyBuildingRow row = rows[i] ?? new HolmasAgencyBuildingRow();
+                writer.Write(row.AgencyStageId);
+                WriteStringArray(writer, row.BuildingIds);
+                WriteIntArray(writer, row.BuildingUpgradeLevelCaps);
+                WriteBuildingCostRows(writer, row.BuildingUpgradeCosts);
+            }
+        }
+
+        private static HolmasAgencyBuildingRow[] ReadAgencyBuildingRows(BinaryReader reader)
+        {
+            int count = ReadNonNegativeCount(reader);
+            var rows = new HolmasAgencyBuildingRow[count];
+            for (int i = 0; i < count; i++)
+            {
+                rows[i] = new HolmasAgencyBuildingRow
+                {
+                    AgencyStageId = reader.ReadInt32(),
+                    BuildingIds = ReadStringArray(reader),
+                    BuildingUpgradeLevelCaps = ReadIntArray(reader),
+                    BuildingUpgradeCosts = ReadBuildingCostRows(reader),
+                };
+            }
+
+            return rows;
+        }
+
+        private static void WriteBuildingCostRows(BinaryWriter writer, HolmasAgencyBuildingCostRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasAgencyBuildingCostRow>();
+            writer.Write(rows.Length);
+            for (int i = 0; i < rows.Length; i++)
+            {
+                HolmasAgencyBuildingCostRow row = rows[i] ?? new HolmasAgencyBuildingCostRow();
+                WriteIntArray(writer, row.Costs);
+            }
+        }
+
+        private static HolmasAgencyBuildingCostRow[] ReadBuildingCostRows(BinaryReader reader)
+        {
+            int count = ReadNonNegativeCount(reader);
+            var rows = new HolmasAgencyBuildingCostRow[count];
+            for (int i = 0; i < count; i++)
+            {
+                rows[i] = new HolmasAgencyBuildingCostRow
+                {
+                    Costs = ReadIntArray(reader),
+                };
+            }
+
+            return rows;
+        }
+
         private static void WriteString(BinaryWriter writer, string value)
         {
             writer.Write(value ?? string.Empty);
@@ -388,6 +482,28 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         private static string ReadString(BinaryReader reader)
         {
             return reader.ReadString() ?? string.Empty;
+        }
+
+        private static void WriteStringArray(BinaryWriter writer, string[] values)
+        {
+            values = values ?? Array.Empty<string>();
+            writer.Write(values.Length);
+            for (int i = 0; i < values.Length; i++)
+            {
+                WriteString(writer, values[i]);
+            }
+        }
+
+        private static string[] ReadStringArray(BinaryReader reader)
+        {
+            int count = ReadNonNegativeCount(reader);
+            var values = new string[count];
+            for (int i = 0; i < count; i++)
+            {
+                values[i] = ReadString(reader);
+            }
+
+            return values;
         }
 
         private static void WriteIntArray(BinaryWriter writer, int[] values)

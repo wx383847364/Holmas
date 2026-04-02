@@ -23,6 +23,7 @@ namespace App.HotUpdate.Holmas.Application
         private readonly HolmasTaskProgressService _taskProgressService;
         private readonly HolmasMetaProgressionService _metaProgressionService;
         private readonly HolmasProgressionCoordinator _progressionCoordinator;
+        private readonly HolmasAgencyProgressionService _agencyProgressionService;
         private readonly IAppLogger _logger;
         private readonly IAssetsRuntime _assetsRuntime;
         private bool _currentLevelCompletionApplied;
@@ -32,7 +33,7 @@ namespace App.HotUpdate.Holmas.Application
             HolmasMetaProgressionService metaProgressionService,
             HolmasProgressionCoordinator progressionCoordinator,
             IAppLogger logger)
-            : this(taskProgressService, metaProgressionService, progressionCoordinator, logger, null)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, null)
         {
         }
 
@@ -42,18 +43,38 @@ namespace App.HotUpdate.Holmas.Application
             HolmasProgressionCoordinator progressionCoordinator,
             IAppLogger logger,
             IAssetsRuntime assetsRuntime)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, assetsRuntime)
+        {
+        }
+
+        public HolmasGameplayRuntime(
+            HolmasTaskProgressService taskProgressService,
+            HolmasMetaProgressionService metaProgressionService,
+            HolmasProgressionCoordinator progressionCoordinator,
+            HolmasAgencyProgressionService agencyProgressionService,
+            IAppLogger logger,
+            IAssetsRuntime assetsRuntime)
         {
             _taskProgressService = taskProgressService ?? throw new ArgumentNullException(nameof(taskProgressService));
             _metaProgressionService = metaProgressionService ?? throw new ArgumentNullException(nameof(metaProgressionService));
             _progressionCoordinator = progressionCoordinator ?? throw new ArgumentNullException(nameof(progressionCoordinator));
+            _agencyProgressionService = agencyProgressionService ?? new HolmasAgencyProgressionService(new HolmasAgencyCatalog(), _metaProgressionService);
             _logger = logger;
             _assetsRuntime = assetsRuntime;
 
             TaskBarState = _taskProgressService.CreateDefaultTaskBarState();
             MetaProgressionState = _metaProgressionService.CreateState();
+            if (MetaProgressionState.PlayerLevel <= 0)
+            {
+                MetaProgressionState.PlayerLevel = 1;
+            }
             if (MetaProgressionState.AgencyLevel <= 0)
             {
-                MetaProgressionState.AgencyLevel = 1;
+                MetaProgressionState.AgencyLevel = MetaProgressionState.PlayerLevel;
+            }
+            if (MetaProgressionState.AgencyStageId <= 0)
+            {
+                MetaProgressionState.AgencyStageId = 1;
             }
         }
 
@@ -66,6 +87,21 @@ namespace App.HotUpdate.Holmas.Application
         /// 当前长期进度运行时状态。
         /// </summary>
         public HolmasMetaProgressionState MetaProgressionState { get; }
+
+        /// <summary>
+        /// 当前玩家等级，供上层无 UI 组合层直接读取。
+        /// </summary>
+        public int CurrentPlayerLevel => MetaProgressionState?.PlayerLevel ?? 1;
+
+        /// <summary>
+        /// 当前侦探社阶段。
+        /// </summary>
+        public int CurrentAgencyStageId => MetaProgressionState?.AgencyStageId ?? 1;
+
+        /// <summary>
+        /// 当前金币余额。
+        /// </summary>
+        public long CurrentGoldBalance => MetaProgressionState?.GoldBalance ?? 0L;
 
         /// <summary>
         /// 当前关卡模板。
@@ -93,6 +129,14 @@ namespace App.HotUpdate.Holmas.Application
         }
 
         /// <summary>
+        /// 按当前玩家等级补齐所有已解锁空槽位。
+        /// </summary>
+        public HolmasTaskRefillResult RefillAvailableTasks()
+        {
+            return RefillAvailableTasks(CurrentPlayerLevel);
+        }
+
+        /// <summary>
         /// 解锁一个广告槽位，并在需要时立即补任务。
         /// </summary>
         public HolmasTaskSlotUnlockResult UnlockAdSlot(int slotIndex, int playerLevel, long unlockExpireAtUtcMilliseconds)
@@ -100,6 +144,15 @@ namespace App.HotUpdate.Holmas.Application
             HolmasTaskSlotUnlockResult result = _taskProgressService.UnlockAdSlot(TaskBarState, slotIndex, playerLevel, unlockExpireAtUtcMilliseconds);
             _logger?.LogInfo("HolmasGameplayRuntime: 尝试解锁任务槽位 {0}，成功={1}。", slotIndex, result.Success);
             return result;
+        }
+
+        /// <summary>
+        /// 使用当前玩家等级与当前成长配置解锁一个广告槽位。
+        /// </summary>
+        public HolmasTaskSlotUnlockResult UnlockAdSlot(int slotIndex, long nowUtcMilliseconds)
+        {
+            long unlockExpireAtUtcMilliseconds = GetAdUnlockExpireAt(nowUtcMilliseconds);
+            return UnlockAdSlot(slotIndex, CurrentPlayerLevel, unlockExpireAtUtcMilliseconds);
         }
 
         /// <summary>
@@ -178,6 +231,14 @@ namespace App.HotUpdate.Holmas.Application
         }
 
         /// <summary>
+        /// 当前长期成长配置下，广告槽位的到期时间。
+        /// </summary>
+        public long GetAdUnlockExpireAt(long nowUtcMilliseconds)
+        {
+            return _metaProgressionService.GetUnlockExpireAt(MetaProgressionState, nowUtcMilliseconds);
+        }
+
+        /// <summary>
         /// 翻开格子；若因此完成当前地图，则立即推进任务与长期进度。
         /// </summary>
         public BoardRevealResult RevealCell(int cellIndex, out HolmasProgressionAdvanceResult progressionResult)
@@ -231,10 +292,19 @@ namespace App.HotUpdate.Holmas.Application
             _currentLevelCompletionApplied = true;
 
             _logger?.LogInfo(
-                "HolmasGameplayRuntime: 已完成地图结算，推进任务 {0} 条，新增完成 {1} 条，长期经验 +{2}。",
+                "HolmasGameplayRuntime: 已完成地图结算，推进任务 {0} 条，新增完成 {1} 条。",
                 result.ProgressedTaskIds.Count,
-                result.CompletedTaskIds.Count,
-                result.MetaExperienceGained);
+                result.CompletedTaskIds.Count);
+            return result;
+        }
+
+        /// <summary>
+        /// 结算离线收益，当前 v1 只增加金币，不再直接给玩家经验。
+        /// </summary>
+        public HolmasProgressionAdvanceResult ApplyOfflineSettlement(long offlineMilliseconds)
+        {
+            HolmasProgressionAdvanceResult result = _progressionCoordinator.ApplyOfflineSettlement(MetaProgressionState, offlineMilliseconds);
+            _logger?.LogInfo("HolmasGameplayRuntime: 已结算离线收益，金币 +{0}。", result.OfflineRewardGained);
             return result;
         }
 
@@ -250,7 +320,44 @@ namespace App.HotUpdate.Holmas.Application
                 _progressionCoordinator.ApplyTaskClaim(taskBeforeClaim, MetaProgressionState);
             }
 
-            _logger?.LogInfo("HolmasGameplayRuntime: 尝试领取槽位 {0} 任务奖励，成功={1}。", slotIndex, result.Success);
+            _logger?.LogInfo("HolmasGameplayRuntime: 尝试领取槽位 {0} 任务奖励，成功={1}，金币 +{2}。", slotIndex, result.Success, result.Reward);
+            return result;
+        }
+
+        /// <summary>
+        /// 按当前玩家等级领取任务奖励。
+        /// </summary>
+        public HolmasTaskClaimResult ClaimTaskReward(int slotIndex)
+        {
+            return ClaimTaskReward(slotIndex, CurrentPlayerLevel);
+        }
+
+        /// <summary>
+        /// 按当前成长配置升级侦探社建筑。
+        /// </summary>
+        public HolmasAgencyUpgradeResult TryUpgradeBuilding(string buildingId)
+        {
+            if (_agencyProgressionService == null)
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前没有可用的建筑成长服务。");
+            }
+
+            HolmasAgencyUpgradeResult result = _agencyProgressionService.TryUpgradeBuilding(MetaProgressionState, buildingId);
+            if (result.Success)
+            {
+                _logger?.LogInfo(
+                    "HolmasGameplayRuntime: 建筑 {0} 升级到 {1}，金币 -{2}，玩家等级={3}，阶段推进={4}。",
+                    result.BuildingId,
+                    result.NewLevel,
+                    result.GoldSpent,
+                    result.PlayerLevelAfter,
+                    result.StageAdvanced);
+            }
+            else
+            {
+                _logger?.LogWarning("HolmasGameplayRuntime: 建筑 {0} 升级失败，原因={1}", buildingId, result.FailureReason);
+            }
+
             return result;
         }
     }

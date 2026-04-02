@@ -27,6 +27,8 @@ namespace Holmas.Tests
             Assert.That(tables.Maps, Has.Count.EqualTo(3));
             Assert.That(tables.Tasks, Has.Count.EqualTo(20));
             Assert.That(tables.Levels, Has.Count.EqualTo(20));
+            Assert.That(tables.MetaLevels, Has.Count.EqualTo(20));
+            Assert.That(tables.AgencyBuildings, Has.Count.EqualTo(4));
             Assert.That(tables.Tasks.All(item => string.Equals(item.TaskKind, "Money", StringComparison.Ordinal)), Is.True);
             Assert.That(tables.Cats.All(item => item.Price > 0 && item.Weight > 0 && item.Rarity > 0), Is.True);
         }
@@ -93,8 +95,61 @@ namespace Holmas.Tests
             Assert.That(bundle.TaskTemplates.Count, Is.EqualTo(tables.Tasks.Count));
             Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(tables.Levels.Count));
             Assert.That(bundle.Maps.Count, Is.EqualTo(tables.Maps.Count));
+            Assert.That(bundle.MetaLevels.Count, Is.EqualTo(tables.MetaLevels.Count));
+            Assert.That(bundle.AgencyBuildings.Count, Is.EqualTo(tables.AgencyBuildings.Count));
             Assert.That(bundle.Report.Success, Is.True);
             Assert.That(bundle.Report.Errors, Is.Empty);
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_RejectsMissingMetaLevels()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+            corePackage.MetaLevels = Array.Empty<HolmasMetaLevelRow>();
+
+            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
+            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out _, out HolmasConfigReport report);
+
+            Assert.That(success, Is.False);
+            Assert.That(report.Errors.Any(item => item.Contains("缺少 MetaLevels")), Is.True, string.Join(Environment.NewLine, report.Errors));
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_RejectsMissingAgencyBuildings()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+            corePackage.AgencyBuildings = Array.Empty<HolmasAgencyBuildingRow>();
+
+            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
+            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out _, out HolmasConfigReport report);
+
+            Assert.That(success, Is.False);
+            Assert.That(report.Errors.Any(item => item.Contains("缺少 AgencyBuildings")), Is.True, string.Join(Environment.NewLine, report.Errors));
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_RejectsTruncatedMetaLevels()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+            corePackage.MetaLevels = corePackage.MetaLevels.Take(corePackage.MetaLevels.Length - 1).ToArray();
+
+            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
+            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out _, out HolmasConfigReport report);
+
+            Assert.That(success, Is.False);
+            Assert.That(report.Errors.Any(item => item.Contains("行数不一致")), Is.True, string.Join(Environment.NewLine, report.Errors));
         }
 
         [Test]
@@ -109,6 +164,9 @@ namespace Holmas.Tests
 
             int[] expectedUpgradeExp = { 100, 120, 140, 160, 180, 210, 240, 270, 300, 340, 380, 420, 470, 520, 580, 640, 710, 780, 860, 950 };
             Assert.That(tables.Levels.Select(item => item.UpgradeExp), Is.EqualTo(expectedUpgradeExp));
+            Assert.That(tables.MetaLevels.Select(item => item.MinExperience).ToArray(), Is.EqualTo(expectedUpgradeExp.Select(value => (long)value).ToArray()));
+            Assert.That(tables.MetaLevels.Select(item => item.PlayerLevel).ToArray(), Is.EqualTo(Enumerable.Range(1, 20).ToArray()));
+            Assert.That(tables.AgencyBuildings.Select(item => item.AgencyStageId), Is.EqualTo(new[] { 1, 2, 3, 4 }));
 
             foreach (CsvLevelRow level in tables.Levels)
             {
@@ -216,6 +274,42 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasCsvValidator_RejectsMetaLevelMismatch()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+            tables.MetaLevels[0].MinExperience = tables.MetaLevels[1].MinExperience;
+
+            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+
+            Assert.That(errors.Any(item => item.Contains("长期成长经验门槛") || item.Contains("严格递增")), Is.True, string.Join(Environment.NewLine, errors));
+        }
+
+        [Test]
+        public void HolmasCsvValidator_RejectsAgencyBuildingShapeMismatch()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+            tables.AgencyBuildings[0].BuildingUpgradeLevelCaps = new[] { 3, 2 };
+
+            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+
+            Assert.That(
+                errors.Any(item => item.Contains("建筑 ID 与等级上限数量不一致") || item.Contains("升级费用数量与等级上限不一致")),
+                Is.True,
+                string.Join(Environment.NewLine, errors));
+        }
+
+        [Test]
+        public void HolmasCsvValidator_RejectsNonPositiveAgencyBuildingCost()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+            tables.AgencyBuildings[0].BuildingUpgradeCosts[0][0] = 0;
+
+            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+
+            Assert.That(errors.Any(item => item.Contains("非正费用")), Is.True, string.Join(Environment.NewLine, errors));
+        }
+
+        [Test]
         public void HolmasCsvValidator_RejectsWeightLengthMismatch()
         {
             CsvConfigTables tables = LoadSampleTables();
@@ -268,6 +362,8 @@ namespace Holmas.Tests
                 Maps = LoadMaps("Holmas_MapTable.csv"),
                 Tasks = LoadTasks("Holmas_TaskTable.csv"),
                 Levels = LoadLevels("Holmas_PlayerLevelTable.csv"),
+                MetaLevels = LoadMetaLevels("Holmas_MetaLevelTable.csv"),
+                AgencyBuildings = LoadAgencyBuildings("Holmas_AgencyBuildingTable.csv"),
             };
         }
 
@@ -378,6 +474,25 @@ namespace Holmas.Tests
                     TaskTypeWeights = item.TaskTypeWeights.ToArray(),
                     MapIndices = item.MapIds.Select(mapId => mapIndexById[mapId]).ToArray(),
                     MapWeights = item.MapWeights.ToArray(),
+                }).ToArray(),
+                MetaLevels = tables.MetaLevels.Select(item => new HolmasMetaLevelRow
+                {
+                    PlayerLevel = item.PlayerLevel,
+                    MinExperience = item.MinExperience,
+                    OfflineRewardPerHour = item.OfflineRewardPerHour,
+                    AdUnlockHours = item.AdUnlockHours,
+                    Notes = item.Notes,
+                }).ToArray(),
+                AgencyBuildings = tables.AgencyBuildings.Select(item => new HolmasAgencyBuildingRow
+                {
+                    AgencyStageId = item.AgencyStageId,
+                    BuildingIds = item.BuildingIds.ToArray(),
+                    BuildingUpgradeLevelCaps = item.BuildingUpgradeLevelCaps.ToArray(),
+                    BuildingUpgradeCosts = item.BuildingUpgradeCosts.Select(costs => new HolmasAgencyBuildingCostRow
+                    {
+                        Costs = costs.ToArray(),
+                    }).ToArray(),
+                    Notes = item.Notes,
                 }).ToArray(),
             };
         }
@@ -514,6 +629,54 @@ namespace Holmas.Tests
                     TaskTypeWeights = SplitIntList(row[3]),
                     MapIds = SplitCsvList(row[4]),
                     MapWeights = SplitIntList(row[5]),
+                });
+            }
+
+            return result;
+        }
+
+        private static List<CsvMetaLevelRow> LoadMetaLevels(string fileName)
+        {
+            var rows = ReadCsvTable(fileName);
+            var result = new List<CsvMetaLevelRow>();
+            foreach (var row in rows.Skip(2))
+            {
+                if (row.Length < 5)
+                {
+                    continue;
+                }
+
+                result.Add(new CsvMetaLevelRow
+                {
+                    PlayerLevel = ParseInt(row[0]),
+                    MinExperience = ParseLong(row[1]),
+                    OfflineRewardPerHour = ParseInt(row[2]),
+                    AdUnlockHours = ParseInt(row[3]),
+                    Notes = row[4],
+                });
+            }
+
+            return result;
+        }
+
+        private static List<CsvAgencyBuildingRow> LoadAgencyBuildings(string fileName)
+        {
+            var rows = ReadCsvTable(fileName);
+            var result = new List<CsvAgencyBuildingRow>();
+            foreach (var row in rows.Skip(2))
+            {
+                if (row.Length < 5)
+                {
+                    continue;
+                }
+
+                result.Add(new CsvAgencyBuildingRow
+                {
+                    AgencyStageId = ParseInt(row[0]),
+                    BuildingIds = SplitCsvList(row[1]),
+                    BuildingUpgradeLevelCaps = SplitIntList(row[2]),
+                    BuildingUpgradeCosts = SplitNestedIntLists(row[3]),
+                    Notes = row[4],
                 });
             }
 
@@ -661,12 +824,35 @@ namespace Holmas.Tests
                 .ToArray();
         }
 
+        private static int[][] SplitNestedIntLists(string cell)
+        {
+            if (string.IsNullOrWhiteSpace(cell))
+            {
+                return Array.Empty<int[]>();
+            }
+
+            return cell.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(item => SplitIntList(item.Trim()))
+                .ToArray();
+        }
+
         private static int ParseInt(string cell)
         {
             int value;
             if (!int.TryParse(cell, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
             {
                 return 0;
+            }
+
+            return value;
+        }
+
+        private static long ParseLong(string cell)
+        {
+            long value;
+            if (!long.TryParse(cell, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
+            {
+                return 0L;
             }
 
             return value;
@@ -689,6 +875,8 @@ namespace Holmas.Tests
             public List<CsvMapRow> Maps { get; set; } = new List<CsvMapRow>();
             public List<CsvTaskRow> Tasks { get; set; } = new List<CsvTaskRow>();
             public List<CsvLevelRow> Levels { get; set; } = new List<CsvLevelRow>();
+            public List<CsvMetaLevelRow> MetaLevels { get; set; } = new List<CsvMetaLevelRow>();
+            public List<CsvAgencyBuildingRow> AgencyBuildings { get; set; } = new List<CsvAgencyBuildingRow>();
         }
 
         private sealed class CsvCatRow
@@ -730,6 +918,24 @@ namespace Holmas.Tests
             public int[] MapWeights = Array.Empty<int>();
         }
 
+        private sealed class CsvMetaLevelRow
+        {
+            public int PlayerLevel;
+            public long MinExperience;
+            public int OfflineRewardPerHour;
+            public int AdUnlockHours;
+            public string Notes = string.Empty;
+        }
+
+        private sealed class CsvAgencyBuildingRow
+        {
+            public int AgencyStageId;
+            public string[] BuildingIds = Array.Empty<string>();
+            public int[] BuildingUpgradeLevelCaps = Array.Empty<int>();
+            public int[][] BuildingUpgradeCosts = Array.Empty<int[]>();
+            public string Notes = string.Empty;
+        }
+
         private static class CsvConfigValidator
         {
             public static List<string> Validate(CsvConfigTables tables)
@@ -745,6 +951,8 @@ namespace Holmas.Tests
                 ValidateMaps(tables.Maps, errors);
                 ValidateTasks(tables.Tasks, tables.Cats, errors);
                 ValidateLevels(tables.Levels, tables.Tasks, tables.Maps, errors);
+                ValidateMetaLevels(tables.MetaLevels, tables.Levels, errors);
+                ValidateAgencyBuildings(tables.AgencyBuildings, errors);
                 return errors;
             }
 
@@ -954,6 +1162,180 @@ namespace Holmas.Tests
                     {
                         ValidateWeightedIds(level.PlayerLevel, level.MapIds, level.MapWeights, mapIds, "地图", errors);
                     }
+                }
+            }
+
+            private static void ValidateMetaLevels(IEnumerable<CsvMetaLevelRow> levels, IReadOnlyList<CsvLevelRow> playerLevels, List<string> errors)
+            {
+                var seen = new HashSet<int>();
+                long previousMinExperience = long.MinValue;
+                int expectedLevel = 1;
+                int metaLevelCount = 0;
+
+                foreach (var level in levels ?? Array.Empty<CsvMetaLevelRow>())
+                {
+                    metaLevelCount++;
+                    if (level == null)
+                    {
+                        errors.Add("长期成长表存在空行。");
+                        continue;
+                    }
+
+                    if (level.PlayerLevel <= 0)
+                    {
+                        errors.Add("长期成长表的玩家等级非法。");
+                        continue;
+                    }
+
+                    if (level.PlayerLevel != expectedLevel)
+                    {
+                        errors.Add($"长期成长表的玩家等级不连续: {level.PlayerLevel}。");
+                    }
+
+                    if (!seen.Add(level.PlayerLevel))
+                    {
+                        errors.Add($"长期成长表存在重复玩家等级: {level.PlayerLevel}");
+                    }
+
+                    if (level.MinExperience < 0)
+                    {
+                        errors.Add($"长期成长表的经验门槛非法: {level.PlayerLevel}");
+                    }
+
+                    if (previousMinExperience >= level.MinExperience)
+                    {
+                        errors.Add($"长期成长经验门槛必须严格递增: {level.PlayerLevel}");
+                    }
+
+                    if (level.OfflineRewardPerHour < 0)
+                    {
+                        errors.Add($"长期成长表的离线奖励非法: {level.PlayerLevel}");
+                    }
+
+                    if (level.AdUnlockHours <= 0)
+                    {
+                        errors.Add($"长期成长表的广告解锁时长非法: {level.PlayerLevel}");
+                    }
+
+                    previousMinExperience = level.MinExperience;
+                    expectedLevel++;
+                }
+
+                if (playerLevels != null && metaLevelCount != playerLevels.Count)
+                {
+                    errors.Add($"长期成长表与玩家等级表数量不一致: meta={metaLevelCount}, player={playerLevels.Count}");
+                }
+
+                if (playerLevels != null)
+                {
+                    var upgradeExpByLevel = playerLevels.Where(item => item != null).ToDictionary(item => item.PlayerLevel, item => item.UpgradeExp);
+                    foreach (var level in levels ?? Array.Empty<CsvMetaLevelRow>())
+                    {
+                        if (level == null)
+                        {
+                            continue;
+                        }
+
+                        int upgradeExp;
+                        if (upgradeExpByLevel.TryGetValue(level.PlayerLevel, out upgradeExp) && upgradeExp != level.MinExperience)
+                        {
+                            errors.Add($"长期成长表和玩家等级表经验门槛不一致: {level.PlayerLevel}");
+                        }
+                    }
+                }
+            }
+
+            private static void ValidateAgencyBuildings(IEnumerable<CsvAgencyBuildingRow> buildings, List<string> errors)
+            {
+                var seenStages = new HashSet<int>();
+                var seenBuildingIds = new HashSet<string>(StringComparer.Ordinal);
+                int expectedStage = 1;
+
+                foreach (var buildingRow in buildings ?? Array.Empty<CsvAgencyBuildingRow>())
+                {
+                    if (buildingRow == null)
+                    {
+                        errors.Add("建筑表存在空行。");
+                        continue;
+                    }
+
+                    if (buildingRow.AgencyStageId <= 0)
+                    {
+                        errors.Add("建筑表的阶段 ID 非法。");
+                        continue;
+                    }
+
+                    if (buildingRow.AgencyStageId != expectedStage)
+                    {
+                        errors.Add($"建筑表的阶段 ID 不连续: {buildingRow.AgencyStageId}");
+                    }
+
+                    if (!seenStages.Add(buildingRow.AgencyStageId))
+                    {
+                        errors.Add($"建筑表存在重复阶段 ID: {buildingRow.AgencyStageId}");
+                    }
+
+                    if (buildingRow.BuildingIds == null || buildingRow.BuildingIds.Length == 0)
+                    {
+                        errors.Add($"建筑表缺少建筑 ID: {buildingRow.AgencyStageId}");
+                        continue;
+                    }
+
+                    if (buildingRow.BuildingUpgradeLevelCaps == null || buildingRow.BuildingUpgradeLevelCaps.Length != buildingRow.BuildingIds.Length)
+                    {
+                        errors.Add($"建筑表的建筑 ID 与等级上限数量不一致: {buildingRow.AgencyStageId}");
+                    }
+
+                    if (buildingRow.BuildingUpgradeCosts == null || buildingRow.BuildingUpgradeCosts.Length != buildingRow.BuildingIds.Length)
+                    {
+                        errors.Add($"建筑表的建筑 ID 与升级费用数量不一致: {buildingRow.AgencyStageId}");
+                    }
+
+                    for (int i = 0; i < buildingRow.BuildingIds.Length; i++)
+                    {
+                        string buildingId = buildingRow.BuildingIds[i] ?? string.Empty;
+                        if (string.IsNullOrWhiteSpace(buildingId))
+                        {
+                            errors.Add($"建筑表存在空建筑 ID: {buildingRow.AgencyStageId}");
+                            continue;
+                        }
+
+                        if (!seenBuildingIds.Add(buildingId))
+                        {
+                            errors.Add($"建筑表存在重复建筑 ID: {buildingId}");
+                        }
+
+                        if (buildingRow.BuildingUpgradeLevelCaps != null && i < buildingRow.BuildingUpgradeLevelCaps.Length && buildingRow.BuildingUpgradeLevelCaps[i] <= 0)
+                        {
+                            errors.Add($"建筑表等级上限非法: {buildingRow.AgencyStageId}/{buildingId}");
+                        }
+
+                        int[] costs = buildingRow.BuildingUpgradeCosts != null && i < buildingRow.BuildingUpgradeCosts.Length
+                            ? buildingRow.BuildingUpgradeCosts[i]
+                            : Array.Empty<int>();
+
+                        int cap = buildingRow.BuildingUpgradeLevelCaps != null && i < buildingRow.BuildingUpgradeLevelCaps.Length
+                            ? buildingRow.BuildingUpgradeLevelCaps[i]
+                            : 0;
+
+                        if (costs == null || costs.Length != cap)
+                        {
+                            errors.Add($"建筑表升级费用数量与等级上限不一致: {buildingRow.AgencyStageId}/{buildingId}");
+                        }
+                        else
+                        {
+                            foreach (int cost in costs)
+                            {
+                                if (cost <= 0)
+                                {
+                                    errors.Add($"建筑表存在非正费用: {buildingRow.AgencyStageId}/{buildingId}");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    expectedStage++;
                 }
             }
 

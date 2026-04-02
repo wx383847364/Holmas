@@ -104,9 +104,19 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return false;
             }
 
+            if (!TryBuildMetaLevels(corePackage.MetaLevels, playerLevels, out var metaLevels, report))
+            {
+                return false;
+            }
+
+            if (!TryBuildAgencyBuildings(corePackage.AgencyBuildings, out var agencyBuildings, report))
+            {
+                return false;
+            }
+
             var mapCatalog = new HolmasMapCatalog(maps);
             var taskCatalog = new HolmasTaskCatalog(cats, tasks, playerLevels);
-            bundle = new HolmasConfigCatalogBundle(mapCatalog, taskCatalog, cats, maps, tasks, playerLevels, report);
+            bundle = new HolmasConfigCatalogBundle(mapCatalog, taskCatalog, cats, maps, tasks, playerLevels, metaLevels, agencyBuildings, report);
             report.MarkSuccess("配置包已成功恢复为运行时 Catalog。");
             return true;
         }
@@ -412,6 +422,216 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     MapIds = ResolveIds(row.MapIndices, mapIdByIndex),
                     MapWeights = row.MapWeights ?? Array.Empty<int>(),
                     MapIndices = row.MapIndices ?? Array.Empty<int>(),
+                });
+            }
+
+            return true;
+        }
+
+        private static bool TryBuildMetaLevels(
+            IReadOnlyList<HolmasMetaLevelRow> rows,
+            IReadOnlyList<HolmasPlayerLevelDefinition> playerLevels,
+            out List<HolmasMetaLevelRow> metaLevels,
+            HolmasConfigReport report)
+        {
+            metaLevels = new List<HolmasMetaLevelRow>();
+
+            if (rows == null || rows.Count == 0)
+            {
+                report.AddError("核心配置包缺少 MetaLevels。");
+                return false;
+            }
+
+            var seenLevels = new HashSet<int>();
+            long previousMinExperience = long.MinValue;
+            int expectedLevel = 1;
+            var playerLevelLookup = playerLevels == null
+                ? new Dictionary<int, HolmasPlayerLevelDefinition>()
+                : playerLevels.Where(item => item != null).ToDictionary(item => item.PlayerLevel, item => item);
+
+            if (playerLevelLookup.Count != rows.Count)
+            {
+                report.AddError("MetaLevels 与 PlayerLevelTable 行数不一致。");
+                return false;
+            }
+
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null)
+                {
+                    report.AddError($"MetaLevels 第 {i + 1} 行为空。");
+                    return false;
+                }
+
+                if (row.PlayerLevel != expectedLevel)
+                {
+                    report.AddError($"MetaLevels 的 playerLevel 必须从 1 连续递增，当前第 {i + 1} 行是 {row.PlayerLevel}。");
+                    return false;
+                }
+
+                expectedLevel++;
+
+                if (!seenLevels.Add(row.PlayerLevel))
+                {
+                    report.AddError($"MetaLevels 存在重复 playerLevel: {row.PlayerLevel}。");
+                    return false;
+                }
+
+                if (row.MinExperience <= previousMinExperience)
+                {
+                    report.AddError($"MetaLevels 的 minExperience 必须严格递增: level={row.PlayerLevel}。");
+                    return false;
+                }
+
+                previousMinExperience = row.MinExperience;
+
+                if (row.OfflineRewardPerHour < 0)
+                {
+                    report.AddError($"MetaLevels 的 offlineRewardPerHour 不能为负: level={row.PlayerLevel}。");
+                    return false;
+                }
+
+                if (row.AdUnlockHours <= 0)
+                {
+                    report.AddError($"MetaLevels 的 adUnlockHours 必须大于 0: level={row.PlayerLevel}。");
+                    return false;
+                }
+
+                if (playerLevelLookup.TryGetValue(row.PlayerLevel, out var playerLevel))
+                {
+                    if (playerLevel.UpgradeExp != row.MinExperience)
+                    {
+                        report.AddError($"MetaLevels.minExperience 必须等于 PlayerLevelTable.upgradeExp: level={row.PlayerLevel}。");
+                        return false;
+                    }
+                }
+
+                metaLevels.Add(new HolmasMetaLevelRow
+                {
+                    PlayerLevel = row.PlayerLevel,
+                    MinExperience = row.MinExperience,
+                    OfflineRewardPerHour = row.OfflineRewardPerHour,
+                    AdUnlockHours = row.AdUnlockHours,
+                    Notes = row.Notes ?? string.Empty,
+                });
+            }
+
+            return true;
+        }
+
+        private static bool TryBuildAgencyBuildings(
+            IReadOnlyList<HolmasAgencyBuildingRow> rows,
+            out List<HolmasAgencyBuildingRow> agencyBuildings,
+            HolmasConfigReport report)
+        {
+            agencyBuildings = new List<HolmasAgencyBuildingRow>();
+
+            if (rows == null || rows.Count == 0)
+            {
+                report.AddError("核心配置包缺少 AgencyBuildings。");
+                return false;
+            }
+
+            var seenStageIds = new HashSet<int>();
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null)
+                {
+                    report.AddError($"AgencyBuildings 第 {i + 1} 行为空。");
+                    return false;
+                }
+
+                if (row.AgencyStageId <= 0)
+                {
+                    report.AddError($"AgencyBuildings 第 {i + 1} 行的 agencyStageId 必须是正整数。");
+                    return false;
+                }
+
+                if (row.AgencyStageId != i + 1)
+                {
+                    report.AddError($"AgencyBuildings 的 agencyStageId 必须按 1..N 连续递增，当前第 {i + 1} 行为 {row.AgencyStageId}。");
+                    return false;
+                }
+
+                if (!seenStageIds.Add(row.AgencyStageId))
+                {
+                    report.AddError($"AgencyBuildings 存在重复 agencyStageId: {row.AgencyStageId}。");
+                    return false;
+                }
+
+                if (row.BuildingIds == null || row.BuildingIds.Length == 0)
+                {
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 缺少 buildingIds。");
+                    return false;
+                }
+
+                if (row.BuildingUpgradeLevelCaps == null || row.BuildingUpgradeLevelCaps.Length != row.BuildingIds.Length)
+                {
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 buildingIds 与 buildingUpgradeLevelCaps 长度不一致。");
+                    return false;
+                }
+
+                if (row.BuildingUpgradeCosts == null || row.BuildingUpgradeCosts.Length != row.BuildingIds.Length)
+                {
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 buildingIds 与 buildingUpgradeCosts 长度不一致。");
+                    return false;
+                }
+
+                var seenBuildingIds = new HashSet<string>(StringComparer.Ordinal);
+                for (int buildingIndex = 0; buildingIndex < row.BuildingIds.Length; buildingIndex++)
+                {
+                    string buildingId = row.BuildingIds[buildingIndex] ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(buildingId))
+                    {
+                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的第 {buildingIndex + 1} 个 buildingId 为空。");
+                        return false;
+                    }
+
+                    if (!seenBuildingIds.Add(buildingId))
+                    {
+                        report.AddError($"AgencyBuildings {row.AgencyStageId} 存在重复 buildingId: {buildingId}。");
+                        return false;
+                    }
+
+                    int cap = row.BuildingUpgradeLevelCaps[buildingIndex];
+                    if (cap <= 0)
+                    {
+                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的 building cap 必须大于 0: {buildingId}。");
+                        return false;
+                    }
+
+                    var costRow = row.BuildingUpgradeCosts[buildingIndex];
+                    int[] costs = costRow?.Costs ?? Array.Empty<int>();
+                    if (costs.Length != cap)
+                    {
+                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的 building {buildingId} 成本档位数量与 cap 不一致。");
+                        return false;
+                    }
+
+                    for (int costIndex = 0; costIndex < costs.Length; costIndex++)
+                    {
+                        if (costs[costIndex] <= 0)
+                        {
+                            report.AddError($"AgencyBuildings {row.AgencyStageId} 的 building {buildingId} 存在非正费用。");
+                            return false;
+                        }
+                    }
+                }
+
+                agencyBuildings.Add(new HolmasAgencyBuildingRow
+                {
+                    AgencyStageId = row.AgencyStageId,
+                    BuildingIds = row.BuildingIds.ToArray(),
+                    BuildingUpgradeLevelCaps = row.BuildingUpgradeLevelCaps.ToArray(),
+                    BuildingUpgradeCosts = (row.BuildingUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostRow>())
+                        .Select(costRow => new HolmasAgencyBuildingCostRow
+                        {
+                            Costs = costRow?.Costs ?? Array.Empty<int>(),
+                        })
+                        .ToArray(),
+                    Notes = row.Notes ?? string.Empty,
                 });
             }
 
