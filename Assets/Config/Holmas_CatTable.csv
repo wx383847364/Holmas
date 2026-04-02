@@ -1,8 +1,8 @@
 猫的id,猫的名称,对应的猫的图片资源地址path,稀有度,出现的权重值,价格
 catId,catName,iconPath,rarity,weight,price
-1,布偶猫,Assets/HotUpdateContent/Res/IconsCat_01.png,1,1000,10
-2,短毛猫,Assets/HotUpdateContent/Res/IconsCat_02.png,1,990,20
-3,波斯猫,Assets/HotUpdateContent/Res/IconsCat_03.png,1,980,30
+1,布偶猫,Assets/HotUpdateContent/Res/Icons/cat_01.png,1,1000,10
+2,短毛猫,Assets/HotUpdateContent/Res/Icons/cat_02.png,1,990,20
+3,波斯猫,Assets/HotUpdateContent/Res/Icons/cat_03.png,1,980,30
 4,暹罗猫,Assets/HotUpdateContent/Res/IconsCat_04.png,1,970,40
 5,缅因猫,Assets/HotUpdateContent/Res/IconsCat_05.png,1,960,50
 6,苏格兰折耳猫,Assets/HotUpdateContent/Res/IconsCat_06.png,1,950,60

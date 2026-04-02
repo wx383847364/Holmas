@@ -9,6 +9,14 @@ LONG_DIR_NAME = "长期主文档"
 ITER_DIR_NAME = "迭代记录"
 LONG_INDEX_NAME = "主文档索引.md"
 ITER_INDEX_NAME = "迭代记录索引.md"
+AGENT_RULE_DOC = "协作与执行/Agent 启动与验收规范.md"
+AGENT_STATUS_HEADING = "迭代文档默认分工状态"
+AGENT_LINE_RE = re.compile(r"^\s*-?\s*Agent\s*([1-5])：(.+?)\s*$")
+DEFAULT_PLACEHOLDERS = {
+    "完成项": {"- 暂无"},
+    "风险与阻塞": {"- 暂无"},
+    "下一步": {"- 待补充"},
+}
 
 
 def ensure_dirs(doc_root: Path):
@@ -51,7 +59,23 @@ def extract_section_bullets(path: Path, heading: str):
         if line.strip() == target:
             capture = True
             continue
-        if capture and line.startswith("## "):
+        if capture and line.strip().startswith("#"):
+            break
+        if capture and line.strip().startswith("- "):
+            bullets.append(line.strip())
+    return bullets
+
+
+def extract_section_bullets_from_text(text: str, heading: str):
+    lines = text.splitlines()
+    target = f"## {heading}"
+    bullets = []
+    capture = False
+    for line in lines:
+        if line.strip() == target:
+            capture = True
+            continue
+        if capture and line.strip().startswith("#"):
             break
         if capture and line.strip().startswith("- "):
             bullets.append(line.strip())
@@ -68,6 +92,35 @@ def extract_prefixed_value(path: Path, prefix: str) -> str:
         if stripped.startswith(prefix):
             return stripped.replace(prefix, "", 1).strip()
     return ""
+
+
+def normalize_agent_status_line(line: str) -> str:
+    stripped = line.strip()
+    if stripped.startswith("- "):
+        stripped = stripped[2:].strip()
+    match = AGENT_LINE_RE.match(stripped)
+    if not match:
+        raise ValueError(f"非法的 agent 状态行：{line}")
+    return f"- Agent {match.group(1)}：{match.group(2).strip()}"
+
+
+def agent_number_from_line(line: str):
+    match = AGENT_LINE_RE.match(line.strip())
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def load_default_agent_statuses(doc_root: Path):
+    path = doc_root / LONG_DIR_NAME / AGENT_RULE_DOC
+    bullets = extract_section_bullets(path, AGENT_STATUS_HEADING)
+    if len(bullets) != 5:
+        raise ValueError(f"{path} 的 “{AGENT_STATUS_HEADING}” 必须正好包含 5 条 agent 状态")
+    normalized = [normalize_agent_status_line(line) for line in bullets]
+    numbers = [agent_number_from_line(line) for line in normalized]
+    if numbers != [1, 2, 3, 4, 5]:
+        raise ValueError(f"{path} 的 “{AGENT_STATUS_HEADING}” 必须按 Agent 1 到 Agent 5 排列")
+    return normalized
 
 
 def recent_files(paths, count=3):
@@ -176,6 +229,70 @@ def replace_section_bullets(text: str, heading: str, bullets) -> str:
 
     block = "\n".join(bullets)
     return text.rstrip() + f"\n\n{heading_line}\n\n{block}\n"
+
+
+def clean_placeholder_bullets(text: str, heading: str, placeholders) -> str:
+    bullets = extract_section_bullets_from_text(text, heading)
+    if not bullets:
+        return text
+    real_items = [line for line in bullets if line not in placeholders]
+    if not real_items:
+        return text
+    cleaned = [line for line in bullets if line not in placeholders]
+    return replace_section_bullets(text, heading, cleaned)
+
+
+def ensure_default_agent_statuses(text: str, default_statuses) -> str:
+    bullets = extract_section_bullets_from_text(text, "分工状态")
+    if not bullets:
+        return replace_section_bullets(text, "分工状态", default_statuses)
+
+    existing = {}
+    replaced = False
+    for line in bullets:
+        number = agent_number_from_line(line)
+        if number is None:
+            continue
+        if line.strip().endswith("待补充"):
+            existing[number] = default_statuses[number - 1]
+            replaced = True
+        else:
+            existing[number] = normalize_agent_status_line(line)
+
+    if not existing:
+        return replace_section_bullets(text, "分工状态", default_statuses)
+
+    merged = []
+    for index, default_line in enumerate(default_statuses, start=1):
+        merged.append(existing.get(index, default_line))
+        if index not in existing:
+            replaced = True
+
+    if replaced or merged != bullets:
+        return replace_section_bullets(text, "分工状态", merged)
+    return text
+
+
+def apply_agent_status_overrides(text: str, overrides):
+    if not overrides:
+        return text
+    bullets = extract_section_bullets_from_text(text, "分工状态")
+    if not bullets:
+        raise ValueError("分工状态章节不存在，无法覆写 agent 状态")
+
+    merged = {}
+    for line in bullets:
+        number = agent_number_from_line(line)
+        if number is not None:
+            merged[number] = normalize_agent_status_line(line)
+
+    for line in overrides:
+        normalized = normalize_agent_status_line(line)
+        number = agent_number_from_line(normalized)
+        merged[number] = normalized
+
+    ordered = [merged[index] for index in range(1, 6)]
+    return replace_section_bullets(text, "分工状态", ordered)
 
 
 def write_project_overview(doc_root: Path):
@@ -438,6 +555,7 @@ def today_sequence(iter_dir: Path) -> int:
 
 def create_iteration(doc_root: Path, title: str, goal: str, status: str):
     _, iter_dir = ensure_dirs(doc_root)
+    default_agent_statuses = load_default_agent_statuses(doc_root)
     now = datetime.now()
     date_str = now.strftime("%Y%m%d")
     seq = today_sequence(iter_dir)
@@ -482,11 +600,7 @@ def create_iteration(doc_root: Path, title: str, goal: str, status: str):
         "",
         "## 分工状态",
         "",
-        "- Agent 1：待补充",
-        "- Agent 2：待补充",
-        "- Agent 3：待补充",
-        "- Agent 4：待补充",
-        "- Agent 5：待补充",
+        *default_agent_statuses,
         "",
         "## 工作日志",
         "",
@@ -541,7 +655,7 @@ def insert_under_heading(text: str, heading: str, block: str) -> str:
     return text.rstrip() + f"\n\n{heading_line}\n\n{block.rstrip()}\n"
 
 
-def append_iteration(doc_root: Path, target: str, latest: bool, summary: str, done, risks, next_steps):
+def append_iteration(doc_root: Path, target: str, latest: bool, summary: str, done, risks, next_steps, agent_statuses):
     if latest:
         path = latest_iteration_file(doc_root)
     else:
@@ -549,6 +663,10 @@ def append_iteration(doc_root: Path, target: str, latest: bool, summary: str, do
         if not path.is_absolute():
             path = doc_root / target
     text = path.read_text(encoding="utf-8")
+
+    default_agent_statuses = load_default_agent_statuses(doc_root)
+    text = ensure_default_agent_statuses(text, default_agent_statuses)
+    text = apply_agent_status_overrides(text, agent_statuses)
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     if summary:
@@ -562,9 +680,36 @@ def append_iteration(doc_root: Path, target: str, latest: bool, summary: str, do
     for item in next_steps:
         text = insert_under_heading(text, "下一步", f"- {item}")
 
+    for heading, placeholders in DEFAULT_PLACEHOLDERS.items():
+        text = clean_placeholder_bullets(text, heading, placeholders)
+
     path.write_text(text, encoding="utf-8")
     sync_indexes(doc_root)
     return path
+
+
+def backfill_agent_status(doc_root: Path, from_date: str):
+    if not re.fullmatch(r"\d{8}", from_date):
+        raise ValueError("--from 必须是 YYYYMMDD 格式，例如 20260330")
+
+    default_agent_statuses = load_default_agent_statuses(doc_root)
+    updated = []
+    for path in scan_iteration_docs(doc_root):
+        match = re.match(r"^迭代记录_(\d{8})_(\d{3})\.md$", path.name)
+        if not match or match.group(1) < from_date:
+            continue
+
+        original = path.read_text(encoding="utf-8")
+        text = ensure_default_agent_statuses(original, default_agent_statuses)
+        for heading, placeholders in DEFAULT_PLACEHOLDERS.items():
+            text = clean_placeholder_bullets(text, heading, placeholders)
+
+        if text != original:
+            path.write_text(text, encoding="utf-8")
+            updated.append(path)
+
+    sync_indexes(doc_root)
+    return updated
 
 
 def main():
@@ -587,6 +732,10 @@ def main():
     append.add_argument("--done", action="append", default=[], help="Completed item, repeatable")
     append.add_argument("--risk", action="append", default=[], help="Risk or blocker, repeatable")
     append.add_argument("--next", dest="next_steps", action="append", default=[], help="Next-step item, repeatable")
+    append.add_argument("--agent-status", action="append", default=[], help="Full Agent status line, repeatable")
+
+    backfill = sub.add_parser("backfill-agent-status", help="Backfill default agent status into iteration logs")
+    backfill.add_argument("--from", dest="from_date", required=True, help="Start date in YYYYMMDD")
 
     args = parser.parse_args()
     doc_root = Path(args.doc_root).resolve()
@@ -603,8 +752,22 @@ def main():
         return
 
     if args.command == "append-iteration":
-        path = append_iteration(doc_root, args.file or "", args.latest, args.summary, args.done, args.risk, args.next_steps)
+        path = append_iteration(
+            doc_root,
+            args.file or "",
+            args.latest,
+            args.summary,
+            args.done,
+            args.risk,
+            args.next_steps,
+            args.agent_status,
+        )
         print(f"[ok] updated iteration log: {path}")
+        return
+
+    if args.command == "backfill-agent-status":
+        updated = backfill_agent_status(doc_root, args.from_date)
+        print(f"[ok] backfilled {len(updated)} iteration logs under {doc_root}")
         return
 
 

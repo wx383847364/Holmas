@@ -16,6 +16,7 @@ SUMMARY=""
 DONE_ITEMS=()
 RISK_ITEMS=()
 NEXT_ITEMS=()
+AGENT_STATUS_ITEMS=()
 SKIP_TEMP_CLEANUP=0
 FORCE_LOG=0
 
@@ -23,6 +24,7 @@ usage() {
     cat <<'EOF'
 用法：
   scripts/finalize_task.sh --summary "本轮摘要" [--done "完成项"] [--risk "风险项"] [--next "下一步"]
+  scripts/finalize_task.sh --summary "本轮摘要" --agent-status "Agent 5：已启动并完成边界验证"
   scripts/finalize_task.sh --file "doc/迭代记录/迭代记录_YYYYMMDD_001.md" --summary "本轮摘要"
   scripts/finalize_task.sh --summary "本轮摘要" --skip-temp-cleanup
   scripts/finalize_task.sh --summary "更新提交说明" --force-log
@@ -30,6 +32,7 @@ usage() {
 说明：
   - 默认写入最新一轮迭代记录
   - 会先判断这次是否属于“值得进入项目文档”的任务；纯事务性协助会自动跳过
+  - `--agent-status` 只做显式透传；只有本轮确实改变某个 Agent 的分工状态时才传
   - 会自动同步主文档索引和迭代记录索引
   - 如果当前目录在 Git 仓库中，会自动暂存 doc/ 下被本次更新影响的文件
   - 默认会在收尾末尾自动尝试清理 /tmp 或 /private/tmp 下的 Holmas 临时验证工程
@@ -63,6 +66,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --next)
             NEXT_ITEMS+=("${2:-}")
+            shift 2
+            ;;
+        --agent-status)
+            AGENT_STATUS_ITEMS+=("${2:-}")
             shift 2
             ;;
         --skip-temp-cleanup)
@@ -161,6 +168,12 @@ fi
 if ((${#NEXT_ITEMS[@]} > 0)); then
     for item in "${NEXT_ITEMS[@]}"; do
         APPEND_ARGS+=(--next "${item}")
+    done
+fi
+
+if ((${#AGENT_STATUS_ITEMS[@]} > 0)); then
+    for item in "${AGENT_STATUS_ITEMS[@]}"; do
+        APPEND_ARGS+=(--agent-status "${item}")
     done
 fi
 

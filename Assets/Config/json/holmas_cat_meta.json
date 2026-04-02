@@ -4,7 +4,7 @@
         {
             "CatId": "1",
             "CatName": "布偶猫",
-            "IconPath": "Assets/HotUpdateContent/Res/IconsCat_01.png",
+            "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_01.png",
             "Rarity": 1,
             "Weight": 1000,
             "Price": 10
@@ -12,7 +12,7 @@
         {
             "CatId": "2",
             "CatName": "短毛猫",
-            "IconPath": "Assets/HotUpdateContent/Res/IconsCat_02.png",
+            "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_02.png",
             "Rarity": 1,
             "Weight": 990,
             "Price": 20
@@ -20,7 +20,7 @@
         {
             "CatId": "3",
             "CatName": "波斯猫",
-            "IconPath": "Assets/HotUpdateContent/Res/IconsCat_03.png",
+            "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_03.png",
             "Rarity": 1,
             "Weight": 980,
             "Price": 30
