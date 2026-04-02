@@ -267,7 +267,7 @@ skill 组合：
 允许写入：
 
 - `App.HotUpdate` 下的任务服务目录
-- Meta progression 目录
+- 长期进度目录
 - 奖励和任务进度目录
 
 禁止写入：
@@ -380,7 +380,7 @@ skill 组合：
 - 写单元测试、集成测试和验证脚本
 - 校验地图、任务、奖励、时间规则和配置抽取是否正确
 - 验证其他 agent 的实现是否符合边界和输入输出约定
-- 做冒烟测试、回归测试和独立审查
+- 做冒烟测试、回归测试和专项质量保障
 
 允许写入：
 
@@ -428,6 +428,67 @@ skill 组合：
 - 标出需要哪个 agent 继续处理
 ```
 
+### Agent 6：挑刺与问题审查
+
+skill 组合：
+
+- 默认：`unity-hotupdate-boundary`
+- 审地图、任务、配置时：再叠加 `findcat-config-pipeline`
+- 审 UI 流程时：再叠加 `unity-ugui-flow-integration`
+
+职责：
+
+- 独立挑刺，找明显 bug、回归、越界、误解需求和缺关键验证
+- 给出 `通过 / 通过，但有非阻塞建议 / 不通过，退回修复` 的结论
+- 把问题退回给原实现 agent 或主控继续修复
+- 作为继续推进前的默认强制审查门
+
+允许写入：
+
+- review 文档
+- 审查脚本
+- QA 结论文档
+
+禁止写入：
+
+- `App.Shared`
+- HotUpdate 入口
+- UI prefab
+- 核心业务实现目录
+
+交付物：
+
+- 审查对象和范围
+- 审查结论
+- 问题列表、严重级别和是否阻塞
+- 退回给谁修以及复审条件
+
+可直接使用的任务模板：
+
+```text
+你负责本项目的挑刺与问题审查。请遵循 $unity-hotupdate-boundary。
+如果审查对象涉及地图、任务、配置，请额外遵循 $findcat-config-pipeline。
+如果审查对象涉及 UI 流程，请额外遵循 $unity-ugui-flow-integration。
+
+目标：
+1. 独立审查当前交付是否存在明显 bug、回归、越界、误解需求或缺关键验证
+2. 给出明确结论：通过 / 通过，但有非阻塞建议 / 不通过，退回修复
+3. 指明问题归属给哪个实现 agent 或主控继续修复
+
+约束：
+- 不要修改 App.Shared
+- 不要修改 HotUpdate 入口
+- 不要主改 UI prefab
+- 不要把发现的问题直接改成新的业务实现
+- 你的职责是挑刺、裁定和退回，不是接管实现
+
+交付：
+- 列出你审查的对象和范围
+- 给出审查结论
+- 列出发现的问题、严重级别和是否阻塞
+- 标出退回给谁修，以及复审条件
+```
+
 ## 6. 主控 agent 的集成规则
 
 主控 agent 负责：
@@ -435,6 +496,7 @@ skill 组合：
 - 先让 Agent 1 冻结 DTO 和模块骨架
 - 再让 Agent 2、Agent 3 并行
 - 同时让 Agent 5 提前搭测试骨架，并在功能线产出后持续验证
+- 每个阶段产出默认交给 Agent 6 做挑刺审查
 - 等核心状态接口稳定后，再启动 Agent 4 的全量接线
 - 最后统一 review、集成和回归
 
@@ -451,13 +513,13 @@ skill 组合：
 后续你可以直接这样对我说：
 
 ```text
-这次按 5 个 subagent 开工。
+这次按 6 个 subagent 开工。
 全部默认遵循 $unity-hotupdate-boundary。
 地图和任务相关额外遵循 $findcat-config-pipeline。
 UI 相关额外遵循 $unity-ugui-flow-integration。
-测试相关按对象叠加 $findcat-config-pipeline 或 $unity-ugui-flow-integration。
+测试和挑刺审查按对象叠加 $findcat-config-pipeline 或 $unity-ugui-flow-integration。
 App.Shared 和 HotUpdate 入口只能边界 agent 改，UI prefab 只能 UI agent 改。
-先冻结 DTO，再并行开发，再由测试 agent 验证，最后统一集成。
+先冻结 DTO，再并行开发；每个阶段产出默认先交给 Agent 6 挑刺审查，通过后再继续推进。
 ```
 
 ## 8. 下一步建议
@@ -467,6 +529,7 @@ App.Shared 和 HotUpdate 入口只能边界 agent 改，UI prefab 只能 UI agen
 - 先启动 Agent 1，冻结第一批 DTO 和 HotUpdate 模块骨架
 - 骨架稳定后，再启动 Agent 2 和 Agent 3 并行
 - 同时启动 Agent 5，先补单测和验证脚本，再持续跟进功能回归
+- 每条功能线完成后，先交给 Agent 6 做挑刺审查；不通过就退回原实现线修复
 - 最后再让 Agent 4 做 UI 接线和冒烟
 
 这样三份 skill 能真正参与协作，而不是只停留在文档层。
