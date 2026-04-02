@@ -1,0 +1,7 @@
+interface:
+  display_name: "Unity HotUpdate Boundary"
+  short_description: "Enforce Unity HotUpdate architecture boundaries"
+  default_prompt: "Use $unity-hotupdate-boundary to implement or review this project while keeping AOT/Shared/HotUpdate boundaries, runtime state ownership, and YooAssets loading rules consistent."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import subprocess
 import sys
 import tempfile
@@ -10,6 +11,7 @@ from shutil import copy2
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "update_project_docs.py"
 FINALIZE_SCRIPT = Path(__file__).resolve().parents[1] / "finalize_task.sh"
+SYNC_SKILLS_SCRIPT = Path(__file__).resolve().parents[1] / "sync_codex_skills.sh"
 
 spec = importlib.util.spec_from_file_location("update_project_docs", SCRIPT_PATH)
 update_project_docs = importlib.util.module_from_spec(spec)
@@ -305,6 +307,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
                     "--skip-temp-cleanup",
                 ],
                 cwd=repo_root,
+                env={**os.environ, "CODEX_HOME": str(repo_root / ".codex")},
                 capture_output=True,
                 text=True,
                 check=False,
@@ -314,6 +317,144 @@ class UpdateProjectDocsTests(unittest.TestCase):
             text = iteration_path.read_text(encoding="utf-8")
             self.assertIn("- Agent 5：已启动并完成核心脚本验证", text)
             self.assertIn("- 分工状态改为长期规则源驱动", text)
+
+    def test_finalize_task_auto_syncs_skills_when_skill_source_changes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo_root = Path(temp_dir)
+            scripts_dir = repo_root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            copy2(SYNC_SKILLS_SCRIPT, scripts_dir / "sync_codex_skills.sh")
+            create_doc_root(repo_root)
+            iteration_path = write_file(
+                repo_root,
+                "doc/迭代记录/迭代记录_20260402_001.md",
+                """
+                # 迭代记录 2026-04-02 001
+
+                ## 分工状态
+
+                - Agent 1：待补充
+                - Agent 2：待补充
+                - Agent 3：待补充
+                - Agent 4：待补充
+                - Agent 5：待补充
+
+                ## 工作日志
+
+                ## 完成项
+
+                - 暂无
+
+                ## 风险与阻塞
+
+                - 暂无
+
+                ## 下一步
+
+                - 待补充
+                """,
+            )
+            write_file(
+                repo_root,
+                "doc/长期主文档/协作与执行/skills/unity-hotupdate-boundary/SKILL.md",
+                """
+                ---
+                name: unity-hotupdate-boundary
+                description: fixture
+                ---
+
+                # Fixture Skill
+                """,
+            )
+
+            subprocess.run(["git", "init"], cwd=repo_root, check=True, capture_output=True, text=True)
+
+            completed = subprocess.run(
+                [
+                    "bash",
+                    str(scripts_dir / "finalize_task.sh"),
+                    "--file",
+                    str(iteration_path),
+                    "--summary",
+                    "同步 skill 真源",
+                    "--skip-temp-cleanup",
+                ],
+                cwd=repo_root,
+                env={**os.environ, "CODEX_HOME": str(repo_root / ".codex")},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            synced_path = repo_root / ".codex" / "skills" / "unity-hotupdate-boundary" / "SKILL.md"
+            self.assertTrue(synced_path.exists())
+            self.assertIn("自动同步到 ~/.codex/skills", completed.stdout)
+
+    def test_finalize_task_skips_skill_sync_when_skill_source_is_unchanged(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo_root = Path(temp_dir)
+            scripts_dir = repo_root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            copy2(SYNC_SKILLS_SCRIPT, scripts_dir / "sync_codex_skills.sh")
+            create_doc_root(repo_root)
+            iteration_path = write_file(
+                repo_root,
+                "doc/迭代记录/迭代记录_20260402_001.md",
+                """
+                # 迭代记录 2026-04-02 001
+
+                ## 分工状态
+
+                - Agent 1：待补充
+                - Agent 2：待补充
+                - Agent 3：待补充
+                - Agent 4：待补充
+                - Agent 5：待补充
+
+                ## 工作日志
+
+                ## 完成项
+
+                - 暂无
+
+                ## 风险与阻塞
+
+                - 暂无
+
+                ## 下一步
+
+                - 待补充
+                """,
+            )
+
+            subprocess.run(["git", "init"], cwd=repo_root, check=True, capture_output=True, text=True)
+
+            completed = subprocess.run(
+                [
+                    "bash",
+                    str(scripts_dir / "finalize_task.sh"),
+                    "--file",
+                    str(iteration_path),
+                    "--summary",
+                    "普通任务收尾",
+                    "--skip-temp-cleanup",
+                ],
+                cwd=repo_root,
+                env={**os.environ, "CODEX_HOME": str(repo_root / ".codex")},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            synced_root = repo_root / ".codex" / "skills"
+            self.assertFalse(synced_root.exists())
+            self.assertNotIn("自动同步到 ~/.codex/skills", completed.stdout)
 
 
 if __name__ == "__main__":

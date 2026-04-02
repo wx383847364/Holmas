@@ -9,6 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DOC_ROOT="${REPO_ROOT}/doc"
+SKILLS_ROOT="${DOC_ROOT}/长期主文档/协作与执行/skills"
 
 TARGET_MODE="latest"
 TARGET_FILE=""
@@ -132,6 +133,22 @@ should_skip_doc_logging() {
     return 1
 }
 
+has_skill_source_changes() {
+    if ! git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        return 1
+    fi
+
+    if [[ ! -d "${SKILLS_ROOT}" ]]; then
+        return 1
+    fi
+
+    if [[ -n "$(git -C "${REPO_ROOT}" status --porcelain --untracked-files=all -- "${SKILLS_ROOT}")" ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
 if should_skip_doc_logging; then
     echo "[skip] 当前任务被判定为事务性协助，无需写入项目总览或迭代记录。"
     echo "[skip] 如需强制记录，请重新执行并追加 --force-log。"
@@ -182,6 +199,18 @@ echo "[info] 追加迭代记录..."
 
 echo "[info] 同步文档索引..."
 python3 "${REPO_ROOT}/scripts/update_project_docs.py" --doc-root "${DOC_ROOT}" sync
+
+if has_skill_source_changes; then
+    SKILL_SYNC_SCRIPT="${REPO_ROOT}/scripts/sync_codex_skills.sh"
+    if [[ -f "${SKILL_SYNC_SCRIPT}" ]]; then
+        echo "[info] 检测到项目 skill 真源有改动，自动同步到 ~/.codex/skills ..."
+        if ! bash "${SKILL_SYNC_SCRIPT}"; then
+            echo "[warn] 项目 skill 自动同步未完成，请按提示决定是否手动执行 scripts/sync_codex_skills.sh。" >&2
+        fi
+    else
+        echo "[warn] 检测到项目 skill 真源有改动，但未找到 scripts/sync_codex_skills.sh，已跳过自动同步。" >&2
+    fi
+fi
 
 # 如果当前目录在 Git 仓库中，顺手把文档改动暂存起来。
 # 这样做可以让“任务收尾”和“提交前文档齐全”尽量靠近。

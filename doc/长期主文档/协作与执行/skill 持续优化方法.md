@@ -2,6 +2,17 @@
 
 ## Summary
 
+当前项目专用 skill 的仓库真源固定放在：
+
+- `/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skills`
+
+本机 Codex 使用前，统一通过下面的脚本同步到 `~/.codex/skills`：
+
+- `bash scripts/sync_codex_skills.sh`
+
+日常情况下不需要每次手动执行。
+`bash scripts/finalize_task.sh` 在检测到仓库 `skills/` 真源有改动时，会自动顺手同步一次。
+
 当前 `doc` 目录已存在，适合新增一份专门记录“如何持续优化 skill”的文档。  
 建议保存为：
 
