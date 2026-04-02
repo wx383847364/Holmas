@@ -25,8 +25,8 @@ namespace Holmas.Tests
             Assert.That(errors, Is.Empty, string.Join(Environment.NewLine, errors));
             Assert.That(tables.Cats, Has.Count.EqualTo(49));
             Assert.That(tables.Maps, Has.Count.EqualTo(3));
-            Assert.That(tables.Tasks, Has.Count.EqualTo(2));
-            Assert.That(tables.Levels, Has.Count.EqualTo(5));
+            Assert.That(tables.Tasks, Has.Count.EqualTo(20));
+            Assert.That(tables.Levels, Has.Count.EqualTo(20));
             Assert.That(tables.Tasks.All(item => string.Equals(item.TaskKind, "Money", StringComparison.Ordinal)), Is.True);
             Assert.That(tables.Cats.All(item => item.Price > 0 && item.Weight > 0 && item.Rarity > 0), Is.True);
         }
@@ -46,15 +46,15 @@ namespace Holmas.Tests
             Assert.That(requestResult.Success, Is.True, requestResult.FailureReason);
             Assert.That(requestResult.SelectedMapId, Is.EqualTo("map_001"));
             Assert.That(requestResult.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/Map/1.asset"));
-            Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(15));
-            Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(20));
+            Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(12));
+            Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(15));
 
             var terrain = HolmasTestSupport.CreateTerrain(5, 5, (_, _) => true);
             LevelSnapshot snapshot = LevelSnapshotFactory.CreateFromTerrain(terrain, requestResult.Request);
 
             Assert.That(snapshot.MapId, Is.EqualTo("map_001"));
             Assert.That(snapshot.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/Map/1.asset"));
-            Assert.That(snapshot.SpawnedCats.Count, Is.InRange(15, 20));
+            Assert.That(snapshot.SpawnedCats.Count, Is.InRange(12, 15));
             Assert.That(snapshot.SpawnedCats.Select(item => item.CatId).All(catId => catPool.Any(pool => pool.CatId == catId)), Is.True);
 
             var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
@@ -95,6 +95,113 @@ namespace Holmas.Tests
             Assert.That(bundle.Maps.Count, Is.EqualTo(tables.Maps.Count));
             Assert.That(bundle.Report.Success, Is.True);
             Assert.That(bundle.Report.Errors, Is.Empty);
+        }
+
+        [Test]
+        public void HolmasCsvSampleTables_FollowRarityBandsAndMapUnlockPlan()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+
+            Assert.That(tables.Cats.Count(item => item.Rarity == 1), Is.EqualTo(20));
+            Assert.That(tables.Cats.Count(item => item.Rarity == 2), Is.EqualTo(14));
+            Assert.That(tables.Cats.Count(item => item.Rarity == 3), Is.EqualTo(10));
+            Assert.That(tables.Cats.Count(item => item.Rarity == 4), Is.EqualTo(5));
+
+            int[] expectedUpgradeExp = { 100, 120, 140, 160, 180, 210, 240, 270, 300, 340, 380, 420, 470, 520, 580, 640, 710, 780, 860, 950 };
+            Assert.That(tables.Levels.Select(item => item.UpgradeExp), Is.EqualTo(expectedUpgradeExp));
+
+            foreach (CsvLevelRow level in tables.Levels)
+            {
+                Assert.That(level.MapWeights.Sum(), Is.EqualTo(100), $"等级 {level.PlayerLevel} 的地图权重和应为 100。");
+
+                if (level.PlayerLevel <= 2)
+                {
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_001" }), $"等级 {level.PlayerLevel} 只应开放 map_001。");
+                }
+                else if (level.PlayerLevel <= 4)
+                {
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_001", "map_002" }), $"等级 {level.PlayerLevel} 应开放 map_001/map_002。");
+                }
+                else
+                {
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_001", "map_002", "map_003" }), $"等级 {level.PlayerLevel} 应开放全部 3 张地图。");
+                }
+            }
+        }
+
+        [Test]
+        public void HolmasCsvSampleTables_AllLevelsCanGenerateRequestsAndFillFiveUniqueTasks()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+            HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
+            HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
+            var requestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource());
+
+            foreach (CsvLevelRow levelRow in tables.Levels)
+            {
+                var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+                HolmasTaskBarState taskBar = taskService.CreateDefaultTaskBarState();
+
+                HolmasLevelRequestGenerationResult requestResult = requestGenerator.TryGenerateForPlayerLevel(levelRow.PlayerLevel, levelRow.PlayerLevel * 17);
+                Assert.That(requestResult.Success, Is.True, $"等级 {levelRow.PlayerLevel} 地图请求生成失败：{requestResult.FailureReason}");
+                Assert.That(levelRow.MapIds, Contains.Item(requestResult.SelectedMapId), $"等级 {levelRow.PlayerLevel} 抽到了未开放地图。");
+
+                CsvMapRow selectedMap = tables.Maps.Single(item => string.Equals(item.MapId, requestResult.SelectedMapId, StringComparison.Ordinal));
+                Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(selectedMap.CatCountMin));
+                Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(selectedMap.CatCountMax));
+
+                HolmasTaskRefillResult refill = taskService.RefillUnlockedEmptySlots(taskBar, levelRow.PlayerLevel);
+                Assert.That(refill.GeneratedTasks.Count, Is.EqualTo(2), $"等级 {levelRow.PlayerLevel} 默认应补满 2 个槽位。");
+                Assert.That(refill.GeneratedTasks.All(item => item.Success), Is.True, $"等级 {levelRow.PlayerLevel} 默认槽位补任务失败。");
+
+                for (int slotIndex = taskBar.DefaultOpenSlots; slotIndex < taskBar.TotalSlots; slotIndex++)
+                {
+                    HolmasTaskSlotUnlockResult unlock = taskService.UnlockAdSlot(taskBar, slotIndex, levelRow.PlayerLevel, 10_000L + slotIndex);
+                    Assert.That(unlock.Success, Is.True, $"等级 {levelRow.PlayerLevel} 解锁槽位 {slotIndex} 失败：{unlock.FailureReason}");
+                    Assert.That(unlock.GeneratedTask, Is.Not.Null, $"等级 {levelRow.PlayerLevel} 解锁槽位 {slotIndex} 后未生成任务。");
+                    Assert.That(unlock.GeneratedTask.Success, Is.True, $"等级 {levelRow.PlayerLevel} 解锁槽位 {slotIndex} 后补任务失败：{unlock.GeneratedTask?.FailureReason}");
+                }
+
+                Assert.That(taskBar.Tasks.Count, Is.EqualTo(taskBar.TotalSlots), $"等级 {levelRow.PlayerLevel} 应能补满 5 个任务槽位。");
+                AssertTaskBarHasUniqueCats(taskBar, levelRow.PlayerLevel);
+                AssertTaskRewardsMatchConfig(tables, taskBar.Tasks.Select(item => item.Task));
+            }
+        }
+
+        [Test]
+        public void HolmasCsvSampleTables_CurrentTaskPoolCanDriveMapSpawnPool()
+        {
+            CsvConfigTables tables = LoadSampleTables();
+            HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
+            HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
+            var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var requestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource());
+            HolmasTaskBarState taskBar = taskService.CreateDefaultTaskBarState();
+
+            taskService.RefillUnlockedEmptySlots(taskBar, 10);
+            for (int slotIndex = taskBar.DefaultOpenSlots; slotIndex < taskBar.TotalSlots; slotIndex++)
+            {
+                taskService.UnlockAdSlot(taskBar, slotIndex, 10, 5_000L + slotIndex);
+            }
+
+            IReadOnlyCollection<string> activeCatIds = taskBar.GetActiveCatIds();
+            IReadOnlyList<BoardSpawnEntry> catPool = tables.Cats
+                .Where(item => activeCatIds.Contains(item.CatId))
+                .Select(item => new BoardSpawnEntry
+                {
+                    CatId = item.CatId,
+                    Weight = item.Weight,
+                })
+                .ToArray();
+
+            HolmasLevelRequestGenerationResult requestResult = requestGenerator.TryGenerateForPlayerLevel(10, 1234, catPool);
+            Assert.That(requestResult.Success, Is.True, requestResult.FailureReason);
+
+            var terrain = HolmasTestSupport.CreateTerrain(6, 6, (_, _) => true);
+            LevelSnapshot snapshot = LevelSnapshotFactory.CreateFromTerrain(terrain, requestResult.Request);
+
+            Assert.That(snapshot.SpawnedCats, Is.Not.Empty);
+            Assert.That(snapshot.SpawnedCats.Select(item => item.CatId).All(activeCatIds.Contains), Is.True, "地图生成应优先使用当前任务栏的猫种池。");
         }
 
         [Test]
@@ -211,6 +318,25 @@ namespace Holmas.Tests
                 CatId = item.CatId,
                 Weight = item.Weight,
             }).ToArray();
+        }
+
+        private static void AssertTaskBarHasUniqueCats(HolmasTaskBarState taskBar, int playerLevel)
+        {
+            IReadOnlyCollection<string> activeCatIds = taskBar.GetActiveCatIds();
+            Assert.That(activeCatIds.Count, Is.EqualTo(taskBar.Tasks.Count), $"等级 {playerLevel} 的任务栏猫种不应重复。");
+            Assert.That(activeCatIds.Count, Is.EqualTo(activeCatIds.Distinct(StringComparer.Ordinal).Count()), $"等级 {playerLevel} 的任务栏存在重复猫种。");
+        }
+
+        private static void AssertTaskRewardsMatchConfig(CsvConfigTables tables, IEnumerable<TaskInstanceData> tasks)
+        {
+            foreach (TaskInstanceData task in tasks)
+            {
+                Assert.That(task, Is.Not.Null);
+                CsvTaskRow taskRow = tables.Tasks.Single(item => string.Equals(item.TaskTypeId, task.SourceTaskTypeId, StringComparison.Ordinal));
+                CsvCatRow catRow = tables.Cats.Single(item => string.Equals(item.CatId, task.CatId, StringComparison.Ordinal));
+                int expectedReward = (int)Math.Round(catRow.Price * task.TargetCount * taskRow.LevelRewardFactor, MidpointRounding.AwayFromZero);
+                Assert.That(task.Reward, Is.EqualTo(expectedReward), $"任务 {task.SourceTaskTypeId}/{task.CatId} 奖励公式不匹配。");
+            }
         }
 
         private static HolmasCoreConfigPackage BuildCorePackage(CsvConfigTables tables)

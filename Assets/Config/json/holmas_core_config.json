@@ -4,153 +4,783 @@
         {
             "MapId": "map_001",
             "TerrainPath": "Assets/HotUpdateContent/Res/Map/1.asset",
-            "CatCountMin": 15,
-            "CatCountMax": 20
+            "CatCountMin": 12,
+            "CatCountMax": 15
         },
         {
             "MapId": "map_002",
             "TerrainPath": "Assets/HotUpdateContent/Res/Map/2.asset",
-            "CatCountMin": 15,
-            "CatCountMax": 20
+            "CatCountMin": 14,
+            "CatCountMax": 18
         },
         {
             "MapId": "map_003",
             "TerrainPath": "Assets/HotUpdateContent/Res/Map/3.asset",
-            "CatCountMin": 15,
+            "CatCountMin": 16,
             "CatCountMax": 20
         }
     ],
     "Tasks": [
         {
-            "TaskTypeId": "task_normal_001",
-            "TaskKind": 0,
-            "CatIndices": [
-                0,
-                1
-            ],
-            "CountMin": 2,
-            "CountMax": 3,
-            "RewardValues": [
-                10,
-                20
-            ],
-            "LevelRewardFactor": 1.5
-        },
-        {
-            "TaskTypeId": "task_normal_002",
+            "TaskTypeId": "task_b1_c_s",
             "TaskKind": 0,
             "CatIndices": [
                 0,
                 1,
-                2
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+            ],
+            "CountMin": 1,
+            "CountMax": 2,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.0
+        },
+        {
+            "TaskTypeId": "task_b1_c_m",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+            ],
+            "CountMin": 2,
+            "CountMax": 3,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.0499999523162842
+        },
+        {
+            "TaskTypeId": "task_b1_c_a",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9
+            ],
+            "CountMin": 2,
+            "CountMax": 3,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.0499999523162842
+        },
+        {
+            "TaskTypeId": "task_b1_c_b",
+            "TaskKind": 0,
+            "CatIndices": [
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+            ],
+            "CountMin": 1,
+            "CountMax": 2,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.0
+        },
+        {
+            "TaskTypeId": "task_b2_cu_s",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33
+            ],
+            "CountMin": 2,
+            "CountMax": 3,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.100000023841858
+        },
+        {
+            "TaskTypeId": "task_b2_cu_m",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33
+            ],
+            "CountMin": 3,
+            "CountMax": 4,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.149999976158142
+        },
+        {
+            "TaskTypeId": "task_b2_u_s",
+            "TaskKind": 0,
+            "CatIndices": [
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33
+            ],
+            "CountMin": 1,
+            "CountMax": 2,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.149999976158142
+        },
+        {
+            "TaskTypeId": "task_b2_c_l",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+            ],
+            "CountMin": 3,
+            "CountMax": 4,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.100000023841858
+        },
+        {
+            "TaskTypeId": "task_b3_cur_s",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43
+            ],
+            "CountMin": 2,
+            "CountMax": 3,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.2000000476837159
+        },
+        {
+            "TaskTypeId": "task_b3_u_m",
+            "TaskKind": 0,
+            "CatIndices": [
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33
+            ],
+            "CountMin": 2,
+            "CountMax": 3,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.2200000286102296
+        },
+        {
+            "TaskTypeId": "task_b3_r_s",
+            "TaskKind": 0,
+            "CatIndices": [
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43
+            ],
+            "CountMin": 1,
+            "CountMax": 2,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.25
+        },
+        {
+            "TaskTypeId": "task_b3_cu_l",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33
             ],
             "CountMin": 3,
             "CountMax": 5,
-            "RewardValues": [
-                10,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.2000000476837159
+        },
+        {
+            "TaskTypeId": "task_b4_ur_s",
+            "TaskKind": 0,
+            "CatIndices": [
                 20,
-                30
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43
             ],
+            "CountMin": 2,
+            "CountMax": 3,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.2999999523162842
+        },
+        {
+            "TaskTypeId": "task_b4_r_m",
+            "TaskKind": 0,
+            "CatIndices": [
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43
+            ],
+            "CountMin": 2,
+            "CountMax": 4,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.350000023841858
+        },
+        {
+            "TaskTypeId": "task_b4_re_s",
+            "TaskKind": 0,
+            "CatIndices": [
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48
+            ],
+            "CountMin": 1,
+            "CountMax": 2,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.399999976158142
+        },
+        {
+            "TaskTypeId": "task_b4_cur_l",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43
+            ],
+            "CountMin": 4,
+            "CountMax": 6,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.2999999523162842
+        },
+        {
+            "TaskTypeId": "task_b5_re_m",
+            "TaskKind": 0,
+            "CatIndices": [
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48
+            ],
+            "CountMin": 2,
+            "CountMax": 3,
+            "RewardValues": [],
             "LevelRewardFactor": 1.5
+        },
+        {
+            "TaskTypeId": "task_b5_e_s",
+            "TaskKind": 0,
+            "CatIndices": [
+                44,
+                45,
+                46,
+                47,
+                48
+            ],
+            "CountMin": 1,
+            "CountMax": 2,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.600000023841858
+        },
+        {
+            "TaskTypeId": "task_b5_ur_l",
+            "TaskKind": 0,
+            "CatIndices": [
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43
+            ],
+            "CountMin": 4,
+            "CountMax": 6,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.4500000476837159
+        },
+        {
+            "TaskTypeId": "task_b5_all_l",
+            "TaskKind": 0,
+            "CatIndices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48
+            ],
+            "CountMin": 5,
+            "CountMax": 7,
+            "RewardValues": [],
+            "LevelRewardFactor": 1.399999976158142
         }
     ],
     "PlayerLevels": [
         {
             "PlayerLevel": 1,
-            "UpgradeExp": 1,
+            "UpgradeExp": 100,
             "TaskTypeIndices": [
                 0,
-                1
+                1,
+                2,
+                3
             ],
             "TaskTypeWeights": [
-                100,
-                50
+                40,
+                30,
+                20,
+                10
             ],
             "MapIndices": [
-                0,
-                1
+                0
             ],
             "MapWeights": [
-                100,
-                80
+                100
             ]
         },
         {
             "PlayerLevel": 2,
-            "UpgradeExp": 2,
+            "UpgradeExp": 120,
             "TaskTypeIndices": [
                 0,
-                1
+                1,
+                2,
+                3
             ],
             "TaskTypeWeights": [
-                100,
-                100
+                25,
+                35,
+                20,
+                20
             ],
             "MapIndices": [
-                0,
-                1,
-                2
+                0
             ],
             "MapWeights": [
-                100,
-                80,
-                60
+                100
             ]
         },
         {
             "PlayerLevel": 3,
-            "UpgradeExp": 3,
+            "UpgradeExp": 140,
             "TaskTypeIndices": [
                 0,
-                1
+                1,
+                2,
+                3
             ],
             "TaskTypeWeights": [
-                100,
-                100
+                20,
+                35,
+                15,
+                30
             ],
             "MapIndices": [
                 0,
-                1,
-                2
+                1
             ],
             "MapWeights": [
-                100,
                 80,
-                60
+                20
             ]
         },
         {
             "PlayerLevel": 4,
-            "UpgradeExp": 4,
+            "UpgradeExp": 160,
             "TaskTypeIndices": [
                 0,
-                1
+                1,
+                2,
+                3
             ],
             "TaskTypeWeights": [
-                100,
-                100
+                10,
+                30,
+                20,
+                40
             ],
             "MapIndices": [
                 0,
-                1,
-                2
+                1
             ],
             "MapWeights": [
-                100,
-                80,
-                60
+                70,
+                30
             ]
         },
         {
             "PlayerLevel": 5,
-            "UpgradeExp": 5,
+            "UpgradeExp": 180,
             "TaskTypeIndices": [
-                0,
-                1
+                1,
+                4,
+                5,
+                6,
+                7
             ],
             "TaskTypeWeights": [
-                100,
-                100
+                15,
+                30,
+                25,
+                20,
+                10
             ],
             "MapIndices": [
                 0,
@@ -158,9 +788,429 @@
                 2
             ],
             "MapWeights": [
-                100,
-                80,
+                55,
+                30,
+                15
+            ]
+        },
+        {
+            "PlayerLevel": 6,
+            "UpgradeExp": 210,
+            "TaskTypeIndices": [
+                4,
+                5,
+                6,
+                7,
+                3
+            ],
+            "TaskTypeWeights": [
+                25,
+                30,
+                20,
+                15,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                50,
+                30,
+                20
+            ]
+        },
+        {
+            "PlayerLevel": 7,
+            "UpgradeExp": 240,
+            "TaskTypeIndices": [
+                4,
+                5,
+                6,
+                7,
+                3
+            ],
+            "TaskTypeWeights": [
+                20,
+                25,
+                25,
+                20,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                45,
+                35,
+                20
+            ]
+        },
+        {
+            "PlayerLevel": 8,
+            "UpgradeExp": 270,
+            "TaskTypeIndices": [
+                4,
+                5,
+                6,
+                7,
+                1
+            ],
+            "TaskTypeWeights": [
+                15,
+                25,
+                25,
+                25,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                40,
+                35,
+                25
+            ]
+        },
+        {
+            "PlayerLevel": 9,
+            "UpgradeExp": 300,
+            "TaskTypeIndices": [
+                5,
+                8,
+                9,
+                10,
+                11
+            ],
+            "TaskTypeWeights": [
+                10,
+                25,
+                20,
+                20,
+                25
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                35,
+                35,
+                30
+            ]
+        },
+        {
+            "PlayerLevel": 10,
+            "UpgradeExp": 340,
+            "TaskTypeIndices": [
+                8,
+                9,
+                10,
+                11,
+                6
+            ],
+            "TaskTypeWeights": [
+                20,
+                25,
+                20,
+                25,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                30,
+                40,
+                30
+            ]
+        },
+        {
+            "PlayerLevel": 11,
+            "UpgradeExp": 380,
+            "TaskTypeIndices": [
+                8,
+                9,
+                10,
+                11,
+                5
+            ],
+            "TaskTypeWeights": [
+                15,
+                20,
+                25,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                30,
+                35,
+                35
+            ]
+        },
+        {
+            "PlayerLevel": 12,
+            "UpgradeExp": 420,
+            "TaskTypeIndices": [
+                8,
+                9,
+                10,
+                11,
+                7
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                25,
+                35,
+                40
+            ]
+        },
+        {
+            "PlayerLevel": 13,
+            "UpgradeExp": 470,
+            "TaskTypeIndices": [
+                9,
+                12,
+                13,
+                14,
+                15
+            ],
+            "TaskTypeWeights": [
+                10,
+                25,
+                25,
+                20,
+                20
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                25,
+                35,
+                40
+            ]
+        },
+        {
+            "PlayerLevel": 14,
+            "UpgradeExp": 520,
+            "TaskTypeIndices": [
+                12,
+                13,
+                14,
+                15,
+                10
+            ],
+            "TaskTypeWeights": [
+                20,
+                30,
+                20,
+                20,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                20,
+                35,
+                45
+            ]
+        },
+        {
+            "PlayerLevel": 15,
+            "UpgradeExp": 580,
+            "TaskTypeIndices": [
+                12,
+                13,
+                14,
+                15,
+                11
+            ],
+            "TaskTypeWeights": [
+                15,
+                30,
+                25,
+                20,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                20,
+                30,
+                50
+            ]
+        },
+        {
+            "PlayerLevel": 16,
+            "UpgradeExp": 640,
+            "TaskTypeIndices": [
+                12,
+                13,
+                14,
+                15,
+                10
+            ],
+            "TaskTypeWeights": [
+                10,
+                25,
+                30,
+                25,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                15,
+                30,
+                55
+            ]
+        },
+        {
+            "PlayerLevel": 17,
+            "UpgradeExp": 710,
+            "TaskTypeIndices": [
+                13,
+                16,
+                17,
+                18,
+                19
+            ],
+            "TaskTypeWeights": [
+                10,
+                25,
+                20,
+                20,
+                25
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                15,
+                25,
                 60
+            ]
+        },
+        {
+            "PlayerLevel": 18,
+            "UpgradeExp": 780,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                20,
+                25,
+                20,
+                25,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                10,
+                25,
+                65
+            ]
+        },
+        {
+            "PlayerLevel": 19,
+            "UpgradeExp": 860,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                15
+            ],
+            "TaskTypeWeights": [
+                15,
+                25,
+                25,
+                25,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                10,
+                20,
+                70
+            ]
+        },
+        {
+            "PlayerLevel": 20,
+            "UpgradeExp": 950,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
             ]
         }
     ]

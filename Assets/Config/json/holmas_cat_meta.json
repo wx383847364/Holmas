@@ -165,7 +165,7 @@
             "CatId": "21",
             "CatName": "日本短尾猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_21.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 800,
             "Price": 210
         },
@@ -173,7 +173,7 @@
             "CatId": "22",
             "CatName": "伯曼猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_22.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 790,
             "Price": 220
         },
@@ -181,7 +181,7 @@
             "CatId": "23",
             "CatName": "喜马拉雅猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_23.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 780,
             "Price": 230
         },
@@ -189,7 +189,7 @@
             "CatId": "24",
             "CatName": "拉邦猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_24.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 770,
             "Price": 240
         },
@@ -197,7 +197,7 @@
             "CatId": "25",
             "CatName": "巴厘猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_25.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 760,
             "Price": 250
         },
@@ -205,7 +205,7 @@
             "CatId": "26",
             "CatName": "奥西猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_26.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 750,
             "Price": 260
         },
@@ -213,7 +213,7 @@
             "CatId": "27",
             "CatName": "美国短尾猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_27.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 740,
             "Price": 270
         },
@@ -221,7 +221,7 @@
             "CatId": "28",
             "CatName": "欧洲缅甸猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_28.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 730,
             "Price": 280
         },
@@ -229,7 +229,7 @@
             "CatId": "29",
             "CatName": "美国刚毛猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_29.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 720,
             "Price": 290
         },
@@ -237,7 +237,7 @@
             "CatId": "30",
             "CatName": "波米拉猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_30.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 710,
             "Price": 300
         },
@@ -245,7 +245,7 @@
             "CatId": "31",
             "CatName": "褴褛猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_31.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 700,
             "Price": 310
         },
@@ -253,7 +253,7 @@
             "CatId": "32",
             "CatName": "玩具虎猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_32.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 690,
             "Price": 320
         },
@@ -261,7 +261,7 @@
             "CatId": "33",
             "CatName": "塞伦盖蒂猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_33.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 680,
             "Price": 330
         },
@@ -269,7 +269,7 @@
             "CatId": "34",
             "CatName": "美国反耳猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_34.png",
-            "Rarity": 1,
+            "Rarity": 2,
             "Weight": 670,
             "Price": 340
         },
@@ -277,7 +277,7 @@
             "CatId": "35",
             "CatName": "曼基康猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_35.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 660,
             "Price": 350
         },
@@ -285,7 +285,7 @@
             "CatId": "36",
             "CatName": "拿破仑猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_36.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 650,
             "Price": 360
         },
@@ -293,7 +293,7 @@
             "CatId": "37",
             "CatName": "夏特尔猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_37.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 640,
             "Price": 370
         },
@@ -301,7 +301,7 @@
             "CatId": "38",
             "CatName": "哈瓦那棕猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_38.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 630,
             "Price": 380
         },
@@ -309,7 +309,7 @@
             "CatId": "39",
             "CatName": "科拉特猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_39.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 620,
             "Price": 390
         },
@@ -317,7 +317,7 @@
             "CatId": "40",
             "CatName": "东奇尼猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_40.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 610,
             "Price": 400
         },
@@ -325,7 +325,7 @@
             "CatId": "41",
             "CatName": "缅甸猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_41.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 600,
             "Price": 410
         },
@@ -333,7 +333,7 @@
             "CatId": "42",
             "CatName": "雪鞋猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_42.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 590,
             "Price": 420
         },
@@ -341,7 +341,7 @@
             "CatId": "43",
             "CatName": "加州闪亮猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_43.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 580,
             "Price": 430
         },
@@ -349,7 +349,7 @@
             "CatId": "44",
             "CatName": "澳大利亚雾猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_44.png",
-            "Rarity": 1,
+            "Rarity": 3,
             "Weight": 570,
             "Price": 440
         },
@@ -357,7 +357,7 @@
             "CatId": "45",
             "CatName": "肯尼亚猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_45.png",
-            "Rarity": 1,
+            "Rarity": 4,
             "Weight": 560,
             "Price": 450
         },
@@ -365,7 +365,7 @@
             "CatId": "46",
             "CatName": "亚洲猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_46.png",
-            "Rarity": 1,
+            "Rarity": 4,
             "Weight": 550,
             "Price": 460
         },
@@ -373,7 +373,7 @@
             "CatId": "47",
             "CatName": "孟买猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_47.png",
-            "Rarity": 1,
+            "Rarity": 4,
             "Weight": 540,
             "Price": 470
         },
@@ -381,7 +381,7 @@
             "CatId": "48",
             "CatName": "中国狸花猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_48.png",
-            "Rarity": 1,
+            "Rarity": 4,
             "Weight": 530,
             "Price": 480
         },
@@ -389,7 +389,7 @@
             "CatId": "49",
             "CatName": "安哥拉猫",
             "IconPath": "Assets/HotUpdateContent/Res/IconsCat_49.png",
-            "Rarity": 1,
+            "Rarity": 4,
             "Weight": 520,
             "Price": 490
         }

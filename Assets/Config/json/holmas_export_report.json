@@ -1,5 +1,5 @@
 {
-    "ExportedAtUtc": "2026-04-01T17:50:52.8846720Z",
+    "ExportedAtUtc": "2026-04-01T18:47:46.6719860Z",
     "Success": true,
     "BinaryWrittenCount": 2,
     "SourceFiles": [
@@ -18,7 +18,7 @@
             ],
             "PreviewJsonPath": "Assets/Config/json/holmas_core_config.json",
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_core_config.bytes",
-            "RowCount": 10,
+            "RowCount": 43,
             "WarningCount": 0,
             "ErrorCount": 0
         },
