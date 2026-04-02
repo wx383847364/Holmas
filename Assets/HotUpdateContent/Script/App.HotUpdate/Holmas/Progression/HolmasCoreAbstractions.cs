@@ -114,12 +114,13 @@ namespace App.HotUpdate.Holmas.Progression
     /// </summary>
     public interface IHolmasAdUnlockPolicy
     {
-        long GetUnlockExpireAt(long nowUtcMilliseconds);
+        long GetUnlockExpireAt(App.HotUpdate.Holmas.Meta.HolmasMetaProgressionState state, long nowUtcMilliseconds);
     }
 
     /// <summary>
     /// 经验来源接口。
-    /// 任务领奖、地图结算、长期成长都可以从这里拿到经验口径。
+    /// 当前 v1 里保留为兼容口径，真正玩家经验由建筑升级驱动。
+    /// 任务领奖和地图结算的实现应返回 0，避免继续沿旧路径直接增长玩家经验。
     /// </summary>
     public interface IHolmasExperienceSource
     {
@@ -130,6 +131,7 @@ namespace App.HotUpdate.Holmas.Progression
 
     /// <summary>
     /// 离线收益接口。
+    /// 当前 v1 里返回的是金币收益，不再直接提供玩家经验。
     /// </summary>
     public interface IHolmasOfflineRewardSource
     {

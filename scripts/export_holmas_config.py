@@ -23,6 +23,8 @@ CSV_FILES = (
     "Holmas_CatTable.csv",
     "Holmas_TaskTable.csv",
     "Holmas_PlayerLevelTable.csv",
+    "Holmas_MetaLevelTable.csv",
+    "Holmas_AgencyBuildingTable.csv",
 )
 
 EXECUTE_METHOD = "Holmas.EditorTools.HolmasCsvBinaryExporter.ExportFromBatchMode"

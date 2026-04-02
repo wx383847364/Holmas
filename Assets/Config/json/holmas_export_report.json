@@ -1,12 +1,14 @@
 {
-    "ExportedAtUtc": "2026-04-02T03:30:33.9408240Z",
+    "ExportedAtUtc": "2026-04-02T10:27:39.6976490Z",
     "Success": true,
     "BinaryWrittenCount": 2,
     "SourceFiles": [
         "Assets/Config/Holmas_MapTable.csv",
         "Assets/Config/Holmas_CatTable.csv",
         "Assets/Config/Holmas_TaskTable.csv",
-        "Assets/Config/Holmas_PlayerLevelTable.csv"
+        "Assets/Config/Holmas_PlayerLevelTable.csv",
+        "Assets/Config/Holmas_MetaLevelTable.csv",
+        "Assets/Config/Holmas_AgencyBuildingTable.csv"
     ],
     "BundleReports": [
         {
@@ -14,11 +16,13 @@
             "SourceCsvNames": [
                 "Holmas_MapTable.csv",
                 "Holmas_TaskTable.csv",
-                "Holmas_PlayerLevelTable.csv"
+                "Holmas_PlayerLevelTable.csv",
+                "Holmas_MetaLevelTable.csv",
+                "Holmas_AgencyBuildingTable.csv"
             ],
             "PreviewJsonPath": "Assets/Config/json/holmas_core_config.json",
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_core_config.bytes",
-            "RowCount": 43,
+            "RowCount": 67,
             "WarningCount": 0,
             "ErrorCount": 0
         },

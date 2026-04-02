@@ -1,5 +1,5 @@
 ﻿{
-    "Version": 1,
+    "Version": 2,
     "Maps": [
         {
             "MapId": "map_001",
@@ -1212,6 +1212,322 @@
                 20,
                 75
             ]
+        }
+    ],
+    "MetaLevels": [
+        {
+            "PlayerLevel": 1,
+            "MinExperience": 100,
+            "OfflineRewardPerHour": 6,
+            "AdUnlockHours": 24,
+            "Notes": "新手"
+        },
+        {
+            "PlayerLevel": 2,
+            "MinExperience": 120,
+            "OfflineRewardPerHour": 6,
+            "AdUnlockHours": 24,
+            "Notes": "新手"
+        },
+        {
+            "PlayerLevel": 3,
+            "MinExperience": 140,
+            "OfflineRewardPerHour": 7,
+            "AdUnlockHours": 24,
+            "Notes": "新手"
+        },
+        {
+            "PlayerLevel": 4,
+            "MinExperience": 160,
+            "OfflineRewardPerHour": 7,
+            "AdUnlockHours": 24,
+            "Notes": "新手"
+        },
+        {
+            "PlayerLevel": 5,
+            "MinExperience": 180,
+            "OfflineRewardPerHour": 8,
+            "AdUnlockHours": 24,
+            "Notes": "新手"
+        },
+        {
+            "PlayerLevel": 6,
+            "MinExperience": 210,
+            "OfflineRewardPerHour": 9,
+            "AdUnlockHours": 24,
+            "Notes": "成长"
+        },
+        {
+            "PlayerLevel": 7,
+            "MinExperience": 240,
+            "OfflineRewardPerHour": 10,
+            "AdUnlockHours": 24,
+            "Notes": "成长"
+        },
+        {
+            "PlayerLevel": 8,
+            "MinExperience": 270,
+            "OfflineRewardPerHour": 11,
+            "AdUnlockHours": 24,
+            "Notes": "成长"
+        },
+        {
+            "PlayerLevel": 9,
+            "MinExperience": 300,
+            "OfflineRewardPerHour": 12,
+            "AdUnlockHours": 24,
+            "Notes": "成长"
+        },
+        {
+            "PlayerLevel": 10,
+            "MinExperience": 340,
+            "OfflineRewardPerHour": 13,
+            "AdUnlockHours": 24,
+            "Notes": "成长"
+        },
+        {
+            "PlayerLevel": 11,
+            "MinExperience": 380,
+            "OfflineRewardPerHour": 14,
+            "AdUnlockHours": 24,
+            "Notes": "中后期"
+        },
+        {
+            "PlayerLevel": 12,
+            "MinExperience": 420,
+            "OfflineRewardPerHour": 16,
+            "AdUnlockHours": 24,
+            "Notes": "中后期"
+        },
+        {
+            "PlayerLevel": 13,
+            "MinExperience": 470,
+            "OfflineRewardPerHour": 18,
+            "AdUnlockHours": 24,
+            "Notes": "中后期"
+        },
+        {
+            "PlayerLevel": 14,
+            "MinExperience": 520,
+            "OfflineRewardPerHour": 20,
+            "AdUnlockHours": 24,
+            "Notes": "中后期"
+        },
+        {
+            "PlayerLevel": 15,
+            "MinExperience": 580,
+            "OfflineRewardPerHour": 22,
+            "AdUnlockHours": 24,
+            "Notes": "中后期"
+        },
+        {
+            "PlayerLevel": 16,
+            "MinExperience": 640,
+            "OfflineRewardPerHour": 24,
+            "AdUnlockHours": 24,
+            "Notes": "后期"
+        },
+        {
+            "PlayerLevel": 17,
+            "MinExperience": 710,
+            "OfflineRewardPerHour": 27,
+            "AdUnlockHours": 24,
+            "Notes": "后期"
+        },
+        {
+            "PlayerLevel": 18,
+            "MinExperience": 780,
+            "OfflineRewardPerHour": 30,
+            "AdUnlockHours": 24,
+            "Notes": "后期"
+        },
+        {
+            "PlayerLevel": 19,
+            "MinExperience": 860,
+            "OfflineRewardPerHour": 33,
+            "AdUnlockHours": 24,
+            "Notes": "后期"
+        },
+        {
+            "PlayerLevel": 20,
+            "MinExperience": 950,
+            "OfflineRewardPerHour": 36,
+            "AdUnlockHours": 24,
+            "Notes": "后期"
+        }
+    ],
+    "AgencyBuildings": [
+        {
+            "AgencyStageId": 1,
+            "BuildingIds": [
+                "lobby",
+                "desk",
+                "boardroom"
+            ],
+            "BuildingUpgradeLevelCaps": [
+                3,
+                2,
+                2
+            ],
+            "BuildingUpgradeCosts": [
+                {
+                    "Costs": [
+                        10,
+                        20,
+                        30
+                    ]
+                },
+                {
+                    "Costs": [
+                        12,
+                        24
+                    ]
+                },
+                {
+                    "Costs": [
+                        8,
+                        16
+                    ]
+                }
+            ],
+            "Notes": "前期阶段"
+        },
+        {
+            "AgencyStageId": 2,
+            "BuildingIds": [
+                "archive",
+                "lab",
+                "display"
+            ],
+            "BuildingUpgradeLevelCaps": [
+                3,
+                3,
+                3
+            ],
+            "BuildingUpgradeCosts": [
+                {
+                    "Costs": [
+                        30,
+                        45,
+                        60
+                    ]
+                },
+                {
+                    "Costs": [
+                        35,
+                        55,
+                        80
+                    ]
+                },
+                {
+                    "Costs": [
+                        28,
+                        42,
+                        56
+                    ]
+                }
+            ],
+            "Notes": "前期到中期"
+        },
+        {
+            "AgencyStageId": 3,
+            "BuildingIds": [
+                "training",
+                "research",
+                "security",
+                "storage"
+            ],
+            "BuildingUpgradeLevelCaps": [
+                4,
+                4,
+                3,
+                3
+            ],
+            "BuildingUpgradeCosts": [
+                {
+                    "Costs": [
+                        60,
+                        90,
+                        120,
+                        150
+                    ]
+                },
+                {
+                    "Costs": [
+                        70,
+                        100,
+                        140,
+                        180
+                    ]
+                },
+                {
+                    "Costs": [
+                        50,
+                        75,
+                        100
+                    ]
+                },
+                {
+                    "Costs": [
+                        55,
+                        80,
+                        110
+                    ]
+                }
+            ],
+            "Notes": "中后期阶段"
+        },
+        {
+            "AgencyStageId": 4,
+            "BuildingIds": [
+                "observatory",
+                "hall",
+                "dataCenter",
+                "recruit"
+            ],
+            "BuildingUpgradeLevelCaps": [
+                5,
+                5,
+                4,
+                4
+            ],
+            "BuildingUpgradeCosts": [
+                {
+                    "Costs": [
+                        120,
+                        160,
+                        210,
+                        270,
+                        340
+                    ]
+                },
+                {
+                    "Costs": [
+                        130,
+                        180,
+                        240,
+                        310,
+                        390
+                    ]
+                },
+                {
+                    "Costs": [
+                        110,
+                        150,
+                        195,
+                        250
+                    ]
+                },
+                {
+                    "Costs": [
+                        100,
+                        140,
+                        190,
+                        245
+                    ]
+                }
+            ],
+            "Notes": "后期阶段"
         }
     ]
 }

@@ -1,6 +1,10 @@
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
+using App.HotUpdate.Holmas.Meta;
+using App.HotUpdate.Holmas.Progression;
+using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.HotUpdate.Holmas.Tasks.Services;
 using App.Shared.Contracts;
 
 namespace App.HotUpdate.Holmas.Application
@@ -68,6 +72,21 @@ namespace App.HotUpdate.Holmas.Application
         public HolmasGameplayRuntime GameplayRuntime { get; }
 
         /// <summary>
+        /// 当前玩家等级。
+        /// </summary>
+        public int CurrentPlayerLevel => GameplayRuntime?.CurrentPlayerLevel ?? 1;
+
+        /// <summary>
+        /// 当前侦探社阶段。
+        /// </summary>
+        public int CurrentAgencyStageId => GameplayRuntime?.CurrentAgencyStageId ?? 1;
+
+        /// <summary>
+        /// 当前金币余额。
+        /// </summary>
+        public long CurrentGoldBalance => GameplayRuntime?.CurrentGoldBalance ?? 0L;
+
+        /// <summary>
         /// 按 TerrainPath 启动一局地图。
         /// 组合层先通过正式资源入口加载地形，再交给 HotUpdate 业务逻辑生成运行时棋盘。
         /// </summary>
@@ -84,6 +103,84 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             return GameplayRuntime.StartLevelAsync(request);
+        }
+
+        /// <summary>
+        /// 按当前玩家等级补齐所有已解锁空槽位。
+        /// </summary>
+        public HolmasTaskRefillResult RefillAvailableTasks()
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.RefillAvailableTasks();
+        }
+
+        /// <summary>
+        /// 使用当前玩家等级与当前成长配置解锁一个广告槽位。
+        /// </summary>
+        public HolmasTaskSlotUnlockResult UnlockAdSlot(int slotIndex, long nowUtcMilliseconds)
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.UnlockAdSlot(slotIndex, nowUtcMilliseconds);
+        }
+
+        /// <summary>
+        /// 按当前玩家等级领取任务奖励。
+        /// </summary>
+        public HolmasTaskClaimResult ClaimTaskReward(int slotIndex)
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.ClaimTaskReward(slotIndex);
+        }
+
+        /// <summary>
+        /// 按当前成长配置升级侦探社建筑。
+        /// </summary>
+        public HolmasAgencyUpgradeResult TryUpgradeBuilding(string buildingId)
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.TryUpgradeBuilding(buildingId);
+        }
+
+        /// <summary>
+        /// 结算离线收益，当前版本只增加金币。
+        /// </summary>
+        public HolmasProgressionAdvanceResult ApplyOfflineSettlement(long offlineMilliseconds)
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.ApplyOfflineSettlement(offlineMilliseconds);
+        }
+
+        /// <summary>
+        /// 读取当前成长配置下，广告槽位解锁的到期时间。
+        /// </summary>
+        public long GetAdUnlockExpireAt(long nowUtcMilliseconds)
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.GetAdUnlockExpireAt(nowUtcMilliseconds);
         }
     }
 }

@@ -56,13 +56,20 @@ namespace Holmas.Tests
             Assert.That(progressionResult.ProgressedTaskIds, Has.Count.EqualTo(1));
             Assert.That(progressionResult.CompletedTaskIds, Has.Count.EqualTo(1));
             Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(1));
-            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(6));
+            Assert.That(progressionResult.TaskExperienceGained, Is.EqualTo(0));
+            Assert.That(progressionResult.MetaExperienceGained, Is.EqualTo(0));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
+            Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(1));
 
             var claim = runtime.ClaimTaskReward(0, 1);
 
             Assert.That(claim.Success, Is.True);
-            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(8));
-            Assert.That(runtime.MetaProgressionState.AgencyLevel, Is.EqualTo(2));
+            Assert.That(claim.Reward, Is.EqualTo(20));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(20));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
+            Assert.That(runtime.MetaProgressionState.PlayerLevel, Is.EqualTo(1));
+            Assert.That(runtime.MetaProgressionState.AgencyLevel, Is.EqualTo(1));
+            Assert.That(runtime.MetaProgressionState.AgencyStageId, Is.EqualTo(1));
             Assert.That(runtime.MetaProgressionState.ClaimedTaskCount, Is.EqualTo(1));
         }
 
@@ -130,15 +137,107 @@ namespace Holmas.Tests
 
             Assert.That(reveal.Completed, Is.True);
             Assert.That(firstResult, Is.Not.Null);
-            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(6));
+            Assert.That(firstResult.MetaExperienceGained, Is.EqualTo(0));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
 
             HolmasProgressionAdvanceResult secondResult = runtime.ApplyCurrentLevelCompletion();
 
             Assert.That(secondResult.ProgressedTaskIds, Is.Empty);
             Assert.That(secondResult.CompletedTaskIds, Is.Empty);
             Assert.That(secondResult.MetaExperienceGained, Is.EqualTo(0));
-            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(6));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
             Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_ApplyOfflineSettlement_AddsGoldOnly()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var metaCatalog = CreateGrowthMetaCatalog();
+            var metaService = new HolmasMetaProgressionService(
+                metaCatalog,
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new FixedUtcClock { UtcNowMilliseconds = 777_000 });
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 1, 0, 1, 1), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger());
+
+            runtime.MetaProgressionState.PlayerLevel = 2;
+            runtime.MetaProgressionState.AgencyLevel = 2;
+
+            HolmasProgressionAdvanceResult result = runtime.ApplyOfflineSettlement(3_600_000L);
+
+            Assert.That(result.OfflineRewardGained, Is.EqualTo(8));
+            Assert.That(result.MetaExperienceGained, Is.EqualTo(0));
+            Assert.That(runtime.MetaProgressionState.GoldBalance, Is.EqualTo(8));
+            Assert.That(runtime.MetaProgressionState.OfflineRewardTotal, Is.EqualTo(8));
+            Assert.That(runtime.MetaProgressionState.LastOfflineSettlementAtUtcMilliseconds, Is.EqualTo(777_000));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
+            Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_TryUpgradeBuilding_ConsumesGoldAndAdvancesStage()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var metaCatalog = CreateGrowthMetaCatalog();
+            var metaService = new HolmasMetaProgressionService(
+                metaCatalog,
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new FixedUtcClock { UtcNowMilliseconds = 777_000 });
+            var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 1, 0, 1, 1), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), null);
+
+            runtime.MetaProgressionState.GoldBalance = 30;
+
+            HolmasAgencyUpgradeResult first = runtime.TryUpgradeBuilding("lobby");
+
+            Assert.That(first.Success, Is.True, first.FailureReason);
+            Assert.That(first.GoldSpent, Is.EqualTo(10));
+            Assert.That(first.PlayerLevelAfter, Is.EqualTo(2));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(20));
+            Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(2));
+            Assert.That(runtime.CurrentAgencyStageId, Is.EqualTo(1));
+
+            HolmasAgencyUpgradeResult second = runtime.TryUpgradeBuilding("desk");
+
+            Assert.That(second.Success, Is.True, second.FailureReason);
+            Assert.That(second.GoldSpent, Is.EqualTo(20));
+            Assert.That(second.StageAdvanced, Is.True);
+            Assert.That(second.PlayerLevelAfter, Is.EqualTo(3));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(0));
+            Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(3));
+            Assert.That(runtime.CurrentAgencyStageId, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_TryUpgradeBuilding_RejectsWhenGoldInsufficient()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var metaCatalog = CreateGrowthMetaCatalog();
+            var metaService = new HolmasMetaProgressionService(
+                metaCatalog,
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new FixedUtcClock { UtcNowMilliseconds = 777_000 });
+            var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 1, 0, 1, 1), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), null);
+
+            runtime.MetaProgressionState.GoldBalance = 5;
+
+            HolmasAgencyUpgradeResult result = runtime.TryUpgradeBuilding("lobby");
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.FailureReason, Does.Contain("金币不足"));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(5));
+            Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(1));
+            Assert.That(runtime.CurrentAgencyStageId, Is.EqualTo(1));
         }
 
         [Test]
@@ -482,6 +581,62 @@ namespace Holmas.Tests
 
         private sealed class InvalidTerrainAsset : ScriptableObject
         {
+        }
+
+        private static HolmasMetaCatalog CreateGrowthMetaCatalog()
+        {
+            return new HolmasMetaCatalog(new[]
+            {
+                new HolmasMetaProgressionDefinition
+                {
+                    PlayerLevel = 1,
+                    MinExperience = 0,
+                    OfflineRewardPerHour = 6,
+                    AdUnlockHours = 24,
+                },
+                new HolmasMetaProgressionDefinition
+                {
+                    PlayerLevel = 2,
+                    MinExperience = 1,
+                    OfflineRewardPerHour = 8,
+                    AdUnlockHours = 12,
+                },
+                new HolmasMetaProgressionDefinition
+                {
+                    PlayerLevel = 3,
+                    MinExperience = 2,
+                    OfflineRewardPerHour = 10,
+                    AdUnlockHours = 24,
+                },
+            });
+        }
+
+        private static HolmasAgencyCatalog CreateAgencyCatalog()
+        {
+            return new HolmasAgencyCatalog(new[]
+            {
+                new HolmasAgencyBuildingDefinition
+                {
+                    AgencyStageId = 1,
+                    BuildingId = "lobby",
+                    LevelCap = 1,
+                    UpgradeCosts = new[] { 10 },
+                },
+                new HolmasAgencyBuildingDefinition
+                {
+                    AgencyStageId = 1,
+                    BuildingId = "desk",
+                    LevelCap = 1,
+                    UpgradeCosts = new[] { 20 },
+                },
+                new HolmasAgencyBuildingDefinition
+                {
+                    AgencyStageId = 2,
+                    BuildingId = "archive",
+                    LevelCap = 2,
+                    UpgradeCosts = new[] { 30, 40 },
+                },
+            });
         }
     }
 }

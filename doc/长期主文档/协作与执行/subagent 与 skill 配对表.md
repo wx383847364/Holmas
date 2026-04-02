@@ -10,9 +10,9 @@
 - UI/流程类工作再叠加 `unity-ugui-flow-integration`
 - `App.Shared`、`HotUpdate` 入口、UI prefab 这 3 类高冲突区域必须独占
 
-推荐先按 **5 个 subagent** 起步；等你用顺手了，再扩成 8 个长期版编组。
+推荐先按 **6 个 subagent** 起步；等你用顺手了，再扩成 9 个长期版编组。
 
-## 5-Agent 实操版
+## 6-Agent 实操版
 
 ### 1. 边界与骨架 Agent
 
@@ -89,7 +89,7 @@ skill 组合：
 
 允许写入：
 - Task service
-- Meta progression service
+- Progression service
 - Offline/ad business service
 - 配置读取与奖励计算逻辑
 
@@ -168,7 +168,37 @@ skill 组合：
 - 失败项和风险清单
 - 需要回给哪个 agent 修复的问题列表
 
-## 8-Agent 长期版
+### 6. 挑刺与问题审查 Agent
+
+skill 组合：
+- 默认：`unity-hotupdate-boundary`
+- 审地图、任务、配置时：再叠加 `findcat-config-pipeline`
+- 审 UI 流程时：再叠加 `unity-ugui-flow-integration`
+
+职责：
+- 独立挑刺，找明显 bug、回归、越界、需求理解偏差和缺关键验证问题
+- 给出 `通过 / 通过，但有非阻塞建议 / 不通过，退回修复` 的结论
+- 把问题明确退回给原实现 agent 或主控继续修复
+- 作为继续推进前的默认强制审查门
+
+允许写入：
+- review 文档
+- 审查脚本
+- QA 结论文档
+
+禁止写入：
+- `App.Shared`
+- HotUpdate 入口
+- UI prefab
+- 核心业务实现目录
+
+交付物：
+- 审查对象和范围
+- 审查结论
+- 问题列表、严重级别和是否阻塞
+- 退回给谁修以及复审条件
+
+## 9-Agent 长期版
 
 当你熟悉 subagent 后，再升级为这套：
 
@@ -188,7 +218,7 @@ skill 组合：
 - skill：`unity-hotupdate-boundary` + `findcat-config-pipeline`
 - 独占：任务栏、奖励、补位、去重
 
-5. `Detective Agency / Meta Progression`
+5. `Detective Agency / Progression`
 - skill：`unity-hotupdate-boundary`
 - 独占：家具、猫窝、养猫、长期成长
 
@@ -204,6 +234,11 @@ skill 组合：
 - skill：`unity-hotupdate-boundary` + `findcat-config-pipeline`
 - 独占：模拟器、配置校验、集成回归
 
+9. `Critic / Defect Review`
+- skill：`unity-hotupdate-boundary`
+- 按对象叠加：`findcat-config-pipeline` 或 `unity-ugui-flow-integration`
+- 独占：问题审查、阻塞结论、退回修复归属
+
 ## 启动顺序
 
 固定顺序建议：
@@ -214,28 +249,29 @@ skill 组合：
 - 地图与棋盘
 - 任务与长期进度
 - 测试与质量保障
-4. UI agent 在核心输出接口稳定后再全速启动
-5. 测试 agent 在功能线产出后持续做验证和回归
-6. 最后统一集成和回归
+4. 每个阶段产出完成后，默认交给挑刺与问题审查 agent 做强制审查
+5. UI agent 在核心输出接口稳定后再全速启动
+6. 测试 agent 在功能线产出后持续做验证和回归
+7. 最后统一集成和回归
 
 ## 你给我的指令模板
 
 ### 轻量版模板
 
-“这次按 5 个 subagent 开工。  
+“这次按 6 个 subagent 开工。  
 全部默认遵循 `unity-hotupdate-boundary`。  
 地图和任务相关额外遵循 `findcat-config-pipeline`。  
 UI 相关额外遵循 `unity-ugui-flow-integration`。  
-测试相关按对象叠加 `findcat-config-pipeline` 或 `unity-ugui-flow-integration`。  
+测试和挑刺审查按对象叠加 `findcat-config-pipeline` 或 `unity-ugui-flow-integration`。  
 `App.Shared` 和 HotUpdate 入口只能边界 agent 改，UI prefab 只能 UI agent 改。  
-先冻结 DTO，再并行开发，再由测试 agent 验证，最后统一集成。”
+先冻结 DTO，再并行开发；每个阶段产出默认先交给 Agent 6 挑刺审查，通过后再继续推进。”
 
 ### 长期版模板
 
-“这次按 8 个 subagent 长期版分工。  
+“这次按 9 个 subagent 长期版分工。  
 所有 agent 默认遵循 `unity-hotupdate-boundary`。  
-配置/地图/任务/QA 额外遵循 `findcat-config-pipeline`。  
-UI agent 额外遵循 `unity-ugui-flow-integration`。  
+配置/地图/任务/QA/审查 额外按对象叠加 `findcat-config-pipeline`。  
+UI 和 UI 审查额外遵循 `unity-ugui-flow-integration`。  
 `App.Shared`、HotUpdate 入口、UI prefab、存档模型分别独占，不允许多人同时修改。”
 
 ## Test Plan
@@ -247,11 +283,12 @@ UI agent 额外遵循 `unity-ugui-flow-integration`。
 - 任务 agent 没把 Presenter/UI 逻辑写进服务层
 - UI agent 没把奖励公式、去重、地图生成写进界面代码
 - 测试 agent 能根据 skill 规则识别越层引用、配置污染运行时、UI 直接改业务状态等问题
+- 挑刺 agent 会在阶段结束后给出明确的 通过 / 退回 结论，而不是只给模糊建议
 - 集成阶段不会频繁出现 DTO 改名、入口冲突、prefab 覆盖
 
 ## Assumptions
 
-- 你是第一次正式使用 subagent + skill 协作，所以默认先推荐 5-Agent 实操版。
+- 你是第一次正式使用 subagent + skill 协作，所以默认先推荐 6-Agent 实操版。
 - `unity-hotupdate-boundary` 是所有 agent 的基础 skill，不单独省略。
 - `findcat-config-pipeline` 主要服务于表结构、权重、生成、奖励和配置校验。
 - `unity-ugui-flow-integration` 主要服务于 UI 接线和流程编排，不允许它承载核心业务规则。

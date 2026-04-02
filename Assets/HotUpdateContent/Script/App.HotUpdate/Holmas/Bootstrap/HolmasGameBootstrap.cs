@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Meta;
@@ -50,9 +52,14 @@ namespace App.HotUpdate.Holmas.Bootstrap
             }
 
             HolmasConfigCatalogBundle configBundle = TryLoadConfigBundle(assetsRuntime, logger);
-            var taskCatalog = configBundle?.TaskCatalog ?? CreateFallbackTaskCatalog();
-            var mapCatalog = configBundle?.MapCatalog ?? CreateFallbackMapCatalog();
-            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime, taskCatalog);
+            if (configBundle == null)
+            {
+                throw new InvalidOperationException("HolmasGameBootstrap: 未能加载正式导出配置，拒绝以错误成长协议启动。");
+            }
+
+            var taskCatalog = configBundle.TaskCatalog;
+            var mapCatalog = configBundle.MapCatalog;
+            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime, taskCatalog, configBundle);
             serviceContainer.RegisterSingleton(gameplayRuntime);
 
             // 这轮先把已确认的共享依赖收敛到统一上下文，给后续地图线和任务线提供稳定挂接点。
@@ -110,29 +117,96 @@ namespace App.HotUpdate.Holmas.Bootstrap
         private static HolmasGameplayRuntime CreateGameplayRuntime(
             IAppLogger logger,
             IAssetsRuntime assetsRuntime,
-            HolmasTaskCatalog taskCatalog)
+            HolmasTaskCatalog taskCatalog,
+            HolmasConfigCatalogBundle configBundle)
         {
-            var metaCatalog = new HolmasMetaCatalog(new[]
-            {
-                new HolmasMetaProgressionDefinition
-                {
-                    AgencyLevel = 1,
-                    MinExperience = 0L,
-                }
-            });
+            var metaCatalog = CreateMetaCatalog(configBundle);
+            var agencyCatalog = CreateAgencyCatalog(configBundle);
             var clock = new HolmasSystemUtcClock();
             var randomSource = new HolmasSystemRandomSource();
-            var metaSource = new HolmasDefaultMetaExperienceSource();
+            var metaSource = new HolmasDefaultMetaExperienceSource(metaCatalog);
             var taskProgressService = new HolmasTaskProgressService(taskCatalog, randomSource, clock);
-            var metaProgressionService = new HolmasMetaProgressionService(metaCatalog, metaSource, metaSource);
+            var metaProgressionService = new HolmasMetaProgressionService(metaCatalog, metaSource, metaSource, clock);
+            var agencyProgressionService = new HolmasAgencyProgressionService(agencyCatalog, metaProgressionService);
             var progressionCoordinator = new HolmasProgressionCoordinator(taskProgressService, metaProgressionService);
 
             return new HolmasGameplayRuntime(
                 taskProgressService,
                 metaProgressionService,
                 progressionCoordinator,
+                agencyProgressionService,
                 logger,
                 assetsRuntime);
+        }
+
+        private static HolmasMetaCatalog CreateMetaCatalog(HolmasConfigCatalogBundle configBundle)
+        {
+            if (configBundle?.MetaLevels == null || configBundle.MetaLevels.Count == 0)
+            {
+                throw new InvalidOperationException("HolmasGameBootstrap: 配置包缺少 MetaLevels，无法组装正式成长服务。");
+            }
+
+            return new HolmasMetaCatalog(configBundle.MetaLevels.Select(row => new HolmasMetaProgressionDefinition
+            {
+                PlayerLevel = row.PlayerLevel,
+                AgencyLevel = row.PlayerLevel,
+                MinExperience = row.MinExperience,
+                OfflineRewardPerHour = row.OfflineRewardPerHour,
+                AdUnlockHours = row.AdUnlockHours,
+            }));
+        }
+
+        private static HolmasAgencyCatalog CreateAgencyCatalog(HolmasConfigCatalogBundle configBundle)
+        {
+            if (configBundle?.AgencyBuildings == null || configBundle.AgencyBuildings.Count == 0)
+            {
+                throw new InvalidOperationException("HolmasGameBootstrap: 配置包缺少 AgencyBuildings，无法组装正式建筑成长服务。");
+            }
+
+            return new HolmasAgencyCatalog(BuildAgencyDefinitions(configBundle.AgencyBuildings));
+        }
+
+        private static IEnumerable<HolmasAgencyBuildingDefinition> BuildAgencyDefinitions(IReadOnlyList<HolmasAgencyBuildingRow> rows)
+        {
+            if (rows == null || rows.Count == 0)
+            {
+                yield break;
+            }
+
+            for (int stageIndex = 0; stageIndex < rows.Count; stageIndex++)
+            {
+                HolmasAgencyBuildingRow stageRow = rows[stageIndex];
+                if (stageRow == null || stageRow.BuildingIds == null)
+                {
+                    continue;
+                }
+
+                for (int buildingIndex = 0; buildingIndex < stageRow.BuildingIds.Length; buildingIndex++)
+                {
+                    string buildingId = stageRow.BuildingIds[buildingIndex];
+                    if (string.IsNullOrWhiteSpace(buildingId))
+                    {
+                        continue;
+                    }
+
+                    int levelCap = stageRow.BuildingUpgradeLevelCaps != null && buildingIndex < stageRow.BuildingUpgradeLevelCaps.Length
+                        ? stageRow.BuildingUpgradeLevelCaps[buildingIndex]
+                        : 0;
+                    int[] costs = Array.Empty<int>();
+                    if (stageRow.BuildingUpgradeCosts != null && buildingIndex < stageRow.BuildingUpgradeCosts.Length)
+                    {
+                        costs = stageRow.BuildingUpgradeCosts[buildingIndex]?.Costs ?? Array.Empty<int>();
+                    }
+
+                    yield return new HolmasAgencyBuildingDefinition
+                    {
+                        AgencyStageId = stageRow.AgencyStageId,
+                        BuildingId = buildingId,
+                        LevelCap = levelCap,
+                        UpgradeCosts = costs,
+                    };
+                }
+            }
         }
 
         private static HolmasTaskCatalog CreateFallbackTaskCatalog()

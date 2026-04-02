@@ -21,6 +21,8 @@ namespace Holmas.EditorTools
         private const string CatCsvName = "Holmas_CatTable.csv";
         private const string TaskCsvName = "Holmas_TaskTable.csv";
         private const string PlayerLevelCsvName = "Holmas_PlayerLevelTable.csv";
+        private const string MetaLevelCsvName = "Holmas_MetaLevelTable.csv";
+        private const string AgencyBuildingCsvName = "Holmas_AgencyBuildingTable.csv";
 
         private const string CoreBinaryName = "holmas_core_config.bytes";
         private const string CatBinaryName = "holmas_cat_meta.bytes";
@@ -68,6 +70,8 @@ namespace Holmas.EditorTools
                     CombineProjectPath(CsvRoot, CatCsvName),
                     CombineProjectPath(CsvRoot, TaskCsvName),
                     CombineProjectPath(CsvRoot, PlayerLevelCsvName),
+                    CombineProjectPath(CsvRoot, MetaLevelCsvName),
+                    CombineProjectPath(CsvRoot, AgencyBuildingCsvName),
                 }
             };
 
@@ -78,6 +82,8 @@ namespace Holmas.EditorTools
             var catTable = LoadCatTable(report);
             var taskTable = LoadTaskTable(report);
             var playerLevelTable = LoadPlayerLevelTable(report);
+            var metaLevelTable = LoadMetaLevelTable(report);
+            var agencyBuildingTable = LoadAgencyBuildingTable(report);
 
             var catLookup = BuildAliasLookup(catTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.CatId, index)));
             var taskLookup = BuildAliasLookup(taskTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.TaskTypeId, index)));
@@ -87,8 +93,10 @@ namespace Holmas.EditorTools
             NormalizeRows(report, taskTable, catLookup, taskLookup, mapLookup);
             NormalizeRows(report, playerLevelTable, catLookup, taskLookup, mapLookup);
             NormalizeRows(report, mapTable, catLookup, taskLookup, mapLookup);
+            ValidateMetaLevelTable(report, playerLevelTable, metaLevelTable);
+            ValidateAgencyBuildingTable(report, agencyBuildingTable);
 
-            HolmasCoreConfigPackage corePackage = BuildCorePackage(mapTable, taskTable, playerLevelTable);
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(mapTable, taskTable, playerLevelTable, metaLevelTable, agencyBuildingTable);
             HolmasCatMetaPackage catPackage = BuildCatMetaPackage(catTable);
 
             report.BundleReports = new[]
@@ -96,10 +104,10 @@ namespace Holmas.EditorTools
                 new HolmasCsvBundleReport
                 {
                     BundleName = "core",
-                    SourceCsvNames = new[] { MapCsvName, TaskCsvName, PlayerLevelCsvName },
+                    SourceCsvNames = new[] { MapCsvName, TaskCsvName, PlayerLevelCsvName, MetaLevelCsvName, AgencyBuildingCsvName },
                     PreviewJsonPath = CombineProjectPath(JsonRoot, CorePreviewName),
                     BinaryPath = CombineProjectPath(HotUpdateConfigRoot, CoreBinaryName),
-                    RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count,
+                    RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count + metaLevelTable.Rows.Count + agencyBuildingTable.Rows.Count,
                     WarningCount = report.Warnings.Count,
                     ErrorCount = report.Errors.Count,
                 },
@@ -234,6 +242,50 @@ namespace Holmas.EditorTools
 
             var headerMap = BuildHeaderMap(rows[1]);
             return new CsvTable<HolmasPlayerLevelCsvRow>(csvName, ParsePlayerLevels(report, path, rows, headerMap));
+        }
+
+        private static CsvTable<HolmasMetaLevelCsvRow> LoadMetaLevelTable(HolmasCsvExportReport report)
+        {
+            string csvName = MetaLevelCsvName;
+            string path = CombineProjectPath(CsvRoot, csvName);
+            if (!File.Exists(path))
+            {
+                report.Errors.Add($"找不到 CSV 文件: {path}");
+                return new CsvTable<HolmasMetaLevelCsvRow>(csvName);
+            }
+
+            string text = File.ReadAllText(path, Encoding.UTF8);
+            var rows = CsvParser.Parse(text);
+            if (rows.Count < 2)
+            {
+                report.Errors.Add($"CSV 结构不完整: {path}");
+                return new CsvTable<HolmasMetaLevelCsvRow>(csvName);
+            }
+
+            var headerMap = BuildHeaderMap(rows[1]);
+            return new CsvTable<HolmasMetaLevelCsvRow>(csvName, ParseMetaLevels(report, path, rows, headerMap));
+        }
+
+        private static CsvTable<HolmasAgencyBuildingCsvRow> LoadAgencyBuildingTable(HolmasCsvExportReport report)
+        {
+            string csvName = AgencyBuildingCsvName;
+            string path = CombineProjectPath(CsvRoot, csvName);
+            if (!File.Exists(path))
+            {
+                report.Errors.Add($"找不到 CSV 文件: {path}");
+                return new CsvTable<HolmasAgencyBuildingCsvRow>(csvName);
+            }
+
+            string text = File.ReadAllText(path, Encoding.UTF8);
+            var rows = CsvParser.Parse(text);
+            if (rows.Count < 2)
+            {
+                report.Errors.Add($"CSV 结构不完整: {path}");
+                return new CsvTable<HolmasAgencyBuildingCsvRow>(csvName);
+            }
+
+            var headerMap = BuildHeaderMap(rows[1]);
+            return new CsvTable<HolmasAgencyBuildingCsvRow>(csvName, ParseAgencyBuildings(report, path, rows, headerMap));
         }
 
         private static List<HolmasMapCsvRow> ParseMaps(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
@@ -575,6 +627,356 @@ namespace Holmas.EditorTools
             return list;
         }
 
+        private static List<HolmasMetaLevelCsvRow> ParseMetaLevels(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        {
+            int playerLevelCol = RequireColumn(report, sourcePath, headerMap, "playerLevel");
+            int minExperienceCol = RequireColumn(report, sourcePath, headerMap, "minExperience");
+            int offlineRewardPerHourCol = RequireColumn(report, sourcePath, headerMap, "offlineRewardPerHour");
+            int adUnlockHoursCol = RequireColumn(report, sourcePath, headerMap, "adUnlockHours");
+            int notesCol = GetOptionalColumn(headerMap, "notes");
+
+            var list = new List<HolmasMetaLevelCsvRow>();
+            for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
+            {
+                var row = rows[rowIndex];
+                if (IsBlankRow(row))
+                {
+                    continue;
+                }
+
+                int playerLevel;
+                bool levelOk = TryParseInt(GetCell(row, playerLevelCol), out playerLevel);
+                long minExperience;
+                bool expOk = TryParseLong(GetCell(row, minExperienceCol), out minExperience);
+                int offlineRewardPerHour;
+                bool offlineOk = TryParseInt(GetCell(row, offlineRewardPerHourCol), out offlineRewardPerHour);
+                int adUnlockHours;
+                bool adOk = TryParseInt(GetCell(row, adUnlockHoursCol), out adUnlockHours);
+
+                var item = new HolmasMetaLevelCsvRow
+                {
+                    RowIndex = list.Count,
+                    PlayerLevel = playerLevel,
+                    MinExperience = minExperience,
+                    OfflineRewardPerHour = offlineRewardPerHour,
+                    AdUnlockHours = adUnlockHours,
+                    Notes = GetCell(row, notesCol),
+                };
+
+                if (!levelOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 playerLevel 无法解析。");
+                    continue;
+                }
+
+                if (!expOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 minExperience 无法解析。");
+                    continue;
+                }
+
+                if (!offlineOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 offlineRewardPerHour 无法解析。");
+                    continue;
+                }
+
+                if (!adOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 adUnlockHours 无法解析。");
+                    continue;
+                }
+
+                list.Add(item);
+            }
+
+            return list;
+        }
+
+        private static List<HolmasAgencyBuildingCsvRow> ParseAgencyBuildings(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        {
+            int stageIdCol = RequireColumn(report, sourcePath, headerMap, "agencyStageId");
+            int buildingIdsCol = RequireColumn(report, sourcePath, headerMap, "buildingIds");
+            int buildingCapsCol = RequireColumn(report, sourcePath, headerMap, "buildingUpgradeLevelCaps");
+            int buildingCostsCol = RequireColumn(report, sourcePath, headerMap, "buildingUpgradeCosts");
+            int notesCol = GetOptionalColumn(headerMap, "notes");
+
+            var list = new List<HolmasAgencyBuildingCsvRow>();
+            for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
+            {
+                var row = rows[rowIndex];
+                if (IsBlankRow(row))
+                {
+                    continue;
+                }
+
+                int stageId;
+                bool stageIdOk = TryParseInt(GetCell(row, stageIdCol), out stageId);
+                string[] buildingIds = SplitArray(GetCell(row, buildingIdsCol));
+                int[] levelCaps = ParseIntArrayStrict(GetCell(row, buildingCapsCol), sourcePath, rowIndex + 1, report);
+                var upgradeCosts = ParseNestedIntArrays(GetCell(row, buildingCostsCol), sourcePath, rowIndex + 1, report);
+
+                var item = new HolmasAgencyBuildingCsvRow
+                {
+                    RowIndex = list.Count,
+                    AgencyStageId = stageId,
+                    BuildingIds = buildingIds,
+                    BuildingUpgradeLevelCaps = levelCaps,
+                    BuildingUpgradeCosts = upgradeCosts,
+                    Notes = GetCell(row, notesCol),
+                };
+
+                if (!stageIdOk || stageId <= 0)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行的 agencyStageId 必须是正整数。");
+                    continue;
+                }
+
+                int expectedStageId = list.Count + 1;
+                if (stageId != expectedStageId)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行的 agencyStageId 必须按 1..N 连续递增，当前值为 {stageId}，期望值为 {expectedStageId}。");
+                    continue;
+                }
+
+                if (item.BuildingIds.Length == 0)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 buildingIds 为空。");
+                    continue;
+                }
+
+                if (item.BuildingIds.Length != item.BuildingUpgradeLevelCaps.Length)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 buildingIds 与 buildingUpgradeLevelCaps 长度不一致。");
+                    continue;
+                }
+
+                if (item.BuildingIds.Length != item.BuildingUpgradeCosts.Length)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 buildingIds 与 buildingUpgradeCosts 长度不一致。");
+                    continue;
+                }
+
+                list.Add(item);
+            }
+
+            return list;
+        }
+
+        private static void ValidateMetaLevelTable(
+            HolmasCsvExportReport report,
+            CsvTable<HolmasPlayerLevelCsvRow> playerLevelTable,
+            CsvTable<HolmasMetaLevelCsvRow> metaLevelTable)
+        {
+            var metaRows = metaLevelTable?.Rows ?? new List<HolmasMetaLevelCsvRow>();
+            var playerRows = playerLevelTable?.Rows ?? new List<HolmasPlayerLevelCsvRow>();
+
+            if (metaRows.Count == 0)
+            {
+                report.Errors.Add("缺少 Holmas_MetaLevelTable 数据。");
+                return;
+            }
+
+            if (playerRows.Count == 0)
+            {
+                report.Errors.Add("缺少 Holmas_PlayerLevelTable 数据，无法校验 meta 表。");
+                return;
+            }
+
+            if (metaRows.Count != playerRows.Count)
+            {
+                report.Errors.Add("Holmas_MetaLevelTable 与 Holmas_PlayerLevelTable 行数不一致。");
+                return;
+            }
+
+            var playerLevelLookup = new Dictionary<int, HolmasPlayerLevelCsvRow>();
+            var seenPlayerLevels = new HashSet<int>();
+            int expectedPlayerLevel = 1;
+            for (int i = 0; i < playerRows.Count; i++)
+            {
+                var playerRow = playerRows[i];
+                if (playerRow == null)
+                {
+                    report.Errors.Add($"Holmas_PlayerLevelTable 第 {i + 1} 行为空。");
+                    return;
+                }
+
+                if (playerRow.PlayerLevel != expectedPlayerLevel)
+                {
+                    report.Errors.Add($"Holmas_PlayerLevelTable 的 playerLevel 必须从 1 连续递增，当前第 {i + 1} 行是 {playerRow.PlayerLevel}。");
+                    return;
+                }
+
+                expectedPlayerLevel++;
+
+                if (!seenPlayerLevels.Add(playerRow.PlayerLevel))
+                {
+                    report.Errors.Add($"Holmas_PlayerLevelTable 存在重复 playerLevel: {playerRow.PlayerLevel}。");
+                    return;
+                }
+
+                playerLevelLookup[playerRow.PlayerLevel] = playerRow;
+            }
+
+            var seenLevels = new HashSet<int>();
+            long previousMinExperience = long.MinValue;
+            int expectedLevel = 1;
+
+            for (int i = 0; i < metaRows.Count; i++)
+            {
+                var row = metaRows[i];
+                if (row == null)
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 第 {i + 1} 行为空。");
+                    return;
+                }
+
+                if (row.PlayerLevel != expectedLevel)
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 的 playerLevel 必须从 1 连续递增，当前第 {i + 1} 行是 {row.PlayerLevel}。");
+                    return;
+                }
+
+                expectedLevel++;
+
+                if (!seenLevels.Add(row.PlayerLevel))
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 存在重复 playerLevel: {row.PlayerLevel}。");
+                    return;
+                }
+
+                if (!playerLevelLookup.TryGetValue(row.PlayerLevel, out var playerRow))
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 找不到对应的玩家等级配置: {row.PlayerLevel}。");
+                    return;
+                }
+
+                if (playerRow.UpgradeExp != row.MinExperience)
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable.minExperience 必须等于 Holmas_PlayerLevelTable.upgradeExp: level={row.PlayerLevel}。");
+                    return;
+                }
+
+                if (row.MinExperience <= previousMinExperience)
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 的 minExperience 必须严格递增: level={row.PlayerLevel}。");
+                    return;
+                }
+
+                previousMinExperience = row.MinExperience;
+
+                if (row.OfflineRewardPerHour < 0)
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 的 offlineRewardPerHour 不能为负: level={row.PlayerLevel}。");
+                    return;
+                }
+
+                if (row.AdUnlockHours <= 0)
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 的 adUnlockHours 必须大于 0: level={row.PlayerLevel}。");
+                    return;
+                }
+            }
+        }
+
+        private static void ValidateAgencyBuildingTable(HolmasCsvExportReport report, CsvTable<HolmasAgencyBuildingCsvRow> agencyBuildingTable)
+        {
+            var rows = agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingCsvRow>();
+            if (rows.Count == 0)
+            {
+                report.Errors.Add("缺少 Holmas_AgencyBuildingTable 数据。");
+                return;
+            }
+
+            var seenStageIds = new HashSet<int>();
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null)
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable 第 {i + 1} 行为空。");
+                    return;
+                }
+
+                if (row.AgencyStageId <= 0)
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable 第 {i + 1} 行的 agencyStageId 必须是正整数。");
+                    return;
+                }
+
+                if (row.AgencyStageId != i + 1)
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable 的 agencyStageId 必须按 1..N 连续递增，当前第 {i + 1} 行为 {row.AgencyStageId}。");
+                    return;
+                }
+
+                if (!seenStageIds.Add(row.AgencyStageId))
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable 存在重复 agencyStageId: {row.AgencyStageId}。");
+                    return;
+                }
+
+                if (row.BuildingIds == null || row.BuildingIds.Length == 0)
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable 缺少 buildingIds: {row.AgencyStageId}。");
+                    return;
+                }
+
+                if (row.BuildingUpgradeLevelCaps == null || row.BuildingUpgradeLevelCaps.Length != row.BuildingIds.Length)
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable 的 buildingIds 与 buildingUpgradeLevelCaps 长度不一致: {row.AgencyStageId}。");
+                    return;
+                }
+
+                if (row.BuildingUpgradeCosts == null || row.BuildingUpgradeCosts.Length != row.BuildingIds.Length)
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable 的 buildingIds 与 buildingUpgradeCosts 长度不一致: {row.AgencyStageId}。");
+                    return;
+                }
+
+                var seenBuildingIds = new HashSet<string>(StringComparer.Ordinal);
+                for (int buildingIndex = 0; buildingIndex < row.BuildingIds.Length; buildingIndex++)
+                {
+                    string buildingId = row.BuildingIds[buildingIndex] ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(buildingId))
+                    {
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的第 {buildingIndex + 1} 个 buildingId 为空。");
+                        return;
+                    }
+
+                    if (!seenBuildingIds.Add(buildingId))
+                    {
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 存在重复 buildingId: {buildingId}。");
+                        return;
+                    }
+
+                    int cap = row.BuildingUpgradeLevelCaps[buildingIndex];
+                    if (cap <= 0)
+                    {
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 building cap 必须大于 0: {buildingId}。");
+                        return;
+                    }
+
+                    HolmasAgencyBuildingCostCsvRow costRow = row.BuildingUpgradeCosts[buildingIndex];
+                    int[] costs = costRow == null ? Array.Empty<int>() : costRow.Costs ?? Array.Empty<int>();
+                    if (costs.Length != cap)
+                    {
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 building {buildingId} 成本档位数量与 cap 不一致。");
+                        return;
+                    }
+
+                    for (int costIndex = 0; costIndex < costs.Length; costIndex++)
+                    {
+                        if (costs[costIndex] <= 0)
+                        {
+                            report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 building {buildingId} 存在非正费用。");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         private static void NormalizeRows(
             HolmasCsvExportReport report,
             CsvTable<HolmasMapCsvRow> mapTable,
@@ -673,7 +1075,7 @@ namespace Holmas.EditorTools
                 for (int i = 0; i < row.MapIds.Length; i++)
                 {
                     int mapIndex = ResolveIndex(row.MapIds[i], mapLookup, out bool mapResolved);
-                    row.MapIndices[i] = mapIndex;
+                row.MapIndices[i] = mapIndex;
                     if (!mapResolved)
                     {
                         unresolvedMaps.Add(row.MapIds[i]);
@@ -695,7 +1097,9 @@ namespace Holmas.EditorTools
         private static HolmasCoreConfigPackage BuildCorePackage(
             CsvTable<HolmasMapCsvRow> mapTable,
             CsvTable<HolmasTaskCsvRow> taskTable,
-            CsvTable<HolmasPlayerLevelCsvRow> playerLevelTable)
+            CsvTable<HolmasPlayerLevelCsvRow> playerLevelTable,
+            CsvTable<HolmasMetaLevelCsvRow> metaLevelTable,
+            CsvTable<HolmasAgencyBuildingCsvRow> agencyBuildingTable)
         {
             return new HolmasCoreConfigPackage
             {
@@ -725,6 +1129,27 @@ namespace Holmas.EditorTools
                     TaskTypeWeights = row.TaskTypeWeights ?? Array.Empty<int>(),
                     MapIndices = row.MapIndices ?? Array.Empty<int>(),
                     MapWeights = row.MapWeights ?? Array.Empty<int>(),
+                }).ToArray(),
+                MetaLevels = (metaLevelTable?.Rows ?? new List<HolmasMetaLevelCsvRow>()).Select(row => new HolmasMetaLevelRow
+                {
+                    PlayerLevel = row.PlayerLevel,
+                    MinExperience = row.MinExperience,
+                    OfflineRewardPerHour = row.OfflineRewardPerHour,
+                    AdUnlockHours = row.AdUnlockHours,
+                    Notes = row.Notes ?? string.Empty,
+                }).ToArray(),
+                AgencyBuildings = (agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingCsvRow>()).Select(row => new HolmasAgencyBuildingRow
+                {
+                    AgencyStageId = row.AgencyStageId,
+                    BuildingIds = row.BuildingIds ?? Array.Empty<string>(),
+                    BuildingUpgradeLevelCaps = row.BuildingUpgradeLevelCaps ?? Array.Empty<int>(),
+                    BuildingUpgradeCosts = (row.BuildingUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostCsvRow>())
+                        .Select(costRow => new HolmasAgencyBuildingCostRow
+                        {
+                            Costs = costRow?.Costs ?? Array.Empty<int>(),
+                        })
+                        .ToArray(),
+                    Notes = row.Notes ?? string.Empty,
                 }).ToArray(),
             };
         }
@@ -968,6 +1393,55 @@ namespace Holmas.EditorTools
             return values.ToArray();
         }
 
+        private static bool TryParseLong(string text, out long value)
+        {
+            return long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        }
+
+        private static HolmasAgencyBuildingCostCsvRow[] ParseNestedIntArrays(string text, string sourcePath, int rowNumber, HolmasCsvExportReport report)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return Array.Empty<HolmasAgencyBuildingCostCsvRow>();
+            }
+
+            var segments = text
+                .Split(new[] { '|', '｜' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(item => item.Trim())
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .ToArray();
+
+            var rows = new List<HolmasAgencyBuildingCostCsvRow>(segments.Length);
+            for (int i = 0; i < segments.Length; i++)
+            {
+                string segment = segments[i];
+                string[] parts = segment
+                    .Split(new[] { ';', '；' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(item => item.Trim())
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .ToArray();
+
+                var costs = new List<int>(parts.Length);
+                for (int j = 0; j < parts.Length; j++)
+                {
+                    if (!int.TryParse(parts[j], NumberStyles.Integer, CultureInfo.InvariantCulture, out int cost))
+                    {
+                        report.Errors.Add($"{sourcePath} 第 {rowNumber} 行第 {i + 1} 段升级费用无法解析为整数: {parts[j]}");
+                        continue;
+                    }
+
+                    costs.Add(cost);
+                }
+
+                rows.Add(new HolmasAgencyBuildingCostCsvRow
+                {
+                    Costs = costs.ToArray(),
+                });
+            }
+
+            return rows.ToArray();
+        }
+
         private static string[] SplitArray(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -1092,6 +1566,8 @@ namespace Holmas.EditorTools
         public HolmasMapCsvRow[] Maps;
         public HolmasTaskCsvRow[] Tasks;
         public HolmasPlayerLevelCsvRow[] PlayerLevels;
+        public HolmasMetaLevelCsvRow[] MetaLevels;
+        public HolmasAgencyBuildingCsvRow[] AgencyBuildings;
     }
 
     [Serializable]
@@ -1157,6 +1633,34 @@ namespace Holmas.EditorTools
         public string[] MapIds;
         public int[] MapIndices;
         public int[] MapWeights;
+    }
+
+    [Serializable]
+    public sealed class HolmasMetaLevelCsvRow
+    {
+        public int RowIndex;
+        public int PlayerLevel;
+        public long MinExperience;
+        public int OfflineRewardPerHour;
+        public int AdUnlockHours;
+        public string Notes;
+    }
+
+    [Serializable]
+    public sealed class HolmasAgencyBuildingCostCsvRow
+    {
+        public int[] Costs;
+    }
+
+    [Serializable]
+    public sealed class HolmasAgencyBuildingCsvRow
+    {
+        public int RowIndex;
+        public int AgencyStageId;
+        public string[] BuildingIds;
+        public int[] BuildingUpgradeLevelCaps;
+        public HolmasAgencyBuildingCostCsvRow[] BuildingUpgradeCosts;
+        public string Notes;
     }
 
     [Serializable]

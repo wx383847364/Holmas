@@ -11,7 +11,8 @@ LONG_INDEX_NAME = "主文档索引.md"
 ITER_INDEX_NAME = "迭代记录索引.md"
 AGENT_RULE_DOC = "协作与执行/Agent 启动与验收规范.md"
 AGENT_STATUS_HEADING = "迭代文档默认分工状态"
-AGENT_LINE_RE = re.compile(r"^\s*-?\s*Agent\s*([1-5])：(.+?)\s*$")
+AGENT_LINE_RE = re.compile(r"^\s*-?\s*Agent\s*([1-6])：(.+?)\s*$")
+ALL_AGENT_MAX = 6
 DEFAULT_PLACEHOLDERS = {
     "完成项": {"- 暂无"},
     "风险与阻塞": {"- 暂无"},
@@ -114,12 +115,12 @@ def agent_number_from_line(line: str):
 def load_default_agent_statuses(doc_root: Path):
     path = doc_root / LONG_DIR_NAME / AGENT_RULE_DOC
     bullets = extract_section_bullets(path, AGENT_STATUS_HEADING)
-    if len(bullets) != 5:
-        raise ValueError(f"{path} 的 “{AGENT_STATUS_HEADING}” 必须正好包含 5 条 agent 状态")
+    if len(bullets) != ALL_AGENT_MAX:
+        raise ValueError(f"{path} 的 “{AGENT_STATUS_HEADING}” 必须正好包含 {ALL_AGENT_MAX} 条 agent 状态")
     normalized = [normalize_agent_status_line(line) for line in bullets]
     numbers = [agent_number_from_line(line) for line in normalized]
-    if numbers != [1, 2, 3, 4, 5]:
-        raise ValueError(f"{path} 的 “{AGENT_STATUS_HEADING}” 必须按 Agent 1 到 Agent 5 排列")
+    if numbers != list(range(1, ALL_AGENT_MAX + 1)):
+        raise ValueError(f"{path} 的 “{AGENT_STATUS_HEADING}” 必须按 Agent 1 到 Agent {ALL_AGENT_MAX} 排列")
     return normalized
 
 
@@ -291,7 +292,7 @@ def apply_agent_status_overrides(text: str, overrides):
         number = agent_number_from_line(normalized)
         merged[number] = normalized
 
-    ordered = [merged[index] for index in range(1, 6)]
+    ordered = [merged[index] for index in range(1, ALL_AGENT_MAX + 1)]
     return replace_section_bullets(text, "分工状态", ordered)
 
 

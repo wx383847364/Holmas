@@ -1,0 +1,6 @@
+侦探社阶段id,建筑id数组,建筑升级级数上限数组,建筑升级费用数组,备注
+agencyStageId,buildingIds,buildingUpgradeLevelCaps,buildingUpgradeCosts,notes
+1,lobby;desk;boardroom,3;2;2,10;20;30|12;24|8;16,前期阶段
+2,archive;lab;display,3;3;3,30;45;60|35;55;80|28;42;56,前期到中期
+3,training;research;security;storage,4;4;3;3,60;90;120;150|70;100;140;180|50;75;100|55;80;110,中后期阶段
+4,observatory;hall;dataCenter;recruit,5;5;4;4,120;160;210;270;340|130;180;240;310;390|110;150;195;250|100;140;190;245,后期阶段

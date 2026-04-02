@@ -25,14 +25,16 @@ public static class HolmasCoreValidationMenu
             catalog,
             new ScriptedRandomSource(0, 0, 1, 0, 1, 1),
             new FixedUtcClock { UtcNowMilliseconds = 1000 });
+        var metaCatalog = CreateMetaCatalog();
         var metaService = new HolmasMetaProgressionService(
-            CreateMetaCatalog(),
-            new HolmasDefaultMetaExperienceSource(),
-            new HolmasDefaultMetaExperienceSource());
+            metaCatalog,
+            new HolmasDefaultMetaExperienceSource(metaCatalog),
+            new HolmasDefaultMetaExperienceSource(metaCatalog));
+        var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
         var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
         var terrain = CreateTerrain(1, 1);
         var assetsRuntime = new FakeAssetsRuntime(terrain);
-        var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+        var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), assetsRuntime);
         var context = new HolmasApplicationContext(
             new FakeServiceContainer(),
             new NullLogger(),
@@ -68,8 +70,21 @@ public static class HolmasCoreValidationMenu
             }).GetAwaiter().GetResult();
         var reveal = runtime.RevealCell(0, out HolmasProgressionAdvanceResult progressionResult);
         var claim = runtime.ClaimTaskReward(0, 1);
+        var firstUpgrade = runtime.TryUpgradeBuilding("lobby");
+        var secondUpgrade = runtime.TryUpgradeBuilding("desk");
+        var offline = runtime.ApplyOfflineSettlement(3_600_000L);
 
-        Debug.Log($"Holmas smoke test passed. revealCompleted={reveal.Completed}, taskProgressed={progressionResult?.ProgressedTaskIds.Count ?? 0}, metaExp={runtime.MetaProgressionState.Experience}, taskClaimSuccess={claim.Success}, agencyLevel={runtime.MetaProgressionState.AgencyLevel}");
+        if (!claim.Success || !firstUpgrade.Success || !secondUpgrade.Success)
+        {
+            throw new InvalidOperationException("Holmas smoke test failed to complete task claim or building upgrades.");
+        }
+
+        if (runtime.CurrentAgencyStageId != 1 || runtime.CurrentPlayerLevel != 3)
+        {
+            throw new InvalidOperationException($"Holmas smoke test reached unexpected growth state: playerLevel={runtime.CurrentPlayerLevel}, agencyStageId={runtime.CurrentAgencyStageId}.");
+        }
+
+        Debug.Log($"Holmas smoke test passed. revealCompleted={reveal.Completed}, taskProgressed={progressionResult?.ProgressedTaskIds.Count ?? 0}, taskClaimSuccess={claim.Success}, gold={runtime.CurrentGoldBalance}, playerLevel={runtime.CurrentPlayerLevel}, agencyStageId={runtime.CurrentAgencyStageId}, offlineReward={offline.OfflineRewardGained}");
     }
 
     private static HolmasTaskCatalog CreateCatalog()
@@ -115,12 +130,45 @@ public static class HolmasCoreValidationMenu
                 {
                     AgencyLevel = 1,
                     MinExperience = 0,
+                    OfflineRewardPerHour = 6,
+                    AdUnlockHours = 24,
                 },
                 new HolmasMetaProgressionDefinition
                 {
                     AgencyLevel = 2,
-                    MinExperience = 5,
+                    MinExperience = 1,
+                    OfflineRewardPerHour = 8,
+                    AdUnlockHours = 12,
+                },
+                new HolmasMetaProgressionDefinition
+                {
+                    AgencyLevel = 3,
+                    MinExperience = 2,
+                    OfflineRewardPerHour = 10,
+                    AdUnlockHours = 24,
                 }
+            });
+    }
+
+    private static HolmasAgencyCatalog CreateAgencyCatalog()
+    {
+        return new HolmasAgencyCatalog(
+            new[]
+            {
+                new HolmasAgencyBuildingDefinition
+                {
+                    AgencyStageId = 1,
+                    BuildingId = "lobby",
+                    LevelCap = 1,
+                    UpgradeCosts = new[] { 10 },
+                },
+                new HolmasAgencyBuildingDefinition
+                {
+                    AgencyStageId = 1,
+                    BuildingId = "desk",
+                    LevelCap = 1,
+                    UpgradeCosts = new[] { 10 },
+                },
             });
     }
 
