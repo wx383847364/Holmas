@@ -11,6 +11,8 @@ using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using UnityEngine;
 using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
+using HolmasAgencyPromotionDefinition = App.HotUpdate.Holmas.Meta.HolmasAgencyBuildingDefinition;
+using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgencyUpgradeResult;
 
 namespace App.HotUpdate.Holmas.Application
 {
@@ -23,7 +25,7 @@ namespace App.HotUpdate.Holmas.Application
         private readonly HolmasTaskProgressService _taskProgressService;
         private readonly HolmasMetaProgressionService _metaProgressionService;
         private readonly HolmasProgressionCoordinator _progressionCoordinator;
-        private readonly HolmasAgencyProgressionService _agencyProgressionService;
+        private readonly HolmasAgencyProgressionService _promotionProgressionService;
         private readonly IAppLogger _logger;
         private readonly IAssetsRuntime _assetsRuntime;
         private bool _currentLevelCompletionApplied;
@@ -58,7 +60,7 @@ namespace App.HotUpdate.Holmas.Application
             _taskProgressService = taskProgressService ?? throw new ArgumentNullException(nameof(taskProgressService));
             _metaProgressionService = metaProgressionService ?? throw new ArgumentNullException(nameof(metaProgressionService));
             _progressionCoordinator = progressionCoordinator ?? throw new ArgumentNullException(nameof(progressionCoordinator));
-            _agencyProgressionService = agencyProgressionService ?? new HolmasAgencyProgressionService(new HolmasAgencyCatalog(), _metaProgressionService);
+            _promotionProgressionService = agencyProgressionService ?? new HolmasAgencyProgressionService(new HolmasAgencyCatalog(), _metaProgressionService);
             _logger = logger;
             _assetsRuntime = assetsRuntime;
 
@@ -67,10 +69,6 @@ namespace App.HotUpdate.Holmas.Application
             if (MetaProgressionState.PlayerLevel <= 0)
             {
                 MetaProgressionState.PlayerLevel = 1;
-            }
-            if (MetaProgressionState.AgencyLevel <= 0)
-            {
-                MetaProgressionState.AgencyLevel = MetaProgressionState.PlayerLevel;
             }
             if (MetaProgressionState.AgencyStageId <= 0)
             {
@@ -333,21 +331,21 @@ namespace App.HotUpdate.Holmas.Application
         }
 
         /// <summary>
-        /// 按当前成长配置升级侦探社建筑。
+        /// 按当前成长配置升级城市宣传功能。
         /// </summary>
-        public HolmasAgencyUpgradeResult TryUpgradeBuilding(string buildingId)
+        public HolmasAgencyPromotionUpgradeResult TryUpgradePromotion(string promotionId)
         {
-            if (_agencyProgressionService == null)
+            if (_promotionProgressionService == null)
             {
-                throw new InvalidOperationException("HolmasGameplayRuntime: 当前没有可用的建筑成长服务。");
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前没有可用的宣传成长服务。");
             }
 
-            HolmasAgencyUpgradeResult result = _agencyProgressionService.TryUpgradeBuilding(MetaProgressionState, buildingId);
+            HolmasAgencyPromotionUpgradeResult result = _promotionProgressionService.TryUpgradePromotion(MetaProgressionState, promotionId);
             if (result.Success)
             {
                 _logger?.LogInfo(
-                    "HolmasGameplayRuntime: 建筑 {0} 升级到 {1}，金币 -{2}，玩家等级={3}，阶段推进={4}。",
-                    result.BuildingId,
+                    "HolmasGameplayRuntime: 宣传 {0} 升级到 {1}，金币 -{2}，玩家等级={3}，阶段推进={4}。",
+                    result.PromotionId,
                     result.NewLevel,
                     result.GoldSpent,
                     result.PlayerLevelAfter,
@@ -355,10 +353,33 @@ namespace App.HotUpdate.Holmas.Application
             }
             else
             {
-                _logger?.LogWarning("HolmasGameplayRuntime: 建筑 {0} 升级失败，原因={1}", buildingId, result.FailureReason);
+                _logger?.LogWarning("HolmasGameplayRuntime: 宣传 {0} 升级失败，原因={1}", promotionId, result.FailureReason);
             }
 
             return result;
         }
+
+        /// <summary>
+        /// 兼容旧 building 命名的宣传升级入口。
+        /// </summary>
+        [Obsolete("Use TryUpgradePromotion instead.")]
+        public HolmasAgencyUpgradeResult TryUpgradeBuilding(string buildingId)
+        {
+            HolmasAgencyPromotionUpgradeResult result = TryUpgradePromotion(buildingId);
+            return new HolmasAgencyUpgradeResult
+            {
+                Success = result.Success,
+                FailureReason = result.FailureReason,
+                AgencyStageId = result.AgencyStageId,
+                PromotionId = result.PromotionId,
+                PreviousLevel = result.PreviousLevel,
+                NewLevel = result.NewLevel,
+                GoldSpent = result.GoldSpent,
+                ExperienceGained = result.ExperienceGained,
+                PlayerLevelAfter = result.PlayerLevelAfter,
+                StageAdvanced = result.StageAdvanced,
+            };
+        }
+
     }
 }

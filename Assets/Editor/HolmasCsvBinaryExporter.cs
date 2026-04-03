@@ -696,9 +696,10 @@ namespace Holmas.EditorTools
         private static List<HolmasAgencyBuildingCsvRow> ParseAgencyBuildings(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int stageIdCol = RequireColumn(report, sourcePath, headerMap, "agencyStageId");
-            int buildingIdsCol = RequireColumn(report, sourcePath, headerMap, "buildingIds");
-            int buildingCapsCol = RequireColumn(report, sourcePath, headerMap, "buildingUpgradeLevelCaps");
-            int buildingCostsCol = RequireColumn(report, sourcePath, headerMap, "buildingUpgradeCosts");
+            int stageNameCol = RequireColumn(report, sourcePath, headerMap, "stageName");
+            int promotionIdsCol = RequireColumn(report, sourcePath, headerMap, "promotionIds");
+            int promotionCapsCol = RequireColumn(report, sourcePath, headerMap, "promotionLevelCaps");
+            int promotionCostsCol = RequireColumn(report, sourcePath, headerMap, "promotionUpgradeCosts");
             int notesCol = GetOptionalColumn(headerMap, "notes");
 
             var list = new List<HolmasAgencyBuildingCsvRow>();
@@ -712,23 +713,31 @@ namespace Holmas.EditorTools
 
                 int stageId;
                 bool stageIdOk = TryParseInt(GetCell(row, stageIdCol), out stageId);
-                string[] buildingIds = SplitArray(GetCell(row, buildingIdsCol));
-                int[] levelCaps = ParseIntArrayStrict(GetCell(row, buildingCapsCol), sourcePath, rowIndex + 1, report);
-                var upgradeCosts = ParseNestedIntArrays(GetCell(row, buildingCostsCol), sourcePath, rowIndex + 1, report);
+                string stageName = GetCell(row, stageNameCol);
+                string[] promotionIds = SplitArray(GetCell(row, promotionIdsCol));
+                int[] levelCaps = ParseIntArrayStrict(GetCell(row, promotionCapsCol), sourcePath, rowIndex + 1, report);
+                var upgradeCosts = ParseNestedIntArrays(GetCell(row, promotionCostsCol), sourcePath, rowIndex + 1, report);
 
                 var item = new HolmasAgencyBuildingCsvRow
                 {
                     RowIndex = list.Count,
                     AgencyStageId = stageId,
-                    BuildingIds = buildingIds,
-                    BuildingUpgradeLevelCaps = levelCaps,
-                    BuildingUpgradeCosts = upgradeCosts,
+                    StageName = stageName,
+                    PromotionIds = promotionIds,
+                    PromotionLevelCaps = levelCaps,
+                    PromotionUpgradeCosts = upgradeCosts,
                     Notes = GetCell(row, notesCol),
                 };
 
                 if (!stageIdOk || stageId <= 0)
                 {
                     report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行的 agencyStageId 必须是正整数。");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(item.StageName))
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行缺少 stageName。");
                     continue;
                 }
 
@@ -739,21 +748,21 @@ namespace Holmas.EditorTools
                     continue;
                 }
 
-                if (item.BuildingIds.Length == 0)
+                if (item.PromotionIds.Length == 0)
                 {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 buildingIds 为空。");
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 promotionIds 为空。");
                     continue;
                 }
 
-                if (item.BuildingIds.Length != item.BuildingUpgradeLevelCaps.Length)
+                if (item.PromotionIds.Length != item.PromotionLevelCaps.Length)
                 {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 buildingIds 与 buildingUpgradeLevelCaps 长度不一致。");
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 promotionIds 与 promotionLevelCaps 长度不一致。");
                     continue;
                 }
 
-                if (item.BuildingIds.Length != item.BuildingUpgradeCosts.Length)
+                if (item.PromotionIds.Length != item.PromotionUpgradeCosts.Length)
                 {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 buildingIds 与 buildingUpgradeCosts 长度不一致。");
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 promotionIds 与 promotionUpgradeCosts 长度不一致。");
                     continue;
                 }
 
@@ -783,9 +792,21 @@ namespace Holmas.EditorTools
                 return;
             }
 
-            if (metaRows.Count != playerRows.Count)
+            if (playerRows.Count != 20)
             {
-                report.Errors.Add("Holmas_MetaLevelTable 与 Holmas_PlayerLevelTable 行数不一致。");
+                report.Errors.Add($"Holmas_PlayerLevelTable 行数必须为 20，当前为 {playerRows.Count}。");
+                return;
+            }
+
+            if (metaRows.Count != 20)
+            {
+                report.Errors.Add($"Holmas_MetaLevelTable 行数必须为 20，当前为 {metaRows.Count}。");
+                return;
+            }
+
+            if (playerRows.Count != metaRows.Count)
+            {
+                report.Errors.Add($"Holmas_PlayerLevelTable 与 Holmas_MetaLevelTable 行数必须完全一致，当前为 {playerRows.Count} / {metaRows.Count}。");
                 return;
             }
 
@@ -850,10 +871,9 @@ namespace Holmas.EditorTools
                     report.Errors.Add($"Holmas_MetaLevelTable 找不到对应的玩家等级配置: {row.PlayerLevel}。");
                     return;
                 }
-
-                if (playerRow.UpgradeExp != row.MinExperience)
+                else if (playerRow.UpgradeExp != row.MinExperience)
                 {
-                    report.Errors.Add($"Holmas_MetaLevelTable.minExperience 必须等于 Holmas_PlayerLevelTable.upgradeExp: level={row.PlayerLevel}。");
+                    report.Errors.Add($"Holmas_MetaLevelTable.minExperience 与 Holmas_PlayerLevelTable.upgradeExp 不一致: level={row.PlayerLevel}。");
                     return;
                 }
 
@@ -877,6 +897,11 @@ namespace Holmas.EditorTools
                     return;
                 }
             }
+
+            if (metaRows[metaRows.Count - 1].MinExperience != 2000)
+            {
+                report.Errors.Add($"Holmas_MetaLevelTable 最终等级的 minExperience 必须为 2000，当前为 {metaRows[metaRows.Count - 1].MinExperience}。");
+            }
         }
 
         private static void ValidateAgencyBuildingTable(HolmasCsvExportReport report, CsvTable<HolmasAgencyBuildingCsvRow> agencyBuildingTable)
@@ -888,7 +913,15 @@ namespace Holmas.EditorTools
                 return;
             }
 
+            if (rows.Count != 100)
+            {
+                report.Errors.Add($"Holmas_AgencyBuildingTable 行数必须为 100，当前为 {rows.Count}。");
+                return;
+            }
+
             var seenStageIds = new HashSet<int>();
+            var seenStageNames = new HashSet<string>(StringComparer.Ordinal);
+            string[] expectedPromotionIds = { "leaflet", "radio", "online", "tv" };
             for (int i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -916,52 +949,56 @@ namespace Holmas.EditorTools
                     return;
                 }
 
-                if (row.BuildingIds == null || row.BuildingIds.Length == 0)
+                if (string.IsNullOrWhiteSpace(row.StageName))
                 {
-                    report.Errors.Add($"Holmas_AgencyBuildingTable 缺少 buildingIds: {row.AgencyStageId}。");
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 缺少 stageName。");
                     return;
                 }
 
-                if (row.BuildingUpgradeLevelCaps == null || row.BuildingUpgradeLevelCaps.Length != row.BuildingIds.Length)
+                if (!seenStageNames.Add(row.StageName))
                 {
-                    report.Errors.Add($"Holmas_AgencyBuildingTable 的 buildingIds 与 buildingUpgradeLevelCaps 长度不一致: {row.AgencyStageId}。");
+                    report.Errors.Add($"Holmas_AgencyBuildingTable 存在重复 stageName: {row.StageName}。");
                     return;
                 }
 
-                if (row.BuildingUpgradeCosts == null || row.BuildingUpgradeCosts.Length != row.BuildingIds.Length)
+                if (row.PromotionIds == null || row.PromotionIds.Length != expectedPromotionIds.Length)
                 {
-                    report.Errors.Add($"Holmas_AgencyBuildingTable 的 buildingIds 与 buildingUpgradeCosts 长度不一致: {row.AgencyStageId}。");
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionIds 数量必须为 4。");
                     return;
                 }
 
-                var seenBuildingIds = new HashSet<string>(StringComparer.Ordinal);
-                for (int buildingIndex = 0; buildingIndex < row.BuildingIds.Length; buildingIndex++)
+                if (row.PromotionLevelCaps == null || row.PromotionLevelCaps.Length != expectedPromotionIds.Length)
                 {
-                    string buildingId = row.BuildingIds[buildingIndex] ?? string.Empty;
-                    if (string.IsNullOrWhiteSpace(buildingId))
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionLevelCaps 数量必须为 4。");
+                    return;
+                }
+
+                if (row.PromotionUpgradeCosts == null || row.PromotionUpgradeCosts.Length != expectedPromotionIds.Length)
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionUpgradeCosts 数量必须为 4。");
+                    return;
+                }
+
+                for (int promotionIndex = 0; promotionIndex < expectedPromotionIds.Length; promotionIndex++)
+                {
+                    if (!string.Equals(row.PromotionIds[promotionIndex], expectedPromotionIds[promotionIndex], StringComparison.Ordinal))
                     {
-                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的第 {buildingIndex + 1} 个 buildingId 为空。");
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionIds 顺序不正确。");
                         return;
                     }
 
-                    if (!seenBuildingIds.Add(buildingId))
+                    int cap = row.PromotionLevelCaps[promotionIndex];
+                    if (cap != 5)
                     {
-                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 存在重复 buildingId: {buildingId}。");
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotion cap 必须固定为 5: {row.PromotionIds[promotionIndex]}。");
                         return;
                     }
 
-                    int cap = row.BuildingUpgradeLevelCaps[buildingIndex];
-                    if (cap <= 0)
-                    {
-                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 building cap 必须大于 0: {buildingId}。");
-                        return;
-                    }
-
-                    HolmasAgencyBuildingCostCsvRow costRow = row.BuildingUpgradeCosts[buildingIndex];
+                    HolmasAgencyBuildingCostCsvRow costRow = row.PromotionUpgradeCosts[promotionIndex];
                     int[] costs = costRow == null ? Array.Empty<int>() : costRow.Costs ?? Array.Empty<int>();
                     if (costs.Length != cap)
                     {
-                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 building {buildingId} 成本档位数量与 cap 不一致。");
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotion {row.PromotionIds[promotionIndex]} 成本档位数量与 cap 不一致。");
                         return;
                     }
 
@@ -969,7 +1006,7 @@ namespace Holmas.EditorTools
                     {
                         if (costs[costIndex] <= 0)
                         {
-                            report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 building {buildingId} 存在非正费用。");
+                            report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotion {row.PromotionIds[promotionIndex]} 存在非正费用。");
                             return;
                         }
                     }
@@ -1141,9 +1178,10 @@ namespace Holmas.EditorTools
                 AgencyBuildings = (agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingCsvRow>()).Select(row => new HolmasAgencyBuildingRow
                 {
                     AgencyStageId = row.AgencyStageId,
-                    BuildingIds = row.BuildingIds ?? Array.Empty<string>(),
-                    BuildingUpgradeLevelCaps = row.BuildingUpgradeLevelCaps ?? Array.Empty<int>(),
-                    BuildingUpgradeCosts = (row.BuildingUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostCsvRow>())
+                    StageName = row.StageName ?? string.Empty,
+                    PromotionIds = row.PromotionIds ?? Array.Empty<string>(),
+                    PromotionLevelCaps = row.PromotionLevelCaps ?? Array.Empty<int>(),
+                    PromotionUpgradeCosts = (row.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostCsvRow>())
                         .Select(costRow => new HolmasAgencyBuildingCostRow
                         {
                             Costs = costRow?.Costs ?? Array.Empty<int>(),
@@ -1657,10 +1695,32 @@ namespace Holmas.EditorTools
     {
         public int RowIndex;
         public int AgencyStageId;
-        public string[] BuildingIds;
-        public int[] BuildingUpgradeLevelCaps;
-        public HolmasAgencyBuildingCostCsvRow[] BuildingUpgradeCosts;
+        public string StageName;
+        public string[] PromotionIds;
+        public int[] PromotionLevelCaps;
+        public HolmasAgencyBuildingCostCsvRow[] PromotionUpgradeCosts;
         public string Notes;
+
+        [Obsolete("Use PromotionIds instead.")]
+        public string[] BuildingIds
+        {
+            get { return PromotionIds; }
+            set { PromotionIds = value; }
+        }
+
+        [Obsolete("Use PromotionLevelCaps instead.")]
+        public int[] BuildingUpgradeLevelCaps
+        {
+            get { return PromotionLevelCaps; }
+            set { PromotionLevelCaps = value; }
+        }
+
+        [Obsolete("Use PromotionUpgradeCosts instead.")]
+        public HolmasAgencyBuildingCostCsvRow[] BuildingUpgradeCosts
+        {
+            get { return PromotionUpgradeCosts; }
+            set { PromotionUpgradeCosts = value; }
+        }
     }
 
     [Serializable]

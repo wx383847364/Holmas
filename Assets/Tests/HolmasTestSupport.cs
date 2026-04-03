@@ -115,17 +115,21 @@ namespace Holmas.Tests
             return new HolmasMetaCatalog(
                 new[]
                 {
-                    new HolmasMetaProgressionDefinition
-                    {
-                        AgencyLevel = 1,
-                        MinExperience = 0,
-                    },
-                    new HolmasMetaProgressionDefinition
-                    {
-                        AgencyLevel = 2,
-                        MinExperience = 5,
-                    }
-                });
+                new HolmasMetaProgressionDefinition
+                {
+                    PlayerLevel = 1,
+                    MinExperience = 0,
+                    OfflineRewardPerHour = 6,
+                    AdUnlockHours = 24,
+                },
+                new HolmasMetaProgressionDefinition
+                {
+                    PlayerLevel = 2,
+                    MinExperience = 5,
+                    OfflineRewardPerHour = 8,
+                    AdUnlockHours = 24,
+                }
+            });
         }
 
         public static T ResolveTerrainType<T>(string simpleName) where T : class

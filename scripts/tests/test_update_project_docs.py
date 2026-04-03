@@ -5,6 +5,7 @@ import sys
 import tempfile
 import textwrap
 import unittest
+from datetime import datetime
 from pathlib import Path
 from shutil import copy2
 
@@ -474,6 +475,95 @@ class UpdateProjectDocsTests(unittest.TestCase):
         suggested = update_project_docs.suggest_agent_start(["- 先交给 Agent 6 做挑刺审查"])
         self.assertNotEqual(suggested, "Agent 6：挑刺与问题审查")
         self.assertEqual(suggested, "暂无明确建议")
+
+    def test_suggest_handoff_prefers_new_session_after_context_compression(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            today = datetime.now().strftime("%Y%m%d")
+            write_file(
+                root,
+                f"doc/迭代记录/迭代记录_{today}_001.md",
+                f"""
+                # 迭代记录 {datetime.now().strftime('%Y-%m-%d')} 001
+
+                ## 本轮主题
+
+                流程与协作规则收尾
+
+                ## 工作日志
+
+                ### {datetime.now().strftime('%Y-%m-%d %H:%M')}
+
+                - 完成第一轮规则收口
+                """,
+            )
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "完成第二轮规则收口",
+                ["补齐脚本规则"],
+                [],
+                ["继续当前主线"],
+                "pending",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                True,
+            )
+
+            self.assertEqual(report["session_advice"], "建议新开下一阶段会话")
+            self.assertIn("自动压缩背景信息", report["session_reason"])
+
+    def test_suggest_handoff_prefers_new_session_after_two_same_day_major_tasks(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            today_pretty = datetime.now().strftime("%Y-%m-%d")
+            today = datetime.now().strftime("%Y%m%d")
+            write_file(
+                root,
+                f"doc/迭代记录/迭代记录_{today}_001.md",
+                f"""
+                # 迭代记录 {today_pretty} 001
+
+                ## 本轮主题
+
+                流程与协作规则收尾
+
+                ## 工作日志
+
+                ### {today_pretty} 09:00
+
+                - 完成第一轮规则收口
+
+                ### {today_pretty} 11:00
+
+                - 完成第二轮规则收口
+                """,
+            )
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "继续补第三轮规则收口",
+                ["更新收尾模板"],
+                [],
+                ["继续当前主线"],
+                "passed",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                False,
+            )
+
+            self.assertEqual(report["session_advice"], "建议新开下一阶段会话")
+            self.assertIn("连续完成 2 个大任务", report["session_reason"])
 
 
 if __name__ == "__main__":

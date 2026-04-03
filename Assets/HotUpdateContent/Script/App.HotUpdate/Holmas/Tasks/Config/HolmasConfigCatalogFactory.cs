@@ -442,6 +442,12 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return false;
             }
 
+            if (rows.Count != 20)
+            {
+                report.AddError($"MetaLevels 行数必须为 20，当前为 {rows.Count}。");
+                return false;
+            }
+
             var seenLevels = new HashSet<int>();
             long previousMinExperience = long.MinValue;
             int expectedLevel = 1;
@@ -502,7 +508,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 {
                     if (playerLevel.UpgradeExp != row.MinExperience)
                     {
-                        report.AddError($"MetaLevels.minExperience 必须等于 PlayerLevelTable.upgradeExp: level={row.PlayerLevel}。");
+                        report.AddError($"MetaLevels.minExperience 与 PlayerLevelTable.upgradeExp 不一致: level={row.PlayerLevel}。");
                         return false;
                     }
                 }
@@ -515,6 +521,12 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     AdUnlockHours = row.AdUnlockHours,
                     Notes = row.Notes ?? string.Empty,
                 });
+            }
+
+            if (metaLevels[metaLevels.Count - 1].MinExperience != 2000)
+            {
+                report.AddError($"MetaLevels 最终等级的 minExperience 必须为 2000，当前为 {metaLevels[metaLevels.Count - 1].MinExperience}。");
+                return false;
             }
 
             return true;
@@ -533,7 +545,14 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return false;
             }
 
+            if (rows.Count != 100)
+            {
+                report.AddError($"AgencyBuildings 行数必须为 100，当前为 {rows.Count}。");
+                return false;
+            }
+
             var seenStageIds = new HashSet<int>();
+            var seenStageNames = new HashSet<string>(StringComparer.Ordinal);
             for (int i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -561,52 +580,78 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (row.BuildingIds == null || row.BuildingIds.Length == 0)
+                string stageName = row.StageName ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(stageName))
                 {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 缺少 buildingIds。");
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 缺少 stageName。");
                     return false;
                 }
 
-                if (row.BuildingUpgradeLevelCaps == null || row.BuildingUpgradeLevelCaps.Length != row.BuildingIds.Length)
+                if (!seenStageNames.Add(stageName))
                 {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 buildingIds 与 buildingUpgradeLevelCaps 长度不一致。");
+                    report.AddError($"AgencyBuildings 存在重复 stageName: {stageName}。");
                     return false;
                 }
 
-                if (row.BuildingUpgradeCosts == null || row.BuildingUpgradeCosts.Length != row.BuildingIds.Length)
+                if (row.PromotionIds == null || row.PromotionIds.Length == 0)
                 {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 buildingIds 与 buildingUpgradeCosts 长度不一致。");
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 缺少 promotionIds。");
                     return false;
                 }
 
-                var seenBuildingIds = new HashSet<string>(StringComparer.Ordinal);
-                for (int buildingIndex = 0; buildingIndex < row.BuildingIds.Length; buildingIndex++)
+                if (row.PromotionLevelCaps == null || row.PromotionLevelCaps.Length != row.PromotionIds.Length)
                 {
-                    string buildingId = row.BuildingIds[buildingIndex] ?? string.Empty;
-                    if (string.IsNullOrWhiteSpace(buildingId))
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionIds 与 promotionLevelCaps 长度不一致。");
+                    return false;
+                }
+
+                if (row.PromotionUpgradeCosts == null || row.PromotionUpgradeCosts.Length != row.PromotionIds.Length)
+                {
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionIds 与 promotionUpgradeCosts 长度不一致。");
+                    return false;
+                }
+
+                if (row.PromotionIds.Length != 4)
+                {
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionIds 数量必须为 4。");
+                    return false;
+                }
+
+                if (row.PromotionLevelCaps.Any(cap => cap != 5))
+                {
+                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionLevelCaps 必须全部为 5。");
+                    return false;
+                }
+
+                var seenPromotionIds = new HashSet<string>(StringComparer.Ordinal);
+                string[] expectedPromotionIds = { "leaflet", "radio", "online", "tv" };
+                for (int promotionIndex = 0; promotionIndex < row.PromotionIds.Length; promotionIndex++)
+                {
+                    string promotionId = row.PromotionIds[promotionIndex] ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(promotionId))
                     {
-                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的第 {buildingIndex + 1} 个 buildingId 为空。");
+                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的第 {promotionIndex + 1} 个 promotionId 为空。");
                         return false;
                     }
 
-                    if (!seenBuildingIds.Add(buildingId))
+                    if (!seenPromotionIds.Add(promotionId))
                     {
-                        report.AddError($"AgencyBuildings {row.AgencyStageId} 存在重复 buildingId: {buildingId}。");
+                        report.AddError($"AgencyBuildings {row.AgencyStageId} 存在重复 promotionId: {promotionId}。");
                         return false;
                     }
 
-                    int cap = row.BuildingUpgradeLevelCaps[buildingIndex];
-                    if (cap <= 0)
+                    if (!string.Equals(promotionId, expectedPromotionIds[promotionIndex], StringComparison.Ordinal))
                     {
-                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的 building cap 必须大于 0: {buildingId}。");
+                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionIds 顺序必须固定为 leaflet/radio/online/tv。");
                         return false;
                     }
 
-                    var costRow = row.BuildingUpgradeCosts[buildingIndex];
+                    int cap = row.PromotionLevelCaps[promotionIndex];
+                    var costRow = row.PromotionUpgradeCosts[promotionIndex];
                     int[] costs = costRow?.Costs ?? Array.Empty<int>();
                     if (costs.Length != cap)
                     {
-                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的 building {buildingId} 成本档位数量与 cap 不一致。");
+                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotion {promotionId} 成本档位数量与 cap 不一致。");
                         return false;
                     }
 
@@ -614,7 +659,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     {
                         if (costs[costIndex] <= 0)
                         {
-                            report.AddError($"AgencyBuildings {row.AgencyStageId} 的 building {buildingId} 存在非正费用。");
+                            report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotion {promotionId} 存在非正费用。");
                             return false;
                         }
                     }
@@ -623,9 +668,10 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 agencyBuildings.Add(new HolmasAgencyBuildingRow
                 {
                     AgencyStageId = row.AgencyStageId,
-                    BuildingIds = row.BuildingIds.ToArray(),
-                    BuildingUpgradeLevelCaps = row.BuildingUpgradeLevelCaps.ToArray(),
-                    BuildingUpgradeCosts = (row.BuildingUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostRow>())
+                    StageName = stageName,
+                    PromotionIds = row.PromotionIds.ToArray(),
+                    PromotionLevelCaps = row.PromotionLevelCaps.ToArray(),
+                    PromotionUpgradeCosts = (row.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostRow>())
                         .Select(costRow => new HolmasAgencyBuildingCostRow
                         {
                             Costs = costRow?.Costs ?? Array.Empty<int>(),

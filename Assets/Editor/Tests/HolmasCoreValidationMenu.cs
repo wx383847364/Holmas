@@ -30,7 +30,7 @@ public static class HolmasCoreValidationMenu
             metaCatalog,
             new HolmasDefaultMetaExperienceSource(metaCatalog),
             new HolmasDefaultMetaExperienceSource(metaCatalog));
-        var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
+        var agencyService = new HolmasAgencyProgressionService(CreatePromotionCatalog(), metaService);
         var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
         var terrain = CreateTerrain(1, 1);
         var assetsRuntime = new FakeAssetsRuntime(terrain);
@@ -70,13 +70,13 @@ public static class HolmasCoreValidationMenu
             }).GetAwaiter().GetResult();
         var reveal = runtime.RevealCell(0, out HolmasProgressionAdvanceResult progressionResult);
         var claim = runtime.ClaimTaskReward(0, 1);
-        var firstUpgrade = runtime.TryUpgradeBuilding("lobby");
-        var secondUpgrade = runtime.TryUpgradeBuilding("desk");
+        var firstUpgrade = runtime.TryUpgradePromotion("lobby");
+        var secondUpgrade = runtime.TryUpgradePromotion("desk");
         var offline = runtime.ApplyOfflineSettlement(3_600_000L);
 
         if (!claim.Success || !firstUpgrade.Success || !secondUpgrade.Success)
         {
-            throw new InvalidOperationException("Holmas smoke test failed to complete task claim or building upgrades.");
+            throw new InvalidOperationException("Holmas smoke test failed to complete task claim or promotion upgrades.");
         }
 
         if (runtime.CurrentAgencyStageId != 1 || runtime.CurrentPlayerLevel != 3)
@@ -128,21 +128,21 @@ public static class HolmasCoreValidationMenu
             {
                 new HolmasMetaProgressionDefinition
                 {
-                    AgencyLevel = 1,
+                    PlayerLevel = 1,
                     MinExperience = 0,
                     OfflineRewardPerHour = 6,
                     AdUnlockHours = 24,
                 },
                 new HolmasMetaProgressionDefinition
                 {
-                    AgencyLevel = 2,
+                    PlayerLevel = 2,
                     MinExperience = 1,
                     OfflineRewardPerHour = 8,
                     AdUnlockHours = 12,
                 },
                 new HolmasMetaProgressionDefinition
                 {
-                    AgencyLevel = 3,
+                    PlayerLevel = 3,
                     MinExperience = 2,
                     OfflineRewardPerHour = 10,
                     AdUnlockHours = 24,
@@ -150,7 +150,7 @@ public static class HolmasCoreValidationMenu
             });
     }
 
-    private static HolmasAgencyCatalog CreateAgencyCatalog()
+    private static HolmasAgencyCatalog CreatePromotionCatalog()
     {
         return new HolmasAgencyCatalog(
             new[]
@@ -158,16 +158,18 @@ public static class HolmasCoreValidationMenu
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 1,
-                    BuildingId = "lobby",
-                    LevelCap = 1,
-                    UpgradeCosts = new[] { 10 },
+                    StageName = "stage-1",
+                    PromotionId = "lobby",
+                    PromotionLevelCap = 1,
+                    PromotionUpgradeCosts = new[] { 10 },
                 },
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 1,
-                    BuildingId = "desk",
-                    LevelCap = 1,
-                    UpgradeCosts = new[] { 10 },
+                    StageName = "stage-1",
+                    PromotionId = "desk",
+                    PromotionLevelCap = 1,
+                    PromotionUpgradeCosts = new[] { 10 },
                 },
             });
     }

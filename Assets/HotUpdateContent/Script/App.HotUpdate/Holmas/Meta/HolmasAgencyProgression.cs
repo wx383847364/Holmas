@@ -5,94 +5,93 @@ using System.Linq;
 namespace App.HotUpdate.Holmas.Meta
 {
     /// <summary>
-    /// 侦探社建筑配置定义。
-    /// 当前 v1 只需要纯逻辑数据，不依赖 UI 或 Unity 资源。
+    /// 单个城市阶段下的宣传功能配置。
+    /// 当前 v1 不接 UI，只保留升级所需的纯逻辑数据。
     /// </summary>
     [Serializable]
     public sealed class HolmasAgencyBuildingDefinition
     {
         public int AgencyStageId;
-        public string BuildingId = string.Empty;
-        public int LevelCap;
-        public int[] UpgradeCosts = Array.Empty<int>();
+        public string StageName = string.Empty;
+        public string PromotionId = string.Empty;
+        public int PromotionLevelCap;
+        public int[] PromotionUpgradeCosts = Array.Empty<int>();
     }
 
     /// <summary>
-    /// 侦探社建筑配置仓库接口。
+    /// 城市宣传配置仓库接口。
     /// </summary>
     public interface IHolmasAgencyCatalog
     {
-        bool TryGetBuilding(string buildingId, out HolmasAgencyBuildingDefinition definition);
-        IReadOnlyList<HolmasAgencyBuildingDefinition> GetBuildingsForStage(int agencyStageId);
+        bool TryGetPromotion(string promotionId, out HolmasAgencyBuildingDefinition definition);
+        IReadOnlyList<HolmasAgencyBuildingDefinition> GetPromotionsForStage(int agencyStageId);
     }
 
     /// <summary>
-    /// 纯内存版侦探社建筑配置仓库。
+    /// 纯内存版城市宣传配置仓库。
     /// </summary>
     public sealed class HolmasAgencyCatalog : IHolmasAgencyCatalog
     {
-        private readonly Dictionary<string, HolmasAgencyBuildingDefinition> _buildings = new Dictionary<string, HolmasAgencyBuildingDefinition>(StringComparer.Ordinal);
-        private readonly Dictionary<int, List<HolmasAgencyBuildingDefinition>> _buildingsByStage = new Dictionary<int, List<HolmasAgencyBuildingDefinition>>();
+        private readonly Dictionary<string, HolmasAgencyBuildingDefinition> _promotions = new Dictionary<string, HolmasAgencyBuildingDefinition>(StringComparer.Ordinal);
+        private readonly Dictionary<int, List<HolmasAgencyBuildingDefinition>> _promotionsByStage = new Dictionary<int, List<HolmasAgencyBuildingDefinition>>();
 
         public HolmasAgencyCatalog()
         {
         }
 
-        public HolmasAgencyCatalog(IEnumerable<HolmasAgencyBuildingDefinition> buildings)
+        public HolmasAgencyCatalog(IEnumerable<HolmasAgencyBuildingDefinition> promotions)
         {
-            SetBuildings(buildings);
+            SetPromotions(promotions);
         }
 
-        public void SetBuildings(IEnumerable<HolmasAgencyBuildingDefinition> buildings)
+        public void SetPromotions(IEnumerable<HolmasAgencyBuildingDefinition> promotions)
         {
-            _buildings.Clear();
-            _buildingsByStage.Clear();
+            _promotions.Clear();
+            _promotionsByStage.Clear();
 
-            if (buildings == null)
+            if (promotions == null)
             {
                 return;
             }
 
-            foreach (var definition in buildings.Where(item => item != null))
+            foreach (HolmasAgencyBuildingDefinition definition in promotions.Where(item => item != null))
             {
-                string buildingId = definition.BuildingId ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(buildingId))
+                string promotionId = definition.PromotionId ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(promotionId))
                 {
                     continue;
                 }
 
-                _buildings[buildingId] = definition;
+                _promotions[promotionId] = definition;
 
-                List<HolmasAgencyBuildingDefinition> stageBuildings;
-                if (!_buildingsByStage.TryGetValue(definition.AgencyStageId, out stageBuildings))
+                if (!_promotionsByStage.TryGetValue(definition.AgencyStageId, out List<HolmasAgencyBuildingDefinition> stagePromotions))
                 {
-                    stageBuildings = new List<HolmasAgencyBuildingDefinition>();
-                    _buildingsByStage[definition.AgencyStageId] = stageBuildings;
+                    stagePromotions = new List<HolmasAgencyBuildingDefinition>();
+                    _promotionsByStage[definition.AgencyStageId] = stagePromotions;
                 }
 
-                stageBuildings.Add(definition);
+                stagePromotions.Add(definition);
             }
         }
 
-        public bool TryGetBuilding(string buildingId, out HolmasAgencyBuildingDefinition definition)
+        public bool TryGetPromotion(string promotionId, out HolmasAgencyBuildingDefinition definition)
         {
-            return _buildings.TryGetValue(buildingId ?? string.Empty, out definition);
+            return _promotions.TryGetValue(promotionId ?? string.Empty, out definition);
         }
 
-        public IReadOnlyList<HolmasAgencyBuildingDefinition> GetBuildingsForStage(int agencyStageId)
+        public IReadOnlyList<HolmasAgencyBuildingDefinition> GetPromotionsForStage(int agencyStageId)
         {
-            List<HolmasAgencyBuildingDefinition> stageBuildings;
-            if (!_buildingsByStage.TryGetValue(agencyStageId, out stageBuildings) || stageBuildings == null)
+            if (!_promotionsByStage.TryGetValue(agencyStageId, out List<HolmasAgencyBuildingDefinition> stagePromotions) || stagePromotions == null)
             {
                 return Array.Empty<HolmasAgencyBuildingDefinition>();
             }
 
-            return stageBuildings;
+            return stagePromotions;
         }
     }
 
     /// <summary>
-    /// 单次建筑升级的结果。
+    /// 单次宣传升级结果。
     /// </summary>
     [Serializable]
     public sealed class HolmasAgencyUpgradeResult
@@ -100,7 +99,7 @@ namespace App.HotUpdate.Holmas.Meta
         public bool Success;
         public string FailureReason = string.Empty;
         public int AgencyStageId;
-        public string BuildingId = string.Empty;
+        public string PromotionId = string.Empty;
         public int PreviousLevel;
         public int NewLevel;
         public long GoldSpent;
@@ -110,8 +109,8 @@ namespace App.HotUpdate.Holmas.Meta
     }
 
     /// <summary>
-    /// 侦探社建筑升级纯逻辑服务。
-    /// 不依赖 UI，负责阶段校验、金币校验、等级上限校验和成长推进。
+    /// 城市宣传升级纯逻辑服务。
+    /// 负责阶段校验、金币校验、等级上限校验和成长推进。
     /// </summary>
     public sealed class HolmasAgencyProgressionService
     {
@@ -126,11 +125,11 @@ namespace App.HotUpdate.Holmas.Meta
             _metaProgressionService = metaProgressionService ?? throw new ArgumentNullException(nameof(metaProgressionService));
         }
 
-        public HolmasAgencyUpgradeResult TryUpgradeBuilding(HolmasMetaProgressionState state, string buildingId)
+        public HolmasAgencyUpgradeResult TryUpgradePromotion(HolmasMetaProgressionState state, string promotionId)
         {
             var result = new HolmasAgencyUpgradeResult
             {
-                BuildingId = buildingId ?? string.Empty
+                PromotionId = promotionId ?? string.Empty
             };
 
             if (state == null)
@@ -139,15 +138,15 @@ namespace App.HotUpdate.Holmas.Meta
                 return result;
             }
 
-            if (string.IsNullOrWhiteSpace(buildingId))
+            if (string.IsNullOrWhiteSpace(promotionId))
             {
-                result.FailureReason = "建筑标识为空。";
+                result.FailureReason = "宣传标识为空。";
                 return result;
             }
 
-            if (!_catalog.TryGetBuilding(buildingId, out var definition) || definition == null)
+            if (!_catalog.TryGetPromotion(promotionId, out HolmasAgencyBuildingDefinition definition) || definition == null)
             {
-                result.FailureReason = $"找不到建筑配置: {buildingId}。";
+                result.FailureReason = $"找不到宣传配置: {promotionId}。";
                 return result;
             }
 
@@ -156,52 +155,52 @@ namespace App.HotUpdate.Holmas.Meta
 
             if (definition.AgencyStageId != currentStageId)
             {
-                result.FailureReason = $"建筑 {buildingId} 不属于当前阶段 {currentStageId}。";
+                result.FailureReason = $"宣传 {promotionId} 不属于当前城市阶段 {currentStageId}。";
                 return result;
             }
 
-            if (definition.LevelCap <= 0)
+            if (definition.PromotionLevelCap <= 0)
             {
-                result.FailureReason = $"建筑 {buildingId} 的等级上限非法。";
+                result.FailureReason = $"宣传 {promotionId} 的等级上限非法。";
                 return result;
             }
 
-            int currentLevel = state.GetBuildingLevel(buildingId);
+            int currentLevel = state.GetPromotionLevel(promotionId);
             result.PreviousLevel = currentLevel;
 
-            if (currentLevel >= definition.LevelCap)
+            if (currentLevel >= definition.PromotionLevelCap)
             {
-                result.FailureReason = $"建筑 {buildingId} 已达到当前阶段等级上限。";
+                result.FailureReason = $"宣传 {promotionId} 已达到当前阶段等级上限。";
                 return result;
             }
 
-            if (definition.UpgradeCosts == null || definition.UpgradeCosts.Length == 0)
+            if (definition.PromotionUpgradeCosts == null || definition.PromotionUpgradeCosts.Length == 0)
             {
-                result.FailureReason = $"建筑 {buildingId} 缺少升级费用配置。";
+                result.FailureReason = $"宣传 {promotionId} 缺少升级费用配置。";
                 return result;
             }
 
-            if (currentLevel >= definition.UpgradeCosts.Length)
+            if (currentLevel >= definition.PromotionUpgradeCosts.Length)
             {
-                result.FailureReason = $"建筑 {buildingId} 缺少第 {currentLevel + 1} 级升级费用。";
+                result.FailureReason = $"宣传 {promotionId} 缺少第 {currentLevel + 1} 级升级费用。";
                 return result;
             }
 
-            long goldCost = Math.Max(0, definition.UpgradeCosts[currentLevel]);
+            long goldCost = Math.Max(0, definition.PromotionUpgradeCosts[currentLevel]);
             if (goldCost <= 0)
             {
-                result.FailureReason = $"建筑 {buildingId} 的升级费用非法。";
+                result.FailureReason = $"宣传 {promotionId} 的升级费用非法。";
                 return result;
             }
 
             if (state.GoldBalance < goldCost)
             {
-                result.FailureReason = $"金币不足，无法升级建筑 {buildingId}。";
+                result.FailureReason = $"金币不足，无法升级宣传 {promotionId}。";
                 return result;
             }
 
             state.GoldBalance -= goldCost;
-            state.SetBuildingLevel(buildingId, currentLevel + 1);
+            state.SetPromotionLevel(promotionId, currentLevel + 1);
             _metaProgressionService.ApplyExperience(state, 1L);
 
             result.Success = true;
@@ -222,28 +221,27 @@ namespace App.HotUpdate.Holmas.Meta
 
             return result;
         }
-
         private bool IsStageCompleted(HolmasMetaProgressionState state, int agencyStageId)
         {
-            var buildings = _catalog.GetBuildingsForStage(agencyStageId);
-            if (buildings == null || buildings.Count == 0)
+            IReadOnlyList<HolmasAgencyBuildingDefinition> promotions = _catalog.GetPromotionsForStage(agencyStageId);
+            if (promotions == null || promotions.Count == 0)
             {
                 return false;
             }
 
-            foreach (var definition in buildings)
+            foreach (HolmasAgencyBuildingDefinition definition in promotions)
             {
-                if (definition == null || string.IsNullOrWhiteSpace(definition.BuildingId))
+                if (definition == null || string.IsNullOrWhiteSpace(definition.PromotionId))
                 {
                     continue;
                 }
 
-                if (definition.LevelCap <= 0)
+                if (definition.PromotionLevelCap <= 0)
                 {
                     return false;
                 }
 
-                if (state.GetBuildingLevel(definition.BuildingId) < definition.LevelCap)
+                if (state.GetPromotionLevel(definition.PromotionId) < definition.PromotionLevelCap)
                 {
                     return false;
                 }
@@ -254,8 +252,8 @@ namespace App.HotUpdate.Holmas.Meta
 
         private bool HasStage(int agencyStageId)
         {
-            var buildings = _catalog.GetBuildingsForStage(agencyStageId);
-            return buildings != null && buildings.Count > 0;
+            IReadOnlyList<HolmasAgencyBuildingDefinition> promotions = _catalog.GetPromotionsForStage(agencyStageId);
+            return promotions != null && promotions.Count > 0;
         }
     }
 }

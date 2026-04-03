@@ -11,7 +11,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public const int CoreMagic = 0x48434F52; // HCOR
         public const int CatMetaMagic = 0x48434154; // HCAT
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
     }
 
     /// <summary>
@@ -96,8 +96,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     }
 
     /// <summary>
-    /// 侦探社建筑升级费用序列。
-    /// 每个实例对应一个建筑的一条升级费用曲线。
+    /// 宣传升级费用序列。
+    /// 每个实例对应一个宣传功能的一条升级费用曲线。
     /// </summary>
     [Serializable]
     public sealed class HolmasAgencyBuildingCostRow
@@ -106,16 +106,38 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     }
 
     /// <summary>
-    /// 侦探社建筑配置行。
+    /// 侦探社宣传配置行。
     /// </summary>
     [Serializable]
     public sealed class HolmasAgencyBuildingRow
     {
         public int AgencyStageId;
-        public string[] BuildingIds = Array.Empty<string>();
-        public int[] BuildingUpgradeLevelCaps = Array.Empty<int>();
-        public HolmasAgencyBuildingCostRow[] BuildingUpgradeCosts = Array.Empty<HolmasAgencyBuildingCostRow>();
+        public string StageName = string.Empty;
+        public string[] PromotionIds = Array.Empty<string>();
+        public int[] PromotionLevelCaps = Array.Empty<int>();
+        public HolmasAgencyBuildingCostRow[] PromotionUpgradeCosts = Array.Empty<HolmasAgencyBuildingCostRow>();
         public string Notes = string.Empty;
+
+        [Obsolete("Use PromotionIds instead.")]
+        public string[] BuildingIds
+        {
+            get { return PromotionIds; }
+            set { PromotionIds = value ?? Array.Empty<string>(); }
+        }
+
+        [Obsolete("Use PromotionLevelCaps instead.")]
+        public int[] BuildingUpgradeLevelCaps
+        {
+            get { return PromotionLevelCaps; }
+            set { PromotionLevelCaps = value ?? Array.Empty<int>(); }
+        }
+
+        [Obsolete("Use PromotionUpgradeCosts instead.")]
+        public HolmasAgencyBuildingCostRow[] BuildingUpgradeCosts
+        {
+            get { return PromotionUpgradeCosts; }
+            set { PromotionUpgradeCosts = value ?? Array.Empty<HolmasAgencyBuildingCostRow>(); }
+        }
     }
 
     /// <summary>

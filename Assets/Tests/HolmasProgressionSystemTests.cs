@@ -23,7 +23,6 @@ namespace Holmas.Tests
 
             HolmasMetaProgressionState state = metaService.CreateState();
             state.PlayerLevel = 1;
-            state.AgencyLevel = 1;
             state.Experience = 5;
 
             var task = new TaskInstanceData
@@ -44,7 +43,6 @@ namespace Holmas.Tests
             Assert.That(state.GoldBalance, Is.EqualTo(37));
             Assert.That(state.Experience, Is.EqualTo(5));
             Assert.That(state.PlayerLevel, Is.EqualTo(1));
-            Assert.That(state.AgencyLevel, Is.EqualTo(1));
             Assert.That(state.ClaimedTaskCount, Is.EqualTo(1));
         }
 
@@ -61,7 +59,6 @@ namespace Holmas.Tests
 
             HolmasMetaProgressionState state = metaService.CreateState();
             state.PlayerLevel = 2;
-            state.AgencyLevel = 2;
             state.Experience = 5;
 
             long gained = metaService.ApplyMapCompletion(
@@ -93,7 +90,6 @@ namespace Holmas.Tests
 
             HolmasMetaProgressionState state = metaService.CreateState();
             state.PlayerLevel = 2;
-            state.AgencyLevel = 2;
             state.Experience = 5;
 
             long reward = metaService.ApplyOfflineSettlement(state, 3_600_000L);
@@ -118,7 +114,6 @@ namespace Holmas.Tests
 
             HolmasMetaProgressionState state = metaService.CreateState();
             state.PlayerLevel = 2;
-            state.AgencyLevel = 2;
 
             long expireAt = metaService.GetUnlockExpireAt(state, 1_000);
 
@@ -126,7 +121,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasAgencyProgressionService_TryUpgradeBuilding_ConsumesGoldGrantsExperienceAndAdvancesStage()
+        public void HolmasAgencyProgressionService_TryUpgradePromotion_ConsumesGoldGrantsExperienceAndAdvancesStage()
         {
             var metaCatalog = CreateMetaCatalog();
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(metaCatalog);
@@ -135,41 +130,39 @@ namespace Holmas.Tests
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
-            var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
+            var agencyService = new HolmasAgencyProgressionService(CreatePromotionCatalog(), metaService);
             HolmasMetaProgressionState state = metaService.CreateState();
             state.PlayerLevel = 1;
-            state.AgencyLevel = 1;
             state.AgencyStageId = 1;
             state.GoldBalance = 30;
 
-            HolmasAgencyUpgradeResult first = agencyService.TryUpgradeBuilding(state, "lobby");
+            HolmasAgencyUpgradeResult first = agencyService.TryUpgradePromotion(state, "lobby");
 
             Assert.That(first.Success, Is.True, first.FailureReason);
             Assert.That(first.GoldSpent, Is.EqualTo(10));
             Assert.That(first.PreviousLevel, Is.EqualTo(0));
             Assert.That(first.NewLevel, Is.EqualTo(1));
-            Assert.That(state.GetBuildingLevel("lobby"), Is.EqualTo(1));
+            Assert.That(state.GetPromotionLevel("lobby"), Is.EqualTo(1));
             Assert.That(state.GoldBalance, Is.EqualTo(20));
             Assert.That(state.Experience, Is.EqualTo(1));
             Assert.That(state.PlayerLevel, Is.EqualTo(2));
-            Assert.That(state.AgencyLevel, Is.EqualTo(2));
             Assert.That(state.AgencyStageId, Is.EqualTo(1));
 
-            HolmasAgencyUpgradeResult second = agencyService.TryUpgradeBuilding(state, "desk");
+            HolmasAgencyUpgradeResult second = agencyService.TryUpgradePromotion(state, "desk");
 
             Assert.That(second.Success, Is.True, second.FailureReason);
             Assert.That(second.GoldSpent, Is.EqualTo(20));
             Assert.That(second.StageAdvanced, Is.True);
-            Assert.That(state.GetBuildingLevel("desk"), Is.EqualTo(1));
+            Assert.That(state.GetPromotionLevel("desk"), Is.EqualTo(1));
             Assert.That(state.GoldBalance, Is.EqualTo(0));
             Assert.That(state.Experience, Is.EqualTo(2));
             Assert.That(state.PlayerLevel, Is.EqualTo(3));
-            Assert.That(state.AgencyLevel, Is.EqualTo(3));
             Assert.That(state.AgencyStageId, Is.EqualTo(2));
+            Assert.That(state.PromotionLevels.Count, Is.EqualTo(2));
         }
 
         [Test]
-        public void HolmasAgencyProgressionService_RejectsUpgradeWhenGoldInsufficient()
+        public void HolmasAgencyProgressionService_RejectsPromotionUpgradeWhenGoldInsufficient()
         {
             var metaCatalog = CreateMetaCatalog();
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(metaCatalog);
@@ -178,24 +171,23 @@ namespace Holmas.Tests
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
-            var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
+            var agencyService = new HolmasAgencyProgressionService(CreatePromotionCatalog(), metaService);
             HolmasMetaProgressionState state = metaService.CreateState();
             state.PlayerLevel = 1;
-            state.AgencyLevel = 1;
             state.AgencyStageId = 1;
             state.GoldBalance = 5;
 
-            HolmasAgencyUpgradeResult result = agencyService.TryUpgradeBuilding(state, "lobby");
+            HolmasAgencyUpgradeResult result = agencyService.TryUpgradePromotion(state, "lobby");
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.FailureReason, Does.Contain("金币不足"));
-            Assert.That(state.GetBuildingLevel("lobby"), Is.EqualTo(0));
+            Assert.That(state.GetPromotionLevel("lobby"), Is.EqualTo(0));
             Assert.That(state.GoldBalance, Is.EqualTo(5));
             Assert.That(state.Experience, Is.EqualTo(0));
         }
 
         [Test]
-        public void HolmasAgencyProgressionService_RejectsUpgradeWhenLevelCapReached()
+        public void HolmasAgencyProgressionService_RejectsPromotionUpgradeWhenLevelCapReached()
         {
             var metaCatalog = CreateMetaCatalog();
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(metaCatalog);
@@ -204,22 +196,21 @@ namespace Holmas.Tests
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
-            var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
+            var agencyService = new HolmasAgencyProgressionService(CreatePromotionCatalog(), metaService);
             HolmasMetaProgressionState state = metaService.CreateState();
             state.PlayerLevel = 1;
-            state.AgencyLevel = 1;
             state.AgencyStageId = 1;
             state.GoldBalance = 20;
 
-            HolmasAgencyUpgradeResult first = agencyService.TryUpgradeBuilding(state, "lobby");
+            HolmasAgencyUpgradeResult first = agencyService.TryUpgradePromotion(state, "lobby");
             Assert.That(first.Success, Is.True, first.FailureReason);
 
             state.GoldBalance = 20;
-            HolmasAgencyUpgradeResult second = agencyService.TryUpgradeBuilding(state, "lobby");
+            HolmasAgencyUpgradeResult second = agencyService.TryUpgradePromotion(state, "lobby");
 
             Assert.That(second.Success, Is.False);
             Assert.That(second.FailureReason, Does.Contain("等级上限"));
-            Assert.That(state.GetBuildingLevel("lobby"), Is.EqualTo(1));
+            Assert.That(state.GetPromotionLevel("lobby"), Is.EqualTo(1));
             Assert.That(state.AgencyStageId, Is.EqualTo(1));
         }
 
@@ -233,19 +224,18 @@ namespace Holmas.Tests
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
-            var agencyService = new HolmasAgencyProgressionService(CreateSingleStageAgencyCatalog(), metaService);
+            var agencyService = new HolmasAgencyProgressionService(CreateSingleStagePromotionCatalog(), metaService);
             HolmasMetaProgressionState state = metaService.CreateState();
             state.PlayerLevel = 1;
-            state.AgencyLevel = 1;
             state.AgencyStageId = 1;
             state.GoldBalance = 10;
 
-            HolmasAgencyUpgradeResult result = agencyService.TryUpgradeBuilding(state, "lobby");
+            HolmasAgencyUpgradeResult result = agencyService.TryUpgradePromotion(state, "lobby");
 
             Assert.That(result.Success, Is.True, result.FailureReason);
             Assert.That(result.StageAdvanced, Is.False);
             Assert.That(state.AgencyStageId, Is.EqualTo(1));
-            Assert.That(state.GetBuildingLevel("lobby"), Is.EqualTo(1));
+            Assert.That(state.GetPromotionLevel("lobby"), Is.EqualTo(1));
         }
 
         private static HolmasMetaCatalog CreateMetaCatalog()
@@ -276,44 +266,48 @@ namespace Holmas.Tests
             });
         }
 
-        private static HolmasAgencyCatalog CreateAgencyCatalog()
+        private static HolmasAgencyCatalog CreatePromotionCatalog()
         {
             return new HolmasAgencyCatalog(new[]
             {
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 1,
-                    BuildingId = "lobby",
-                    LevelCap = 1,
-                    UpgradeCosts = new[] { 10 },
+                    StageName = "stage-1",
+                    PromotionId = "lobby",
+                    PromotionLevelCap = 1,
+                    PromotionUpgradeCosts = new[] { 10 },
                 },
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 1,
-                    BuildingId = "desk",
-                    LevelCap = 1,
-                    UpgradeCosts = new[] { 20 },
+                    StageName = "stage-1",
+                    PromotionId = "desk",
+                    PromotionLevelCap = 1,
+                    PromotionUpgradeCosts = new[] { 20 },
                 },
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 2,
-                    BuildingId = "archive",
-                    LevelCap = 2,
-                    UpgradeCosts = new[] { 30, 40 },
+                    StageName = "stage-2",
+                    PromotionId = "archive",
+                    PromotionLevelCap = 2,
+                    PromotionUpgradeCosts = new[] { 30, 40 },
                 },
             });
         }
 
-        private static HolmasAgencyCatalog CreateSingleStageAgencyCatalog()
+        private static HolmasAgencyCatalog CreateSingleStagePromotionCatalog()
         {
             return new HolmasAgencyCatalog(new[]
             {
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 1,
-                    BuildingId = "lobby",
-                    LevelCap = 1,
-                    UpgradeCosts = new[] { 10 },
+                    StageName = "stage-1",
+                    PromotionId = "lobby",
+                    PromotionLevelCap = 1,
+                    PromotionUpgradeCosts = new[] { 10 },
                 },
             });
         }

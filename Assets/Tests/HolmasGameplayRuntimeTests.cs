@@ -68,7 +68,6 @@ namespace Holmas.Tests
             Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(20));
             Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
             Assert.That(runtime.MetaProgressionState.PlayerLevel, Is.EqualTo(1));
-            Assert.That(runtime.MetaProgressionState.AgencyLevel, Is.EqualTo(1));
             Assert.That(runtime.MetaProgressionState.AgencyStageId, Is.EqualTo(1));
             Assert.That(runtime.MetaProgressionState.ClaimedTaskCount, Is.EqualTo(1));
         }
@@ -164,7 +163,6 @@ namespace Holmas.Tests
             var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger());
 
             runtime.MetaProgressionState.PlayerLevel = 2;
-            runtime.MetaProgressionState.AgencyLevel = 2;
 
             HolmasProgressionAdvanceResult result = runtime.ApplyOfflineSettlement(3_600_000L);
 
@@ -178,7 +176,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasGameplayRuntime_TryUpgradeBuilding_ConsumesGoldAndAdvancesStage()
+        public void HolmasGameplayRuntime_TryUpgradePromotion_ConsumesGoldAndAdvancesStage()
         {
             var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
             var metaCatalog = CreateGrowthMetaCatalog();
@@ -187,14 +185,14 @@ namespace Holmas.Tests
                 new HolmasDefaultMetaExperienceSource(metaCatalog),
                 new HolmasDefaultMetaExperienceSource(metaCatalog),
                 new FixedUtcClock { UtcNowMilliseconds = 777_000 });
-            var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
+            var agencyService = new HolmasAgencyProgressionService(CreatePromotionCatalog(), metaService);
             var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 1, 0, 1, 1), new FixedUtcClock { UtcNowMilliseconds = 1000 });
             var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
             var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), null);
 
             runtime.MetaProgressionState.GoldBalance = 30;
 
-            HolmasAgencyUpgradeResult first = runtime.TryUpgradeBuilding("lobby");
+            HolmasAgencyUpgradeResult first = runtime.TryUpgradePromotion("lobby");
 
             Assert.That(first.Success, Is.True, first.FailureReason);
             Assert.That(first.GoldSpent, Is.EqualTo(10));
@@ -203,7 +201,7 @@ namespace Holmas.Tests
             Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(2));
             Assert.That(runtime.CurrentAgencyStageId, Is.EqualTo(1));
 
-            HolmasAgencyUpgradeResult second = runtime.TryUpgradeBuilding("desk");
+            HolmasAgencyUpgradeResult second = runtime.TryUpgradePromotion("desk");
 
             Assert.That(second.Success, Is.True, second.FailureReason);
             Assert.That(second.GoldSpent, Is.EqualTo(20));
@@ -215,7 +213,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasGameplayRuntime_TryUpgradeBuilding_RejectsWhenGoldInsufficient()
+        public void HolmasGameplayRuntime_TryUpgradePromotion_RejectsWhenGoldInsufficient()
         {
             var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
             var metaCatalog = CreateGrowthMetaCatalog();
@@ -224,14 +222,14 @@ namespace Holmas.Tests
                 new HolmasDefaultMetaExperienceSource(metaCatalog),
                 new HolmasDefaultMetaExperienceSource(metaCatalog),
                 new FixedUtcClock { UtcNowMilliseconds = 777_000 });
-            var agencyService = new HolmasAgencyProgressionService(CreateAgencyCatalog(), metaService);
+            var agencyService = new HolmasAgencyProgressionService(CreatePromotionCatalog(), metaService);
             var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 1, 0, 1, 1), new FixedUtcClock { UtcNowMilliseconds = 1000 });
             var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
             var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), null);
 
             runtime.MetaProgressionState.GoldBalance = 5;
 
-            HolmasAgencyUpgradeResult result = runtime.TryUpgradeBuilding("lobby");
+            HolmasAgencyUpgradeResult result = runtime.TryUpgradePromotion("lobby");
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.FailureReason, Does.Contain("金币不足"));
@@ -611,30 +609,33 @@ namespace Holmas.Tests
             });
         }
 
-        private static HolmasAgencyCatalog CreateAgencyCatalog()
+        private static HolmasAgencyCatalog CreatePromotionCatalog()
         {
             return new HolmasAgencyCatalog(new[]
             {
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 1,
-                    BuildingId = "lobby",
-                    LevelCap = 1,
-                    UpgradeCosts = new[] { 10 },
+                    StageName = "stage-1",
+                    PromotionId = "lobby",
+                    PromotionLevelCap = 1,
+                    PromotionUpgradeCosts = new[] { 10 },
                 },
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 1,
-                    BuildingId = "desk",
-                    LevelCap = 1,
-                    UpgradeCosts = new[] { 20 },
+                    StageName = "stage-1",
+                    PromotionId = "desk",
+                    PromotionLevelCap = 1,
+                    PromotionUpgradeCosts = new[] { 20 },
                 },
                 new HolmasAgencyBuildingDefinition
                 {
                     AgencyStageId = 2,
-                    BuildingId = "archive",
-                    LevelCap = 2,
-                    UpgradeCosts = new[] { 30, 40 },
+                    StageName = "stage-2",
+                    PromotionId = "archive",
+                    PromotionLevelCap = 2,
+                    PromotionUpgradeCosts = new[] { 30, 40 },
                 },
             });
         }

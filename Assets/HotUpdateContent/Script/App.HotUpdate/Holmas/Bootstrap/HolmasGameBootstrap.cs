@@ -8,6 +8,9 @@ using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.Shared.Contracts;
+using IHolmasPromotionCatalog = App.HotUpdate.Holmas.Meta.IHolmasAgencyCatalog;
+using HolmasAgencyPromotionDefinition = App.HotUpdate.Holmas.Meta.HolmasAgencyBuildingDefinition;
+using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgencyUpgradeResult;
 
 namespace App.HotUpdate.Holmas.Bootstrap
 {
@@ -59,7 +62,9 @@ namespace App.HotUpdate.Holmas.Bootstrap
 
             var taskCatalog = configBundle.TaskCatalog;
             var mapCatalog = configBundle.MapCatalog;
-            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime, taskCatalog, configBundle);
+            var metaCatalog = CreateMetaCatalog(configBundle);
+            var promotionCatalog = CreatePromotionCatalog(configBundle);
+            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime, taskCatalog, metaCatalog, promotionCatalog);
             serviceContainer.RegisterSingleton(gameplayRuntime);
 
             // 这轮先把已确认的共享依赖收敛到统一上下文，给后续地图线和任务线提供稳定挂接点。
@@ -78,11 +83,14 @@ namespace App.HotUpdate.Holmas.Bootstrap
             serviceContainer.RegisterSingleton(taskCatalog);
             serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(taskCatalog);
             serviceContainer.RegisterSingleton<IHolmasMapCatalog>(mapCatalog);
+            serviceContainer.RegisterSingleton(promotionCatalog);
+            serviceContainer.RegisterSingleton<IHolmasPromotionCatalog>(promotionCatalog);
+            serviceContainer.RegisterSingleton<IHolmasAgencyCatalog>(promotionCatalog);
             serviceContainer.RegisterSingleton(levelLaunchGateway);
             serviceContainer.RegisterSingleton<IHolmasLevelLaunchGateway>(levelLaunchGateway);
 
             // 这轮已经把地图完成 -> 任务推进 -> 长期进度的运行时编排接入组合层，但仍不提前接 UI。
-            Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动，运行时编排入口已就位。");
+            Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动，城市宣传编排入口已就位。");
         }
 
         private static HolmasConfigCatalogBundle TryLoadConfigBundle(IAssetsRuntime assetsRuntime, IAppLogger logger)
@@ -118,23 +126,22 @@ namespace App.HotUpdate.Holmas.Bootstrap
             IAppLogger logger,
             IAssetsRuntime assetsRuntime,
             HolmasTaskCatalog taskCatalog,
-            HolmasConfigCatalogBundle configBundle)
+            HolmasMetaCatalog metaCatalog,
+            HolmasAgencyCatalog promotionCatalog)
         {
-            var metaCatalog = CreateMetaCatalog(configBundle);
-            var agencyCatalog = CreateAgencyCatalog(configBundle);
             var clock = new HolmasSystemUtcClock();
             var randomSource = new HolmasSystemRandomSource();
             var metaSource = new HolmasDefaultMetaExperienceSource(metaCatalog);
             var taskProgressService = new HolmasTaskProgressService(taskCatalog, randomSource, clock);
             var metaProgressionService = new HolmasMetaProgressionService(metaCatalog, metaSource, metaSource, clock);
-            var agencyProgressionService = new HolmasAgencyProgressionService(agencyCatalog, metaProgressionService);
+            var promotionProgressionService = new HolmasAgencyProgressionService(promotionCatalog, metaProgressionService);
             var progressionCoordinator = new HolmasProgressionCoordinator(taskProgressService, metaProgressionService);
 
             return new HolmasGameplayRuntime(
                 taskProgressService,
                 metaProgressionService,
                 progressionCoordinator,
-                agencyProgressionService,
+                promotionProgressionService,
                 logger,
                 assetsRuntime);
         }
@@ -149,24 +156,23 @@ namespace App.HotUpdate.Holmas.Bootstrap
             return new HolmasMetaCatalog(configBundle.MetaLevels.Select(row => new HolmasMetaProgressionDefinition
             {
                 PlayerLevel = row.PlayerLevel,
-                AgencyLevel = row.PlayerLevel,
                 MinExperience = row.MinExperience,
                 OfflineRewardPerHour = row.OfflineRewardPerHour,
                 AdUnlockHours = row.AdUnlockHours,
             }));
         }
 
-        private static HolmasAgencyCatalog CreateAgencyCatalog(HolmasConfigCatalogBundle configBundle)
+        private static HolmasAgencyCatalog CreatePromotionCatalog(HolmasConfigCatalogBundle configBundle)
         {
             if (configBundle?.AgencyBuildings == null || configBundle.AgencyBuildings.Count == 0)
             {
-                throw new InvalidOperationException("HolmasGameBootstrap: 配置包缺少 AgencyBuildings，无法组装正式建筑成长服务。");
+                throw new InvalidOperationException("HolmasGameBootstrap: 配置包缺少 AgencyBuildings，无法组装正式城市宣传成长服务。");
             }
 
-            return new HolmasAgencyCatalog(BuildAgencyDefinitions(configBundle.AgencyBuildings));
+            return new HolmasAgencyCatalog(BuildPromotionDefinitions(configBundle.AgencyBuildings));
         }
 
-        private static IEnumerable<HolmasAgencyBuildingDefinition> BuildAgencyDefinitions(IReadOnlyList<HolmasAgencyBuildingRow> rows)
+        private static IEnumerable<HolmasAgencyPromotionDefinition> BuildPromotionDefinitions(IReadOnlyList<HolmasAgencyBuildingRow> rows)
         {
             if (rows == null || rows.Count == 0)
             {
@@ -176,34 +182,35 @@ namespace App.HotUpdate.Holmas.Bootstrap
             for (int stageIndex = 0; stageIndex < rows.Count; stageIndex++)
             {
                 HolmasAgencyBuildingRow stageRow = rows[stageIndex];
-                if (stageRow == null || stageRow.BuildingIds == null)
+                if (stageRow == null || stageRow.PromotionIds == null)
                 {
                     continue;
                 }
 
-                for (int buildingIndex = 0; buildingIndex < stageRow.BuildingIds.Length; buildingIndex++)
+                for (int promotionIndex = 0; promotionIndex < stageRow.PromotionIds.Length; promotionIndex++)
                 {
-                    string buildingId = stageRow.BuildingIds[buildingIndex];
-                    if (string.IsNullOrWhiteSpace(buildingId))
+                    string promotionId = stageRow.PromotionIds[promotionIndex];
+                    if (string.IsNullOrWhiteSpace(promotionId))
                     {
                         continue;
                     }
 
-                    int levelCap = stageRow.BuildingUpgradeLevelCaps != null && buildingIndex < stageRow.BuildingUpgradeLevelCaps.Length
-                        ? stageRow.BuildingUpgradeLevelCaps[buildingIndex]
+                    int levelCap = stageRow.PromotionLevelCaps != null && promotionIndex < stageRow.PromotionLevelCaps.Length
+                        ? stageRow.PromotionLevelCaps[promotionIndex]
                         : 0;
                     int[] costs = Array.Empty<int>();
-                    if (stageRow.BuildingUpgradeCosts != null && buildingIndex < stageRow.BuildingUpgradeCosts.Length)
+                    if (stageRow.PromotionUpgradeCosts != null && promotionIndex < stageRow.PromotionUpgradeCosts.Length)
                     {
-                        costs = stageRow.BuildingUpgradeCosts[buildingIndex]?.Costs ?? Array.Empty<int>();
+                        costs = stageRow.PromotionUpgradeCosts[promotionIndex]?.Costs ?? Array.Empty<int>();
                     }
 
-                    yield return new HolmasAgencyBuildingDefinition
+                    yield return new HolmasAgencyPromotionDefinition
                     {
                         AgencyStageId = stageRow.AgencyStageId,
-                        BuildingId = buildingId,
-                        LevelCap = levelCap,
-                        UpgradeCosts = costs,
+                        StageName = stageRow.StageName,
+                        PromotionId = promotionId,
+                        PromotionLevelCap = levelCap,
+                        PromotionUpgradeCosts = costs,
                     };
                 }
             }

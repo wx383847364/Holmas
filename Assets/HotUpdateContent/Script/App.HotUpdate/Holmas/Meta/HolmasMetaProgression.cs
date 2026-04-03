@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using App.Shared.Holmas.RuntimeData;
 using App.HotUpdate.Holmas.Progression;
+using App.Shared.Holmas.RuntimeData;
 
 namespace App.HotUpdate.Holmas.Meta
 {
     /// <summary>
     /// 长期进度运行时状态。
-    /// 当前 v1 以玩家等级、侦探社阶段、金币和建筑等级为主。
+    /// 当前 v1 以玩家等级、城市宣传阶段、金币和宣传等级为主。
     /// </summary>
     [Serializable]
     public sealed class HolmasMetaProgressionState
@@ -16,13 +16,11 @@ namespace App.HotUpdate.Holmas.Meta
         public HolmasMetaProgressionState()
         {
             PlayerLevel = 1;
-            AgencyLevel = 1;
             AgencyStageId = 1;
         }
 
         public long Experience;
         public int PlayerLevel;
-        public int AgencyLevel;
         public int AgencyStageId;
         public long GoldBalance;
         public int CompletedMapCount;
@@ -30,33 +28,32 @@ namespace App.HotUpdate.Holmas.Meta
         public long OfflineRewardTotal;
         public long LastOfflineSettlementAtUtcMilliseconds;
         public readonly Dictionary<string, int> CatDiscoveryCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-        public readonly Dictionary<string, int> BuildingLevels = new Dictionary<string, int>(StringComparer.Ordinal);
+        public readonly Dictionary<string, int> PromotionLevels = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        public int GetBuildingLevel(string buildingId)
+        public int GetPromotionLevel(string promotionId)
         {
-            if (string.IsNullOrWhiteSpace(buildingId))
+            if (string.IsNullOrWhiteSpace(promotionId))
             {
                 return 0;
             }
 
-            int currentLevel;
-            return BuildingLevels.TryGetValue(buildingId, out currentLevel) ? currentLevel : 0;
+            return PromotionLevels.TryGetValue(promotionId, out int currentLevel) ? currentLevel : 0;
         }
 
-        public void SetBuildingLevel(string buildingId, int level)
+        public void SetPromotionLevel(string promotionId, int level)
         {
-            if (string.IsNullOrWhiteSpace(buildingId))
+            if (string.IsNullOrWhiteSpace(promotionId))
             {
                 return;
             }
 
             if (level <= 0)
             {
-                BuildingLevels.Remove(buildingId);
+                PromotionLevels.Remove(promotionId);
                 return;
             }
 
-            BuildingLevels[buildingId] = level;
+            PromotionLevels[promotionId] = level;
         }
     }
 
@@ -67,7 +64,6 @@ namespace App.HotUpdate.Holmas.Meta
     public sealed class HolmasMetaProgressionDefinition
     {
         public int PlayerLevel;
-        public int AgencyLevel;
         public long MinExperience;
         public int OfflineRewardPerHour;
         public int AdUnlockHours = 24;
@@ -79,7 +75,6 @@ namespace App.HotUpdate.Holmas.Meta
     public interface IHolmasMetaCatalog
     {
         bool TryGetPlayerLevel(int playerLevel, out HolmasMetaProgressionDefinition definition);
-        bool TryGetAgencyLevel(int agencyLevel, out HolmasMetaProgressionDefinition definition);
     }
 
     /// <summary>
@@ -106,53 +101,27 @@ namespace App.HotUpdate.Holmas.Meta
                 return;
             }
 
-            foreach (var item in playerLevels.Where(level => level != null))
+            foreach (HolmasMetaProgressionDefinition item in playerLevels.Where(level => level != null))
             {
-                int effectiveLevel = GetEffectiveLevel(item);
-                if (effectiveLevel <= 0)
+                if (item.PlayerLevel <= 0)
                 {
                     continue;
                 }
 
-                _playerLevels[effectiveLevel] = item;
+                _playerLevels[item.PlayerLevel] = item;
             }
-        }
-
-        public void SetAgencyLevels(IEnumerable<HolmasMetaProgressionDefinition> agencyLevels)
-        {
-            SetPlayerLevels(agencyLevels);
         }
 
         public bool TryGetPlayerLevel(int playerLevel, out HolmasMetaProgressionDefinition definition)
         {
             return _playerLevels.TryGetValue(playerLevel, out definition);
         }
-
-        public bool TryGetAgencyLevel(int agencyLevel, out HolmasMetaProgressionDefinition definition)
-        {
-            return TryGetPlayerLevel(agencyLevel, out definition);
-        }
-
-        private static int GetEffectiveLevel(HolmasMetaProgressionDefinition definition)
-        {
-            if (definition == null)
-            {
-                return 0;
-            }
-
-            if (definition.PlayerLevel > 0)
-            {
-                return definition.PlayerLevel;
-            }
-
-            return Math.Max(0, definition.AgencyLevel);
-        }
     }
 
     /// <summary>
     /// 默认的长期成长策略。
     /// 当前 v1 不再把任务/地图直接换算成玩家经验。
-    /// 任务领奖和离线结算改为金币来源，玩家经验只由建筑升级驱动。
+    /// 任务领奖和离线结算改为金币来源，玩家经验只由宣传升级驱动。
     /// </summary>
     public sealed class HolmasDefaultMetaExperienceSource : IHolmasExperienceSource, IHolmasOfflineRewardSource, IHolmasAdUnlockPolicy
     {
@@ -190,7 +159,6 @@ namespace App.HotUpdate.Holmas.Meta
             int rewardPerHour = definition != null
                 ? Math.Max(0, definition.OfflineRewardPerHour)
                 : DefaultOfflineRewardPerHour;
-
             return (offlineMilliseconds * rewardPerHour) / (1000L * 60L * 60L);
         }
 
@@ -200,7 +168,7 @@ namespace App.HotUpdate.Holmas.Meta
             int unlockHours = definition != null
                 ? Math.Max(1, definition.AdUnlockHours)
                 : 24;
-            return nowUtcMilliseconds + (unlockHours * 60L * 60L * 1000L);
+            return nowUtcMilliseconds + unlockHours * 60L * 60L * 1000L;
         }
 
         public long GetUnlockExpireAt(long nowUtcMilliseconds)
@@ -218,21 +186,21 @@ namespace App.HotUpdate.Holmas.Meta
             int playerLevel = 1;
             if (state != null)
             {
-                playerLevel = Math.Max(1, Math.Max(state.PlayerLevel, state.AgencyLevel));
+                playerLevel = Math.Max(1, state.PlayerLevel);
             }
 
-            _catalog.TryGetPlayerLevel(playerLevel, out var definition);
-            if (definition == null)
+            if (_catalog.TryGetPlayerLevel(playerLevel, out HolmasMetaProgressionDefinition definition) && definition != null)
             {
-                _catalog.TryGetAgencyLevel(playerLevel, out definition);
+                return definition;
             }
-            return definition;
+
+            return null;
         }
     }
 
     /// <summary>
     /// 长期进度服务。
-    /// 负责玩家等级、金币、侦探社成长、离线收益与地图结算累计。
+    /// 负责玩家等级、金币、城市宣传成长、离线收益与地图结算累计。
     /// </summary>
     public sealed class HolmasMetaProgressionService
     {
@@ -271,7 +239,6 @@ namespace App.HotUpdate.Holmas.Meta
             }
 
             state.ClaimedTaskCount++;
-
             long gold = Math.Max(0L, task.Reward);
             state.GoldBalance += gold;
             return gold;
@@ -284,7 +251,10 @@ namespace App.HotUpdate.Holmas.Meta
                 return 0L;
             }
 
-            var spawnedList = spawnedCats == null ? Array.Empty<SpawnedCatData>() : spawnedCats.Where(item => item != null).ToArray();
+            SpawnedCatData[] spawnedList = spawnedCats == null
+                ? Array.Empty<SpawnedCatData>()
+                : spawnedCats.Where(item => item != null).ToArray();
+
             var report = new HolmasMapCompletionReport
             {
                 CompletedMapCount = 1,
@@ -293,19 +263,17 @@ namespace App.HotUpdate.Holmas.Meta
             };
 
             state.CompletedMapCount += 1;
-            foreach (var cat in spawnedList)
+            foreach (SpawnedCatData cat in spawnedList)
             {
                 if (cat == null || string.IsNullOrEmpty(cat.CatId))
                 {
                     continue;
                 }
 
-                int current;
-                state.CatDiscoveryCounts.TryGetValue(cat.CatId, out current);
+                state.CatDiscoveryCounts.TryGetValue(cat.CatId, out int current);
                 state.CatDiscoveryCounts[cat.CatId] = current + 1;
             }
 
-            // v1 地图完成只推进任务栏侧，不再直接提供玩家经验。
             _experienceSource.GetMapCompletionExperience(report);
             return 0L;
         }
@@ -335,7 +303,7 @@ namespace App.HotUpdate.Holmas.Meta
                 return 0L;
             }
 
-            if (TryGetLevelDefinition(state, out var definition))
+            if (TryGetLevelDefinition(state, out HolmasMetaProgressionDefinition definition))
             {
                 long rewardPerHour = Math.Max(0, definition.OfflineRewardPerHour);
                 return (offlineMilliseconds * rewardPerHour) / (1000L * 60L * 60L);
@@ -346,7 +314,7 @@ namespace App.HotUpdate.Holmas.Meta
 
         public long GetUnlockExpireAt(HolmasMetaProgressionState state, long nowUtcMilliseconds)
         {
-            if (state != null && TryGetLevelDefinition(state, out var definition))
+            if (state != null && TryGetLevelDefinition(state, out HolmasMetaProgressionDefinition definition))
             {
                 int unlockHours = Math.Max(1, definition.AdUnlockHours);
                 return nowUtcMilliseconds + unlockHours * 60L * 60L * 1000L;
@@ -378,17 +346,12 @@ namespace App.HotUpdate.Holmas.Meta
                 return;
             }
 
-            int currentLevel = Math.Max(1, Math.Max(state.PlayerLevel, state.AgencyLevel));
+            int currentLevel = Math.Max(1, state.PlayerLevel);
             int nextLevel = currentLevel;
 
-            while (_catalog.TryGetPlayerLevel(nextLevel + 1, out var nextDefinition))
+            while (_catalog.TryGetPlayerLevel(nextLevel + 1, out HolmasMetaProgressionDefinition nextDefinition))
             {
-                if (nextDefinition == null)
-                {
-                    break;
-                }
-
-                if (state.Experience < nextDefinition.MinExperience)
+                if (nextDefinition == null || state.Experience < nextDefinition.MinExperience)
                 {
                     break;
                 }
@@ -397,12 +360,6 @@ namespace App.HotUpdate.Holmas.Meta
             }
 
             state.PlayerLevel = nextLevel;
-            state.AgencyLevel = nextLevel;
-        }
-
-        public void RecalculateAgencyLevel(HolmasMetaProgressionState state)
-        {
-            RecalculatePlayerLevel(state);
         }
 
         private bool TryGetLevelDefinition(HolmasMetaProgressionState state, out HolmasMetaProgressionDefinition definition)
@@ -414,18 +371,8 @@ namespace App.HotUpdate.Holmas.Meta
                 return false;
             }
 
-            int effectiveLevel = Math.Max(1, Math.Max(state.PlayerLevel, state.AgencyLevel));
-            if (_catalog.TryGetPlayerLevel(effectiveLevel, out definition) && definition != null)
-            {
-                return true;
-            }
-
-            if (_catalog.TryGetAgencyLevel(effectiveLevel, out definition) && definition != null)
-            {
-                return true;
-            }
-
-            return false;
+            int effectiveLevel = Math.Max(1, state.PlayerLevel);
+            return _catalog.TryGetPlayerLevel(effectiveLevel, out definition) && definition != null;
         }
     }
 }
