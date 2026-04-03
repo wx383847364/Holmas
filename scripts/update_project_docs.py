@@ -18,6 +18,18 @@ DEFAULT_PLACEHOLDERS = {
     "风险与阻塞": {"- 暂无"},
     "下一步": {"- 待补充"},
 }
+SESSION_BOOTSTRAP_DOC = "协作与执行/Codex新会话必读.md"
+TASK_WRAPUP_DOC = "协作与执行/任务完成后自动维护文档.md"
+TOPIC_PATTERNS = [
+    ("流程与协作", r"会话|文档维护|交接|协作|启动卡|收尾|流程|自动维护"),
+    ("审查与修复", r"Agent\s*6|审查|复审|修复|review|挑刺"),
+    ("测试与验证", r"测试|验证|回归|smoke|qa|batchmode"),
+    ("UI 与联调", r"UI|界面|prefab|presenter|controller|联调|图标"),
+    ("配置表与数值扩展", r"配置表|导表|csv|json|bytes|catalog|数值|buildingtable|leveltable"),
+    ("任务与长期进度", r"任务|成长|长期|进度|奖励|建筑升级|agency|playerLevel|playerlevel"),
+    ("地图与棋盘", r"地图|棋盘|terrain|board|level|扫雷|开图|猫池"),
+    ("边界与骨架", r"Shared|DTO|骨架|入口|bootstrap|组合层|boundary"),
+]
 
 
 def ensure_dirs(doc_root: Path):
@@ -83,6 +95,28 @@ def extract_section_bullets_from_text(text: str, heading: str):
     return bullets
 
 
+def extract_section_text(path: Path, heading: str) -> str:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return ""
+    lines = text.splitlines()
+    target = f"## {heading}"
+    body = []
+    capture = False
+    for line in lines:
+        if line.strip() == target:
+            capture = True
+            continue
+        if capture and line.strip().startswith("## "):
+            break
+        if capture:
+            stripped = line.strip()
+            if stripped:
+                body.append(stripped)
+    return "\n".join(body).strip()
+
+
 def extract_prefixed_value(path: Path, prefix: str) -> str:
     try:
         text = path.read_text(encoding="utf-8")
@@ -135,6 +169,48 @@ def parse_iteration_key(path: Path):
     date_raw, seq = match.groups()
     date_pretty = f"{date_raw[0:4]}-{date_raw[4:6]}-{date_raw[6:8]}"
     return date_pretty, seq
+
+
+def classify_topic(text: str) -> str:
+    compact = " ".join(text.split())
+    if not compact:
+        return "未识别"
+    for label, pattern in TOPIC_PATTERNS:
+        if re.search(pattern, compact, re.IGNORECASE):
+            return label
+    return "通用实现"
+
+
+def first_non_empty(items):
+    for item in items:
+        if item and item.strip():
+            return item.strip()
+    return ""
+
+
+def dedupe_preserve_order(items):
+    seen = set()
+    ordered = []
+    for item in items:
+        if not item:
+            continue
+        normalized = item.strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        ordered.append(normalized)
+    return ordered
+
+
+def extract_first_text_code_block(path: Path) -> str:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return ""
+    match = re.search(r"```text\s*(.*?)```", text, re.DOTALL)
+    if not match:
+        return ""
+    return match.group(1).strip()
 
 
 def suggest_agent_start(bullets):
@@ -689,6 +765,224 @@ def append_iteration(doc_root: Path, target: str, latest: bool, summary: str, do
     return path
 
 
+def latest_iteration_metadata(doc_root: Path):
+    files = scan_iteration_docs(doc_root)
+    latest = files[-1] if files else None
+    if not latest:
+        return {
+            "path": None,
+            "date": "",
+            "title": "",
+            "theme": "",
+            "topic": "未识别",
+        }
+    date_pretty, _ = parse_iteration_key(latest)
+    theme = extract_section_text(latest, "本轮主题")
+    title = markdown_title(latest)
+    return {
+        "path": latest,
+        "date": date_pretty or "",
+        "title": title,
+        "theme": theme,
+        "topic": classify_topic(f"{title}\n{theme}"),
+    }
+
+
+def build_session_bootstrap_prompt(doc_root: Path, goal: str, done, risks, next_steps, docs):
+    startup_doc = doc_root / LONG_DIR_NAME / SESSION_BOOTSTRAP_DOC
+    intro = extract_first_text_code_block(startup_doc)
+    if not intro:
+        intro = (
+            "按长期主文档规则执行。每次完成一个任务后都执行文档维护流程。"
+            "每次任务结束时都必须汇报文档维护、Git 提交建议、会话建议和迭代记录建议。"
+        )
+
+    lines = [intro]
+    if goal:
+        lines.append(f"当前目标：{goal}")
+    if done:
+        lines.append("已完成：")
+        for item in done[:3]:
+            lines.append(f"- {item}")
+    if risks:
+        lines.append("当前风险：")
+        for item in risks[:3]:
+            lines.append(f"- {item}")
+    if next_steps:
+        lines.append("当前下一步：")
+        for item in next_steps[:3]:
+            lines.append(f"- {item}")
+    if docs:
+        lines.append("建议先读：")
+        for item in docs:
+            lines.append(f"- {item}")
+    return "\n".join(lines)
+
+
+def suggest_handoff(
+    doc_root: Path,
+    summary: str,
+    done,
+    risks,
+    next_steps,
+    agent6_review: str,
+    session_mode: str,
+    iteration_mode: str,
+    next_session_title: str,
+    next_session_goal: str,
+    next_session_docs,
+    doc_log_skipped: bool,
+):
+    latest = latest_iteration_metadata(doc_root)
+    today = datetime.now().strftime("%Y-%m-%d")
+    next_focus = first_non_empty([next_session_goal, next_steps[0] if next_steps else "", summary])
+    next_topic = classify_topic(next_focus)
+    review_gate_open = agent6_review in {"passed", "passed-with-suggestions", "not-required"}
+    review_failed = agent6_review == "failed"
+    review_pending = agent6_review == "pending"
+
+    if review_failed:
+        session_advice = "建议新开修复/复审会话"
+        session_reason = "Agent 6 未通过，本轮只能先修复并复审，不能直接切到下一阶段。"
+        title = next_session_title or "修复 Agent 6 审查问题"
+        goal = next_session_goal or first_non_empty(
+            [
+                next_steps[0] if next_steps else "",
+                risks[0] if risks else "",
+                "按 Agent 6 审查意见修复当前交付，并准备复审。",
+            ]
+        )
+    elif review_pending:
+        session_advice = "继续当前会话"
+        session_reason = "Agent 6 审查尚未完成，暂不建议生成下一阶段启动卡。"
+        title = ""
+        goal = ""
+    else:
+        should_new_session = False
+        if session_mode == "new":
+            should_new_session = True
+        elif session_mode == "continue":
+            should_new_session = False
+        else:
+            should_new_session = bool(next_focus) and (
+                latest["topic"] != next_topic
+                or len(done) >= 2
+                or bool(re.search(r"完成|收口|通过|里程碑", summary))
+            )
+
+        if should_new_session and review_gate_open:
+            session_advice = "建议新开下一阶段会话"
+            session_reason = "当前任务已基本收口，下一步可以按独立主题重新装载上下文。"
+            title = next_session_title or first_non_empty(
+                [
+                    next_steps[0] if next_steps else "",
+                    summary,
+                    "继续下一阶段任务",
+                ]
+            )
+            goal = next_session_goal or first_non_empty(
+                [
+                    next_steps[0] if next_steps else "",
+                    summary,
+                    "继续推进下一阶段任务",
+                ]
+            )
+        else:
+            session_advice = "继续当前会话"
+            session_reason = "下一步仍然依赖当前上下文，暂时不需要切到新的会话。"
+            title = ""
+            goal = ""
+
+    if iteration_mode == "new":
+        iteration_advice = "建议新建迭代记录"
+        iteration_reason = "主控显式要求新建迭代记录。"
+    elif iteration_mode == "continue":
+        iteration_advice = "继续当前迭代记录"
+        iteration_reason = "主控显式要求沿用当前迭代记录。"
+    else:
+        if not latest["path"]:
+            iteration_advice = "建议新建迭代记录"
+            iteration_reason = "当前还没有迭代记录，下一轮需要先建立记录。"
+        elif review_failed or review_pending:
+            iteration_advice = "继续当前迭代记录"
+            iteration_reason = "当前仍在同一轮修复/复审链路内，不应提前切出新的迭代文件。"
+        elif latest["date"] and latest["date"] != today:
+            iteration_advice = "建议新建迭代记录"
+            iteration_reason = "已跨天，按当前规则默认新建新的迭代记录。"
+        elif latest["topic"] != next_topic and next_focus:
+            iteration_advice = "建议新建迭代记录"
+            iteration_reason = "下一步主题已明显切换，应该把这轮和下一轮分开记录。"
+        else:
+            iteration_advice = "继续当前迭代记录"
+            iteration_reason = "下一步仍属于同一主线，继续沿用当前迭代记录更清晰。"
+
+    doc_paths = []
+    for item in next_session_docs:
+        candidate = Path(item)
+        if candidate.is_absolute():
+            doc_paths.append(candidate.as_posix())
+        else:
+            doc_paths.append((doc_root / item).resolve().as_posix())
+
+    default_docs = [
+        (doc_root / LONG_DIR_NAME / SESSION_BOOTSTRAP_DOC).resolve().as_posix(),
+        (doc_root / LONG_DIR_NAME / TASK_WRAPUP_DOC).resolve().as_posix(),
+    ]
+    if latest["path"]:
+        default_docs.append(latest["path"].resolve().as_posix())
+    docs = dedupe_preserve_order(doc_paths + default_docs)
+
+    startup_prompt = ""
+    if title and goal:
+        startup_prompt = build_session_bootstrap_prompt(doc_root, goal, done, risks, next_steps, docs)
+
+    return {
+        "session_advice": session_advice,
+        "session_reason": session_reason,
+        "iteration_advice": iteration_advice,
+        "iteration_reason": iteration_reason,
+        "title": title,
+        "goal": goal,
+        "docs": docs,
+        "startup_prompt": startup_prompt,
+        "doc_log_skipped": doc_log_skipped,
+    }
+
+
+def format_handoff_report(report):
+    lines = [
+        f"会话建议：{report['session_advice']}",
+        f"原因是：{report['session_reason']}",
+        f"迭代记录建议：{report['iteration_advice']}",
+        f"原因是：{report['iteration_reason']}",
+    ]
+    if report["doc_log_skipped"]:
+        lines += [
+            "文档落点：本轮被判定为事务性协助，本次只输出建议，不写入迭代记录。",
+        ]
+    else:
+        lines += [
+            "文档落点：本次建议默认只在收尾输出中展示，不自动写入迭代记录。",
+        ]
+    if report["title"] and report["goal"]:
+        lines += [
+            f"下一会话标题：{report['title']}",
+            f"下一会话目标：{report['goal']}",
+            "建议先读：",
+        ]
+        for item in report["docs"]:
+            lines.append(f"- {item}")
+        lines += [
+            "建议首条消息：",
+            "```text",
+            report["startup_prompt"],
+            "```",
+        ]
+    else:
+        lines.append("下一会话启动卡：当前不生成，继续当前会话即可。")
+    return "\n".join(lines)
+
+
 def backfill_agent_status(doc_root: Path, from_date: str):
     if not re.fullmatch(r"\d{8}", from_date):
         raise ValueError("--from 必须是 YYYYMMDD 格式，例如 20260330")
@@ -735,6 +1029,34 @@ def main():
     append.add_argument("--next", dest="next_steps", action="append", default=[], help="Next-step item, repeatable")
     append.add_argument("--agent-status", action="append", default=[], help="Full Agent status line, repeatable")
 
+    handoff = sub.add_parser("suggest-handoff", help="Suggest whether to start a new session and/or iteration")
+    handoff.add_argument("--summary", default="", help="Short work summary")
+    handoff.add_argument("--done", action="append", default=[], help="Completed item, repeatable")
+    handoff.add_argument("--risk", action="append", default=[], help="Risk or blocker, repeatable")
+    handoff.add_argument("--next", dest="next_steps", action="append", default=[], help="Next-step item, repeatable")
+    handoff.add_argument(
+        "--agent6-review",
+        default="pending",
+        choices=["passed", "passed-with-suggestions", "failed", "pending", "not-required"],
+        help="Current Agent 6 review status",
+    )
+    handoff.add_argument(
+        "--session-mode",
+        default="auto",
+        choices=["auto", "new", "continue"],
+        help="Override the session suggestion",
+    )
+    handoff.add_argument(
+        "--iteration-mode",
+        default="auto",
+        choices=["auto", "new", "continue"],
+        help="Override the iteration suggestion",
+    )
+    handoff.add_argument("--next-session-title", default="", help="Explicit next-session title")
+    handoff.add_argument("--next-session-goal", default="", help="Explicit next-session goal")
+    handoff.add_argument("--next-session-doc", action="append", default=[], help="Recommended doc path, repeatable")
+    handoff.add_argument("--doc-log-skipped", action="store_true", help="Mark that this round did not write project docs")
+
     backfill = sub.add_parser("backfill-agent-status", help="Backfill default agent status into iteration logs")
     backfill.add_argument("--from", dest="from_date", required=True, help="Start date in YYYYMMDD")
 
@@ -764,6 +1086,24 @@ def main():
             args.agent_status,
         )
         print(f"[ok] updated iteration log: {path}")
+        return
+
+    if args.command == "suggest-handoff":
+        report = suggest_handoff(
+            doc_root,
+            args.summary,
+            args.done,
+            args.risk,
+            args.next_steps,
+            args.agent6_review,
+            args.session_mode,
+            args.iteration_mode,
+            args.next_session_title,
+            args.next_session_goal,
+            args.next_session_doc,
+            args.doc_log_skipped,
+        )
+        print(format_handoff_report(report))
         return
 
     if args.command == "backfill-agent-status":

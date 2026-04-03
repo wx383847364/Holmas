@@ -18,14 +18,22 @@ DONE_ITEMS=()
 RISK_ITEMS=()
 NEXT_ITEMS=()
 AGENT_STATUS_ITEMS=()
+SESSION_MODE="auto"
+ITERATION_MODE="auto"
+AGENT6_REVIEW="pending"
+NEXT_SESSION_TITLE=""
+NEXT_SESSION_GOAL=""
+NEXT_SESSION_DOCS=()
 SKIP_TEMP_CLEANUP=0
 FORCE_LOG=0
+SKIP_DOC_LOGGING=0
 
 usage() {
     cat <<'EOF'
 用法：
   scripts/finalize_task.sh --summary "本轮摘要" [--done "完成项"] [--risk "风险项"] [--next "下一步"]
   scripts/finalize_task.sh --summary "本轮摘要" --agent-status "Agent 5：已启动并完成边界验证"
+  scripts/finalize_task.sh --summary "本轮摘要" --agent6-review passed --next "下一阶段目标"
   scripts/finalize_task.sh --file "doc/迭代记录/迭代记录_YYYYMMDD_001.md" --summary "本轮摘要"
   scripts/finalize_task.sh --summary "本轮摘要" --skip-temp-cleanup
   scripts/finalize_task.sh --summary "更新提交说明" --force-log
@@ -34,6 +42,9 @@ usage() {
   - 默认写入最新一轮迭代记录
   - 会先判断这次是否属于“值得进入项目文档”的任务；纯事务性协助会自动跳过
   - `--agent-status` 只做显式透传；只有本轮确实改变某个 Agent 的分工状态时才传
+  - `--agent6-review` 用来声明 Agent 6 当前审查状态：passed / passed-with-suggestions / failed / pending / not-required
+  - `--session-mode` 和 `--iteration-mode` 分别控制“会话建议”和“迭代记录建议”，两者彼此独立
+  - 默认会在收尾末尾输出“会话建议 + 迭代记录建议 + 启动卡”，即使这轮被判定为事务性协助也会给出建议
   - 会自动同步主文档索引和迭代记录索引
   - 如果当前目录在 Git 仓库中，会自动暂存 doc/ 下被本次更新影响的文件
   - 默认会在收尾末尾自动尝试清理 /tmp 或 /private/tmp 下的 Holmas 临时验证工程
@@ -71,6 +82,30 @@ while [[ $# -gt 0 ]]; do
             ;;
         --agent-status)
             AGENT_STATUS_ITEMS+=("${2:-}")
+            shift 2
+            ;;
+        --session-mode)
+            SESSION_MODE="${2:-}"
+            shift 2
+            ;;
+        --iteration-mode)
+            ITERATION_MODE="${2:-}"
+            shift 2
+            ;;
+        --agent6-review)
+            AGENT6_REVIEW="${2:-}"
+            shift 2
+            ;;
+        --next-session-title)
+            NEXT_SESSION_TITLE="${2:-}"
+            shift 2
+            ;;
+        --next-session-goal)
+            NEXT_SESSION_GOAL="${2:-}"
+            shift 2
+            ;;
+        --next-session-doc)
+            NEXT_SESSION_DOCS+=("${2:-}")
             shift 2
             ;;
         --skip-temp-cleanup)
@@ -150,83 +185,135 @@ has_skill_source_changes() {
 }
 
 if should_skip_doc_logging; then
+    SKIP_DOC_LOGGING=1
     echo "[skip] 当前任务被判定为事务性协助，无需写入项目总览或迭代记录。"
     echo "[skip] 如需强制记录，请重新执行并追加 --force-log。"
-    exit 0
+fi
+if [[ "${SKIP_DOC_LOGGING}" -ne 1 ]]; then
+    APPEND_ARGS=(
+        python3
+        "${REPO_ROOT}/scripts/update_project_docs.py"
+        --doc-root "${DOC_ROOT}"
+        append-iteration
+    )
+
+    if [[ "${TARGET_MODE}" == "latest" ]]; then
+        APPEND_ARGS+=(--latest)
+    else
+        APPEND_ARGS+=(--file "${TARGET_FILE}")
+    fi
+
+    APPEND_ARGS+=(--summary "${SUMMARY}")
+
+    if ((${#DONE_ITEMS[@]} > 0)); then
+        for item in "${DONE_ITEMS[@]}"; do
+            APPEND_ARGS+=(--done "${item}")
+        done
+    fi
+
+    if ((${#RISK_ITEMS[@]} > 0)); then
+        for item in "${RISK_ITEMS[@]}"; do
+            APPEND_ARGS+=(--risk "${item}")
+        done
+    fi
+
+    if ((${#NEXT_ITEMS[@]} > 0)); then
+        for item in "${NEXT_ITEMS[@]}"; do
+            APPEND_ARGS+=(--next "${item}")
+        done
+    fi
+
+    if ((${#AGENT_STATUS_ITEMS[@]} > 0)); then
+        for item in "${AGENT_STATUS_ITEMS[@]}"; do
+            APPEND_ARGS+=(--agent-status "${item}")
+        done
+    fi
+
+    echo "[info] 追加迭代记录..."
+    "${APPEND_ARGS[@]}"
+
+    echo "[info] 同步文档索引..."
+    python3 "${REPO_ROOT}/scripts/update_project_docs.py" --doc-root "${DOC_ROOT}" sync
+
+    if has_skill_source_changes; then
+        SKILL_SYNC_SCRIPT="${REPO_ROOT}/scripts/sync_codex_skills.sh"
+        if [[ -f "${SKILL_SYNC_SCRIPT}" ]]; then
+            echo "[info] 检测到项目 skill 真源有改动，自动同步到 ~/.codex/skills ..."
+            if ! bash "${SKILL_SYNC_SCRIPT}"; then
+                echo "[warn] 项目 skill 自动同步未完成，请按提示决定是否手动执行 scripts/sync_codex_skills.sh。" >&2
+            fi
+        else
+            echo "[warn] 检测到项目 skill 真源有改动，但未找到 scripts/sync_codex_skills.sh，已跳过自动同步。" >&2
+        fi
+    fi
+
+    # 如果当前目录在 Git 仓库中，顺手把文档改动暂存起来。
+    # 这样做可以让“任务收尾”和“提交前文档齐全”尽量靠近。
+    if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo "[info] 暂存文档改动..."
+        git -C "${REPO_ROOT}" add doc
+    fi
+
+    if [[ "${SKIP_TEMP_CLEANUP}" -ne 1 ]]; then
+        CLEAN_SCRIPT="${REPO_ROOT}/scripts/clean_hub_temp_projects.sh"
+        if [[ -f "${CLEAN_SCRIPT}" ]]; then
+            echo "[info] 自动清理历史临时验证工程..."
+            if ! bash "${CLEAN_SCRIPT}"; then
+                echo "[warn] 临时验证工程自动清理未完成，请按提示决定是否手动执行 scripts/clean_hub_temp_projects.sh。" >&2
+            fi
+        fi
+    fi
+
+    echo "[ok] 文档维护流程已执行完成。"
 fi
 
-APPEND_ARGS=(
+HANDOFF_ARGS=(
     python3
     "${REPO_ROOT}/scripts/update_project_docs.py"
     --doc-root "${DOC_ROOT}"
-    append-iteration
+    suggest-handoff
+    --summary "${SUMMARY}"
+    --agent6-review "${AGENT6_REVIEW}"
+    --session-mode "${SESSION_MODE}"
+    --iteration-mode "${ITERATION_MODE}"
 )
-
-if [[ "${TARGET_MODE}" == "latest" ]]; then
-    APPEND_ARGS+=(--latest)
-else
-    APPEND_ARGS+=(--file "${TARGET_FILE}")
-fi
-
-APPEND_ARGS+=(--summary "${SUMMARY}")
 
 if ((${#DONE_ITEMS[@]} > 0)); then
     for item in "${DONE_ITEMS[@]}"; do
-        APPEND_ARGS+=(--done "${item}")
+        HANDOFF_ARGS+=(--done "${item}")
     done
 fi
 
 if ((${#RISK_ITEMS[@]} > 0)); then
     for item in "${RISK_ITEMS[@]}"; do
-        APPEND_ARGS+=(--risk "${item}")
+        HANDOFF_ARGS+=(--risk "${item}")
     done
 fi
 
 if ((${#NEXT_ITEMS[@]} > 0)); then
     for item in "${NEXT_ITEMS[@]}"; do
-        APPEND_ARGS+=(--next "${item}")
+        HANDOFF_ARGS+=(--next "${item}")
     done
 fi
 
-if ((${#AGENT_STATUS_ITEMS[@]} > 0)); then
-    for item in "${AGENT_STATUS_ITEMS[@]}"; do
-        APPEND_ARGS+=(--agent-status "${item}")
+if [[ -n "${NEXT_SESSION_TITLE}" ]]; then
+    HANDOFF_ARGS+=(--next-session-title "${NEXT_SESSION_TITLE}")
+fi
+
+if [[ -n "${NEXT_SESSION_GOAL}" ]]; then
+    HANDOFF_ARGS+=(--next-session-goal "${NEXT_SESSION_GOAL}")
+fi
+
+if ((${#NEXT_SESSION_DOCS[@]} > 0)); then
+    for item in "${NEXT_SESSION_DOCS[@]}"; do
+        HANDOFF_ARGS+=(--next-session-doc "${item}")
     done
 fi
 
-echo "[info] 追加迭代记录..."
-"${APPEND_ARGS[@]}"
-
-echo "[info] 同步文档索引..."
-python3 "${REPO_ROOT}/scripts/update_project_docs.py" --doc-root "${DOC_ROOT}" sync
-
-if has_skill_source_changes; then
-    SKILL_SYNC_SCRIPT="${REPO_ROOT}/scripts/sync_codex_skills.sh"
-    if [[ -f "${SKILL_SYNC_SCRIPT}" ]]; then
-        echo "[info] 检测到项目 skill 真源有改动，自动同步到 ~/.codex/skills ..."
-        if ! bash "${SKILL_SYNC_SCRIPT}"; then
-            echo "[warn] 项目 skill 自动同步未完成，请按提示决定是否手动执行 scripts/sync_codex_skills.sh。" >&2
-        fi
-    else
-        echo "[warn] 检测到项目 skill 真源有改动，但未找到 scripts/sync_codex_skills.sh，已跳过自动同步。" >&2
-    fi
+if [[ "${SKIP_DOC_LOGGING}" -eq 1 ]]; then
+    HANDOFF_ARGS+=(--doc-log-skipped)
 fi
 
-# 如果当前目录在 Git 仓库中，顺手把文档改动暂存起来。
-# 这样做可以让“任务收尾”和“提交前文档齐全”尽量靠近。
-if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "[info] 暂存文档改动..."
-    git -C "${REPO_ROOT}" add doc
-fi
-
-if [[ "${SKIP_TEMP_CLEANUP}" -ne 1 ]]; then
-    CLEAN_SCRIPT="${REPO_ROOT}/scripts/clean_hub_temp_projects.sh"
-    if [[ -f "${CLEAN_SCRIPT}" ]]; then
-        echo "[info] 自动清理历史临时验证工程..."
-        if ! bash "${CLEAN_SCRIPT}"; then
-            echo "[warn] 临时验证工程自动清理未完成，请按提示决定是否手动执行 scripts/clean_hub_temp_projects.sh。" >&2
-        fi
-    fi
-fi
-
-echo "[ok] 文档维护流程已执行完成。"
+echo
+echo "[info] 会话衔接建议..."
+"${HANDOFF_ARGS[@]}"
