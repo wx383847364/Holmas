@@ -842,6 +842,7 @@ def suggest_handoff(
     review_gate_open = agent6_review in {"passed", "passed-with-suggestions", "not-required"}
     review_failed = agent6_review == "failed"
     review_pending = agent6_review == "pending"
+    review_deferred = agent6_review == "deferred"
     session_quality_reasons = []
     if context_compressed:
         session_quality_reasons.append("本会话已出现过自动压缩背景信息，后续继续堆叠上下文的收益会明显下降。")
@@ -862,11 +863,39 @@ def suggest_handoff(
                 "按 Agent 6 审查意见修复当前交付，并准备复审。",
             ]
         )
+    elif review_deferred:
+        if session_quality_degraded:
+            session_advice = "建议新开修复/复审会话"
+            session_reason = "Agent 6 审查已转为待回补复审，当前不能宣告下一阶段通过。 " + " ".join(session_quality_reasons)
+            title = next_session_title or "继续当前修复/验证链"
+            goal = next_session_goal or first_non_empty(
+                [
+                    next_steps[0] if next_steps else "",
+                    risks[0] if risks else "",
+                    "继续当前修复与验证，并在审查结果回传后回补复审。",
+                ]
+            )
+        else:
+            session_advice = "继续当前修复/验证会话"
+            session_reason = "Agent 6 审查已转为待回补复审；当前可继续已知修复与验证，但暂不生成下一阶段启动卡。"
+            title = ""
+            goal = ""
     elif review_pending and not session_quality_degraded:
         session_advice = "继续当前会话"
         session_reason = "Agent 6 审查尚未完成，暂不建议生成下一阶段启动卡。"
         title = ""
         goal = ""
+    elif review_pending and session_quality_degraded:
+        session_advice = "建议新开修复/复审会话"
+        session_reason = "Agent 6 审查已发起但结果尚未回传，当前不能宣告下一阶段通过。 " + " ".join(session_quality_reasons)
+        title = next_session_title or "继续当前修复/复审链"
+        goal = next_session_goal or first_non_empty(
+            [
+                next_steps[0] if next_steps else "",
+                summary,
+                "等待 Agent 6 审查结果回传，并继续当前修复链。",
+            ]
+        )
     else:
         should_new_session = False
         if session_mode == "new":
@@ -918,7 +947,7 @@ def suggest_handoff(
         if not latest["path"]:
             iteration_advice = "建议新建迭代记录"
             iteration_reason = "当前还没有迭代记录，下一轮需要先建立记录。"
-        elif review_failed or review_pending:
+        elif review_failed or review_pending or review_deferred:
             iteration_advice = "继续当前迭代记录"
             iteration_reason = "当前仍在同一轮修复/复审链路内，不应提前切出新的迭代文件。"
         elif latest["date"] and latest["date"] != today:
@@ -1052,7 +1081,7 @@ def main():
     handoff.add_argument(
         "--agent6-review",
         default="pending",
-        choices=["passed", "passed-with-suggestions", "failed", "pending", "not-required"],
+        choices=["passed", "passed-with-suggestions", "failed", "pending", "deferred", "not-required"],
         help="Current Agent 6 review status",
     )
     handoff.add_argument(

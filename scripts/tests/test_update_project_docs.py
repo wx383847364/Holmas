@@ -43,7 +43,7 @@ def create_doc_root(root: Path) -> Path:
         - Agent 3：任务与长期进度纯逻辑作为被验证对象，本轮未改生产逻辑
         - Agent 4：UI 与验证，暂未启动
         - Agent 5：测试与质量保障，默认按需启动，本轮未启动
-        - Agent 6：挑刺与问题审查，默认在任务完成后自动启动
+        - Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动
         """,
     )
     write_file(
@@ -63,6 +63,19 @@ def create_doc_root(root: Path) -> Path:
 
 
 class UpdateProjectDocsTests(unittest.TestCase):
+    def test_finalize_task_help_mentions_sync_for_overview_and_index(self):
+        completed = subprocess.run(
+            ["bash", str(FINALIZE_SCRIPT), "--help"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("passed / passed-with-suggestions / failed / pending / deferred / not-required", completed.stdout)
+        self.assertIn("项目总览.md", completed.stdout)
+        self.assertIn("update_project_docs.py sync", completed.stdout)
+
     def test_new_iteration_uses_default_agent_statuses(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -73,7 +86,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             self.assertIn("- Agent 1：Shared 与骨架继续保持冻结，本轮未改", text)
             self.assertIn("- Agent 5：测试与质量保障，默认按需启动，本轮未启动", text)
-            self.assertIn("- Agent 6：挑刺与问题审查，默认在任务完成后自动启动", text)
+            self.assertIn("- Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动", text)
             self.assertNotIn("Agent 1：待补充", text)
 
     def test_append_iteration_overrides_only_target_agent(self):
@@ -146,7 +159,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
 
             self.assertIn("- Agent 2：地图与棋盘纯逻辑作为被验证对象，本轮未改生产逻辑", text)
-            self.assertIn("- Agent 6：挑刺与问题审查，默认在任务完成后自动启动", text)
+            self.assertIn("- Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动", text)
             self.assertIn("- 新增脚本测试", text)
             self.assertNotIn("## 完成项\n\n- 暂无", text)
             self.assertNotIn("Agent 3：待补充", text)
@@ -178,7 +191,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("- Agent 2：已启动并完成地图配置接线", text)
             self.assertIn("- Agent 3：任务与长期进度纯逻辑作为被验证对象，本轮未改生产逻辑", text)
             self.assertIn("- Agent 5：测试与质量保障，默认按需启动，本轮未启动", text)
-            self.assertIn("- Agent 6：挑刺与问题审查，默认在任务完成后自动启动", text)
+            self.assertIn("- Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动", text)
 
     def test_summary_does_not_infer_agent_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -199,7 +212,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
 
             self.assertIn("- Agent 5：测试与质量保障，默认按需启动，本轮未启动", text)
-            self.assertIn("- Agent 6：挑刺与问题审查，默认在任务完成后自动启动", text)
+            self.assertIn("- Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动", text)
             self.assertNotIn("已启动并完成", text)
 
     def test_backfill_agent_status_updates_only_placeholders(self):
@@ -260,7 +273,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             text = new_path.read_text(encoding="utf-8")
             self.assertIn("- Agent 2：已启动并完成地图配置接线", text)
             self.assertIn("- Agent 3：任务与长期进度纯逻辑作为被验证对象，本轮未改生产逻辑", text)
-            self.assertIn("- Agent 6：挑刺与问题审查，默认在任务完成后自动启动", text)
+            self.assertIn("- Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动", text)
             self.assertNotIn("## 完成项\n\n- 暂无", text)
             self.assertNotIn("## 下一步\n\n- 待补充", text)
 
@@ -328,7 +341,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stderr)
             text = iteration_path.read_text(encoding="utf-8")
             self.assertIn("- Agent 5：已启动并完成核心脚本验证", text)
-            self.assertIn("- Agent 6：挑刺与问题审查，默认在任务完成后自动启动", text)
+            self.assertIn("- Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动", text)
             self.assertIn("- 分工状态改为长期规则源驱动", text)
 
     def test_finalize_task_auto_syncs_skills_when_skill_source_changes(self):
@@ -476,7 +489,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
         self.assertNotEqual(suggested, "Agent 6：挑刺与问题审查")
         self.assertEqual(suggested, "暂无明确建议")
 
-    def test_suggest_handoff_prefers_new_session_after_context_compression(self):
+    def test_suggest_handoff_pending_review_uses_review_session_when_context_degraded(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             doc_root = create_doc_root(root)
@@ -516,8 +529,36 @@ class UpdateProjectDocsTests(unittest.TestCase):
                 0,
             )
 
-            self.assertEqual(report["session_advice"], "建议新开下一阶段会话")
+            self.assertEqual(report["session_advice"], "建议新开修复/复审会话")
+            self.assertIn("审查已发起但结果尚未回传", report["session_reason"])
             self.assertIn("自动压缩背景信息", report["session_reason"])
+
+    def test_suggest_handoff_deferred_review_after_reviewer_handoff_stays_in_current_fix_session(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+
+            # Old reviewer timed out; a new reviewer continues the same review_chain_id.
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "继续收敛 Agent 6 去阻塞规则",
+                ["补齐状态机定义"],
+                [],
+                ["继续当前修复与验证"],
+                "deferred",
+                "auto",
+                "continue",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+
+            self.assertEqual(report["session_advice"], "继续当前修复/验证会话")
+            self.assertIn("待回补复审", report["session_reason"])
+            self.assertEqual(report["iteration_advice"], "继续当前迭代记录")
 
     def test_suggest_handoff_prefers_new_session_after_two_same_session_major_tasks(self):
         with tempfile.TemporaryDirectory() as temp_dir:

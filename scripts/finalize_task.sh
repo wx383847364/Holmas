@@ -46,12 +46,13 @@ usage() {
   - 默认写入最新一轮迭代记录
   - 会先判断这次是否属于“值得进入项目文档”的任务；纯事务性协助会自动跳过
   - `--agent-status` 只做显式透传；只有本轮确实改变某个 Agent 的分工状态时才传
-  - `--agent6-review` 用来声明 Agent 6 当前审查状态：passed / passed-with-suggestions / failed / pending / not-required
+  - `--agent6-review` 用来声明 Agent 6 当前审查状态：passed / passed-with-suggestions / failed / pending / deferred / not-required
   - `--context-compressed` 用来声明本会话已经出现过自动压缩背景信息，或你已经明确感知到上下文质量下降
   - `--session-major-task-count` 用来显式声明当前会话已经连续完成了多少个大任务；脚本不再按“同一天”自动推断
   - `--session-mode` 和 `--iteration-mode` 分别控制“会话建议”和“迭代记录建议”，两者彼此独立
   - 默认会在收尾末尾输出“会话建议 + 迭代记录建议 + 启动卡”，即使这轮被判定为事务性协助也会给出建议
   - 会自动同步主文档索引和迭代记录索引
+  - `项目总览.md` 和 `主文档索引.md` 虽然不是每次单独点名的必改文档，但会通过 `update_project_docs.py sync` 间接收口
   - 如果当前目录在 Git 仓库中，会自动暂存 doc/ 下被本次更新影响的文件
   - 默认会在收尾末尾自动尝试清理 /tmp 或 /private/tmp 下的 Holmas 临时验证工程
   - 如果 Hub 正在运行或清理失败，只会给出提示，不会中断文档收尾
