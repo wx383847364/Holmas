@@ -513,38 +513,16 @@ class UpdateProjectDocsTests(unittest.TestCase):
                 [],
                 False,
                 True,
+                0,
             )
 
             self.assertEqual(report["session_advice"], "建议新开下一阶段会话")
             self.assertIn("自动压缩背景信息", report["session_reason"])
 
-    def test_suggest_handoff_prefers_new_session_after_two_same_day_major_tasks(self):
+    def test_suggest_handoff_prefers_new_session_after_two_same_session_major_tasks(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             doc_root = create_doc_root(root)
-            today_pretty = datetime.now().strftime("%Y-%m-%d")
-            today = datetime.now().strftime("%Y%m%d")
-            write_file(
-                root,
-                f"doc/迭代记录/迭代记录_{today}_001.md",
-                f"""
-                # 迭代记录 {today_pretty} 001
-
-                ## 本轮主题
-
-                流程与协作规则收尾
-
-                ## 工作日志
-
-                ### {today_pretty} 09:00
-
-                - 完成第一轮规则收口
-
-                ### {today_pretty} 11:00
-
-                - 完成第二轮规则收口
-                """,
-            )
 
             report = update_project_docs.suggest_handoff(
                 doc_root,
@@ -560,10 +538,11 @@ class UpdateProjectDocsTests(unittest.TestCase):
                 [],
                 False,
                 False,
+                2,
             )
 
             self.assertEqual(report["session_advice"], "建议新开下一阶段会话")
-            self.assertIn("连续完成 2 个大任务", report["session_reason"])
+            self.assertIn("当前会话内已连续完成 2 个大任务", report["session_reason"])
 
 
 if __name__ == "__main__":

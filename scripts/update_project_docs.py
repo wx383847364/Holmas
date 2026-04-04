@@ -775,7 +775,6 @@ def latest_iteration_metadata(doc_root: Path):
             "title": "",
             "theme": "",
             "topic": "未识别",
-            "today_major_task_count": 0,
         }
     date_pretty, _ = parse_iteration_key(latest)
     theme = extract_section_text(latest, "本轮主题")
@@ -786,44 +785,7 @@ def latest_iteration_metadata(doc_root: Path):
         "title": title,
         "theme": theme,
         "topic": classify_topic(f"{title}\n{theme}"),
-        "today_major_task_count": count_today_major_task_entries(latest, datetime.now().strftime("%Y-%m-%d")),
     }
-
-
-def count_today_major_task_entries(path: Path, today: str) -> int:
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except FileNotFoundError:
-        return 0
-
-    count = 0
-    in_work_log = False
-    index = 0
-    while index < len(lines):
-        stripped = lines[index].strip()
-        if stripped == "## 工作日志":
-            in_work_log = True
-            index += 1
-            continue
-        if in_work_log and stripped.startswith("## "):
-            break
-        if in_work_log and stripped.startswith("### "):
-            match = re.match(r"^###\s+(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}\s*$", stripped)
-            if match and match.group(1) == today:
-                first_bullet = ""
-                lookahead = index + 1
-                while lookahead < len(lines):
-                    candidate = lines[lookahead].strip()
-                    if candidate.startswith("### ") or candidate.startswith("## "):
-                        break
-                    if candidate.startswith("- "):
-                        first_bullet = candidate
-                        break
-                    lookahead += 1
-                if first_bullet and first_bullet != "- 创建本轮迭代记录":
-                    count += 1
-        index += 1
-    return count
 
 
 def build_session_bootstrap_prompt(doc_root: Path, goal: str, done, risks, next_steps, docs):
@@ -871,6 +833,7 @@ def suggest_handoff(
     next_session_docs,
     doc_log_skipped: bool,
     context_compressed: bool,
+    session_major_task_count: int,
 ):
     latest = latest_iteration_metadata(doc_root)
     today = datetime.now().strftime("%Y-%m-%d")
@@ -879,13 +842,12 @@ def suggest_handoff(
     review_gate_open = agent6_review in {"passed", "passed-with-suggestions", "not-required"}
     review_failed = agent6_review == "failed"
     review_pending = agent6_review == "pending"
-    today_major_task_count = latest.get("today_major_task_count", 0)
     session_quality_reasons = []
     if context_compressed:
         session_quality_reasons.append("本会话已出现过自动压缩背景信息，后续继续堆叠上下文的收益会明显下降。")
-    if today_major_task_count >= 2:
+    if session_major_task_count >= 2:
         session_quality_reasons.append(
-            f"同一天内已连续完成 {today_major_task_count} 个大任务，当前更适合开一个新会话重新装载上下文。"
+            f"当前会话内已连续完成 {session_major_task_count} 个大任务，当前更适合开一个新会话重新装载上下文。"
         )
     session_quality_degraded = bool(session_quality_reasons)
 
@@ -1114,6 +1076,12 @@ def main():
         action="store_true",
         help="Mark that this session has already shown automatic context compression or obvious context degradation",
     )
+    handoff.add_argument(
+        "--session-major-task-count",
+        type=int,
+        default=0,
+        help="Explicit count of major tasks already completed in the current session",
+    )
 
     backfill = sub.add_parser("backfill-agent-status", help="Backfill default agent status into iteration logs")
     backfill.add_argument("--from", dest="from_date", required=True, help="Start date in YYYYMMDD")
@@ -1161,6 +1129,7 @@ def main():
             args.next_session_doc,
             args.doc_log_skipped,
             args.context_compressed,
+            args.session_major_task_count,
         )
         print(format_handoff_report(report))
         return
