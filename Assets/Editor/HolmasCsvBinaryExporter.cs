@@ -1700,27 +1700,6 @@ namespace Holmas.EditorTools
         public int[] PromotionLevelCaps;
         public HolmasAgencyBuildingCostCsvRow[] PromotionUpgradeCosts;
         public string Notes;
-
-        [Obsolete("Use PromotionIds instead.")]
-        public string[] BuildingIds
-        {
-            get { return PromotionIds; }
-            set { PromotionIds = value; }
-        }
-
-        [Obsolete("Use PromotionLevelCaps instead.")]
-        public int[] BuildingUpgradeLevelCaps
-        {
-            get { return PromotionLevelCaps; }
-            set { PromotionLevelCaps = value; }
-        }
-
-        [Obsolete("Use PromotionUpgradeCosts instead.")]
-        public HolmasAgencyBuildingCostCsvRow[] BuildingUpgradeCosts
-        {
-            get { return PromotionUpgradeCosts; }
-            set { PromotionUpgradeCosts = value; }
-        }
     }
 
     [Serializable]

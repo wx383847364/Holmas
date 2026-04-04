@@ -117,27 +117,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public int[] PromotionLevelCaps = Array.Empty<int>();
         public HolmasAgencyBuildingCostRow[] PromotionUpgradeCosts = Array.Empty<HolmasAgencyBuildingCostRow>();
         public string Notes = string.Empty;
-
-        [Obsolete("Use PromotionIds instead.")]
-        public string[] BuildingIds
-        {
-            get { return PromotionIds; }
-            set { PromotionIds = value ?? Array.Empty<string>(); }
-        }
-
-        [Obsolete("Use PromotionLevelCaps instead.")]
-        public int[] BuildingUpgradeLevelCaps
-        {
-            get { return PromotionLevelCaps; }
-            set { PromotionLevelCaps = value ?? Array.Empty<int>(); }
-        }
-
-        [Obsolete("Use PromotionUpgradeCosts instead.")]
-        public HolmasAgencyBuildingCostRow[] BuildingUpgradeCosts
-        {
-            get { return PromotionUpgradeCosts; }
-            set { PromotionUpgradeCosts = value ?? Array.Empty<HolmasAgencyBuildingCostRow>(); }
-        }
     }
 
     /// <summary>

@@ -6,7 +6,6 @@ using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.Shared.Contracts;
-using HolmasAgencyPromotionDefinition = App.HotUpdate.Holmas.Meta.HolmasAgencyBuildingDefinition;
 using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgencyUpgradeResult;
 
 namespace App.HotUpdate.Holmas.Application
@@ -157,20 +156,6 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             return GameplayRuntime.TryUpgradePromotion(promotionId);
-        }
-
-        /// <summary>
-        /// 兼容旧 building 命名的宣传升级入口。
-        /// </summary>
-        [System.Obsolete("Use TryUpgradePromotion instead.")]
-        public HolmasAgencyUpgradeResult TryUpgradeBuilding(string buildingId)
-        {
-            if (GameplayRuntime == null)
-            {
-                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
-            }
-
-            return GameplayRuntime.TryUpgradeBuilding(buildingId);
         }
 
         /// <summary>

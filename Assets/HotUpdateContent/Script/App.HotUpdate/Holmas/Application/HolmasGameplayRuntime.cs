@@ -11,7 +11,6 @@ using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using UnityEngine;
 using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
-using HolmasAgencyPromotionDefinition = App.HotUpdate.Holmas.Meta.HolmasAgencyBuildingDefinition;
 using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgencyUpgradeResult;
 
 namespace App.HotUpdate.Holmas.Application
@@ -357,28 +356,6 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// 兼容旧 building 命名的宣传升级入口。
-        /// </summary>
-        [Obsolete("Use TryUpgradePromotion instead.")]
-        public HolmasAgencyUpgradeResult TryUpgradeBuilding(string buildingId)
-        {
-            HolmasAgencyPromotionUpgradeResult result = TryUpgradePromotion(buildingId);
-            return new HolmasAgencyUpgradeResult
-            {
-                Success = result.Success,
-                FailureReason = result.FailureReason,
-                AgencyStageId = result.AgencyStageId,
-                PromotionId = result.PromotionId,
-                PreviousLevel = result.PreviousLevel,
-                NewLevel = result.NewLevel,
-                GoldSpent = result.GoldSpent,
-                ExperienceGained = result.ExperienceGained,
-                PlayerLevelAfter = result.PlayerLevelAfter,
-                StageAdvanced = result.StageAdvanced,
-            };
         }
 
     }

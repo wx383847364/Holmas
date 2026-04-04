@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
@@ -13,6 +15,7 @@ using App.HotUpdate.Holmas.Terrain;
 using App.Shared.Contracts;
 using UnityEditor;
 using UnityEngine;
+using App.HotUpdate.Holmas.Bootstrap;
 using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
 public static class HolmasCoreValidationMenu
@@ -20,158 +23,258 @@ public static class HolmasCoreValidationMenu
     [MenuItem("Holmas/Validation/Run Core Logic Smoke Test")]
     public static void RunCoreLogicSmokeTest()
     {
-        var catalog = CreateCatalog();
-        var taskService = new HolmasTaskProgressService(
-            catalog,
-            new ScriptedRandomSource(0, 0, 1, 0, 1, 1),
-            new FixedUtcClock { UtcNowMilliseconds = 1000 });
-        var metaCatalog = CreateMetaCatalog();
-        var metaService = new HolmasMetaProgressionService(
-            metaCatalog,
-            new HolmasDefaultMetaExperienceSource(metaCatalog),
-            new HolmasDefaultMetaExperienceSource(metaCatalog));
-        var agencyService = new HolmasAgencyProgressionService(CreatePromotionCatalog(), metaService);
-        var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
-        var terrain = CreateTerrain(1, 1);
-        var assetsRuntime = new FakeAssetsRuntime(terrain);
-        var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), assetsRuntime);
-        var context = new HolmasApplicationContext(
-            new FakeServiceContainer(),
-            new NullLogger(),
-            new FakeTickManager(),
-            new FakeEventBus(),
-            assetsRuntime,
-            runtime);
-        var mapCatalog = new HolmasMapCatalog(
-            new[]
-            {
-                new HolmasMapDefinition
-                {
-                    MapId = "map-1",
-                    TerrainPath = "validation-map",
-                    CatCountMin = 1,
-                    CatCountMax = 1,
-                }
-            });
-        var gateway = new HolmasLevelLaunchGateway(context, new HolmasLevelRequestGenerator(catalog, mapCatalog, new ScriptedRandomSource(0)));
+        ResetBootstrapContext();
+        HolmasConfigCatalogBundle configBundle = LoadExportedConfigBundle();
+        var serviceContainer = new RecordingServiceContainer();
+        var assetsRuntime = new ProjectAssetsRuntime();
+        serviceContainer.RegisterSingleton<IAppLogger>(new NullLogger());
+        serviceContainer.RegisterSingleton<ITickManager>(new FakeTickManager());
+        serviceContainer.RegisterSingleton<IEventBus>(new FakeEventBus());
+        serviceContainer.RegisterSingleton<IAssetsRuntime>(assetsRuntime);
 
-        runtime.RefillAvailableTasks(1);
-
-        gateway.StartLevelForPlayerAsync(
-            1,
-            1,
-            new[]
-            {
-                new BoardSpawnEntry
-                {
-                    CatId = "cat-a",
-                    Weight = 1,
-                }
-            }).GetAwaiter().GetResult();
-        var reveal = runtime.RevealCell(0, out HolmasProgressionAdvanceResult progressionResult);
-        var claim = runtime.ClaimTaskReward(0, 1);
-        var firstUpgrade = runtime.TryUpgradePromotion("lobby");
-        var secondUpgrade = runtime.TryUpgradePromotion("desk");
-        var offline = runtime.ApplyOfflineSettlement(3_600_000L);
-
-        if (!claim.Success || !firstUpgrade.Success || !secondUpgrade.Success)
+        try
         {
-            throw new InvalidOperationException("Holmas smoke test failed to complete task claim or promotion upgrades.");
+            HolmasGameBootstrap.Start(serviceContainer);
+            HolmasApplicationContext context = HolmasGameBootstrap.Context;
+            if (context == null)
+            {
+                throw new InvalidOperationException("Holmas smoke test failed to initialize the application context from exported bytes.");
+            }
+
+            var gateway = serviceContainer.Get<IHolmasLevelLaunchGateway>();
+            if (gateway == null)
+            {
+                throw new InvalidOperationException("Holmas smoke test could not recover the formal level launch gateway from bootstrap.");
+            }
+
+            var promotionCatalog = serviceContainer.Get<IHolmasAgencyCatalog>();
+            if (promotionCatalog == null)
+            {
+                throw new InvalidOperationException("Holmas smoke test could not recover the formal promotion catalog from bootstrap.");
+            }
+
+            int smokeStageId = configBundle.AgencyBuildings
+                .Where(row => row != null)
+                .Select(row => row.AgencyStageId)
+                .DefaultIfEmpty(1)
+                .Max();
+            IReadOnlyList<HolmasAgencyBuildingDefinition> smokeStagePromotions = promotionCatalog.GetPromotionsForStage(smokeStageId);
+            if (smokeStagePromotions == null || smokeStagePromotions.Count == 0)
+            {
+                throw new InvalidOperationException($"Holmas smoke test failed to recover formal promotions for stage {smokeStageId}.");
+            }
+
+            context.RefillAvailableTasks();
+            var firstTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(0);
+            if (firstTask == null || firstTask.Task == null || string.IsNullOrWhiteSpace(firstTask.Task.CatId))
+            {
+                throw new InvalidOperationException("Holmas smoke test failed to recover an active task from the exported config bundle.");
+            }
+
+            gateway.StartLevelForCurrentPlayerAsync(
+                1,
+                new[]
+                {
+                    new BoardSpawnEntry
+                    {
+                        CatId = firstTask.Task.CatId,
+                        Weight = 1,
+                    }
+                }).GetAwaiter().GetResult();
+
+            var reveal = context.GameplayRuntime.RevealCell(0, out HolmasProgressionAdvanceResult progressionResult);
+            HolmasTaskRuntimeInstance claimableTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(0);
+            if (claimableTask == null || claimableTask.Task == null)
+            {
+                throw new InvalidOperationException("Holmas smoke test could not recover the active task from the task bar.");
+            }
+
+            claimableTask.Task.CurrentCount = claimableTask.Task.TargetCount;
+            var claim = context.ClaimTaskReward(0);
+            if (!claim.Success)
+            {
+                throw new InvalidOperationException($"Holmas smoke test failed to complete exported task claim: {claim.FailureReason}");
+            }
+
+            long requiredGold = CalculatePromotionTotalCost(smokeStagePromotions);
+            long currentGold = context.CurrentGoldBalance;
+            int rewardRatePerHour = configBundle.MetaLevels.FirstOrDefault()?.OfflineRewardPerHour ?? 0;
+            if (rewardRatePerHour <= 0)
+            {
+                throw new InvalidOperationException("Holmas smoke test recovered an invalid offline reward rate from exported config.");
+            }
+
+            if (currentGold < requiredGold)
+            {
+                long goldGap = requiredGold - currentGold;
+                long offlineHours = (goldGap + rewardRatePerHour - 1) / rewardRatePerHour;
+                HolmasProgressionAdvanceResult offline = context.ApplyOfflineSettlement(offlineHours * 3_600_000L);
+                if (offline.OfflineRewardGained < goldGap)
+                {
+                    throw new InvalidOperationException($"Holmas smoke test failed to gain enough offline gold: required={goldGap}, gained={offline.OfflineRewardGained}.");
+                }
+            }
+
+            long goldBeforePromotionUpgrades = context.CurrentGoldBalance;
+            context.GameplayRuntime.MetaProgressionState.AgencyStageId = smokeStageId;
+            UpgradePromotions(context.GameplayRuntime, smokeStagePromotions);
+
+            if (context.CurrentAgencyStageId != smokeStageId)
+            {
+                throw new InvalidOperationException($"Holmas smoke test unexpectedly changed stage after fully upgrading the exported stage. currentStage={context.CurrentAgencyStageId}, expectedStage={smokeStageId}");
+            }
+
+            if (context.CurrentPlayerLevel != 1)
+            {
+                throw new InvalidOperationException($"Holmas smoke test reached unexpected player level after growth chain: {context.CurrentPlayerLevel}.");
+            }
+
+            if (context.GameplayRuntime.MetaProgressionState.Experience != 20)
+            {
+                throw new InvalidOperationException($"Holmas smoke test reached unexpected experience after growth chain: {context.GameplayRuntime.MetaProgressionState.Experience}.");
+            }
+
+            if (context.GameplayRuntime.MetaProgressionState.PromotionLevels.Count != smokeStagePromotions.Count)
+            {
+                throw new InvalidOperationException($"Holmas smoke test did not record all upgraded promotions: {context.GameplayRuntime.MetaProgressionState.PromotionLevels.Count}.");
+            }
+
+            long expectedGoldBalance = goldBeforePromotionUpgrades - requiredGold;
+            if (context.CurrentGoldBalance != expectedGoldBalance)
+            {
+                throw new InvalidOperationException($"Holmas smoke test reached unexpected gold balance after promotion upgrades: current={context.CurrentGoldBalance}, expected={expectedGoldBalance}.");
+            }
+
+            List<string> promotionLevelEntries = new List<string>();
+            foreach (var entry in context.GameplayRuntime.MetaProgressionState.PromotionLevels.OrderBy(item => item.Key))
+            {
+                promotionLevelEntries.Add(entry.Key + ":" + entry.Value);
+            }
+
+            string promotionLevels = string.Join(",", promotionLevelEntries);
+            Debug.Log($"Holmas smoke test passed. revealCompleted={reveal.Completed}, taskProgressed={progressionResult?.ProgressedTaskIds.Count ?? 0}, taskClaimSuccess={claim.Success}, gold={context.CurrentGoldBalance}, experience={context.GameplayRuntime.MetaProgressionState.Experience}, playerLevel={context.CurrentPlayerLevel}, agencyStageId={context.CurrentAgencyStageId}, promotionLevels={promotionLevels}");
+        }
+        finally
+        {
+            ResetBootstrapContext();
+        }
+    }
+
+    private static long CalculatePromotionTotalCost(IReadOnlyList<HolmasAgencyBuildingDefinition> promotions)
+    {
+        if (promotions == null || promotions.Count == 0)
+        {
+            throw new InvalidOperationException("Holmas smoke test recovered an empty promotion list.");
         }
 
-        if (runtime.CurrentAgencyStageId != 1 || runtime.CurrentPlayerLevel != 3)
+        long totalCost = 0;
+        foreach (var promotion in promotions)
         {
-            throw new InvalidOperationException($"Holmas smoke test reached unexpected growth state: playerLevel={runtime.CurrentPlayerLevel}, agencyStageId={runtime.CurrentAgencyStageId}.");
+            if (promotion == null)
+            {
+                continue;
+            }
+
+            if (promotion.PromotionUpgradeCosts == null)
+            {
+                continue;
+            }
+
+            foreach (int cost in promotion.PromotionUpgradeCosts)
+            {
+                totalCost += cost;
+            }
         }
 
-        Debug.Log($"Holmas smoke test passed. revealCompleted={reveal.Completed}, taskProgressed={progressionResult?.ProgressedTaskIds.Count ?? 0}, taskClaimSuccess={claim.Success}, gold={runtime.CurrentGoldBalance}, playerLevel={runtime.CurrentPlayerLevel}, agencyStageId={runtime.CurrentAgencyStageId}, offlineReward={offline.OfflineRewardGained}");
+        return totalCost;
     }
 
-    private static HolmasTaskCatalog CreateCatalog()
+    private static void UpgradePromotions(HolmasGameplayRuntime runtime, IReadOnlyList<HolmasAgencyBuildingDefinition> promotions)
     {
-        return new HolmasTaskCatalog(
-            new[]
+        if (runtime == null)
+        {
+            throw new ArgumentNullException(nameof(runtime));
+        }
+
+        if (promotions == null || promotions.Count == 0)
+        {
+            throw new InvalidOperationException("Holmas smoke test recovered an empty promotion list to upgrade.");
+        }
+
+        foreach (HolmasAgencyBuildingDefinition promotion in promotions)
+        {
+            if (promotion == null || string.IsNullOrWhiteSpace(promotion.PromotionId))
             {
-                new HolmasCatDefinition { CatId = "cat-a", Price = 10 },
-                new HolmasCatDefinition { CatId = "cat-b", Price = 20 },
-            },
-            new[]
+                continue;
+            }
+
+            string promotionId = promotion.PromotionId;
+            int levelCap = promotion.PromotionLevelCap;
+
+            if (levelCap <= 0)
             {
-                new HolmasTaskTemplateDefinition
+                throw new InvalidOperationException($"Holmas smoke test recovered invalid promotion cap for promotion {promotionId}.");
+            }
+
+            while (runtime.MetaProgressionState.GetPromotionLevel(promotionId) < levelCap)
+            {
+                HolmasAgencyUpgradeResult result = runtime.TryUpgradePromotion(promotionId);
+                if (!result.Success)
                 {
-                    TaskTypeId = "task-normal",
-                    CatIdList = new[] { "cat-a", "cat-b" },
-                    CountMin = 1,
-                    CountMax = 1,
-                    RewardArray = Array.Empty<string>(),
-                    LevelRewardFactor = 2f,
+                    throw new InvalidOperationException($"Holmas smoke test failed to upgrade promotion {promotionId}: {result.FailureReason}");
                 }
-            },
-            new[]
-            {
-                new HolmasPlayerLevelDefinition
-                {
-                    PlayerLevel = 1,
-                    UpgradeExp = 0,
-                    TaskTypeIds = new[] { "task-normal" },
-                    TaskTypeWeights = new[] { 1 },
-                    MapIds = new[] { "map-1" },
-                    MapWeights = new[] { 1 },
-                }
-            });
+            }
+        }
     }
 
-    private static HolmasMetaCatalog CreateMetaCatalog()
+    private static void ResetBootstrapContext()
     {
-        return new HolmasMetaCatalog(
-            new[]
-            {
-                new HolmasMetaProgressionDefinition
-                {
-                    PlayerLevel = 1,
-                    MinExperience = 0,
-                    OfflineRewardPerHour = 6,
-                    AdUnlockHours = 24,
-                },
-                new HolmasMetaProgressionDefinition
-                {
-                    PlayerLevel = 2,
-                    MinExperience = 1,
-                    OfflineRewardPerHour = 8,
-                    AdUnlockHours = 12,
-                },
-                new HolmasMetaProgressionDefinition
-                {
-                    PlayerLevel = 3,
-                    MinExperience = 2,
-                    OfflineRewardPerHour = 10,
-                    AdUnlockHours = 24,
-                }
-            });
+        var property = typeof(HolmasGameBootstrap).GetProperty(nameof(HolmasGameBootstrap.Context), BindingFlags.Public | BindingFlags.Static);
+        if (property == null)
+        {
+            throw new InvalidOperationException("Holmas smoke test could not locate HolmasGameBootstrap.Context.");
+        }
+
+        var setter = property.GetSetMethod(true);
+        if (setter == null)
+        {
+            throw new InvalidOperationException("Holmas smoke test could not access HolmasGameBootstrap.Context setter.");
+        }
+
+        setter.Invoke(null, new object[] { null });
     }
 
-    private static HolmasAgencyCatalog CreatePromotionCatalog()
+    private static HolmasConfigCatalogBundle LoadExportedConfigBundle()
     {
-        return new HolmasAgencyCatalog(
-            new[]
-            {
-                new HolmasAgencyBuildingDefinition
-                {
-                    AgencyStageId = 1,
-                    StageName = "stage-1",
-                    PromotionId = "lobby",
-                    PromotionLevelCap = 1,
-                    PromotionUpgradeCosts = new[] { 10 },
-                },
-                new HolmasAgencyBuildingDefinition
-                {
-                    AgencyStageId = 1,
-                    StageName = "stage-1",
-                    PromotionId = "desk",
-                    PromotionLevelCap = 1,
-                    PromotionUpgradeCosts = new[] { 10 },
-                },
-            });
+        string corePath = Path.Combine(Application.dataPath, "HotUpdateContent/Config/holmas_core_config.bytes");
+        string catMetaPath = Path.Combine(Application.dataPath, "HotUpdateContent/Config/holmas_cat_meta.bytes");
+
+        if (!File.Exists(corePath))
+        {
+            throw new InvalidOperationException($"Holmas smoke test could not find exported core config bytes: {corePath}");
+        }
+
+        if (!File.Exists(catMetaPath))
+        {
+            throw new InvalidOperationException($"Holmas smoke test could not find exported cat meta bytes: {catMetaPath}");
+        }
+
+        byte[] coreBytes = File.ReadAllBytes(corePath);
+        byte[] catBytes = File.ReadAllBytes(catMetaPath);
+        if (!HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report))
+        {
+            string reportText = report == null
+                ? "no report"
+                : string.Join("; ", report.Errors.Concat(report.Warnings));
+            throw new InvalidOperationException($"Holmas smoke test failed to recover exported config bundle: {reportText}");
+        }
+
+        if (bundle == null)
+        {
+            throw new InvalidOperationException("Holmas smoke test recovered a null config bundle from exported bytes.");
+        }
+
+        return bundle;
     }
 
     private static UnityEngine.Object CreateTerrain(int rows, int cols)
@@ -208,6 +311,54 @@ public static class HolmasCoreValidationMenu
         }
 
         return ScriptableObject.CreateInstance(type) as T;
+    }
+
+    private sealed class RecordingServiceContainer : IServiceContainer
+    {
+        private readonly Dictionary<Type, object> _instances = new Dictionary<Type, object>();
+
+        public void RegisterSingleton<T>(T instance) where T : class
+        {
+            _instances[typeof(T)] = instance;
+        }
+
+        public T Get<T>() where T : class
+        {
+            return _instances.TryGetValue(typeof(T), out object instance) ? instance as T : null;
+        }
+
+        public bool IsRegistered<T>()
+        {
+            return _instances.ContainsKey(typeof(T));
+        }
+    }
+
+    private sealed class ProjectAssetsRuntime : IAssetsRuntime
+    {
+        public System.Threading.Tasks.Task InitializeAsync()
+        {
+            return System.Threading.Tasks.Task.CompletedTask;
+        }
+
+        public System.Threading.Tasks.Task<bool> RunPatchFlowAsync(string packageVersion = null)
+        {
+            return System.Threading.Tasks.Task.FromResult(true);
+        }
+
+        public System.Threading.Tasks.Task<IAssetHandle> LoadAssetAsync(string location)
+        {
+            var asset = AssetDatabase.LoadMainAssetAtPath(location);
+            if (asset == null)
+            {
+                return System.Threading.Tasks.Task.FromResult<IAssetHandle>(new FakeAssetHandle(null));
+            }
+
+            return System.Threading.Tasks.Task.FromResult<IAssetHandle>(new FakeAssetHandle(asset));
+        }
+
+        public void Shutdown()
+        {
+        }
     }
 
     private static void InvokeVoid(object target, string methodName, params object[] arguments)

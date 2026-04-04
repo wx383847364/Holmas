@@ -496,11 +496,13 @@ skill 组合：
 
 主控 agent 负责：
 
+- 先判断当前线程是否开启默认真实 subagent 自动闭环
+- 维护线程级真实 agent 注册表，记录每个真实 subagent 的职责、agent id、状态和是否原实现方
 - 先让 Agent 1 冻结 DTO 和模块骨架
 - 再让 Agent 2、Agent 3 并行
-- 同时让 Agent 5 提前搭测试骨架，并在功能线产出后持续验证
+- Agent 5 可提前搭测试骨架，也可在功能线产出后补专项验证
 - 每个阶段产出默认交给 Agent 6 做挑刺审查
-- 如果 Agent 6 不通过，修完后默认交回同一个 Agent 6 复审
+- 如果 Agent 6 不通过，必须先按职责归属路由回实现线；修完后默认交回同一个 Agent 6 复审
 - 等核心状态接口稳定后，再启动 Agent 4 的全量接线
 - 最后统一 review、集成和回归
 
@@ -512,19 +514,42 @@ skill 组合：
 - 奖励公式是否只存在于服务层
 - Prefab 是否只由 UI 线统一维护
 
+主控在 Agent 6 退回 findings 后，固定按下面顺序推进：
+
+1. 逐条回显 findings
+2. 逐条判定归属职责
+3. 如果一个 finding 横跨多职责，先拆成多条修复链
+4. 查询线程级真实 agent 注册表
+5. 如果已有原实现真实 subagent，直接退回原实现方
+6. 如果没有原实现真实 subagent，但当前线程已开启默认真实 subagent 自动闭环，自动补起同职责真实 subagent
+7. 如果当前线程未授权自动闭环，明确回显“当前线程未授权自动补起真实 subagent”，再由主线程兜底或等待用户指令
+8. 修复完成后，先做基础验收与必要验证
+9. 默认交回同一个 Agent 6 复审
+
+默认问题归属映射表：
+
+- Shared / Entry / 组合层 / AOT-HotUpdate 边界：`Agent 1`
+- 地图 / 棋盘 / terrain / board runtime：`Agent 2`
+- 任务 / 奖励 / 成长 / 配置恢复业务：`Agent 3`
+- UI / Presenter / Prefab / 绑定 / 联调流程：`Agent 4`
+- 单测 / 集成测试 / smoke / 验证脚本 / 回归链路：`Agent 5`
+- 审查结论 / 阻塞裁定 / 复审：`Agent 6`
+
 ## 7. 推荐给我的启动指令
 
 后续你可以直接这样对我说：
 
 ```text
 这次按 6 个 subagent 开工。
+默认启动真实 subagent，并开启默认真实 subagent 自动闭环。
 全部默认遵循 $unity-hotupdate-boundary。
 地图和任务相关额外遵循 $findcat-config-pipeline。
 UI 相关额外遵循 $unity-ugui-flow-integration。
 测试和挑刺审查按对象叠加 $findcat-config-pipeline 或 $unity-ugui-flow-integration。
 App.Shared 和 HotUpdate 入口只能边界 agent 改，UI prefab 只能 UI agent 改。
 先冻结 DTO，再并行开发；每个阶段产出默认先交给 Agent 6 挑刺审查，通过后再继续推进。
-如果 Agent 6 不通过，修完后默认交回同一个 Agent 6 复审，不要新开新的审查 agent。
+如果 Agent 6 不通过，先退回原实现方修复；如果当前没有原实现真实 subagent，就自动补起同职责真实 subagent 接手修复。
+修完后默认交回同一个 Agent 6 复审，不要新开新的审查 agent。
 ```
 
 ## 8. 下一步建议
