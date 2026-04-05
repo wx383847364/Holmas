@@ -345,6 +345,66 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             self.assertIn("[未开始] Holmas v1 方案", index_text)
 
+    def test_append_iteration_cli_warns_that_wrapup_is_incomplete(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            create_doc_root(root)
+            write_file(
+                root,
+                "doc/迭代记录/迭代记录_20260405_001.md",
+                """
+                # 迭代记录 2026-04-05 001
+
+                ## 分工状态
+
+                - Agent 1：待补充
+                - Agent 2：待补充
+                - Agent 3：待补充
+                - Agent 4：待补充
+                - Agent 5：待补充
+                - Agent 6：待补充
+
+                ## 工作日志
+
+                ## 完成项
+
+                - 暂无
+
+                ## 风险与阻塞
+
+                - 暂无
+
+                ## 下一步
+
+                - 待补充
+                """,
+            )
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(scripts_dir / "update_project_docs.py"),
+                    "--doc-root",
+                    str(root / "doc"),
+                    "append-iteration",
+                    "--latest",
+                    "--summary",
+                    "补一条文档记录",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("updated iteration log", completed.stdout)
+            self.assertIn("这仍属于半收尾", completed.stdout)
+            self.assertIn("suggest-handoff", completed.stdout)
+
     def test_finalize_task_forwards_agent_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
