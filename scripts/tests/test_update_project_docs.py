@@ -77,6 +77,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
         self.assertIn("update_project_docs.py sync", completed.stdout)
         self.assertIn("文档维护", completed.stdout)
         self.assertIn("Git 提交建议", completed.stdout)
+        self.assertIn("提交确认", completed.stdout)
 
     def test_new_iteration_uses_default_agent_statuses(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -416,6 +417,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("内容：", completed.stdout)
             self.assertIn("- 为收尾流程补固定三段输出", completed.stdout)
             self.assertIn("- 为提交建议补中文标题和内容", completed.stdout)
+            self.assertIn("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。", completed.stdout)
             self.assertIn("会话建议：", completed.stdout)
 
     def test_finalize_task_auto_syncs_skills_when_skill_source_changes(self):
@@ -563,6 +565,77 @@ class UpdateProjectDocsTests(unittest.TestCase):
         self.assertNotEqual(suggested, "Agent 6：挑刺与问题审查")
         self.assertEqual(suggested, "暂无明确建议")
 
+    def test_latest_iteration_context_prefers_product_mainline_over_process_next_steps(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            write_file(
+                root,
+                "doc/迭代记录/迭代记录_20260405_001.md",
+                """
+                # 迭代记录 2026-04-05 001
+
+                ## 迭代标识
+
+                - 建议起始 Agent：Agent 4：UI 与验证
+
+                ## 当前状态
+
+                - 当前阶段：进行中
+                - 整体判断：当前需先补 HolmasCoreValidationMenu 的真实任务推进验证，再回同一审查链复审。
+
+                ## 下一步
+
+                - 继续压缩协作文档
+                - 统一更新入口文档
+                - 继续 Agent 4：把当前代码生成 UI 收敛为正式 Holmas Panel/Presenter/Scene 资产。
+
+                ## 给下一轮的人
+
+                - 先回同一 Agent 6 审查链复审；通过后进入 Agent 4/UI 联调。
+                """,
+            )
+
+            context = update_project_docs.latest_iteration_context(doc_root)
+
+            self.assertEqual(context["stage"], "进行中")
+            self.assertEqual(context["start_agent"], "Agent 4：UI 与验证")
+            self.assertIn("Agent 4/UI 联调", context["mainline"])
+            self.assertNotIn("压缩协作文档", context["mainline"])
+
+    def test_write_iteration_index_uses_explicit_start_agent_instead_of_guessing_from_next_steps(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            write_file(
+                root,
+                "doc/迭代记录/迭代记录_20260405_001.md",
+                """
+                # 迭代记录 2026-04-05 001
+
+                ## 迭代标识
+
+                - 建议起始 Agent：Agent 4：UI 与验证
+
+                ## 当前状态
+
+                - 当前阶段：进行中
+                - 整体判断：先回同一审查链复审，再进入 UI 联调。
+
+                ## 下一步
+
+                - 继续 Agent 3/组合层：接入 IPersistence。
+                - 回同一 Agent 6 复审当前 smoke 修复。
+                """,
+            )
+
+            update_project_docs.write_iteration_index(doc_root)
+            index_text = (doc_root / "迭代记录" / "迭代记录索引.md").read_text(encoding="utf-8")
+
+            self.assertIn("## 建议从哪个 Agent 开始继续", index_text)
+            self.assertIn("- Agent 4：UI 与验证", index_text)
+            self.assertNotIn("- Agent 3：任务与长期进度", index_text)
+
     def test_suggest_handoff_pending_review_uses_review_session_when_context_degraded(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -692,7 +765,34 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("文档维护：已执行", formatted)
             self.assertIn("Git 提交建议：适合提交", formatted)
             self.assertIn("标题：流程：新会话启动与收尾流程", formatted)
+            self.assertIn("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。", formatted)
             self.assertIn("会话建议：", formatted)
+
+    def test_format_handoff_report_for_unsuitable_commit_includes_do_not_commit_prompt(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "继续修复 Agent 6 findings",
+                ["补齐回归验证"],
+                [],
+                ["继续当前修复"],
+                "failed",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+
+            formatted = update_project_docs.format_handoff_report(report)
+            self.assertIn("Git 提交建议：暂不建议提交。原因是：Agent 6 审查未通过", formatted)
+            self.assertIn("提交确认：当前不建议直接提交；如需强制提交，请明确说明。", formatted)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,8 @@ LONG_DIR_NAME = "长期主文档"
 ITER_DIR_NAME = "迭代记录"
 LONG_INDEX_NAME = "主文档索引.md"
 ITER_INDEX_NAME = "迭代记录索引.md"
+UI_SYSTEM_DIR_NAME = "UI自动生成系统"
+UI_SYSTEM_OVERVIEW_NAME = "00_总览.md"
 AGENT_RULE_DOC = "协作与执行/Agent 启动与验收规范.md"
 AGENT_STATUS_HEADING = "迭代文档默认分工状态"
 AGENT_LINE_RE = re.compile(r"^\s*-?\s*Agent\s*([1-6])：(.+?)\s*$")
@@ -20,6 +22,10 @@ DEFAULT_PLACEHOLDERS = {
 }
 SESSION_BOOTSTRAP_DOC = "协作与执行/Codex新会话必读.md"
 TASK_WRAPUP_DOC = "协作与执行/任务完成后自动维护文档.md"
+LEGACY_LONG_DOCS = {
+    f"{LONG_DIR_NAME}/方案与数据/Holmas UI 自动生成系统长期方案.md",
+    f"{LONG_DIR_NAME}/方案与数据/PLAN.md",
+}
 TOPIC_PATTERNS = [
     ("流程与协作", r"会话|文档维护|交接|协作|启动卡|收尾|流程|自动维护"),
     ("审查与修复", r"Agent\s*6|审查|复审|修复|review|挑刺"),
@@ -30,6 +36,10 @@ TOPIC_PATTERNS = [
     ("地图与棋盘", r"地图|棋盘|terrain|board|level|扫雷|开图|猫池"),
     ("边界与骨架", r"Shared|DTO|骨架|入口|bootstrap|组合层|boundary"),
 ]
+PROCESS_ONLY_PATTERN = re.compile(
+    r"文档|主文档|迭代记录|索引|启动卡|口令|模板|helper|收尾|去重|精简|pre-commit|commit helper|update_project_docs|finalize_task",
+    re.IGNORECASE,
+)
 COMMIT_TITLE_PREFIX = {
     "流程与协作": "流程：",
     "审查与修复": "修复：",
@@ -214,6 +224,35 @@ def dedupe_preserve_order(items):
     return ordered
 
 
+def bullet_text(item: str) -> str:
+    stripped = item.strip()
+    if stripped.startswith("- "):
+        return stripped[2:].strip()
+    return stripped
+
+
+def is_process_only_item(text: str) -> bool:
+    compact = bullet_text(text)
+    if not compact:
+        return False
+    return classify_topic(compact) == "流程与协作" or bool(PROCESS_ONLY_PATTERN.search(compact))
+
+
+def select_mainline_bullets(handoff_bullets, next_steps, overall_judgement: str):
+    handoff_candidates = [item for item in handoff_bullets if not is_process_only_item(item)]
+    next_candidates = [item for item in next_steps if not is_process_only_item(item)]
+
+    if handoff_candidates:
+        return handoff_candidates[:2]
+    if overall_judgement and not is_process_only_item(overall_judgement):
+        return [overall_judgement]
+    if next_candidates:
+        return next_candidates[:2]
+    if overall_judgement:
+        return [overall_judgement]
+    return next_steps[:2]
+
+
 def simplify_commit_title(text: str) -> str:
     value = " ".join(text.split()).strip("。；，, ")
     if not value:
@@ -327,6 +366,8 @@ def suggest_agent_start(bullets):
         (r"Agent\s*1|骨架|Shared|入口冻结", "Agent 1：边界与骨架"),
     ]
     for bullet in bullets:
+        if is_process_only_item(bullet):
+            continue
         for pattern, label in patterns:
             if re.search(pattern, bullet, re.IGNORECASE):
                 return label
@@ -343,12 +384,17 @@ def latest_iteration_context(doc_root: Path):
             "start_agent": "暂无明确建议",
         }
     current_status = extract_section_bullets(latest, "当前状态")
+    handoff = extract_section_bullets(latest, "给下一轮的人")
     next_steps = extract_section_bullets(latest, "下一步")
     stage = current_status[0][2:] if current_status else "暂无"
     if stage.startswith("当前阶段："):
         stage = stage.replace("当前阶段：", "", 1).strip()
-    mainline = "；".join(item[2:] for item in next_steps[:2]) if next_steps else "暂无"
-    start_agent = extract_prefixed_value(latest, "- 建议起始 Agent：") or suggest_agent_start(next_steps)
+    overall_judgement = extract_prefixed_value(latest, "- 整体判断：")
+    mainline_bullets = select_mainline_bullets(handoff, next_steps, overall_judgement)
+    mainline = "；".join(bullet_text(item) for item in mainline_bullets) if mainline_bullets else "暂无"
+    start_agent = extract_prefixed_value(latest, "- 建议起始 Agent：")
+    if not start_agent or start_agent == "待补充":
+        start_agent = suggest_agent_start(handoff + next_steps)
     return {
         "stage": stage,
         "mainline": mainline,
@@ -360,6 +406,8 @@ def classify_long_doc(path: Path):
     if path.name == "项目总览.md":
         return "项目总览"
     parts = set(path.parts)
+    if UI_SYSTEM_DIR_NAME in parts:
+        return "UI自动生成系统"
     if "方案与数据" in parts:
         return "方案与数据"
     if "架构与边界" in parts:
@@ -376,6 +424,8 @@ def scan_long_docs(doc_root: Path):
         if rel.startswith(f"{ITER_DIR_NAME}/"):
             continue
         if rel == f"{LONG_DIR_NAME}/{LONG_INDEX_NAME}":
+            continue
+        if rel in LEGACY_LONG_DOCS:
             continue
         files.append(path)
     return files
@@ -502,12 +552,21 @@ def write_long_index(doc_root: Path):
     latest_docs = recent_files(long_docs, 3)
     grouped = {
         "项目总览": [],
+        "UI自动生成系统": [],
         "方案与数据": [],
         "架构与边界": [],
         "协作与执行": [],
     }
     for path in long_docs:
         grouped[classify_long_doc(path)].append(path)
+    ui_system_overview = next(
+        (
+            path
+            for path in grouped["UI自动生成系统"]
+            if path.name == UI_SYSTEM_OVERVIEW_NAME
+        ),
+        grouped["UI自动生成系统"][0] if grouped["UI自动生成系统"] else None,
+    )
     lines = [
         "# 主文档索引",
         "",
@@ -562,8 +621,11 @@ def write_long_index(doc_root: Path):
         "",
     ]
     if not grouped["方案与数据"]:
-        lines.append("- [ ] 暂无")
+        if ui_system_overview is None:
+            lines.append("- [ ] 暂无")
     else:
+        if ui_system_overview is not None:
+            lines.append(f"- [ ] [UI 自动生成系统专区]({absolute_doc_link(ui_system_overview, doc_root)})")
         for path in grouped["方案与数据"]:
             title = markdown_title(path)
             rel = relative_markdown_link(path, doc_root)
@@ -620,11 +682,12 @@ def write_iteration_index(doc_root: Path):
     _, iter_dir = ensure_dirs(doc_root)
     iteration_docs = scan_iteration_docs(doc_root)
     latest = iteration_docs[-1] if iteration_docs else None
+    context = latest_iteration_context(doc_root)
     latest_done = extract_section_bullets(latest, "完成项")[:3] if latest else []
     latest_risks = extract_section_bullets(latest, "风险与阻塞")[:3] if latest else []
     latest_next = extract_section_bullets(latest, "下一步")[:3] if latest else []
     latest_updates = recent_files(iteration_docs, 3)
-    suggested_agent = suggest_agent_start(latest_next)
+    suggested_agent = context["start_agent"]
     lines = [
         "# 迭代记录索引",
         "",
@@ -1116,8 +1179,10 @@ def format_handoff_report(report):
         for item in commit["content"]:
             lines.append(f"- {item}")
         lines.append("```")
+        lines.append("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。")
     else:
         lines.append(f"Git 提交建议：暂不建议提交。原因是：{commit['reason']}")
+        lines.append("提交确认：当前不建议直接提交；如需强制提交，请明确说明。")
 
     lines.append(f"会话建议：{report['session_advice']}")
     lines += [
