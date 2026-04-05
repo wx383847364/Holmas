@@ -280,6 +280,71 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertNotIn("## 完成项\n\n- 暂无", text)
             self.assertNotIn("## 下一步\n\n- 待补充", text)
 
+    def test_extract_plan_progress_reads_status_and_note(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            create_doc_root(root)
+            plan_path = write_file(
+                root,
+                "doc/长期主文档/方案与数据/Holmas v1 正式建筑内容表方案.md",
+                """
+                # Holmas v1 正式建筑内容表方案
+
+                ## 完成情况
+
+                - 当前状态：进行中
+                - 进度说明：已完成表结构定义，待运行时和导表链完全对齐。
+                """,
+            )
+
+            progress = update_project_docs.extract_plan_progress(plan_path)
+
+            self.assertEqual(progress["status"], "进行中")
+            self.assertEqual(progress["note"], "已完成表结构定义，待运行时和导表链完全对齐。")
+
+    def test_write_long_index_shows_plan_status_label_for_scheme_docs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            write_file(
+                root,
+                "doc/长期主文档/方案与数据/Holmas v1 长期成长表方案.md",
+                """
+                # Holmas v1 长期成长表方案
+
+                ## 完成情况
+
+                - 当前状态：已完成
+                - 进度说明：配置规则和运行时接线已全部完成。
+                """,
+            )
+
+            update_project_docs.write_long_index(doc_root)
+            index_text = (doc_root / "长期主文档" / "主文档索引.md").read_text(encoding="utf-8")
+
+            self.assertIn("[已完成] Holmas v1 长期成长表方案", index_text)
+
+    def test_write_long_index_falls_back_to_unstarted_when_plan_progress_missing(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            write_file(
+                root,
+                "doc/长期主文档/方案与数据/Holmas_v1方案.md",
+                """
+                # Holmas v1 方案
+
+                ## Summary
+
+                - 测试旧方案文档缺少完成情况时的索引回退。
+                """,
+            )
+
+            update_project_docs.write_long_index(doc_root)
+            index_text = (doc_root / "长期主文档" / "主文档索引.md").read_text(encoding="utf-8")
+
+            self.assertIn("[未开始] Holmas v1 方案", index_text)
+
     def test_finalize_task_forwards_agent_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)

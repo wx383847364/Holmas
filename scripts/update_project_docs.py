@@ -26,7 +26,6 @@ SESSION_BOOTSTRAP_DOC = "协作与执行/Codex新会话必读.md"
 TASK_WRAPUP_DOC = "协作与执行/任务完成后自动维护文档.md"
 LEGACY_LONG_DOCS = {
     f"{LONG_DIR_NAME}/方案与数据/Holmas UI 自动生成系统长期方案.md",
-    f"{LONG_DIR_NAME}/方案与数据/PLAN.md",
     f"{LONG_DIR_NAME}/方案与数据/UI Prefab 自动生成系统 Agent 规划入口.md",
     f"{LONG_DIR_NAME}/方案与数据/UI 自动生成系统隔离化孵化方案 v2.md",
     f"{LONG_DIR_NAME}/方案与数据/UI 自动生成系统隔离化孵化方案 v2 执行派工单与 Skill 规范.md",
@@ -59,6 +58,8 @@ COMMIT_TITLE_PREFIX = {
 }
 PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
 COMMIT_SEQUENCE_START = 50
+PLAN_PROGRESS_HEADING = "完成情况"
+PLAN_STATUS_VALUES = {"未开始", "进行中", "已完成"}
 
 
 def ensure_dirs(doc_root: Path):
@@ -156,6 +157,26 @@ def extract_prefixed_value(path: Path, prefix: str) -> str:
         if stripped.startswith(prefix):
             return stripped.replace(prefix, "", 1).strip()
     return ""
+
+
+def extract_prefixed_value_from_bullets(bullets, prefix: str) -> str:
+    for line in bullets:
+        stripped = line.strip()
+        if stripped.startswith(prefix):
+            return stripped.replace(prefix, "", 1).strip()
+    return ""
+
+
+def extract_plan_progress(path: Path):
+    bullets = extract_section_bullets(path, PLAN_PROGRESS_HEADING)
+    status = extract_prefixed_value_from_bullets(bullets, "- 当前状态：")
+    note = extract_prefixed_value_from_bullets(bullets, "- 进度说明：")
+    if status not in PLAN_STATUS_VALUES:
+        status = "未开始"
+    return {
+        "status": status,
+        "note": note,
+    }
 
 
 def normalize_agent_status_line(line: str) -> str:
@@ -747,8 +768,9 @@ def write_long_index(doc_root: Path):
             lines.append(f"- [ ] [UI 自动生成系统专区]({absolute_doc_link(ui_system_overview, doc_root)})")
         for path in grouped["方案与数据"]:
             title = markdown_title(path)
-            rel = relative_markdown_link(path, doc_root)
-            lines.append(f"- [ ] [{title}]({absolute_doc_link(path, doc_root)})")
+            plan_progress = extract_plan_progress(path)
+            label = f"[{plan_progress['status']}] {title}"
+            lines.append(f"- [ ] [{label}]({absolute_doc_link(path, doc_root)})")
     lines += [
         "",
         "### C. 架构与边界",
