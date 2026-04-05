@@ -18,6 +18,38 @@
 - 写入边界、禁止边界、交付物、验收项，必须在启动时一次说清
 - 未通过验收的 Agent 结果，不视为可直接集成
 
+## 新会话默认入口
+
+如果新会话只输入：
+
+```text
+按长期主文档规则执行。
+```
+
+主线程固定按两阶段推进。
+
+### 阶段 A：briefing
+
+- 只读 [项目总览](/Users/bruce/work/Holmas/doc/长期主文档/项目总览.md)、[迭代记录索引](/Users/bruce/work/Holmas/doc/迭代记录/迭代记录索引.md)，以及最新迭代记录中的 `当前状态`、`关键结论`、`风险与阻塞`、`下一步`、`给下一轮的人`
+- 默认不扫项目代码
+- 默认不通读全量协作文档
+- 固定输出：当前主线、当前阻塞、`1 ~ 3` 个任务建议、推荐先做哪个
+
+### 阶段 B：execution dispatch
+
+- 只有用户确认开始执行某个任务后，主线程才进入执行调度阶段
+- 进入执行调度阶段后，主线程才去读 `doc/长期主文档/协作与执行/` 下与当前任务有关的编组、角色、验收和收尾规则
+- 主线程必须先查线程级总注册表，再决定主线程直做、复用 helper、或启动一个或多个真实 subagent
+- 某条实现链达到阶段里程碑后，默认进入 `Agent 6 审查 -> 原实现线修复 -> 同一审查链复审 -> 通过` 的闭环
+
+如果用户直接说：
+
+```text
+按长期主文档规则执行，默认启动subagent。
+```
+
+表示跳过 briefing，直接进入 execution dispatch，并优先按长期编组方案判断是否拉起真实 subagent。
+
 ## 启动前检查
 
 主控在真正启动任何 Agent 之前，必须先完成这组检查：
@@ -104,22 +136,37 @@
 从现在开始，固定区分下面三层概念：
 
 - `Agent 1~6` 是职责模板，不等于真实 subagent 实例
-- “执行 Agent X”默认表示主线程按该职责执行，不代表自动启动真实 subagent
-- 只有你明确说“启动真实 subagent”或“默认真实 subagent 自动闭环”时，才表示允许真实委派
+- “执行 Agent X”默认表示主线程先按该职责推进，不预设一定新开真实 subagent
+- 新会话只说 `按长期主文档规则执行。` 时，默认先走 briefing；任务一旦确认，主线程就可以按长期规则自动判断是否委派真实 subagent
+- 只有用户显式补充“这轮不要开真实 subagent”时，主线程才必须禁用真实 subagent 委派
 - `Agent 6` 永远只负责审查、裁定、退回和复审，不接管实现
 
-## 线程级真实 subagent 模式
+## 线程级调度阶段与真实 subagent 模式
 
-主线程在每轮开始前，固定先判断当前线程是否开启真实 subagent 自动闭环。
+主线程每轮固定先判断当前线程处于哪个调度阶段。
 
-- `thread_real_subagent_mode = off`
+- `thread_dispatch_stage = briefing`
   - 默认值
-  - 主线程可以按 Agent 职责做事
-  - 不允许因为 Agent 6 退回 findings 就静默自动补起新的真实 subagent
-- `thread_real_subagent_mode = on`
-  - 只在用户明确授权“启动真实 subagent”或“默认真实 subagent 自动闭环”后开启
-  - 主线程应优先使用真实 subagent 承担实现职责
+  - 只做低 token 主线判断
+  - 不扫代码
+  - 不直接拉起真实 subagent
+- `thread_dispatch_stage = execution`
+  - 用户确认某个任务后进入
+  - 主线程必须再读协作文档、检查总注册表，并判断是否需要 helper 或真实 subagent
+  - 某条实现链达到阶段里程碑后，默认进入 Agent 6 审查闭环
+
+只有进入 `thread_dispatch_stage = execution` 后，主线程才判断真实 subagent 模式：
+
+- `thread_real_subagent_mode = disabled`
+  - 用户显式要求“这轮不要开真实 subagent”
+  - 主线程不得自动补起新的真实 subagent
+- `thread_real_subagent_mode = auto`
+  - 默认值
+  - 主线程按长期编组方案和线程级总注册表自动判断是否需要真实 subagent
   - 如果 Agent 6 退回 findings 且当前没有原实现真实 subagent，允许自动补起同职责真实 subagent 继续闭环
+- `thread_real_subagent_mode = preferred`
+  - 用户直接使用 `按长期主文档规则执行，默认启动subagent。`
+  - 可跳过 briefing，直接进入 execution，并优先使用真实 subagent 承担实现职责
 
 ## 线程级真实 agent 注册表
 
@@ -681,14 +728,15 @@ Agent 6 审查结果：通过
 主控在实际协作时固定按下面顺序推进：
 
 1. 先判断当前阶段和 DTO 状态
-2. 再判断本线程是否已授权默认真实 subagent 自动闭环
-3. 再决定由主线程按哪个职责执行，或启动哪一个真实 subagent
-4. 启动时使用固定模板，不临时口述
-5. 实现线返回后，先按验收规范检查
-6. 某条实现线达到阶段里程碑并通过基础验收后，默认交给 Agent 6 做挑刺与问题审查
-7. Agent 6 未通过时，先按固定路由规则退回实现方修复；修完后默认优先交回同一审查链复审
-8. 只有所有相关阶段里程碑都通过 Agent 6 后，才决定是否进入下一个阶段或做最终汇总
-9. 本轮结束后，执行文档维护流程
+2. 再判断当前线程是 `briefing` 还是 `execution`
+3. 如果已进入 `execution`，再判断真实 subagent 模式是 `disabled / auto / preferred`
+4. 再决定由主线程按哪个职责执行，或启动哪一个真实 subagent
+5. 启动时使用固定模板，不临时口述
+6. 实现线返回后，先按验收规范检查
+7. 某条实现线达到阶段里程碑并通过基础验收后，默认交给 Agent 6 做挑刺与问题审查
+8. Agent 6 未通过时，先按固定路由规则退回实现方修复；修完后默认优先交回同一审查链复审
+9. 只有所有相关阶段里程碑都通过 Agent 6 后，才决定是否进入下一个阶段或做最终汇总
+10. 本轮结束后，执行文档维护流程
 
 如果这轮同时有多个实现 subagent，则固定按下面的闭环方式执行：
 
@@ -719,8 +767,8 @@ Agent 6 审查结果：通过
 2. 逐条判定归属职责；如果跨职责，先拆链
 3. 查询线程级真实 agent 注册表
 4. 如果已有该职责的原实现真实 subagent，直接退回原 subagent
-5. 如果没有原实现真实 subagent，但 `thread_real_subagent_mode = on`，自动补起同职责真实 subagent
-6. 如果没有授权自动闭环，必须明确回显“当前线程未授权自动补起真实 subagent”，再由主线程兜底或等待用户指令
+5. 如果没有原实现真实 subagent，但 `thread_real_subagent_mode = auto / preferred`，自动补起同职责真实 subagent
+6. 如果当前仍在 briefing，或 `thread_real_subagent_mode = disabled`，必须明确回显“当前线程未授权自动补起真实 subagent”，再由主线程兜底或等待用户指令
 7. 等待修复中的实现线时，持续对外显示等待状态
 8. 修复完成后，主线程先做基础验收与必要验证
 9. 自动优先送回同一审查链复审
@@ -733,9 +781,9 @@ Agent 6 审查结果：通过
 - reviewer 接手后，线程级注册表里的 execution 状态仍按 `in_review / review_deferred / pending_re_review` 的真实阶段推进；脚本侧 `pending / deferred / failed / passed` 文案必须与该状态保持一致，不能因为换 reviewer 而重置成新链
 - Agent 6 的职责只到“找问题、裁定、退回、复审”为止；不要把修复动作继续丢给 Agent 6
 - 如果 Agent 6 已经给出 findings，后续修复默认必须回到原实现方，不允许主线程直接接管修复
-- 如果当前没有原实现真实 subagent，但线程已授权默认真实 subagent 自动闭环，主线程必须自动补起同职责真实 subagent，而不是让链路停住
-- 如果当前没有原实现真实 subagent，且线程未授权自动闭环，主线程必须明确回显“当前线程未授权自动补起真实 subagent”；这时才允许主线程兜底或等待用户指令
-- 如果原实现真实 subagent 已明确不可用，且线程已授权自动闭环，主线程可以补起同职责新的真实 subagent 接管剩余修复链；但必须对用户明确说明这次是同职责接管，不是原 subagent 继续处理
+- 如果当前没有原实现真实 subagent，但线程已进入 execution 且 `thread_real_subagent_mode = auto / preferred`，主线程必须自动补起同职责真实 subagent，而不是让链路停住
+- 如果当前没有原实现真实 subagent，且线程仍在 `briefing` 或 `thread_real_subagent_mode = disabled`，主线程必须明确回显“当前线程未授权自动补起真实 subagent”；这时才允许主线程兜底或等待用户指令
+- 如果原实现真实 subagent 已明确不可用，且线程已进入 execution 且 `thread_real_subagent_mode = auto / preferred`，主线程可以补起同职责新的真实 subagent 接管剩余修复链；但必须对用户明确说明这次是同职责接管，不是原 subagent 继续处理
 - 只有两种例外允许主线程接管修复：
   - 用户明确要求主线程接管
   - 原实现 subagent 已明确不可用，且主线程已向用户说明这次是兜底接管

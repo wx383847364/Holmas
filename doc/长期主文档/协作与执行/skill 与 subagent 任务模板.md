@@ -496,7 +496,7 @@ skill 组合：
 
 主控 agent 负责：
 
-- 先判断当前线程是否开启默认真实 subagent 自动闭环
+- 先判断当前线程处于 briefing 还是 execution dispatch
 - 维护线程级真实 agent 注册表，记录每个真实 subagent 的职责、agent id、状态和是否原实现方
 - 先让 Agent 1 冻结 DTO 和模块骨架
 - 再让 Agent 2、Agent 3 并行
@@ -521,8 +521,8 @@ skill 组合：
 3. 如果一个 finding 横跨多职责，先拆成多条修复链
 4. 查询线程级真实 agent 注册表
 5. 如果已有原实现真实 subagent，直接退回原实现方
-6. 如果没有原实现真实 subagent，但当前线程已开启默认真实 subagent 自动闭环，自动补起同职责真实 subagent
-7. 如果当前线程未授权自动闭环，明确回显“当前线程未授权自动补起真实 subagent”，再由主线程兜底或等待用户指令
+6. 如果没有原实现真实 subagent，但当前线程已进入 execution dispatch，且没有显式禁用真实 subagent，自动补起同职责真实 subagent
+7. 如果当前线程仍处于 briefing，或当前任务显式禁止真实 subagent，明确回显“当前线程未授权自动补起真实 subagent”，再由主线程兜底或等待用户指令
 8. 修复完成后，先做基础验收与必要验证
 9. 默认优先交回同一审查链复审
 
@@ -541,7 +541,7 @@ skill 组合：
 
 ```text
 这次按 6 个 subagent 开工。
-默认启动真实 subagent，并开启默认真实 subagent 自动闭环。
+直接进入 execution dispatch，按长期 subagent 编组方案自动判断并启动合适的真实 subagent。
 全部默认遵循 $unity-hotupdate-boundary。
 地图和任务相关额外遵循 $findcat-config-pipeline。
 UI 相关额外遵循 $unity-ugui-flow-integration。
