@@ -75,6 +75,8 @@ class UpdateProjectDocsTests(unittest.TestCase):
         self.assertIn("passed / passed-with-suggestions / failed / pending / deferred / not-required", completed.stdout)
         self.assertIn("项目总览.md", completed.stdout)
         self.assertIn("update_project_docs.py sync", completed.stdout)
+        self.assertIn("文档维护", completed.stdout)
+        self.assertIn("Git 提交建议", completed.stdout)
 
     def test_new_iteration_uses_default_agent_statuses(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -344,6 +346,78 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("- Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动", text)
             self.assertIn("- 分工状态改为长期规则源驱动", text)
 
+    def test_finalize_task_outputs_fixed_wrapup_sections_with_chinese_commit_message(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo_root = Path(temp_dir)
+            scripts_dir = repo_root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            create_doc_root(repo_root)
+
+            iteration_path = write_file(
+                repo_root,
+                "doc/迭代记录/迭代记录_20260402_001.md",
+                """
+                # 迭代记录 2026-04-02 001
+
+                ## 分工状态
+
+                - Agent 1：待补充
+                - Agent 2：待补充
+                - Agent 3：待补充
+                - Agent 4：待补充
+                - Agent 5：待补充
+                - Agent 6：待补充
+
+                ## 工作日志
+
+                ## 完成项
+
+                - 暂无
+
+                ## 风险与阻塞
+
+                - 暂无
+
+                ## 下一步
+
+                - 待补充
+                """,
+            )
+
+            completed = subprocess.run(
+                [
+                    "bash",
+                    str(scripts_dir / "finalize_task.sh"),
+                    "--file",
+                    str(iteration_path),
+                    "--summary",
+                    "统一新会话启动与收尾脚本输出",
+                    "--done",
+                    "为收尾流程补固定三段输出",
+                    "--done",
+                    "为提交建议补中文标题和内容",
+                    "--agent6-review",
+                    "passed",
+                    "--skip-temp-cleanup",
+                ],
+                cwd=repo_root,
+                env={**os.environ, "CODEX_HOME": str(repo_root / ".codex")},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("文档维护：已执行", completed.stdout)
+            self.assertIn("Git 提交建议：适合提交", completed.stdout)
+            self.assertIn("标题：流程：新会话启动与收尾脚本输出", completed.stdout)
+            self.assertIn("内容：", completed.stdout)
+            self.assertIn("- 为收尾流程补固定三段输出", completed.stdout)
+            self.assertIn("- 为提交建议补中文标题和内容", completed.stdout)
+            self.assertIn("会话建议：", completed.stdout)
+
     def test_finalize_task_auto_syncs_skills_when_skill_source_changes(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
@@ -584,6 +658,41 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             self.assertEqual(report["session_advice"], "建议新开下一阶段会话")
             self.assertIn("当前会话内已连续完成 2 个大任务", report["session_reason"])
+
+    def test_suggest_handoff_generates_chinese_commit_suggestion(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "统一新会话启动与收尾流程",
+                ["为收尾流程补固定三段输出", "为提交建议补中文标题和内容"],
+                [],
+                ["继续推进脚本收尾规则"],
+                "passed",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+
+            self.assertEqual(report["doc_maintenance_status"], "已执行")
+            self.assertTrue(report["commit_suggestion"]["suitable"])
+            self.assertEqual(report["commit_suggestion"]["title"], "流程：新会话启动与收尾流程")
+            self.assertEqual(
+                report["commit_suggestion"]["content"][:2],
+                ["为收尾流程补固定三段输出", "为提交建议补中文标题和内容"],
+            )
+            formatted = update_project_docs.format_handoff_report(report)
+            self.assertIn("文档维护：已执行", formatted)
+            self.assertIn("Git 提交建议：适合提交", formatted)
+            self.assertIn("标题：流程：新会话启动与收尾流程", formatted)
+            self.assertIn("会话建议：", formatted)
 
 
 if __name__ == "__main__":

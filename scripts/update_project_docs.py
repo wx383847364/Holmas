@@ -30,6 +30,18 @@ TOPIC_PATTERNS = [
     ("地图与棋盘", r"地图|棋盘|terrain|board|level|扫雷|开图|猫池"),
     ("边界与骨架", r"Shared|DTO|骨架|入口|bootstrap|组合层|boundary"),
 ]
+COMMIT_TITLE_PREFIX = {
+    "流程与协作": "流程：",
+    "审查与修复": "修复：",
+    "测试与验证": "测试：",
+    "UI 与联调": "UI：",
+    "配置表与数值扩展": "配置：",
+    "任务与长期进度": "玩法：",
+    "地图与棋盘": "玩法：",
+    "边界与骨架": "架构：",
+    "通用实现": "提交：",
+    "未识别": "提交：",
+}
 
 
 def ensure_dirs(doc_root: Path):
@@ -200,6 +212,99 @@ def dedupe_preserve_order(items):
         seen.add(normalized)
         ordered.append(normalized)
     return ordered
+
+
+def simplify_commit_title(text: str) -> str:
+    value = " ".join(text.split()).strip("。；，, ")
+    if not value:
+        return "更新当前任务"
+    value = re.sub(r"^(完成|继续|开始|正在|统一|补充|补齐|更新|修复|实现|新增|收口)", "", value).strip()
+    value = value.strip("：: ")
+    return value or "更新当前任务"
+
+
+def build_commit_title(summary: str, done, topic: str) -> str:
+    prefix = COMMIT_TITLE_PREFIX.get(topic, "提交：")
+    base = first_non_empty([summary, done[0] if done else "", "更新当前任务"])
+    simplified = simplify_commit_title(base)
+    if simplified.startswith(prefix):
+        return simplified
+    return f"{prefix}{simplified}"
+
+
+def build_commit_content(summary: str, done):
+    items = dedupe_preserve_order(done)
+    if summary:
+        items = dedupe_preserve_order(items + [summary])
+    if not items:
+        items = ["整理并收口当前任务改动"]
+    return items[:4]
+
+
+def suggest_commit_message(summary: str, done, risks, agent6_review: str, doc_log_skipped: bool):
+    if doc_log_skipped:
+        return {
+            "suitable": False,
+            "reason": "这轮属于事务性协助，没有形成需要写入项目状态的独立里程碑。",
+            "title": "",
+            "content": [],
+        }
+
+    if agent6_review == "failed":
+        return {
+            "suitable": False,
+            "reason": "Agent 6 审查未通过，当前仍在修复链中，暂不适合提交。",
+            "title": "",
+            "content": [],
+        }
+
+    if agent6_review == "pending":
+        return {
+            "suitable": False,
+            "reason": "Agent 6 审查尚未完成，当前还不能确认这轮改动已经收口。",
+            "title": "",
+            "content": [],
+        }
+
+    if agent6_review == "deferred":
+        return {
+            "suitable": False,
+            "reason": "Agent 6 审查当前处于待回补复审，正式审查闭环尚未完成。",
+            "title": "",
+            "content": [],
+        }
+
+    content = build_commit_content(summary, done)
+    topics = {
+        classify_topic(item)
+        for item in [summary, *done]
+        if item and item.strip()
+    }
+    topics.discard("未识别")
+    topics.discard("通用实现")
+    if len(topics) > 1:
+        return {
+            "suitable": False,
+            "reason": "当前总结里仍混有多条主线，建议先拆分后再分别生成提交标题和内容。",
+            "title": "",
+            "content": [],
+        }
+
+    if risks and not done:
+        return {
+            "suitable": False,
+            "reason": "当前仍以风险说明为主，缺少清晰完成项，暂不建议直接提交。",
+            "title": "",
+            "content": [],
+        }
+
+    topic = next(iter(topics), classify_topic(summary))
+    return {
+        "suitable": True,
+        "reason": "",
+        "title": build_commit_title(summary, done, topic),
+        "content": content,
+    }
 
 
 def extract_first_text_code_block(path: Path) -> str:
@@ -835,6 +940,7 @@ def suggest_handoff(
     context_compressed: bool,
     session_major_task_count: int,
 ):
+    commit = suggest_commit_message(summary, done, risks, agent6_review, doc_log_skipped)
     latest = latest_iteration_metadata(doc_root)
     today = datetime.now().strftime("%Y-%m-%d")
     next_focus = first_non_empty([next_session_goal, next_steps[0] if next_steps else "", summary])
@@ -981,6 +1087,8 @@ def suggest_handoff(
         startup_prompt = build_session_bootstrap_prompt(doc_root, goal, done, risks, next_steps, docs)
 
     return {
+        "doc_maintenance_status": "未执行。原因是：这轮属于事务性协助，没有写入项目总览或迭代记录。" if doc_log_skipped else "已执行",
+        "commit_suggestion": commit,
         "session_advice": session_advice,
         "session_reason": session_reason,
         "iteration_advice": iteration_advice,
@@ -995,7 +1103,24 @@ def suggest_handoff(
 
 def format_handoff_report(report):
     lines = [
-        f"会话建议：{report['session_advice']}",
+        f"文档维护：{report['doc_maintenance_status']}",
+    ]
+    commit = report["commit_suggestion"]
+    if commit["suitable"]:
+        lines += [
+            "Git 提交建议：适合提交",
+            f"标题：{commit['title']}",
+            "内容：",
+            "```text",
+        ]
+        for item in commit["content"]:
+            lines.append(f"- {item}")
+        lines.append("```")
+    else:
+        lines.append(f"Git 提交建议：暂不建议提交。原因是：{commit['reason']}")
+
+    lines.append(f"会话建议：{report['session_advice']}")
+    lines += [
         f"原因是：{report['session_reason']}",
         f"迭代记录建议：{report['iteration_advice']}",
         f"原因是：{report['iteration_reason']}",
