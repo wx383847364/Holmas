@@ -2,7 +2,9 @@
 import argparse
 from datetime import datetime
 from pathlib import Path
+import json
 import re
+import subprocess
 
 
 LONG_DIR_NAME = "长期主文档"
@@ -55,6 +57,8 @@ COMMIT_TITLE_PREFIX = {
     "通用实现": "提交：",
     "未识别": "提交：",
 }
+PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
+COMMIT_SEQUENCE_START = 50
 
 
 def ensure_dirs(doc_root: Path):
@@ -265,13 +269,52 @@ def simplify_commit_title(text: str) -> str:
     return value or "更新当前任务"
 
 
-def build_commit_title(summary: str, done, topic: str) -> str:
+def next_commit_sequence(doc_root: Path) -> int:
+    repo_root = doc_root.resolve().parent
+    try:
+        inside_repo = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--is-inside-work-tree"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return COMMIT_SEQUENCE_START
+
+    if inside_repo.returncode != 0:
+        return COMMIT_SEQUENCE_START
+
+    log_result = subprocess.run(
+        ["git", "-C", str(repo_root), "log", "--format=%s"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if log_result.returncode != 0:
+        return COMMIT_SEQUENCE_START
+
+    max_sequence = 0
+    for line in log_result.stdout.splitlines():
+        match = re.match(r"^\[(\d+)\]\s+", line.strip())
+        if match:
+            max_sequence = max(max_sequence, int(match.group(1)))
+    return max(max_sequence + 1, COMMIT_SEQUENCE_START)
+
+
+def format_commit_sequence(sequence: int) -> str:
+    return f"[{sequence:04d}]"
+
+
+def build_commit_title(doc_root: Path, summary: str, done, topic: str) -> str:
     prefix = COMMIT_TITLE_PREFIX.get(topic, "提交：")
     base = first_non_empty([summary, done[0] if done else "", "更新当前任务"])
     simplified = simplify_commit_title(base)
-    if simplified.startswith(prefix):
+    if not simplified.startswith(prefix):
+        simplified = f"{prefix}{simplified}"
+    sequence = format_commit_sequence(next_commit_sequence(doc_root))
+    if simplified.startswith(f"{sequence} "):
         return simplified
-    return f"{prefix}{simplified}"
+    return f"{sequence} {simplified}"
 
 
 def build_commit_content(summary: str, done):
@@ -283,7 +326,80 @@ def build_commit_content(summary: str, done):
     return items[:4]
 
 
-def suggest_commit_message(summary: str, done, risks, agent6_review: str, doc_log_skipped: bool):
+def git_dir_for_doc_root(doc_root: Path):
+    repo_root = doc_root.resolve().parent
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--git-dir"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return None
+
+    if result.returncode != 0:
+        return None
+
+    git_dir = result.stdout.strip()
+    if not git_dir:
+        return None
+
+    path = Path(git_dir)
+    if not path.is_absolute():
+        path = (repo_root / path).resolve()
+    return path
+
+
+def pending_commit_cache_path(doc_root: Path):
+    git_dir = git_dir_for_doc_root(doc_root)
+    if git_dir is None:
+        return None
+    return git_dir / PENDING_COMMIT_CACHE_RELATIVE
+
+
+def current_head_commit(doc_root: Path) -> str:
+    repo_root = doc_root.resolve().parent
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
+def write_pending_commit_suggestion(doc_root: Path, commit):
+    cache_path = pending_commit_cache_path(doc_root)
+    if cache_path is None:
+        return
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "title": commit["title"],
+        "content": commit["content"],
+        "head_commit": current_head_commit(doc_root),
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+    }
+    cache_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def clear_pending_commit_suggestion(doc_root: Path):
+    cache_path = pending_commit_cache_path(doc_root)
+    if cache_path is None or not cache_path.exists():
+        return
+    cache_path.unlink()
+
+
+def read_pending_commit_suggestion(doc_root: Path):
+    cache_path = pending_commit_cache_path(doc_root)
+    if cache_path is None or not cache_path.exists():
+        return None
+    return json.loads(cache_path.read_text(encoding="utf-8"))
+
+
+def suggest_commit_message(doc_root: Path, summary: str, done, risks, agent6_review: str, doc_log_skipped: bool):
     if doc_log_skipped:
         return {
             "suitable": False,
@@ -344,7 +460,7 @@ def suggest_commit_message(summary: str, done, risks, agent6_review: str, doc_lo
     return {
         "suitable": True,
         "reason": "",
-        "title": build_commit_title(summary, done, topic),
+        "title": build_commit_title(doc_root, summary, done, topic),
         "content": content,
     }
 
@@ -1006,7 +1122,11 @@ def suggest_handoff(
     context_compressed: bool,
     session_major_task_count: int,
 ):
-    commit = suggest_commit_message(summary, done, risks, agent6_review, doc_log_skipped)
+    commit = suggest_commit_message(doc_root, summary, done, risks, agent6_review, doc_log_skipped)
+    if commit["suitable"]:
+        write_pending_commit_suggestion(doc_root, commit)
+    else:
+        clear_pending_commit_suggestion(doc_root)
     latest = latest_iteration_metadata(doc_root)
     today = datetime.now().strftime("%Y-%m-%d")
     next_focus = first_non_empty([next_session_goal, next_steps[0] if next_steps else "", summary])
@@ -1305,6 +1425,8 @@ def main():
         help="Explicit count of major tasks already completed in the current session",
     )
 
+    sub.add_parser("show-pending-commit", help="Show the latest cached suitable commit suggestion")
+
     backfill = sub.add_parser("backfill-agent-status", help="Backfill default agent status into iteration logs")
     backfill.add_argument("--from", dest="from_date", required=True, help="Start date in YYYYMMDD")
 
@@ -1354,6 +1476,13 @@ def main():
             args.session_major_task_count,
         )
         print(format_handoff_report(report))
+        return
+
+    if args.command == "show-pending-commit":
+        payload = read_pending_commit_suggestion(doc_root)
+        if not payload:
+            raise SystemExit("未找到最近一次可直接复用的提交建议缓存。")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
         return
 
     if args.command == "backfill-agent-status":

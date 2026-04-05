@@ -413,7 +413,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertIn("文档维护：已执行", completed.stdout)
             self.assertIn("Git 提交建议：适合提交", completed.stdout)
-            self.assertIn("标题：流程：新会话启动与收尾脚本输出", completed.stdout)
+            self.assertIn("标题：[0050] 流程：新会话启动与收尾脚本输出", completed.stdout)
             self.assertIn("内容：", completed.stdout)
             self.assertIn("- 为收尾流程补固定三段输出", completed.stdout)
             self.assertIn("- 为提交建议补中文标题和内容", completed.stdout)
@@ -756,7 +756,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             self.assertEqual(report["doc_maintenance_status"], "已执行")
             self.assertTrue(report["commit_suggestion"]["suitable"])
-            self.assertEqual(report["commit_suggestion"]["title"], "流程：新会话启动与收尾流程")
+            self.assertEqual(report["commit_suggestion"]["title"], "[0050] 流程：新会话启动与收尾流程")
             self.assertEqual(
                 report["commit_suggestion"]["content"][:2],
                 ["为收尾流程补固定三段输出", "为提交建议补中文标题和内容"],
@@ -764,9 +764,130 @@ class UpdateProjectDocsTests(unittest.TestCase):
             formatted = update_project_docs.format_handoff_report(report)
             self.assertIn("文档维护：已执行", formatted)
             self.assertIn("Git 提交建议：适合提交", formatted)
-            self.assertIn("标题：流程：新会话启动与收尾流程", formatted)
+            self.assertIn("标题：[0050] 流程：新会话启动与收尾流程", formatted)
             self.assertIn("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。", formatted)
             self.assertIn("会话建议：", formatted)
+
+    def test_suggest_commit_message_uses_next_numbered_commit_sequence(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.email", "codex@example.com"], cwd=root, check=True, capture_output=True, text=True)
+
+            tracked = write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[0003] 文档：已有编号提交"], cwd=root, check=True, capture_output=True, text=True)
+
+            tracked.write_text("world\n", encoding="utf-8")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "没有编号的历史提交"], cwd=root, check=True, capture_output=True, text=True)
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "统一新会话启动与收尾流程",
+                ["为收尾流程补固定三段输出"],
+                [],
+                ["继续推进脚本收尾规则"],
+                "passed",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+
+            self.assertTrue(report["commit_suggestion"]["suitable"])
+            self.assertEqual(report["commit_suggestion"]["title"], "[0050] 流程：新会话启动与收尾流程")
+
+    def test_suggest_handoff_caches_pending_commit_suggestion_in_git_dir(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.email", "codex@example.com"], cwd=root, check=True, capture_output=True, text=True)
+
+            tracked = write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[0002] 文档：已有编号提交"], cwd=root, check=True, capture_output=True, text=True)
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "统一新会话启动与收尾流程",
+                ["为收尾流程补固定三段输出"],
+                [],
+                ["继续推进脚本收尾规则"],
+                "passed",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+
+            cache = update_project_docs.read_pending_commit_suggestion(doc_root)
+            self.assertTrue(report["commit_suggestion"]["suitable"])
+            self.assertIsNotNone(cache)
+            self.assertEqual(cache["title"], "[0050] 流程：新会话启动与收尾流程")
+            self.assertEqual(cache["content"], ["为收尾流程补固定三段输出", "统一新会话启动与收尾流程"])
+            self.assertTrue(cache["head_commit"])
+
+    def test_unsuitable_handoff_clears_pending_commit_cache(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.email", "codex@example.com"], cwd=root, check=True, capture_output=True, text=True)
+
+            tracked = write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[0005] 文档：已有编号提交"], cwd=root, check=True, capture_output=True, text=True)
+
+            update_project_docs.suggest_handoff(
+                doc_root,
+                "统一新会话启动与收尾流程",
+                ["为收尾流程补固定三段输出"],
+                [],
+                ["继续推进脚本收尾规则"],
+                "passed",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+            self.assertIsNotNone(update_project_docs.read_pending_commit_suggestion(doc_root))
+
+            update_project_docs.suggest_handoff(
+                doc_root,
+                "继续修复 Agent 6 findings",
+                ["补齐回归验证"],
+                [],
+                ["继续当前修复"],
+                "failed",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+
+            self.assertIsNone(update_project_docs.read_pending_commit_suggestion(doc_root))
 
     def test_format_handoff_report_for_unsuitable_commit_includes_do_not_commit_prompt(self):
         with tempfile.TemporaryDirectory() as temp_dir:
