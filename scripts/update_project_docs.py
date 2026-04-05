@@ -31,6 +31,7 @@ LEGACY_LONG_DOCS = {
     f"{LONG_DIR_NAME}/方案与数据/UI 自动生成系统隔离化孵化方案 v2 执行派工单与 Skill 规范.md",
 }
 TOPIC_PATTERNS = [
+    ("文档整理", r"文档|主文档|迭代记录|索引|总览|规范|模板|跳转页|规则文档|update_project_docs|finalize_task"),
     ("流程与协作", r"会话|文档维护|交接|协作|启动卡|收尾|流程|自动维护"),
     ("审查与修复", r"Agent\s*6|审查|复审|修复|review|挑刺"),
     ("测试与验证", r"测试|验证|回归|smoke|qa|batchmode"),
@@ -45,6 +46,7 @@ PROCESS_ONLY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 COMMIT_TITLE_PREFIX = {
+    "文档整理": "文档：",
     "流程与协作": "流程：",
     "审查与修复": "修复：",
     "测试与验证": "测试：",

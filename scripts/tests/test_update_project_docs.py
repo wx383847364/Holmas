@@ -833,6 +833,37 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。", formatted)
             self.assertIn("会话建议：", formatted)
 
+    def test_classify_topic_prefers_document_category_for_doc_words(self):
+        self.assertEqual(
+            update_project_docs.classify_topic("整理项目总览与长期规则文档入口"),
+            "文档整理",
+        )
+
+    def test_suggest_handoff_uses_document_prefix_for_doc_cleanup(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "整理项目总览与长期规则文档入口",
+                [],
+                [],
+                ["继续维护文档入口"],
+                "passed",
+                "continue",
+                "continue",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+
+            self.assertTrue(report["commit_suggestion"]["suitable"])
+            self.assertEqual(report["commit_suggestion"]["title"], "[0050] 文档：整理项目总览与长期规则文档入口")
+
     def test_suggest_commit_message_uses_next_numbered_commit_sequence(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
