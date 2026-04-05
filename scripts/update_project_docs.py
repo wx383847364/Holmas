@@ -25,6 +25,9 @@ TASK_WRAPUP_DOC = "协作与执行/任务完成后自动维护文档.md"
 LEGACY_LONG_DOCS = {
     f"{LONG_DIR_NAME}/方案与数据/Holmas UI 自动生成系统长期方案.md",
     f"{LONG_DIR_NAME}/方案与数据/PLAN.md",
+    f"{LONG_DIR_NAME}/方案与数据/UI Prefab 自动生成系统 Agent 规划入口.md",
+    f"{LONG_DIR_NAME}/方案与数据/UI 自动生成系统隔离化孵化方案 v2.md",
+    f"{LONG_DIR_NAME}/方案与数据/UI 自动生成系统隔离化孵化方案 v2 执行派工单与 Skill 规范.md",
 }
 TOPIC_PATTERNS = [
     ("流程与协作", r"会话|文档维护|交接|协作|启动卡|收尾|流程|自动维护"),

@@ -12,6 +12,52 @@
 
 推荐先按 **6 个 subagent** 起步；等你用顺手了，再扩成 9 个长期版编组。
 
+## UI 自动生成系统专项
+
+当任务属于 `doc/长期主文档/UI自动生成系统` 或 `Assets/Tools/UiPrefabGenerator` 时，优先切到这套专项组合，而不是默认套 Holmas gameplay 编组。
+
+### 专项 skill
+
+- `ui-prefab-governance`
+  - 管专区落位、派工单格式、asmdef 分层、迁移边界、旧稿跳转页和 Holmas 试点角色
+- `ui-prefab-pipeline`
+  - 管 `DesignPacket -> UiPrefabSpec -> PrefabBindingManifest -> validation`
+
+### 专项 subagent
+
+1. `Subagent 1 / Foundation-Contracts`
+- skill：`ui-prefab-governance`
+- 独占：`Runtime/Core/Contracts`、`*.asmdef`、专区执行派工单正文
+
+2. `Subagent 2 / Design-Intake-Spec`
+- skill：`ui-prefab-pipeline`
+- 独占：`Runtime/Core/Intake`、`04_输入规格_DesignPacket.md`、`05_中间规格_UiPrefabSpec.md`
+
+3. `Subagent 3 / Generator-Manifest`
+- skill：`ui-prefab-pipeline`
+- 独占：`Runtime/Core/Manifest`、`Editor/Generation`、manifest 与生成样例
+
+4. `Subagent 4 / Holmas-Adapter-Profile`
+- skill：`ui-prefab-governance` + `ui-prefab-pipeline`
+- 只有触碰 Holmas 接入代码时才额外叠加：`unity-hotupdate-boundary`
+- 独占：`Runtime/HolmasAdapter`、Holmas profile、目录映射和消费约束
+
+5. `Subagent 5 / Validation-Regression`
+- skill：`ui-prefab-pipeline`
+- 独占：`Editor/Validation`、`Tests`、golden fixtures、validation baseline
+
+6. `Subagent 6 / Review-Acceptance`
+- skill：`ui-prefab-governance`
+- 按审查对象叠加：`ui-prefab-pipeline`
+- 独占：迭代记录中的审查结论、review note、复审条件
+
+### 专项启动顺序
+
+1. 先起 `Subagent 1 / Foundation-Contracts`
+2. 契约冻结后并行起 `Subagent 2 / 3 / 4`
+3. 至少有 1 份 approved sample spec 和 1 份 sample manifest 后，`Subagent 5` 再全面介入
+4. `Subagent 6` 只在阶段里程碑后介入
+
 ## 6-Agent 实操版
 
 ### 1. 边界与骨架 Agent

@@ -168,3 +168,30 @@ Agent 6 已经退回 findings。
 如果没有，而当前线程已进入执行调度阶段且未显式禁止真实 subagent，就自动补起同职责真实 subagent 接手修复。
 修完后默认优先交回同一审查链复审；如果原审查实例超时、不可用或上下文明显失真，再由同职责 reviewer 接手同一 review_chain_id。不要停下来等我再次确认。
 ```
+
+## UI 自动生成系统专项
+
+适合 `doc/长期主文档/UI自动生成系统` 和 `Assets/Tools/UiPrefabGenerator` 相关任务。
+
+```text
+按长期主文档规则执行。
+这轮任务属于 UI 自动生成系统专项。
+优先遵循 $ui-prefab-governance；如果任务涉及 DesignPacket、UiPrefabSpec、PrefabBindingManifest、生成流程或校验回归，再叠加 $ui-prefab-pipeline。
+按 UI 自动生成系统专区中的执行派工单拆分 subagent，并遵守子目录独占写入边界。
+完成后同步专区文档、旧稿跳转页、相关 skill 和迭代记录。
+```
+
+```text
+按长期主文档规则执行，默认启动subagent。
+这轮任务属于 UI 自动生成系统专项。
+先执行 Subagent 1 / Foundation-Contracts。
+目标：冻结专区权威正文、asmdef 分层、核心不可变契约和 adapter 接口边界，并交付 contracts freeze note。
+```
+
+```text
+按长期主文档规则执行，默认启动subagent。
+这轮任务属于 UI 自动生成系统专项。
+执行 Subagent 3 / Generator-Manifest。
+目标：基于 approved spec 冻结 prefab 草稿生成步骤、节点命名、组件白名单、资源槽位规则，并交付 sample manifest。
+不要修改 Runtime/Core/Contracts、Runtime/Core/Intake、Runtime/HolmasAdapter、Editor/Validation 或 Tests。
+```
