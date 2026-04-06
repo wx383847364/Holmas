@@ -118,6 +118,86 @@ namespace UiPrefabGenerator.Tests.EditMode
         }
 
         [Test]
+        public void TryLoadAnalysisResult_FallsBackWhenResourceMatchReportIsMissing()
+        {
+            string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_missing_match_report";
+            try
+            {
+                UiGenerationDataPaths.EnsureDataFolders();
+                UiGenerationDataPaths.EnsureFolderExists(taskDirectory);
+
+                var designPacket = SampleFixtureLoader.LoadDesignPacket();
+                var spec = SampleFixtureLoader.LoadUiPrefabSpec();
+
+                UiGenerationJsonFileUtility.SaveJson(taskDirectory + "/" + UiGenerationDataPaths.DesignPacketFileName, designPacket);
+                UiGenerationJsonFileUtility.SaveJson(taskDirectory + "/" + UiGenerationDataPaths.UiPrefabSpecFileName, spec);
+
+                UiGenerationAnalysisResult loadedResult;
+                string error;
+                Assert.That(UiGenerationTaskStorage.TryLoadAnalysisResult(taskDirectory, out loadedResult, out error), Is.True);
+                Assert.That(error, Is.Empty);
+                Assert.That(loadedResult, Is.Not.Null);
+                Assert.That(loadedResult.ResourceMatchReport, Is.Not.Null);
+                Assert.That(loadedResult.ResourceMatchReport.Matches, Is.Empty);
+                Assert.That(loadedResult.ResourceMatchReport.UnresolvedSlots, Is.Empty);
+            }
+            finally
+            {
+                CleanupTaskArtifacts(taskDirectory);
+            }
+        }
+
+        [Test]
+        public void TryLoadAnalysisResult_FailsWhenDesignPacketIsMissing()
+        {
+            string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_missing_design_packet";
+            try
+            {
+                UiGenerationDataPaths.EnsureDataFolders();
+                UiGenerationDataPaths.EnsureFolderExists(taskDirectory);
+
+                UiGenerationJsonFileUtility.SaveJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.UiPrefabSpecFileName,
+                    SampleFixtureLoader.LoadUiPrefabSpec());
+
+                UiGenerationAnalysisResult loadedResult;
+                string error;
+                Assert.That(UiGenerationTaskStorage.TryLoadAnalysisResult(taskDirectory, out loadedResult, out error), Is.False);
+                Assert.That(loadedResult, Is.Null);
+                Assert.That(error, Does.Contain("design_packet"));
+            }
+            finally
+            {
+                CleanupTaskArtifacts(taskDirectory);
+            }
+        }
+
+        [Test]
+        public void TryLoadAnalysisResult_FailsWhenUiPrefabSpecIsMissing()
+        {
+            string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_missing_ui_prefab_spec";
+            try
+            {
+                UiGenerationDataPaths.EnsureDataFolders();
+                UiGenerationDataPaths.EnsureFolderExists(taskDirectory);
+
+                UiGenerationJsonFileUtility.SaveJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.DesignPacketFileName,
+                    SampleFixtureLoader.LoadDesignPacket());
+
+                UiGenerationAnalysisResult loadedResult;
+                string error;
+                Assert.That(UiGenerationTaskStorage.TryLoadAnalysisResult(taskDirectory, out loadedResult, out error), Is.False);
+                Assert.That(loadedResult, Is.Null);
+                Assert.That(error, Does.Contain("ui_prefab_spec"));
+            }
+            finally
+            {
+                CleanupTaskArtifacts(taskDirectory);
+            }
+        }
+
+        [Test]
         public void TryLoadAnalysisResult_FailsWhenTaskIdDoesNotMatchDirectory()
         {
             string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_task_id_guard";
@@ -148,6 +228,112 @@ namespace UiPrefabGenerator.Tests.EditMode
             }
         }
 
+        [Test]
+        public void TryLoadAnalysisResult_PrefersAnalysisResultJsonWhenPresent()
+        {
+            string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_analysis_result_precedence";
+            try
+            {
+                UiGenerationDataPaths.EnsureDataFolders();
+                UiGenerationDataPaths.EnsureFolderExists(taskDirectory);
+
+                UiGenerationJsonFileUtility.SaveJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.DesignPacketFileName,
+                    CreateDesignPacket("fallback_page", "Fallback Page", "FallbackPrefab"));
+                UiGenerationJsonFileUtility.SaveJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.UiPrefabSpecFileName,
+                    CreateUiPrefabSpec("fallback_page", "FallbackPrefab"));
+                UiGenerationJsonFileUtility.SaveJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.ResourceMatchReportFileName,
+                    CreateResourceMatchReport("test_analysis_result_precedence", null, false));
+
+                UiGenerationAnalysisResult expected = CreateAnalysisResult(
+                    "test_analysis_result_precedence",
+                    "direct_page",
+                    "Direct Page",
+                    "DirectPrefab",
+                    "DirectTemplate",
+                    "direct_profile");
+                UiGenerationJsonFileUtility.SaveJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.AnalysisResultFileName,
+                    expected);
+
+                UiGenerationAnalysisResult loadedResult;
+                string error;
+                Assert.That(UiGenerationTaskStorage.TryLoadAnalysisResult(taskDirectory, out loadedResult, out error), Is.True);
+                Assert.That(error, Is.Empty);
+                Assert.That(loadedResult.TaskId, Is.EqualTo("test_analysis_result_precedence"));
+                Assert.That(loadedResult.TemplateName, Is.EqualTo("DirectTemplate"));
+                Assert.That(loadedResult.ProfileId, Is.EqualTo("direct_profile"));
+                Assert.That(loadedResult.DesignPacket.PageId, Is.EqualTo("direct_page"));
+                Assert.That(loadedResult.DesignPacket.PrefabName, Is.EqualTo("DirectPrefab"));
+            }
+            finally
+            {
+                CleanupTaskArtifacts(taskDirectory);
+            }
+        }
+
+        [Test]
+        public void SaveAnalysisArtifacts_WritesAllAnalysisArtifacts()
+        {
+            string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_save_analysis_artifacts";
+            try
+            {
+                UiGenerationDataPaths.EnsureDataFolders();
+                UiGenerationDataPaths.EnsureFolderExists(taskDirectory);
+
+                UiGenerationAnalysisResult analysis = CreateAnalysisResult(
+                    "test_save_analysis_artifacts",
+                    "analysis_page",
+                    "Analysis Page",
+                    "AnalysisPrefab",
+                    "AnalysisTemplate",
+                    "analysis_profile");
+
+                UiGenerationTaskStorage.SaveAnalysisArtifacts(taskDirectory, analysis);
+
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.AnalysisResultFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.DesignPacketFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.UiPrefabSpecFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.ResourceMatchReportFileName)), Is.True);
+
+                UiGenerationAnalysisResult loadedResult;
+                string error;
+                Assert.That(UiGenerationTaskStorage.TryLoadAnalysisResult(taskDirectory, out loadedResult, out error), Is.True);
+                Assert.That(error, Is.Empty);
+                Assert.That(loadedResult.TaskId, Is.EqualTo("test_save_analysis_artifacts"));
+                Assert.That(loadedResult.TemplateName, Is.EqualTo("AnalysisTemplate"));
+                Assert.That(loadedResult.ProfileId, Is.EqualTo("analysis_profile"));
+                Assert.That(loadedResult.ResourceMatchReport.Matches.Count, Is.EqualTo(1));
+                Assert.That(loadedResult.ResourceMatchReport.UnresolvedSlots, Has.Member("claim_button_bg"));
+            }
+            finally
+            {
+                CleanupTaskArtifacts(taskDirectory);
+            }
+        }
+
+        [Test]
+        public void LoadAnalysisSummary_ReturnsSavedMarkdown()
+        {
+            string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_analysis_summary";
+            try
+            {
+                UiGenerationDataPaths.EnsureDataFolders();
+                UiGenerationDataPaths.EnsureFolderExists(taskDirectory);
+
+                const string expectedSummary = "## analysis\n- ok\n";
+                UiGenerationJsonFileUtility.SaveText(taskDirectory + "/" + UiGenerationDataPaths.AnalysisSummaryFileName, expectedSummary);
+
+                Assert.That(UiGenerationTaskStorage.LoadAnalysisSummary(taskDirectory), Is.EqualTo(expectedSummary));
+            }
+            finally
+            {
+                CleanupTaskArtifacts(taskDirectory);
+            }
+        }
+
         private static void CreateTempImageAsset()
         {
             Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, false);
@@ -166,6 +352,80 @@ namespace UiPrefabGenerator.Tests.EditMode
             Object.DestroyImmediate(texture);
             AssetDatabase.ImportAsset(TempImageAssetPath, ImportAssetOptions.ForceSynchronousImport);
             AssetDatabase.Refresh();
+        }
+
+        private static UiGenerationAnalysisResult CreateAnalysisResult(
+            string taskId,
+            string pageId,
+            string pageTitle,
+            string prefabName,
+            string templateName,
+            string profileId)
+        {
+            return new UiGenerationAnalysisResult
+            {
+                TaskId = taskId,
+                Success = true,
+                TemplateName = templateName,
+                ProfileId = profileId,
+                DesignPacket = CreateDesignPacket(pageId, pageTitle, prefabName),
+                UiPrefabSpec = CreateUiPrefabSpec(pageId, prefabName),
+                ResourceMatchReport = CreateResourceMatchReport(taskId, "Assets/Res", true),
+            };
+        }
+
+        private static DesignPacket CreateDesignPacket(string pageId, string pageTitle, string prefabName)
+        {
+            return new DesignPacket
+            {
+                PageId = pageId,
+                PageTitle = pageTitle,
+                PrefabName = prefabName,
+                Notes = "test",
+            };
+        }
+
+        private static UiPrefabSpec CreateUiPrefabSpec(string pageId, string prefabName)
+        {
+            return new UiPrefabSpec
+            {
+                PageId = pageId,
+                PrefabName = prefabName,
+                RootNodeId = "root",
+                GenerationProfileId = "test_profile",
+            };
+        }
+
+        private static UiResourceMatchReport CreateResourceMatchReport(string taskId, string assetRoot, bool includeSelectedAsset)
+        {
+            var report = new UiResourceMatchReport
+            {
+                TaskId = taskId,
+                AssetRoot = assetRoot ?? string.Empty,
+            };
+            report.Matches.Add(new UiAssetSlotMatch
+            {
+                AssetSlot = "panel_bg",
+                ComponentType = "Image",
+                SelectedAssetPath = includeSelectedAsset ? "Assets/Res/UI/panel_bg.png" : string.Empty,
+                SelectedAssetType = includeSelectedAsset ? "Sprite" : string.Empty,
+                Confidence = includeSelectedAsset ? 0.9f : 0.2f,
+                Notes = includeSelectedAsset ? "selected" : "low confidence",
+            });
+            report.UnresolvedSlots.Add("claim_button_bg");
+            if (!includeSelectedAsset)
+            {
+                report.Matches[0].Candidates.Add(new UiAssetCandidate
+                {
+                    AssetPath = "Assets/Res/UI/panel_bg_low.png",
+                    AssetType = "Sprite",
+                    Score = 0.2f,
+                    Reason = "low score",
+                    Recommended = false,
+                });
+            }
+
+            return report;
         }
 
         private static void CleanupTaskArtifacts(string taskDirectory)
