@@ -1,0 +1,24 @@
+{
+    "name": "UiPrefabGenerator.Tests",
+    "rootNamespace": "UiPrefabGenerator.Tests",
+    "references": [
+        "UiPrefabGenerator.Core",
+        "UiPrefabGenerator.Core.Intake",
+        "UiPrefabGenerator.Editor",
+        "UiPrefabGenerator.HolmasAdapter"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
