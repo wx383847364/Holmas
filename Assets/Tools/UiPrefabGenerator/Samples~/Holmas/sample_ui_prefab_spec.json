@@ -1,0 +1,31 @@
+{
+  "page_id": "agency_main",
+  "prefab_name": "AgencyMainPanel",
+  "root_node_id": "root",
+  "generation_profile_id": "holmas_ugui",
+  "nodes": [
+    {
+      "node_id": "root",
+      "node_name": "AgencyMainPanel",
+      "parent_node_id": "",
+      "components": [
+        {
+          "component_type": "RectTransform",
+          "binding_key": "",
+          "asset_slot": ""
+        },
+        {
+          "component_type": "Image",
+          "binding_key": "",
+          "asset_slot": "panel_bg"
+        }
+      ],
+      "layout": {
+        "layout_type": "FullScreen",
+        "layout_slot": "root"
+      }
+    }
+  ],
+  "bindings": [],
+  "interactions": []
+}

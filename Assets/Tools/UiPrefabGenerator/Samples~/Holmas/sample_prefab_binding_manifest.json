@@ -1,0 +1,24 @@
+{
+  "prefab_name": "AgencyMainPanel",
+  "prefab_draft_path": "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+  "entries": [
+    {
+      "node_path": "AgencyMainPanel",
+      "component_type": "RectTransform",
+      "binding_key": "",
+      "asset_slot": "",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=root; component=RectTransform; layout=FullScreen; layout_slot=root; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel",
+      "component_type": "Image",
+      "binding_key": "",
+      "asset_slot": "panel_bg",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=root; component=Image; asset_slot=panel_bg; layout=FullScreen; layout_slot=root; manual_wiring=false"
+    }
+  ]
+}
