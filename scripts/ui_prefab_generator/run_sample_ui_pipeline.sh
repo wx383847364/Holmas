@@ -41,6 +41,18 @@ error() {
     printf '[error] %s\n' "$1" >&2
 }
 
+file_contains_pattern() {
+    local pattern="$1"
+    local file_path="$2"
+
+    if command -v rg >/dev/null 2>&1; then
+        rg -q -- "${pattern}" "${file_path}"
+        return $?
+    fi
+
+    grep -E -q -- "${pattern}" "${file_path}"
+}
+
 detect_editor_path() {
     if [[ -n "${EDITOR_PATH}" ]]; then
         return 0
@@ -190,7 +202,7 @@ run_batchmode() {
 assert_log_contains() {
     local pattern="$1"
     local log_file="$2"
-    if ! rg -q "${pattern}" "${log_file}"; then
+    if ! file_contains_pattern "${pattern}" "${log_file}"; then
         error "日志未找到预期成功标记：${pattern}"
         error "请检查日志：${log_file}"
         exit 1
@@ -207,7 +219,7 @@ if [[ ! -f "${REPORT_PATH}" ]]; then
     exit 1
 fi
 
-if ! rg -q '"Success": true' "${REPORT_PATH}"; then
+if ! file_contains_pattern '"Success": true' "${REPORT_PATH}"; then
     error "sample pipeline 报告未通过成功断言：${REPORT_PATH}"
     exit 1
 fi
