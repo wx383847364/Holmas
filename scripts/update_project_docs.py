@@ -59,7 +59,17 @@ COMMIT_TITLE_PREFIX = {
     "未识别": "提交：",
 }
 PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
-COMMIT_SEQUENCE_START = 50
+COMMIT_MODULE_SEQUENCE_START = 1
+COMMIT_MODULE_DEFAULT = "610"
+DOC_MODULE_PATTERNS = [
+    ("210", r"项目总览|主文档索引|入口页|入口文档|研发入口|当前概览"),
+    ("220", r"架构与边界|边界规范|边界文档|热更新边界规范|boundary"),
+    ("260", r"迭代记录|启动卡|交接|给下一轮的人"),
+    ("270", r"UI 自动生成系统|UiPrefabGenerator|DesignPacket|UiPrefabSpec|PrefabBindingManifest|执行派工单|sample manifest|sample spec"),
+    ("250", r"配表|内容表|成长表|表方案|表结构|数据方案"),
+    ("240", r"落地方案|长期方案|主线方案|Holmas_v1方案|方案"),
+    ("230", r"协作与执行|收尾|finalize_task|suggest-handoff|append-iteration|Codex新会话必读|Agent 启动|启动与验收|subagent|skill"),
+]
 PLAN_PROGRESS_HEADING = "完成情况"
 PLAN_STATUS_VALUES = {"未开始", "进行中", "已完成"}
 
@@ -233,6 +243,71 @@ def classify_topic(text: str) -> str:
     return "通用实现"
 
 
+def classify_commit_module(text: str, topic: str) -> str:
+    compact = " ".join(text.split())
+    if not compact:
+        return COMMIT_MODULE_DEFAULT
+
+    if re.search(r"Assets/HotUpdateContent/Res|HotUpdate Res|Res 目录|资源 meta|Res/|图标资源 meta", compact, re.IGNORECASE):
+        return "320"
+    if re.search(r"图标|贴图|头像|icon", compact, re.IGNORECASE):
+        return "310"
+    if re.search(r"地图资源|关卡资源|terrain 资源|Map/|\.asset\.meta", compact, re.IGNORECASE):
+        return "340"
+    if re.search(r"场景|scene|预制体|prefab", compact, re.IGNORECASE):
+        return "330"
+    if re.search(r"Holmas_AgencyBuildingTable|Holmas_CatTable|Holmas_MapTable|Holmas_MetaLevelTable|Holmas_PlayerLevelTable|Holmas_TaskTable|\.csv|csv|配置表", compact, re.IGNORECASE):
+        return "410"
+    if re.search(r"导表|导出|转换脚本|export report|配置转换", compact, re.IGNORECASE):
+        return "420"
+    if re.search(r"\.json|\.bytes|catalog|json / bytes|holmas_core_config|holmas_cat_meta", compact, re.IGNORECASE):
+        return "430"
+    if re.search(r"schema|协议|数据结构|字段定义", compact, re.IGNORECASE):
+        return "440"
+    if re.search(r"UI 自动生成系统|UiPrefabGenerator|DesignPacket|UiPrefabSpec|PrefabBindingManifest|sample manifest|sample spec", compact, re.IGNORECASE):
+        return "270" if topic == "文档整理" else "620"
+
+    if topic == "文档整理":
+        for code, pattern in DOC_MODULE_PATTERNS:
+            if re.search(pattern, compact, re.IGNORECASE):
+                return code
+        return "230"
+
+    if topic == "流程与协作":
+        return "230"
+
+    if topic == "审查与修复":
+        return "520"
+
+    if topic == "测试与验证":
+        if re.search(r"单元测试|集成测试|EditMode|PlayMode", compact, re.IGNORECASE):
+            return "510"
+        if re.search(r"check_boundary|QA 脚本|校验脚本", compact, re.IGNORECASE):
+            return "530"
+        return "520"
+
+    if topic == "UI 与联调":
+        return "150"
+
+    if topic == "配置表与数值扩展":
+        return "410"
+
+    if topic == "任务与长期进度":
+        return "130"
+
+    if topic == "地图与棋盘":
+        return "140"
+
+    if topic == "边界与骨架":
+        if re.search(r"App\.Shared|Contracts|Shared DTO", compact, re.IGNORECASE):
+            return "110"
+        if re.search(r"App\.AOT|Bootstrap|Infrastructure|YooRuntimeAssets|HybridCLR", compact, re.IGNORECASE):
+            return "120"
+        return "110"
+
+    return COMMIT_MODULE_DEFAULT
+
+
 def first_non_empty(items):
     for item in items:
         if item and item.strip():
@@ -292,7 +367,7 @@ def simplify_commit_title(text: str) -> str:
     return value or "更新当前任务"
 
 
-def next_commit_sequence(doc_root: Path) -> int:
+def next_commit_sequence(doc_root: Path, module_code: str) -> int:
     repo_root = doc_root.resolve().parent
     try:
         inside_repo = subprocess.run(
@@ -302,10 +377,10 @@ def next_commit_sequence(doc_root: Path) -> int:
             check=False,
         )
     except OSError:
-        return COMMIT_SEQUENCE_START
+        return COMMIT_MODULE_SEQUENCE_START
 
     if inside_repo.returncode != 0:
-        return COMMIT_SEQUENCE_START
+        return COMMIT_MODULE_SEQUENCE_START
 
     log_result = subprocess.run(
         ["git", "-C", str(repo_root), "log", "--format=%s"],
@@ -314,18 +389,20 @@ def next_commit_sequence(doc_root: Path) -> int:
         check=False,
     )
     if log_result.returncode != 0:
-        return COMMIT_SEQUENCE_START
+        return COMMIT_MODULE_SEQUENCE_START
 
     max_sequence = 0
     for line in log_result.stdout.splitlines():
-        match = re.match(r"^\[(\d+)\]\s+", line.strip())
+        match = re.match(r"^\[(\d{8})\]\s+", line.strip())
         if match:
-            max_sequence = max(max_sequence, int(match.group(1)))
-    return max(max_sequence + 1, COMMIT_SEQUENCE_START)
+            full_code = match.group(1)
+            if full_code.startswith(module_code):
+                max_sequence = max(max_sequence, int(full_code[3:]))
+    return max_sequence + 1 if max_sequence else COMMIT_MODULE_SEQUENCE_START
 
 
-def format_commit_sequence(sequence: int) -> str:
-    return f"[{sequence:04d}]"
+def format_commit_sequence(module_code: str, sequence: int) -> str:
+    return f"[{module_code}{sequence:05d}]"
 
 
 def build_commit_title(doc_root: Path, summary: str, done, topic: str) -> str:
@@ -334,7 +411,8 @@ def build_commit_title(doc_root: Path, summary: str, done, topic: str) -> str:
     simplified = simplify_commit_title(base)
     if not simplified.startswith(prefix):
         simplified = f"{prefix}{simplified}"
-    sequence = format_commit_sequence(next_commit_sequence(doc_root))
+    module_code = classify_commit_module(" ".join([summary, *done]), topic)
+    sequence = format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code))
     if simplified.startswith(f"{sequence} "):
         return simplified
     return f"{sequence} {simplified}"
