@@ -538,7 +538,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertIn("文档维护：已执行", completed.stdout)
             self.assertIn("Git 提交建议：适合提交", completed.stdout)
-            self.assertIn("标题：[0050] 流程：新会话启动与收尾脚本输出", completed.stdout)
+            self.assertIn("标题：[23000001] 流程：新会话启动与收尾脚本输出", completed.stdout)
             self.assertIn("内容：", completed.stdout)
             self.assertIn("- 为收尾流程补固定三段输出", completed.stdout)
             self.assertIn("- 为提交建议补中文标题和内容", completed.stdout)
@@ -881,7 +881,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             self.assertEqual(report["doc_maintenance_status"], "已执行")
             self.assertTrue(report["commit_suggestion"]["suitable"])
-            self.assertEqual(report["commit_suggestion"]["title"], "[0050] 流程：新会话启动与收尾流程")
+            self.assertEqual(report["commit_suggestion"]["title"], "[23000001] 流程：新会话启动与收尾流程")
             self.assertEqual(
                 report["commit_suggestion"]["content"][:2],
                 ["为收尾流程补固定三段输出", "为提交建议补中文标题和内容"],
@@ -889,7 +889,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             formatted = update_project_docs.format_handoff_report(report)
             self.assertIn("文档维护：已执行", formatted)
             self.assertIn("Git 提交建议：适合提交", formatted)
-            self.assertIn("标题：[0050] 流程：新会话启动与收尾流程", formatted)
+            self.assertIn("标题：[23000001] 流程：新会话启动与收尾流程", formatted)
             self.assertIn("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。", formatted)
             self.assertIn("会话建议：", formatted)
 
@@ -897,6 +897,16 @@ class UpdateProjectDocsTests(unittest.TestCase):
         self.assertEqual(
             update_project_docs.classify_topic("整理项目总览与长期规则文档入口"),
             "文档整理",
+        )
+
+    def test_classify_commit_module_distinguishes_plan_and_table_docs(self):
+        self.assertEqual(
+            update_project_docs.classify_commit_module("补齐 Holmas_v1 方案落地描述", "文档整理"),
+            "240",
+        )
+        self.assertEqual(
+            update_project_docs.classify_commit_module("补齐正式建筑内容表方案与表结构说明", "文档整理"),
+            "250",
         )
 
     def test_suggest_handoff_uses_document_prefix_for_doc_cleanup(self):
@@ -922,9 +932,9 @@ class UpdateProjectDocsTests(unittest.TestCase):
             )
 
             self.assertTrue(report["commit_suggestion"]["suitable"])
-            self.assertEqual(report["commit_suggestion"]["title"], "[0050] 文档：整理项目总览与长期规则文档入口")
+            self.assertEqual(report["commit_suggestion"]["title"], "[21000001] 文档：整理项目总览与长期规则文档入口")
 
-    def test_suggest_commit_message_uses_next_numbered_commit_sequence(self):
+    def test_suggest_commit_message_uses_next_numbered_commit_sequence_per_module(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             doc_root = create_doc_root(root)
@@ -934,11 +944,11 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             tracked = write_file(root, "README.md", "hello\n")
             subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
-            subprocess.run(["git", "commit", "-m", "[0003] 文档：已有编号提交"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000003] 流程：已有 230 模块提交"], cwd=root, check=True, capture_output=True, text=True)
 
             tracked.write_text("world\n", encoding="utf-8")
             subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
-            subprocess.run(["git", "commit", "-m", "没有编号的历史提交"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[21000002] 文档：其他模块提交"], cwd=root, check=True, capture_output=True, text=True)
 
             report = update_project_docs.suggest_handoff(
                 doc_root,
@@ -958,7 +968,39 @@ class UpdateProjectDocsTests(unittest.TestCase):
             )
 
             self.assertTrue(report["commit_suggestion"]["suitable"])
-            self.assertEqual(report["commit_suggestion"]["title"], "[0050] 流程：新会话启动与收尾流程")
+            self.assertEqual(report["commit_suggestion"]["title"], "[23000004] 流程：新会话启动与收尾流程")
+
+    def test_suggest_commit_message_ignores_legacy_four_digit_sequence_titles(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.email", "codex@example.com"], cwd=root, check=True, capture_output=True, text=True)
+
+            tracked = write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[0055] 玩法：旧四位编号提交"], cwd=root, check=True, capture_output=True, text=True)
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "统一新会话启动与收尾流程",
+                ["为收尾流程补固定三段输出"],
+                [],
+                ["继续推进脚本收尾规则"],
+                "passed",
+                "auto",
+                "auto",
+                "",
+                "",
+                [],
+                False,
+                False,
+                0,
+            )
+
+            self.assertTrue(report["commit_suggestion"]["suitable"])
+            self.assertEqual(report["commit_suggestion"]["title"], "[23000001] 流程：新会话启动与收尾流程")
 
     def test_suggest_handoff_caches_pending_commit_suggestion_in_git_dir(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -970,7 +1012,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             tracked = write_file(root, "README.md", "hello\n")
             subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
-            subprocess.run(["git", "commit", "-m", "[0002] 文档：已有编号提交"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000002] 流程：已有编号提交"], cwd=root, check=True, capture_output=True, text=True)
 
             report = update_project_docs.suggest_handoff(
                 doc_root,
@@ -992,7 +1034,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             cache = update_project_docs.read_pending_commit_suggestion(doc_root)
             self.assertTrue(report["commit_suggestion"]["suitable"])
             self.assertIsNotNone(cache)
-            self.assertEqual(cache["title"], "[0050] 流程：新会话启动与收尾流程")
+            self.assertEqual(cache["title"], "[23000003] 流程：新会话启动与收尾流程")
             self.assertEqual(cache["content"], ["为收尾流程补固定三段输出", "统一新会话启动与收尾流程"])
             self.assertTrue(cache["head_commit"])
 
@@ -1006,7 +1048,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             tracked = write_file(root, "README.md", "hello\n")
             subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
-            subprocess.run(["git", "commit", "-m", "[0005] 文档：已有编号提交"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000005] 流程：已有编号提交"], cwd=root, check=True, capture_output=True, text=True)
 
             update_project_docs.suggest_handoff(
                 doc_root,
