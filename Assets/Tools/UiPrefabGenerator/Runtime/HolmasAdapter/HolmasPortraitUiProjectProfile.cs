@@ -1,17 +1,18 @@
+using System.Collections.Generic;
 using UiPrefabGenerator.Core.Profile;
 
 namespace UiPrefabGenerator.HolmasAdapter
 {
-    public sealed class HolmasUiProjectProfile : IProjectUiProfile
+    public sealed class HolmasPortraitUiProjectProfile : IProjectUiProfile
     {
         public string ProfileId
         {
-            get { return "holmas_ugui"; }
+            get { return "holmas_ugui_portrait"; }
         }
 
         public string DraftPrefabRoot
         {
-            get { return "Assets/Res/Perfabs/Generated/Holmas"; }
+            get { return "Assets/Res/Perfabs/Generated/Holmas/Portrait"; }
         }
 
         public string RuntimeBindingNamespace
@@ -19,7 +20,7 @@ namespace UiPrefabGenerator.HolmasAdapter
             get { return "App.HotUpdate.Holmas.UI.Generated"; }
         }
 
-        public System.Collections.Generic.IReadOnlyCollection<string> AllowedComponentTypes
+        public IReadOnlyCollection<string> AllowedComponentTypes
         {
             get { return HolmasUiProfileShared.AllowedComponentTypes; }
         }

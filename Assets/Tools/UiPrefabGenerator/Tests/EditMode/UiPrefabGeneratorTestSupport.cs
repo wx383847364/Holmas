@@ -9,8 +9,16 @@ namespace UiPrefabGenerator.Tests.EditMode
         public static void CleanupGeneratedDraftRoot()
         {
             DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab");
+            DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab");
+            DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/Portrait");
             DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas");
             DeleteAssetIfExists("Assets/Res/Perfabs/Generated");
+            AssetDatabase.Refresh();
+        }
+
+        public static void DeleteAssetIfExistsForTests(string assetPath)
+        {
+            DeleteAssetIfExists(assetPath);
             AssetDatabase.Refresh();
         }
 

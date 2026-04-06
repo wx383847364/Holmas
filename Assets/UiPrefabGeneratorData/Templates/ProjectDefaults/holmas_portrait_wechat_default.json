@@ -1,0 +1,41 @@
+{
+  "TemplateName": "holmas_portrait_wechat_default",
+  "ProfileId": "holmas_ugui_portrait",
+  "TargetPlatform": "wechat_minigame",
+  "Orientation": "portrait",
+  "ReferenceResolutionWidth": 1080,
+  "ReferenceResolutionHeight": 1920,
+  "CanvasScaleMode": "ScaleWithScreenSize",
+  "MatchMode": "match_height",
+  "MatchWidthOrHeight": 1.0,
+  "SafeAreaMode": "simulate_mobile",
+  "SafeAreaInsets": {
+    "Top": 0.0,
+    "Bottom": 0.0,
+    "Left": 0.0,
+    "Right": 0.0
+  },
+  "RootLayoutMode": "fullscreen_mobile",
+  "PageType": "mobile_fullscreen",
+  "VisualDensity": "normal",
+  "AssetRoot": "Assets/Res",
+  "DraftPrefabRoot": "Assets/Res/Perfabs/Generated/Holmas/Portrait",
+  "RuntimeBindingNamespace": "App.HotUpdate.Holmas.UI.Generated",
+  "ResourceMatchStrictness": "balanced",
+  "NodeNameStyle": "PascalCase",
+  "BindingKeyStyle": "snake_case",
+  "TextStrategy": "placeholder_only",
+  "ManualReviewRequired": true,
+  "AutoPingPrefabAfterGeneration": true,
+  "AutoOpenPreviewAfterGeneration": false,
+  "IgnoreDecorativeElements": true,
+  "ResourceSearchExtensions": [
+    ".png",
+    ".jpg",
+    ".prefab",
+    ".asset"
+  ],
+  "MustHaveNodes": [],
+  "MustHaveInteractions": [],
+  "Notes": "Default portrait template for WeChat mini-game style UGUI generation."
+}
