@@ -334,6 +334,70 @@ namespace UiPrefabGenerator.Tests.EditMode
             }
         }
 
+        [Test]
+        public void TryLoadExecutionResult_LoadsSavedGenerationResult()
+        {
+            string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_execution_result";
+            try
+            {
+                UiGenerationDataPaths.EnsureDataFolders();
+                UiGenerationDataPaths.EnsureFolderExists(taskDirectory);
+
+                UiGenerationJsonFileUtility.SaveJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.ExecutionResultFileName,
+                    new UiGenerationExecutionResult
+                    {
+                        TaskId = "test_execution_result",
+                        Success = true,
+                        PrefabPath = "Assets/Res/Perfabs/Generated/Holmas/Portrait/Test.prefab",
+                        ManifestValidationPassed = true,
+                        StructureValidationPassed = true,
+                    });
+
+                UiGenerationExecutionResult loadedResult;
+                string error;
+                Assert.That(UiGenerationTaskStorage.TryLoadExecutionResult(taskDirectory, out loadedResult, out error), Is.True);
+                Assert.That(error, Is.Empty);
+                Assert.That(loadedResult, Is.Not.Null);
+                Assert.That(loadedResult.TaskId, Is.EqualTo("test_execution_result"));
+                Assert.That(loadedResult.Success, Is.True);
+                Assert.That(loadedResult.PrefabPath, Does.Contain("Test.prefab"));
+            }
+            finally
+            {
+                CleanupTaskArtifacts(taskDirectory);
+            }
+        }
+
+        [Test]
+        public void TryLoadExecutionResult_FailsWhenTaskIdDoesNotMatchDirectory()
+        {
+            string taskDirectory = "Assets/UiPrefabGeneratorData/Tasks/test_execution_result_guard";
+            try
+            {
+                UiGenerationDataPaths.EnsureDataFolders();
+                UiGenerationDataPaths.EnsureFolderExists(taskDirectory);
+
+                UiGenerationJsonFileUtility.SaveJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.ExecutionResultFileName,
+                    new UiGenerationExecutionResult
+                    {
+                        TaskId = "another_task",
+                        Success = true,
+                    });
+
+                UiGenerationExecutionResult loadedResult;
+                string error;
+                Assert.That(UiGenerationTaskStorage.TryLoadExecutionResult(taskDirectory, out loadedResult, out error), Is.False);
+                Assert.That(loadedResult, Is.Null);
+                Assert.That(error, Does.Contain("task_id"));
+            }
+            finally
+            {
+                CleanupTaskArtifacts(taskDirectory);
+            }
+        }
+
         private static void CreateTempImageAsset()
         {
             Texture2D texture = new Texture2D(4, 4, TextureFormat.RGBA32, false);

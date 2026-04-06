@@ -180,6 +180,39 @@ namespace UiPrefabGenerator.Editor.Bridge
                 out request) && request != null;
         }
 
+        public static bool TryLoadExecutionResult(string taskDirectory, out UiGenerationExecutionResult result, out string error)
+        {
+            result = null;
+            error = string.Empty;
+            if (string.IsNullOrWhiteSpace(taskDirectory))
+            {
+                error = "任务目录为空。";
+                return false;
+            }
+
+            string expectedTaskId = Path.GetFileName(taskDirectory) ?? string.Empty;
+            if (!UiGenerationJsonFileUtility.TryLoadJson(
+                    taskDirectory + "/" + UiGenerationDataPaths.ExecutionResultFileName,
+                    out result) || result == null)
+            {
+                error = "未找到可读取的 generation_result.json。";
+                return false;
+            }
+
+            if (!ValidateTaskId(expectedTaskId, result.TaskId, out error))
+            {
+                result = null;
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(result.TaskId))
+            {
+                result.TaskId = expectedTaskId;
+            }
+
+            return true;
+        }
+
         public static void SaveAnalysisArtifacts(string taskDirectory, UiGenerationAnalysisResult result)
         {
             if (string.IsNullOrWhiteSpace(taskDirectory) || result == null)

@@ -13,6 +13,8 @@ namespace UiPrefabGenerator.Editor.Window
 {
     public sealed class UiPrefabGenerationWindow : EditorWindow
     {
+        private const string LastTaskDirectorySessionKey = "UiPrefabGenerator.Editor.Window.LastTaskDirectory";
+
         private Texture2D _sourceImage;
         private UiGenerationTemplate _template;
         private string[] _templatePaths = Array.Empty<string>();
@@ -37,6 +39,7 @@ namespace UiPrefabGenerator.Editor.Window
         private void OnEnable()
         {
             ReloadTemplates();
+            RestoreLastTaskIfPossible();
         }
 
         private void OnGUI()
@@ -137,6 +140,21 @@ namespace UiPrefabGenerator.Editor.Window
                 GUILayout.Height(36f));
 
             EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("导入已有任务", GUILayout.Height(24f)))
+            {
+                ImportTaskFromPicker();
+            }
+
+            using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(SessionState.GetString(LastTaskDirectorySessionKey, string.Empty))))
+            {
+                if (GUILayout.Button("恢复上次任务", GUILayout.Height(24f)))
+                {
+                    RestoreLastTaskIfPossible(true);
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
             using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(_currentTaskDirectory)))
             {
                 if (GUILayout.Button("刷新分析结果", GUILayout.Height(24f)))
@@ -169,9 +187,42 @@ namespace UiPrefabGenerator.Editor.Window
                 return;
             }
 
+            UiGenerationAnalysisStatusSummary statusSummary = UiGenerationAnalysisStatusSummarizer.Build(_analysisResult);
+
+            EditorGUILayout.LabelField("分析状态", statusSummary.StatusLabel);
+            EditorGUILayout.LabelField(
+                "问题计数",
+                string.Format(
+                    "未解决项 {0} | 未匹配资源槽 {1} | 警告 {2} | 错误 {3}",
+                    statusSummary.UnresolvedItemCount,
+                    statusSummary.UnresolvedSlotCount,
+                    statusSummary.WarningCount,
+                    statusSummary.ErrorCount));
+            EditorGUILayout.LabelField(
+                "结果覆盖",
+                string.Format(
+                    "节点 {0} | Bindings {1} | 交互 {2} | 资源已选中 {3}/{4}",
+                    statusSummary.NodeCount,
+                    statusSummary.BindingCount,
+                    statusSummary.InteractionCount,
+                    statusSummary.SelectedMatchCount,
+                    statusSummary.MatchCount));
+            EditorGUILayout.LabelField("结果强度", statusSummary.IsWeakResult ? "偏弱" : "正常");
+            EditorGUILayout.HelpBox(statusSummary.StatusSummary, statusSummary.StatusMessageType);
+
+            if (statusSummary.IsWeakResult)
+            {
+                EditorGUILayout.HelpBox("弱结果提示： " + statusSummary.WeakResultSummary, MessageType.Warning);
+            }
+
             EditorGUILayout.LabelField("TaskId", _analysisResult.TaskId);
-            EditorGUILayout.LabelField("Spec 节点数", _analysisResult.UiPrefabSpec != null ? _analysisResult.UiPrefabSpec.Nodes.Count.ToString() : "0");
-            EditorGUILayout.LabelField("资源匹配数", _analysisResult.ResourceMatchReport != null ? _analysisResult.ResourceMatchReport.Matches.Count.ToString() : "0");
+            EditorGUILayout.LabelField("Spec 节点数", statusSummary.NodeCount.ToString());
+            EditorGUILayout.LabelField("资源匹配数", statusSummary.MatchCount.ToString());
+
+            if (statusSummary.UnresolvedSummaries.Count > 0)
+            {
+                EditorGUILayout.HelpBox("未解决摘要：\n" + string.Join("\n", statusSummary.UnresolvedSummaries.ToArray()), MessageType.Warning);
+            }
 
             if (_analysisResult.UiPrefabSpec != null && _analysisResult.UiPrefabSpec.Nodes != null)
             {
@@ -206,14 +257,14 @@ namespace UiPrefabGenerator.Editor.Window
                 EditorGUILayout.TextArea(summary, GUILayout.MinHeight(80f));
             }
 
-            if (_analysisResult.Warnings != null && _analysisResult.Warnings.Count > 0)
+            if (statusSummary.WarningSummaries.Count > 0)
             {
-                EditorGUILayout.HelpBox(string.Join("\n", _analysisResult.Warnings.ToArray()), MessageType.Warning);
+                EditorGUILayout.HelpBox(string.Join("\n", statusSummary.WarningSummaries.ToArray()), MessageType.Warning);
             }
 
-            if (_analysisResult.Errors != null && _analysisResult.Errors.Count > 0)
+            if (statusSummary.ErrorSummaries.Count > 0)
             {
-                EditorGUILayout.HelpBox(string.Join("\n", _analysisResult.Errors.ToArray()), MessageType.Error);
+                EditorGUILayout.HelpBox(string.Join("\n", statusSummary.ErrorSummaries.ToArray()), MessageType.Error);
             }
 
             using (new EditorGUI.DisabledScope(_template != null && _template.ManualReviewRequired && _analysisResult == null))
@@ -347,6 +398,7 @@ namespace UiPrefabGenerator.Editor.Window
             _currentTaskDirectory = UiGenerationTaskStorage.CreateTask(request, _sourceImage);
             _analysisResult = null;
             _executionResult = null;
+            RememberLastTaskDirectory(_currentTaskDirectory);
             EditorUtility.DisplayDialog("请求已生成", "已写入任务目录：\n" + _currentTaskDirectory, "确定");
         }
 
@@ -432,6 +484,222 @@ namespace UiPrefabGenerator.Editor.Window
                     EditorGUIUtility.PingObject(prefab);
                     Selection.activeObject = prefab;
                 }
+            }
+        }
+
+        private void ImportTaskFromPicker()
+        {
+            string initialDirectory = UiGenerationDataPaths.ToAbsolutePath(UiGenerationDataPaths.TasksRoot);
+            if (!string.IsNullOrWhiteSpace(_currentTaskDirectory))
+            {
+                initialDirectory = UiGenerationDataPaths.ToAbsolutePath(_currentTaskDirectory);
+            }
+
+            string selectedDirectory = EditorUtility.OpenFolderPanel("选择已有任务目录", initialDirectory, string.Empty);
+            if (string.IsNullOrWhiteSpace(selectedDirectory))
+            {
+                return;
+            }
+
+            string taskDirectory = NormalizeTaskDirectoryAssetPath(selectedDirectory);
+            if (string.IsNullOrWhiteSpace(taskDirectory))
+            {
+                EditorUtility.DisplayDialog("导入失败", "请选择项目内 Assets/UiPrefabGeneratorData/Tasks 下的任务目录。", "确定");
+                return;
+            }
+
+            string error;
+            if (!ImportTask(taskDirectory, out error))
+            {
+                EditorUtility.DisplayDialog("导入失败", error, "确定");
+                return;
+            }
+
+            EditorUtility.DisplayDialog("导入完成", "已恢复任务：\n" + taskDirectory, "确定");
+        }
+
+        private void RestoreLastTaskIfPossible()
+        {
+            RestoreLastTaskIfPossible(false);
+        }
+
+        private void RestoreLastTaskIfPossible(bool showDialogOnFailure)
+        {
+            if (!string.IsNullOrWhiteSpace(_currentTaskDirectory))
+            {
+                return;
+            }
+
+            string taskDirectory = SessionState.GetString(LastTaskDirectorySessionKey, string.Empty);
+            if (string.IsNullOrWhiteSpace(taskDirectory))
+            {
+                return;
+            }
+
+            string error;
+            if (ImportTask(taskDirectory, out error))
+            {
+                return;
+            }
+
+            SessionState.EraseString(LastTaskDirectorySessionKey);
+            if (showDialogOnFailure)
+            {
+                EditorUtility.DisplayDialog("恢复失败", error, "确定");
+            }
+        }
+
+        private bool ImportTask(string taskDirectory, out string error)
+        {
+            error = string.Empty;
+            UiGenerationTaskRequest request;
+            if (!UiGenerationTaskStorage.TryLoadTaskRequest(taskDirectory, out request) || request == null)
+            {
+                error = "任务目录中缺少可读取的 request.json。";
+                return false;
+            }
+
+            _currentTaskDirectory = taskDirectory;
+            RememberLastTaskDirectory(taskDirectory);
+            ApplyTemplateFromRequest(request);
+            _sourceImage = LoadSourceImageForRequest(request);
+            _pageId = request.PageId ?? string.Empty;
+            _pageTitle = request.PageTitle ?? string.Empty;
+            _prefabName = request.PrefabName ?? string.Empty;
+            _notes = request.Notes ?? string.Empty;
+
+            string analysisError;
+            if (!TryRefreshAnalysisResult(out analysisError))
+            {
+                _analysisResult = null;
+            }
+
+            UiGenerationExecutionResult executionResult;
+            string executionError;
+            if (UiGenerationTaskStorage.TryLoadExecutionResult(taskDirectory, out executionResult, out executionError))
+            {
+                _executionResult = executionResult;
+            }
+            else
+            {
+                _executionResult = null;
+            }
+
+            return true;
+        }
+
+        private void ApplyTemplateFromRequest(UiGenerationTaskRequest request)
+        {
+            int templateIndex = FindTemplateIndexByName(request.TemplateName);
+            if (templateIndex >= 0)
+            {
+                _selectedTemplateIndex = templateIndex;
+                LoadSelectedTemplate();
+            }
+            else
+            {
+                _template = UiGenerationTemplateStore.BuildPortraitWechatDefault();
+            }
+
+            if (_template == null)
+            {
+                _template = UiGenerationTemplateStore.BuildPortraitWechatDefault();
+            }
+
+            _template.TemplateName = request.TemplateName ?? string.Empty;
+            _template.ProfileId = request.ProfileId ?? string.Empty;
+            _template.TargetPlatform = request.TargetPlatform ?? string.Empty;
+            _template.Orientation = request.Orientation ?? string.Empty;
+            _template.ReferenceResolutionWidth = request.ReferenceResolutionWidth;
+            _template.ReferenceResolutionHeight = request.ReferenceResolutionHeight;
+            _template.AssetRoot = request.AssetRoot ?? string.Empty;
+            _template.DraftPrefabRoot = request.DraftPrefabRoot ?? string.Empty;
+            _template.PageType = request.PageType ?? string.Empty;
+            _template.MustHaveNodes.Clear();
+            _template.MustHaveInteractions.Clear();
+            if (request.MustHaveNodes != null)
+            {
+                _template.MustHaveNodes.AddRange(request.MustHaveNodes);
+            }
+
+            if (request.MustHaveInteractions != null)
+            {
+                _template.MustHaveInteractions.AddRange(request.MustHaveInteractions);
+            }
+        }
+
+        private int FindTemplateIndexByName(string templateName)
+        {
+            if (string.IsNullOrWhiteSpace(templateName))
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < _templateLabels.Length; i++)
+            {
+                if (string.Equals(_templateLabels[i], templateName, StringComparison.Ordinal))
+                {
+                    return i;
+                }
+            }
+
+            for (int i = 0; i < _templatePaths.Length; i++)
+            {
+                if (string.Equals(Path.GetFileNameWithoutExtension(_templatePaths[i]), templateName, StringComparison.Ordinal))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static Texture2D LoadSourceImageForRequest(UiGenerationTaskRequest request)
+        {
+            if (request == null)
+            {
+                return null;
+            }
+
+            Texture2D taskCopy = LoadTextureAtPath(request.SourceImageTaskAssetPath);
+            if (taskCopy != null)
+            {
+                return taskCopy;
+            }
+
+            return LoadTextureAtPath(request.SourceImageAssetPath);
+        }
+
+        private static Texture2D LoadTextureAtPath(string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return null;
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+        }
+
+        private static string NormalizeTaskDirectoryAssetPath(string selectedDirectory)
+        {
+            string normalized = selectedDirectory.Replace('\\', '/').TrimEnd('/');
+            string assetPath = UiGenerationDataPaths.ToAssetPath(normalized);
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return string.Empty;
+            }
+
+            return assetPath.StartsWith(UiGenerationDataPaths.TasksRoot + "/", StringComparison.Ordinal)
+                || string.Equals(assetPath, UiGenerationDataPaths.TasksRoot, StringComparison.Ordinal)
+                ? assetPath
+                : string.Empty;
+        }
+
+        private static void RememberLastTaskDirectory(string taskDirectory)
+        {
+            if (!string.IsNullOrWhiteSpace(taskDirectory))
+            {
+                SessionState.SetString(LastTaskDirectorySessionKey, taskDirectory);
             }
         }
     }
