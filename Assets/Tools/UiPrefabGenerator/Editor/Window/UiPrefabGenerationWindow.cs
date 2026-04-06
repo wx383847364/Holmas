@@ -61,7 +61,7 @@ namespace UiPrefabGenerator.Editor.Window
         {
             EditorGUILayout.LabelField("竖屏 UI 生成工具", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "这条链路固定为：图片 -> request.json -> Codex 分析结果 -> 人工确认 -> 自动生成 prefab。",
+                "这条链路固定为：图片 -> request.json -> 自动分析或手动回写 -> 人工确认 -> 自动生成 prefab。",
                 MessageType.Info);
         }
 
@@ -150,6 +150,14 @@ namespace UiPrefabGenerator.Editor.Window
                 }
             }
             EditorGUILayout.EndHorizontal();
+
+            using (new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(_currentTaskDirectory)))
+            {
+                if (GUILayout.Button("自动分析并回写结果", GUILayout.Height(26f)))
+                {
+                    RunAutoAnalysisAndRefresh();
+                }
+            }
         }
 
         private void DrawAnalysisSection()
@@ -157,7 +165,7 @@ namespace UiPrefabGenerator.Editor.Window
             EditorGUILayout.LabelField("分析结果", EditorStyles.boldLabel);
             if (_analysisResult == null)
             {
-                EditorGUILayout.HelpBox("还没有读取到分析结果。Codex 回写 analysis_result.json 或 design_packet/ui_prefab_spec/resource_match_report 后，点“刷新分析结果”。", MessageType.None);
+                EditorGUILayout.HelpBox("还没有读取到分析结果。可以点“自动分析并回写结果”，或手动回写 analysis_result.json / design_packet.json / ui_prefab_spec.json / resource_match_report.json 后再点“刷新分析结果”。", MessageType.None);
                 return;
             }
 
@@ -345,15 +353,65 @@ namespace UiPrefabGenerator.Editor.Window
         private void RefreshAnalysisResult()
         {
             string error;
+            if (!TryRefreshAnalysisResult(out error))
+            {
+                EditorUtility.DisplayDialog("读取失败", error, "确定");
+            }
+        }
+
+        private bool TryRefreshAnalysisResult(out string error)
+        {
             UiGenerationAnalysisResult result;
             if (!UiGenerationTaskStorage.TryLoadAnalysisResult(_currentTaskDirectory, out result, out error))
             {
-                EditorUtility.DisplayDialog("读取失败", error, "确定");
-                return;
+                return false;
             }
 
             _analysisResult = result;
             _executionResult = null;
+            return true;
+        }
+
+        private void RunAutoAnalysisAndRefresh()
+        {
+            if (string.IsNullOrWhiteSpace(_currentTaskDirectory))
+            {
+                EditorUtility.DisplayDialog("缺少任务", "请先生成请求。", "确定");
+                return;
+            }
+
+            if (!UiGenerationTaskStorage.TryLoadTaskRequest(_currentTaskDirectory, out _))
+            {
+                EditorUtility.DisplayDialog("缺少请求", "请先生成 request.json，再执行自动分析。", "确定");
+                return;
+            }
+
+            try
+            {
+                EditorUtility.DisplayProgressBar("自动分析并回写结果", "正在执行本地自动分析脚本...", 0.1f);
+                UiPrefabGeneratorAutoAnalysisResult result = UiPrefabGeneratorAutoAnalysisBridge.RunTaskAutoAnalysis(_currentTaskDirectory);
+                if (!result.Success)
+                {
+                    EditorUtility.DisplayDialog("自动分析失败", result.GetFailureMessage(), "确定");
+                    return;
+                }
+
+                string refreshError;
+                if (!TryRefreshAnalysisResult(out refreshError))
+                {
+                    EditorUtility.DisplayDialog(
+                        "自动分析成功，但刷新失败",
+                        refreshError + "\n\n日志：\n" + result.LogPath,
+                        "确定");
+                    return;
+                }
+
+                Debug.Log("自动分析并回写结果完成: " + _currentTaskDirectory + "\n日志: " + result.LogPath);
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
         }
 
         private void GeneratePrefab()
