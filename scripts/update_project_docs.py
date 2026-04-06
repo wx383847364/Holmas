@@ -1519,6 +1519,11 @@ def format_handoff_report(report):
         ]
     else:
         lines.append("下一会话启动卡：当前不生成，继续当前会话即可。")
+    lines += [
+        "最终回复要求：发送 final 时，必须显式包含上面的 `文档维护 / Git 提交建议 / 会话建议` 三段内容。",
+        "最终回复要求：`check-last-finalize` 返回 `[ok]` 只表示允许进入 final，不表示可以省略这三段。",
+        "最终回复要求：如果最终回复只总结实现结果、只说“已完成收尾”或只说“脚本已执行”，一律视为未完成收尾。",
+    ]
     return "\n".join(lines)
 
 

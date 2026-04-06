@@ -5,10 +5,10 @@
 - 新会话第一句怎么说
 - briefing 和 execution dispatch 怎么切换
 
-这页不重复解释：
+这页不重复展开解释：
 
 - Agent 职责、启动边界、验收规则
-- 固定三段收尾、Git 提交流程
+- 固定三段收尾、Git 提交流程的全部细节
 
 详细规则分别看：
 
@@ -29,6 +29,19 @@
 - `briefing`
 - `execution dispatch`
 - `completion finalize`
+
+## 收尾硬门
+
+只要这轮发生了 repo 级改动，最终回复必须同时满足下面两件事：
+
+- 已执行 `finalize_task.sh -> check-last-finalize`
+- `final` 消息里显式包含 `文档维护 / Git 提交建议 / 会话建议` 三段内容
+
+固定强调：
+
+- `check-last-finalize` 返回 `[ok]`，只表示“允许进入 final”，不表示“可以省略三段收尾输出”
+- 如果最终回复只写实现总结、只说“已完成收尾”，或只说“脚本已经执行”，都视为未完成当前轮收尾
+- 发送 final 时，默认应直接复用 `finalize_task.sh` 刚输出的三段内容，而不是临时重新概括一版
 
 ## 阶段 A：briefing
 
@@ -74,6 +87,7 @@
 - 只有在明确无法走 shell 收尾时，才允许退回 `update_project_docs.py suggest-handoff`
 - 默认完整链固定为：`finalize_task.sh -> check-last-finalize -> final`
 - 只有看到了 `文档维护 / Git 提交建议 / 会话建议` 三段输出，才能视为当前轮真正结束
+- `final` 消息若没有显式包含这三段，即使脚本已执行、`check-last-finalize` 返回 `[ok]`，也仍视为未完成
 - `finalize_task.sh` 完成后，应以 `.git/codex/last_finalize_report.json` 作为最近一次完整收尾状态
 - 在发送 final 前，必须通过 `python3 scripts/update_project_docs.py --doc-root doc check-last-finalize`
 
