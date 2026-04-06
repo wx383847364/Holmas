@@ -1,0 +1,12 @@
+{
+  "baseline_id": "holmas_ui_prefab_generator_v1",
+  "approved_sample_spec_path": "Assets/Tools/UiPrefabGenerator/Samples~/Holmas/sample_ui_prefab_spec.json",
+  "golden_manifest_path": "Assets/Tools/UiPrefabGenerator/Samples~/Holmas/sample_prefab_binding_manifest.json",
+  "golden_generated_result_plan_path": "Assets/Tools/UiPrefabGenerator/Samples~/Holmas/sample_holmas_generated_result_plan.json",
+  "checks": [
+    "design_packet_interpretation",
+    "manifest_validation",
+    "holmas_generated_result_consumption",
+    "deterministic_manifest_regression"
+  ]
+}
