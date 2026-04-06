@@ -1,0 +1,31 @@
+{
+  "page_id": "agency_main",
+  "page_title": "Agency Main",
+  "prefab_name": "AgencyMainPanel",
+  "design_images": [
+    {
+      "image_id": "default",
+      "image_path": "Design/AgencyMain/default.png",
+      "state_id": "default"
+    }
+  ],
+  "states": [
+    {
+      "state_id": "default",
+      "description": "default state"
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "task_list_scrollable",
+      "description": "task list should be scrollable"
+    }
+  ],
+  "asset_slot_hints": [
+    {
+      "slot_id": "panel_bg",
+      "usage": "background panel image"
+    }
+  ],
+  "notes": "Sample only."
+}

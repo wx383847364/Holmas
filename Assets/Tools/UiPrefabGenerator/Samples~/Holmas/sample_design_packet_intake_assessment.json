@@ -1,0 +1,22 @@
+{
+  "intake_profile_id": "design_packet_review_v1",
+  "has_blocking_issues": false,
+  "unresolved_items": [
+    {
+      "issue_id": "rule_unsupported_task_list_scrollable",
+      "severity": "Warning",
+      "kind": "UnsupportedRule",
+      "field_path": "rules[0].rule_id",
+      "summary": "当前规则需要人工确认。",
+      "details": "rule_id 尚未接入自动解释: task_list_scrollable",
+      "suggested_resolution": "先由人工审阅，再决定是否扩展解释器。",
+      "requires_human_decision": true
+    }
+  ],
+  "notes": [
+    "design_images=1",
+    "states=1",
+    "rules=1",
+    "asset_slot_hints=1"
+  ]
+}
