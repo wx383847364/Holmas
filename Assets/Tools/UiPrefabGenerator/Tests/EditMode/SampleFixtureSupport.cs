@@ -491,6 +491,23 @@ namespace UiPrefabGenerator.Tests.EditMode
                     Assert.That(actualComponent.AssetSlot, Is.EqualTo(expectedComponent.AssetSlot));
                 }
             }
+
+            for (int i = 0; i < expected.Bindings.Count; i++)
+            {
+                UiBindingSpec actualBinding = actual.Bindings[i];
+                UiBindingSpec expectedBinding = expected.Bindings[i];
+                Assert.That(actualBinding.NodeId, Is.EqualTo(expectedBinding.NodeId));
+                Assert.That(actualBinding.BindingKey, Is.EqualTo(expectedBinding.BindingKey));
+            }
+
+            for (int i = 0; i < expected.Interactions.Count; i++)
+            {
+                UiInteractionSpec actualInteraction = actual.Interactions[i];
+                UiInteractionSpec expectedInteraction = expected.Interactions[i];
+                Assert.That(actualInteraction.NodeId, Is.EqualTo(expectedInteraction.NodeId));
+                Assert.That(actualInteraction.EventName, Is.EqualTo(expectedInteraction.EventName));
+                Assert.That(actualInteraction.HandlerKey, Is.EqualTo(expectedInteraction.HandlerKey));
+            }
         }
 
         public static void AreEqual(PrefabBindingManifest actual, PrefabBindingManifest expected)

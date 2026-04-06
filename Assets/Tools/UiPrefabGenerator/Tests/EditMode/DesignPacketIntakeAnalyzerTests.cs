@@ -31,5 +31,18 @@ namespace UiPrefabGenerator.Tests.EditMode
                 Has.Some.Matches<DesignPacketIntakeIssue>(
                     issue => issue.Kind == DesignPacketIntakeIssueKind.AmbiguousImageStateMapping));
         }
+
+        [Test]
+        public void Analyze_SupportedScrollableRule_DoesNotReportUnsupportedRule()
+        {
+            DesignPacket packet = SampleFixtureLoader.LoadDesignPacket();
+
+            DesignPacketIntakeAssessment assessment = new DefaultDesignPacketIntakeAnalyzer().Analyze(packet);
+
+            Assert.That(
+                assessment.UnresolvedItems,
+                Has.None.Matches<DesignPacketIntakeIssue>(
+                    issue => issue.Kind == DesignPacketIntakeIssueKind.UnsupportedRule));
+        }
     }
 }

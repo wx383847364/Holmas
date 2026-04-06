@@ -47,6 +47,15 @@
     },
     {
       "node_path": "AgencyMainPanel/ClaimButton",
+      "component_type": "RectTransform",
+      "binding_key": "",
+      "asset_slot": "",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=claim_button; component=RectTransform; layout=Anchored; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel/ClaimButton",
       "component_type": "Button",
       "binding_key": "claim_button",
       "asset_slot": "",

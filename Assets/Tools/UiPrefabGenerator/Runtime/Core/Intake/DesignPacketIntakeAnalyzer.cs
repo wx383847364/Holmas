@@ -331,7 +331,9 @@ namespace UiPrefabGenerator.Core.Intake
 
         private static bool IsRuleSupported(string ruleId)
         {
-            return string.Equals(ruleId, "fullscreen_root", StringComparison.Ordinal);
+            return string.Equals(ruleId, "fullscreen_root", StringComparison.Ordinal) ||
+                   string.Equals(ruleId, "task_list_scrollable", StringComparison.Ordinal) ||
+                   string.Equals(ruleId, "claim_button_clickable", StringComparison.Ordinal);
         }
 
         private static int SafeCount<T>(List<T> items)

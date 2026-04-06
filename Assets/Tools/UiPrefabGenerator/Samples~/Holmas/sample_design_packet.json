@@ -19,6 +19,10 @@
     {
       "rule_id": "task_list_scrollable",
       "description": "task list should be scrollable"
+    },
+    {
+      "rule_id": "claim_button_clickable",
+      "description": "claim button should expose click event"
     }
   ],
   "asset_slot_hints": [

@@ -43,6 +43,10 @@
     {
       "rule_id": "task_list_scrollable",
       "description": "任务列表需要可滚动"
+    },
+    {
+      "rule_id": "claim_button_clickable",
+      "description": "领奖按钮需要暴露点击事件"
     }
   ],
   "asset_slot_hints": [
@@ -81,7 +85,10 @@
 - 先运行 intake analyzer
 - 存在 blocking issue 时，禁止直接进入 spec 解释
 - 无 blocking issue 时，允许产出最小 `UiPrefabSpec`
-- 第一版默认生成 1 个 `root` 节点
-- 第一版只自动落：
+- 当前默认生成 1 个 `root` 节点
+- 当前自动支持的最小规则集：
   - `RectTransform`
   - 来自首个 `asset_slot_hint` 的 `Image`
+  - `task_list_scrollable -> task_list / ScrollRect`
+  - `claim_button_clickable -> claim_button / Button / on_click`
+- 尚未接入自动解释的其他规则继续留在 intake 未决项中，不在 spec 层猜测生成

@@ -24,8 +24,56 @@
         "layout_type": "FullScreen",
         "layout_slot": "root"
       }
+    },
+    {
+      "node_id": "task_list",
+      "node_name": "TaskList",
+      "parent_node_id": "root",
+      "components": [
+        {
+          "component_type": "RectTransform",
+          "binding_key": "",
+          "asset_slot": ""
+        },
+        {
+          "component_type": "ScrollRect",
+          "binding_key": "task_list",
+          "asset_slot": ""
+        }
+      ],
+      "layout": {
+        "layout_type": "VerticalLayout",
+        "layout_slot": "task_list"
+      }
+    },
+    {
+      "node_id": "claim_button",
+      "node_name": "ClaimButton",
+      "parent_node_id": "root",
+      "components": [
+        {
+          "component_type": "RectTransform",
+          "binding_key": "",
+          "asset_slot": ""
+        },
+        {
+          "component_type": "Button",
+          "binding_key": "claim_button",
+          "asset_slot": ""
+        }
+      ],
+      "layout": {
+        "layout_type": "Anchored",
+        "layout_slot": "claim_button"
+      }
     }
   ],
   "bindings": [],
-  "interactions": []
+  "interactions": [
+    {
+      "node_id": "claim_button",
+      "event_name": "on_click",
+      "handler_key": "claim_task"
+    }
+  ]
 }

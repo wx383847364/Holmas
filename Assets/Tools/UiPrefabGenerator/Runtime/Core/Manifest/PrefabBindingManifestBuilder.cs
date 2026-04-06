@@ -97,6 +97,23 @@ namespace UiPrefabGenerator.Core.Manifest
                     continue;
                 }
 
+                List<UiInteractionSpec> nodeInteractions;
+                int interactionCarrierComponentIndex = -1;
+                if (interactionsByNode.TryGetValue(node.NodeId, out nodeInteractions) &&
+                    nodeInteractions.Count > 0)
+                {
+                    interactionCarrierComponentIndex = FindInteractionCarrierComponentIndex(node.Components);
+                    if (nodeInteractions.Count > 1)
+                    {
+                        result.Warnings.Add(string.Format("节点 {0} 存在多个交互候选，已使用第一个。", node.NodeId));
+                    }
+
+                    if (interactionCarrierComponentIndex < 0)
+                    {
+                        result.Warnings.Add(string.Format("节点 {0} 定义了交互，但未找到可承载交互的组件。", node.NodeId));
+                    }
+                }
+
                 for (int componentIndex = 0; componentIndex < node.Components.Count; componentIndex++)
                 {
                     UiComponentSpec component = node.Components[componentIndex];
@@ -123,18 +140,14 @@ namespace UiPrefabGenerator.Core.Manifest
                     string eventName = string.Empty;
                     string handlerKey = string.Empty;
                     bool requiresManualWiring = false;
-                    List<UiInteractionSpec> nodeInteractions;
-                    if (interactionsByNode.TryGetValue(node.NodeId, out nodeInteractions) &&
-                        nodeInteractions.Count > 0)
+                    if (nodeInteractions != null &&
+                        nodeInteractions.Count > 0 &&
+                        componentIndex == interactionCarrierComponentIndex)
                     {
                         UiInteractionSpec interaction = nodeInteractions[0];
                         eventName = interaction.EventName ?? string.Empty;
                         handlerKey = interaction.HandlerKey ?? string.Empty;
                         requiresManualWiring = true;
-                        if (nodeInteractions.Count > 1)
-                        {
-                            result.Warnings.Add(string.Format("节点 {0} 存在多个交互候选，已使用第一个。", node.NodeId));
-                        }
                     }
 
                     var entry = new PrefabBindingEntry
@@ -189,6 +202,35 @@ namespace UiPrefabGenerator.Core.Manifest
 
                 list.Add(binding);
             }
+        }
+
+        private static int FindInteractionCarrierComponentIndex(List<UiComponentSpec> components)
+        {
+            if (components == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < components.Count; i++)
+            {
+                UiComponentSpec component = components[i];
+                if (component != null && IsInteractionCarrierComponentType(component.ComponentType))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static bool IsInteractionCarrierComponentType(string componentType)
+        {
+            return string.Equals(componentType, "Button", StringComparison.Ordinal) ||
+                   string.Equals(componentType, "Toggle", StringComparison.Ordinal) ||
+                   string.Equals(componentType, "Slider", StringComparison.Ordinal) ||
+                   string.Equals(componentType, "Scrollbar", StringComparison.Ordinal) ||
+                   string.Equals(componentType, "ScrollRect", StringComparison.Ordinal) ||
+                   string.Equals(componentType, "InputField", StringComparison.Ordinal);
         }
 
         private static void CollectInteractionsByNode(
