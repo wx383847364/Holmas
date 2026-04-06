@@ -127,6 +127,86 @@
 
 ### 4. 日常使用规则
 
+## 提交编号速查表
+
+### 完整速查表
+
+```text
+1xxxxxxx 代码
+110xxxxx App.Shared / Contracts
+120xxxxx App.AOT / Bootstrap / Infrastructure
+130xxxxx App.HotUpdate / Holmas gameplay
+140xxxxx Minesweeper 接入
+150xxxxx 运行时 UI / Presenter / Controller
+
+2xxxxxxx 文档
+210xxxxx 项目总览 / 主文档索引 / 入口页
+220xxxxx 架构与边界
+230xxxxx 协作与执行 / agent / skill / 收尾流程
+240xxxxx 策划方案文档
+250xxxxx 策划配表文档 / 数据方案文档
+260xxxxx 迭代记录 / 启动卡 / 交接
+270xxxxx UI 自动生成系统专区文档
+
+3xxxxxxx 资源 / 美术 / Unity 资产
+310xxxxx 图标 / 贴图 / 美术资源
+320xxxxx HotUpdate Res
+330xxxxx Scene / Prefab / Unity 资产
+340xxxxx 地图 / Terrain / 关卡资源
+
+4xxxxxxx 配置 / 数据
+410xxxxx 原始配置表 / CSV
+420xxxxx 配置导出 / 转换脚本
+430xxxxx json / bytes / catalog 产物
+440xxxxx 配置协议 / schema / 数据结构
+
+5xxxxxxx 测试 / 验证
+510xxxxx 单元 / 集成测试
+520xxxxx smoke / validation / 回归
+530xxxxx 边界检查 / QA 脚本
+
+6xxxxxxx 工具 / 生成器 / 项目脚本
+610xxxxx 通用项目脚本
+620xxxxx UiPrefabGenerator
+630xxxxx Editor 工具 / 导入器 / 生成辅助
+```
+
+### 最常用一屏版
+
+```text
+130 Holmas gameplay 主代码
+230 协作流程 / 收尾 / agent 规则
+240 策划方案
+250 配表 / 数据方案
+260 迭代记录 / 交接
+270 UI 自动生成系统文档
+320 HotUpdate Res
+330 Prefab / Unity 资产 / meta
+410 CSV / 原始配置
+420 配置导出脚本
+520 测试 / 回归 / validation
+620 UiPrefabGenerator
+```
+
+### 当前已使用示例
+
+```text
+[62000001] 架构：补齐 UI prefab intake 与 manifest 主链
+[62000002] UI：补齐 Holmas adapter 与 sample 输出样例
+[52000001] 测试：补齐 UI prefab validation 与 sample-driven regression
+[27000001] 文档：同步 UI 自动生成系统规格与迭代记录
+[23000001] 流程：提交编号与收尾规则
+[23000002] 流程：重写线程级辅助 subagent 角色规则
+[23000003] 流程：迁移旧 PLAN 并新增八位提交编号方案
+[33000001] 资源：补齐 Holmas UI 与测试文件 meta
+```
+
+使用建议：
+
+- 在 GitHub Desktop 里先看前 3 位模块号，再看中文前缀
+- 在 `git log` 里优先按模块前缀检索，例如 `620`、`230`、`330`
+- 新提交先判断模块，再在该模块下递增 `SSSSS`
+
 后续提交标题统一变成：
 
 ```text
