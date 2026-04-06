@@ -23,12 +23,20 @@
     {
       "rule_id": "claim_button_clickable",
       "description": "claim button should expose click event"
+    },
+    {
+      "rule_id": "claim_button_visualized",
+      "description": "claim button should have a visible background"
     }
   ],
   "asset_slot_hints": [
     {
       "slot_id": "panel_bg",
       "usage": "background panel image"
+    },
+    {
+      "slot_id": "claim_button_bg",
+      "usage": "claim button background image"
     }
   ],
   "notes": "Sample only."

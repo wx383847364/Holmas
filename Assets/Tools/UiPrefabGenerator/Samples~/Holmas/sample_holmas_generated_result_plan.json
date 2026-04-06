@@ -51,6 +51,15 @@
     },
     {
       "node_path": "AgencyMainPanel/ClaimButton",
+      "component_type": "Image",
+      "binding_key": "",
+      "asset_slot": "claim_button_bg",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=claim_button; component=Image; asset_slot=claim_button_bg; layout=Anchored; layout_slot=claim_button; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel/ClaimButton",
       "component_type": "Button",
       "binding_key": "claim_button",
       "asset_slot": "",

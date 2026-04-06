@@ -21,7 +21,7 @@ public static class HolmasEditModeTestRunner
         var filter = new Filter
         {
             testMode = TestMode.EditMode,
-            assemblyNames = new[] { "Holmas.Tests", "Assembly-CSharp-Editor" }
+            assemblyNames = new[] { "Holmas.Tests", "UiPrefabGenerator.Tests", "Assembly-CSharp-Editor" }
         };
 
         var settings = new ExecutionSettings(filter)

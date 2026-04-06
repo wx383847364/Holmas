@@ -99,5 +99,70 @@ namespace UiPrefabGenerator.Tests.EditMode
             Assert.That(result.Manifest.Entries[1].RequiresManualWiring, Is.False);
             Assert.That(result.Manifest.Entries[1].Notes, Does.Not.Contain("handler_key=open_header"));
         }
+
+        [Test]
+        public void Build_MultiComponentClaimButton_OnlyMarksButtonForManualWiring()
+        {
+            var spec = new UiPrefabSpec
+            {
+                PageId = "agency_main",
+                PrefabName = "AgencyMainPanel",
+                RootNodeId = "root",
+            };
+            spec.Nodes.Add(new UiNodeSpec
+            {
+                NodeId = "root",
+                NodeName = "AgencyMainPanel",
+                Components =
+                {
+                    new UiComponentSpec { ComponentType = "RectTransform" },
+                },
+            });
+            spec.Nodes.Add(new UiNodeSpec
+            {
+                NodeId = "claim_button",
+                NodeName = "ClaimButton",
+                ParentNodeId = "root",
+                Layout = new UiLayoutSpec
+                {
+                    LayoutType = "Anchored",
+                    LayoutSlot = "claim_button",
+                },
+                Components =
+                {
+                    new UiComponentSpec { ComponentType = "RectTransform" },
+                    new UiComponentSpec { ComponentType = "Image", AssetSlot = "claim_button_bg" },
+                    new UiComponentSpec { ComponentType = "Button", BindingKey = "claim_button" },
+                },
+            });
+            spec.Interactions.Add(new UiInteractionSpec
+            {
+                NodeId = "claim_button",
+                EventName = "on_click",
+                HandlerKey = "claim_task",
+            });
+
+            PrefabBindingManifestBuildResult result = new DefaultPrefabBindingManifestBuilder().Build(
+                new PrefabBindingManifestBuildRequest
+                {
+                    Spec = spec,
+                    PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                });
+
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Errors, Is.Empty);
+            Assert.That(result.Warnings, Is.Empty);
+            Assert.That(result.Manifest.Entries.Count, Is.EqualTo(4));
+            Assert.That(result.Manifest.Entries[1].ComponentType, Is.EqualTo("RectTransform"));
+            Assert.That(result.Manifest.Entries[1].RequiresManualWiring, Is.False);
+            Assert.That(result.Manifest.Entries[2].ComponentType, Is.EqualTo("Image"));
+            Assert.That(result.Manifest.Entries[2].AssetSlot, Is.EqualTo("claim_button_bg"));
+            Assert.That(result.Manifest.Entries[2].EventName, Is.Empty);
+            Assert.That(result.Manifest.Entries[2].RequiresManualWiring, Is.False);
+            Assert.That(result.Manifest.Entries[3].ComponentType, Is.EqualTo("Button"));
+            Assert.That(result.Manifest.Entries[3].EventName, Is.EqualTo("on_click"));
+            Assert.That(result.Manifest.Entries[3].RequiresManualWiring, Is.True);
+            Assert.That(result.Manifest.Entries[3].Notes, Does.Contain("handler_key=claim_task"));
+        }
     }
 }

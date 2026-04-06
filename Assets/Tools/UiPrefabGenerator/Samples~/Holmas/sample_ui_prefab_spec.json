@@ -57,6 +57,11 @@
           "asset_slot": ""
         },
         {
+          "component_type": "Image",
+          "binding_key": "",
+          "asset_slot": "claim_button_bg"
+        },
+        {
           "component_type": "Button",
           "binding_key": "claim_button",
           "asset_slot": ""

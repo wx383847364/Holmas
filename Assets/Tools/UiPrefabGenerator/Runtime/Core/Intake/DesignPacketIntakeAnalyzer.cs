@@ -333,7 +333,8 @@ namespace UiPrefabGenerator.Core.Intake
         {
             return string.Equals(ruleId, "fullscreen_root", StringComparison.Ordinal) ||
                    string.Equals(ruleId, "task_list_scrollable", StringComparison.Ordinal) ||
-                   string.Equals(ruleId, "claim_button_clickable", StringComparison.Ordinal);
+                   string.Equals(ruleId, "claim_button_clickable", StringComparison.Ordinal) ||
+                   string.Equals(ruleId, "claim_button_visualized", StringComparison.Ordinal);
         }
 
         private static int SafeCount<T>(List<T> items)

@@ -133,5 +133,54 @@ namespace UiPrefabGenerator.Tests.EditMode
                                    interaction.EventName == "on_click" &&
                                    interaction.HandlerKey == "claim_task"));
         }
+
+        [Test]
+        public void Interpret_ClaimButtonVisualizedRule_AddsImageComponentToClaimButton()
+        {
+            var packet = new DesignPacket
+            {
+                PageId = "agency_main",
+                PageTitle = "Agency Main",
+                PrefabName = "AgencyMainPanel",
+                DesignImages =
+                {
+                    new DesignImageReference
+                    {
+                        ImageId = "default",
+                        ImagePath = "Design/AgencyMain/default.png",
+                        StateId = "default",
+                    },
+                },
+                States =
+                {
+                    new DesignStateDefinition
+                    {
+                        StateId = "default",
+                        Description = "default state",
+                    },
+                },
+                Rules =
+                {
+                    new DesignRuleDefinition
+                    {
+                        RuleId = "claim_button_visualized",
+                        Description = "claim button should have a visible background",
+                    },
+                },
+            };
+
+            UiPrefabSpec spec = new DefaultDesignPacketToUiPrefabSpecInterpreter().Interpret(packet);
+
+            Assert.That(
+                spec.Nodes,
+                Has.Some.Matches<UiNodeSpec>(
+                    node => node.NodeId == "claim_button" &&
+                            node.Components.Count == 3 &&
+                            node.Components[1].ComponentType == "Image" &&
+                            node.Components[1].AssetSlot == "claim_button_bg" &&
+                            node.Components[2].ComponentType == "Button" &&
+                            node.Components[2].BindingKey == "claim_button"));
+            Assert.That(spec.Interactions, Is.Empty);
+        }
     }
 }

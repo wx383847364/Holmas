@@ -5,7 +5,7 @@
   "notes": [
     "design_images=1",
     "states=1",
-    "rules=2",
-    "asset_slot_hints=1"
+    "rules=3",
+    "asset_slot_hints=2"
   ]
 }

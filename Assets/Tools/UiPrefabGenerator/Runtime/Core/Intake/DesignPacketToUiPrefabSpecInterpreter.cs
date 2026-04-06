@@ -9,6 +9,7 @@ namespace UiPrefabGenerator.Core.Intake
         private const string DefaultGenerationProfileId = "holmas_ugui";
         private const string TaskListScrollableRuleId = "task_list_scrollable";
         private const string ClaimButtonClickableRuleId = "claim_button_clickable";
+        private const string ClaimButtonVisualizedRuleId = "claim_button_visualized";
 
         private readonly IDesignPacketIntakeAnalyzer _analyzer;
         private readonly string _generationProfileId;
@@ -44,10 +45,15 @@ namespace UiPrefabGenerator.Core.Intake
                 spec.Nodes.Add(BuildScrollableTaskListNode());
             }
 
-            if (HasRule(designPacket, ClaimButtonClickableRuleId))
+            bool hasClickableClaimButton = HasRule(designPacket, ClaimButtonClickableRuleId);
+            bool hasVisualizedClaimButton = HasRule(designPacket, ClaimButtonVisualizedRuleId);
+            if (hasClickableClaimButton || hasVisualizedClaimButton)
             {
-                spec.Nodes.Add(BuildClaimButtonNode());
-                spec.Interactions.Add(BuildClaimButtonInteraction());
+                spec.Nodes.Add(BuildClaimButtonNode(hasVisualizedClaimButton));
+                if (hasClickableClaimButton)
+                {
+                    spec.Interactions.Add(BuildClaimButtonInteraction());
+                }
             }
 
             return spec;
@@ -110,7 +116,7 @@ namespace UiPrefabGenerator.Core.Intake
             return taskListNode;
         }
 
-        private static UiNodeSpec BuildClaimButtonNode()
+        private static UiNodeSpec BuildClaimButtonNode(bool includeVisualComponent)
         {
             var claimButtonNode = new UiNodeSpec
             {
@@ -127,6 +133,14 @@ namespace UiPrefabGenerator.Core.Intake
             {
                 ComponentType = "RectTransform",
             });
+            if (includeVisualComponent)
+            {
+                claimButtonNode.Components.Add(new UiComponentSpec
+                {
+                    ComponentType = "Image",
+                    AssetSlot = "claim_button_bg",
+                });
+            }
             claimButtonNode.Components.Add(new UiComponentSpec
             {
                 ComponentType = "Button",

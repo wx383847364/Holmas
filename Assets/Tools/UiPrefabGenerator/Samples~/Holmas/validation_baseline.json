@@ -5,8 +5,11 @@
   "golden_generated_result_plan_path": "Assets/Tools/UiPrefabGenerator/Samples~/Holmas/sample_holmas_generated_result_plan.json",
   "checks": [
     "design_packet_interpretation",
+    "prefab_draft_write",
+    "prefab_draft_structure_validation",
     "manifest_validation",
     "holmas_generated_result_consumption",
-    "deterministic_manifest_regression"
+    "deterministic_manifest_regression",
+    "sample_pipeline_end_to_end"
   ]
 }

@@ -44,5 +44,24 @@ namespace UiPrefabGenerator.Tests.EditMode
                 Has.None.Matches<DesignPacketIntakeIssue>(
                     issue => issue.Kind == DesignPacketIntakeIssueKind.UnsupportedRule));
         }
+
+        [Test]
+        public void Analyze_SupportedVisualizedRule_DoesNotReportUnsupportedRule()
+        {
+            DesignPacket packet = SampleFixtureLoader.LoadDesignPacket();
+            packet.Rules.Add(new DesignRuleDefinition
+            {
+                RuleId = "claim_button_visualized",
+                Description = "claim button should have a visible background",
+            });
+
+            DesignPacketIntakeAssessment assessment = new DefaultDesignPacketIntakeAnalyzer().Analyze(packet);
+
+            Assert.That(
+                assessment.UnresolvedItems,
+                Has.None.Matches<DesignPacketIntakeIssue>(
+                    issue => issue.Kind == DesignPacketIntakeIssueKind.UnsupportedRule &&
+                             issue.FieldPath == "rules[3].rule_id"));
+        }
     }
 }
