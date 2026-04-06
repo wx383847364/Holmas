@@ -30,7 +30,7 @@
     {
       "image_id": "default",
       "image_path": "Design/AgencyMain/default.png",
-      "state": "default"
+      "state_id": "default"
     }
   ],
   "states": [
@@ -61,3 +61,27 @@
 - 标注包必须能说明节点语义、交互和资源位
 - 规则文本必须是可执行约束，而不是泛泛描述
 - 不能把业务逻辑说明混成布局标注
+
+## Intake 审阅层
+
+第一版在 `DesignPacket` 正式进入 spec 生成前，允许先产出 intake 审阅结果：
+
+- 记录缺失字段和未决项
+- 记录哪些问题必须人工确认
+- 记录哪些问题会阻塞进入 `UiPrefabSpec`
+
+冻结约束：
+
+- intake 只做 review-only assessment，不直接产正式 `UiPrefabSpec`
+- generator 和 validator 继续只消费 `UiPrefabSpec`
+- `rules`、`asset_slot_hints`、图片状态映射不清时，应以未决项而不是猜测结构的方式暴露
+
+当前最小解释器实现口径：
+
+- 先运行 intake analyzer
+- 存在 blocking issue 时，禁止直接进入 spec 解释
+- 无 blocking issue 时，允许产出最小 `UiPrefabSpec`
+- 第一版默认生成 1 个 `root` 节点
+- 第一版只自动落：
+  - `RectTransform`
+  - 来自首个 `asset_slot_hint` 的 `Image`

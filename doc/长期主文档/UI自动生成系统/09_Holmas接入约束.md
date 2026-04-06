@@ -44,3 +44,17 @@ Holmas 不负责：
 - 只有触碰 Holmas 接入代码时，才需要额外叠加 `unity-hotupdate-boundary`
 - `Samples~/Holmas` 只放 Holmas 试点样例，不作为通用共享杂物区
 - `Documentation~` 中的 Holmas 说明只记录接入约束，不记录系统本体规则
+
+## 第一版消费边界
+
+Holmas adapter 第一版只做：
+
+- 校验 `PrefabBindingManifest` 是否属于 Holmas 允许目录
+- 把 manifest 归一化成 Holmas 侧可读的 generated result plan
+- 收集 `requires_manual_wiring` 节点，交给后续业务侧人工接线
+
+Holmas adapter 不做：
+
+- 改写核心 schema
+- 自动生成 gameplay 逻辑
+- 直接扩展为 HotUpdate 业务 Presenter
