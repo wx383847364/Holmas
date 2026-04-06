@@ -41,30 +41,26 @@
       "node_id": "root",
       "node_name": "AgencyMainPanel",
       "parent_node_id": "",
-      "components": ["RectTransform", "Image"],
-      "layout": "FullScreen"
-    },
-    {
-      "node_id": "task_list",
-      "node_name": "TaskList",
-      "parent_node_id": "root",
-      "components": ["RectTransform", "ScrollRect", "VerticalLayoutGroup"],
-      "layout": "LeftColumn"
+      "components": [
+        {
+          "component_type": "RectTransform",
+          "binding_key": "",
+          "asset_slot": ""
+        },
+        {
+          "component_type": "Image",
+          "binding_key": "",
+          "asset_slot": "panel_bg"
+        }
+      ],
+      "layout": {
+        "layout_type": "FullScreen",
+        "layout_slot": "root"
+      }
     }
   ],
-  "bindings": [
-    {
-      "node_id": "task_list",
-      "binding_key": "task_list"
-    }
-  ],
-  "interactions": [
-    {
-      "node_id": "claim_button",
-      "event_name": "on_click",
-      "handler_key": "claim_task"
-    }
-  ]
+  "bindings": [],
+  "interactions": []
 }
 ```
 
@@ -73,3 +69,5 @@
 - `UiPrefabSpec` 不承载玩法规则
 - `UiPrefabSpec` 只表达结构、组件、资源位、绑定位和交互出口
 - 所有生成与校验都必须可从 spec 重建
+- `DesignPacket` 的 intake 结果只能作为前置审阅材料，不能绕开 spec 直接进入 generator 或 validator
+- 第一版 `DesignPacket -> UiPrefabSpec` 解释器只产出最小 root spec；未自动解释的规则必须继续留在 intake 未决项中
