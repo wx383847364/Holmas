@@ -4,15 +4,15 @@
 
 这页不重复解释：
 
-- 新会话默认入口和两阶段切换
+- 新会话默认入口和阶段判断总规则
 - 执行型 `Agent 1 ~ 6` 的职责边界和验收规则
-- helper 的可复制启动口令
+- helper 的覆盖模板
 - 固定三段收尾和 Git 提交流程
 
 相关入口分别看：
 
 - [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
-- [Agent 启动口令清单](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动口令清单.md)
+- [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
 - [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
 - [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
 
@@ -39,21 +39,38 @@ helper role 不是新的官方 `Agent` 编号，也不是执行型真实 subagen
   - 代替 `Agent 6` 输出代码审查结论
   - 代替执行型 Agent 接管修复闭环
 
-## helper 在两阶段工作流中的位置
+## helper 在默认工作流中的位置
+
+新会话只要已经按 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md) 进入默认入口，主线程就必须自己判断是否需要 helper，不需要用户额外补口令。
 
 - `briefing`
-  - 默认允许主线程自行完成，也允许按需复用或启动 `文档 / 主线判断 helper`
+  - 默认允许主线程自行完成
+  - 只有在需要低成本梳理主线、阻塞和下一步建议时，才按需复用或启动 `文档 / 主线判断 helper`
   - 目标是低 token 判断当前主线，不直接进入代码执行
-- `execution dispatch`
+- `execution`
   - 默认只在确有必要时使用 helper
   - 典型场景是：
     - 先做只读规则审计
     - 核对线程内已有注册表状态
     - 给主线程补一轮主线或流程判断
 
-helper role 只补辅助判断，不改变两阶段切换权和执行调度权；这些仍由主线程掌握。
+helper role 只补辅助判断，不改变阶段判断权和执行调度权；这些仍由主线程掌握。
+
+固定要求：
+
+- 不要把“要不要开 helper”交还给用户
+- 不要因为 helper 有模板就机械启动
+- 如果主线程一个人就能低成本完成判断，默认不必额外起 helper
 
 ## 默认 helper 角色
+
+主线程只有在下面情况之一成立时，才值得启用 helper：
+
+- 需要快速只读梳理长期文档和迭代记录
+- 需要单独做规则审计，但主线程仍负责最终裁定
+- 需要把只读分析和实现动作分开，降低主线程上下文噪音
+
+如果只是单点任务、上下文清晰、主线程已足够判断，本轮默认由主线程直做，不额外启 helper。
 
 ### 文档 / 主线判断 helper
 
@@ -231,17 +248,18 @@ helper role 的回传固定使用三段式：
   - 它的 `status`
   - 它的 `context_compression_count`
   - 为什么继续复用，或为什么关闭并换新
+- 如果主线程判断这轮不需要 helper，也应直接说明“本轮主线程直做即可，helper 成本高于收益”
 
 ## 跨环境恢复方式
 
 - helper 的长期主语是 `role_name`，不是旧实例昵称
 - 换环境后，如果线程里没有旧实例，直接按 `role_name` 恢复同职责 helper
-- helper 的可复制启动口令统一看 [Agent 启动口令清单](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动口令清单.md)
+- 如需显式覆盖默认行为，再看 [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md) 中的 helper 模板
 - helper 只是线程内辅助判断机制，不改变官方执行型 Agent 分工
 
 ## 与其他长期文档的关系
 
 - 新会话默认入口继续看 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
 - 执行型真实 subagent 的启动、调度、职责、验收和 Agent 6 闭环继续看 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
-- helper 的可复制说法继续看 [Agent 启动口令清单](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动口令清单.md)
+- helper 的覆盖模板继续看 [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
 - 文档收尾与 Git 提交建议继续看 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)

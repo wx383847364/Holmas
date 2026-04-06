@@ -4,14 +4,14 @@
 
 这页不重复提供：
 
-- 新会话第一句怎么说
-- 可直接复制的口令模板
+- 新会话入口页的完整说明
+- 可直接复制的覆盖模板
 - 固定三段收尾和 Git 提交流程
 
 对应入口分别看：
 
 - [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
-- [Agent 启动口令清单](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动口令清单.md)
+- [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
 - [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
 
 ## Summary
@@ -21,28 +21,18 @@
 
 ## 新会话默认入口
 
-如果新会话只输入：
+新会话只要已经读到 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)，就默认视为长期规则已生效，不需要用户再补固定口令。
 
-```text
-按长期主文档规则执行。
-```
+主线程固定先做两件事：
 
-主线程固定按两阶段推进：
+- 自己判断当前该走 `briefing` 还是 `execution dispatch`
+- 自己判断这轮是主线程直做、只启 helper，还是需要真实 subagent
 
-- `briefing`
-  - 只读项目总览、迭代记录索引和最新迭代摘要
-  - 输出当前主线、当前阻塞、任务建议
-- `execution dispatch`
-  - 只有在用户确认开始执行某个任务后进入
-  - 主线程才去读协作文档、检查总注册表，并判断主线程直做、复用 helper 或启动真实 subagent
+默认切换规则：
 
-如果用户直接说：
-
-```text
-按长期主文档规则执行，默认启动subagent。
-```
-
-表示跳过 `briefing`，直接进入 `execution dispatch`，并优先按长期编组方案判断是否拉起真实 subagent。
+- 任务不够明确时，先走 `briefing`
+- 任务已经明确，且可以判断目标、产出和职责归属时，直接进入 `execution dispatch`
+- 只有用户显式限制“先只给建议”“不要开真实 subagent”“只让主线程做”时，才覆盖默认自动判断
 
 ## 启动前检查
 
@@ -116,7 +106,7 @@
 
 - `Agent 1~6` 是职责模板，不等于真实 subagent 实例
 - “执行 Agent X”默认表示主线程先按该职责推进，不预设一定新开真实 subagent
-- 新会话只说 `按长期主文档规则执行。` 时，默认先走 `briefing`；任务一旦确认，主线程就可以按长期规则自动判断是否委派真实 subagent
+- 新会话默认由主线程自己判断先 `briefing` 还是直接进入 `execution`，并按长期规则自动判断是否委派真实 subagent
 - 只有用户显式补充“这轮不要开真实 subagent”时，主线程才必须禁用真实 subagent 委派
 - `Agent 6` 永远只负责审查、裁定、退回和复审，不接管实现
 
@@ -125,12 +115,12 @@
 主线程每轮固定先判断当前线程处于哪个调度阶段。
 
 - `thread_dispatch_stage = briefing`
-  - 默认值
+  - 用于目标还不够明确的轮次
   - 只做低 token 主线判断
   - 不扫代码
   - 不直接拉起真实 subagent
 - `thread_dispatch_stage = execution`
-  - 用户确认某个任务后进入
+  - 任务已经明确，或用户已确认开始执行某个任务后进入
   - 主线程必须再读协作文档、检查总注册表，并判断是否需要 helper 或真实 subagent
   - 某条实现链达到阶段里程碑后，默认进入 Agent 6 审查闭环
 
@@ -144,8 +134,8 @@
   - 主线程按长期编组方案和线程级总注册表自动判断是否需要真实 subagent
   - 如果 Agent 6 退回 findings 且当前没有原实现真实 subagent，允许自动补起同职责真实 subagent 继续闭环
 - `thread_real_subagent_mode = preferred`
-  - 用户直接使用 `按长期主文档规则执行，默认启动subagent。`
-  - 可跳过 `briefing`，直接进入 `execution`，并优先使用真实 subagent 承担实现职责
+  - 用户显式要求“优先并行处理”“优先启真实 subagent”，或主线程已经判断这轮明确适合并行拆分
+  - 已进入 `execution`，并优先使用真实 subagent 承担实现职责
 
 ## 线程级真实 agent 注册表
 

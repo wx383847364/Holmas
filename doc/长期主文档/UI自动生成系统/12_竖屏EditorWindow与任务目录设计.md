@@ -25,6 +25,7 @@ UiPrefabGenerator/Window/Portrait Generator
 - 拖入设计图
 - 填写 `page_id / page_title / prefab_name`
 - 生成 `request.json`
+- 触发本地自动分析并回写结果
 - 刷新分析结果
 - 确认后生成 prefab
 - 展示 `generation_result.json`
@@ -54,6 +55,7 @@ Assets/Tools/UiPrefabGenerator
 │   │   └── ResourceMatch
 │   └── HolmasAdapter
 ├── Editor
+│   ├── Analysis
 │   ├── Window
 │   ├── Bridge
 │   ├── Template
@@ -161,7 +163,7 @@ Assets/UiPrefabGeneratorData/Templates/ProjectDefaults/holmas_portrait_wechat_de
 
 ### 分析结果层
 
-Codex 回写以下文件：
+本地自动分析 CLI 默认回写以下文件；必要时仍可手动回写：
 
 - `design_packet.json`
 - `ui_prefab_spec.json`
@@ -184,11 +186,12 @@ Unity 在读取分析结果后自动生成 prefab，并回写：
 
 1. 在 `Portrait Generator` 中选择模板并拖入设计图。
 2. 点击 `生成请求`，写入任务目录和 `request.json`。
-3. Codex 根据请求回写 `DesignPacket / UiPrefabSpec / resource_match_report`。
-4. 在窗口中点击 `刷新分析结果`，查看节点树、资源候选和风险项。
-5. 点击 `确认并生成 Prefab`。
-6. Unity 根据分析结果自动生成 prefab、manifest 和 `generation_result.json`。
-7. 如有需要，点击 `定位生成的 Prefab` 做人工复核。
+3. 点击 `自动分析并回写结果`，由本地 `run_task_auto_analysis.sh` 在临时工程里执行 batch 分析并回写 5 份分析产物。
+4. 自动分析成功后，窗口自动刷新分析结果；如自动分析不可用，仍可手动回写分析产物后点击 `刷新分析结果`。
+5. 在窗口中查看节点树、资源候选和风险项。
+6. 点击 `确认并生成 Prefab`。
+7. Unity 根据分析结果自动生成 prefab、manifest 和 `generation_result.json`。
+8. 如有需要，点击 `定位生成的 Prefab` 做人工复核。
 
 ## 多 Agent 协作边界
 
@@ -212,7 +215,9 @@ Unity 在读取分析结果后自动生成 prefab，并回写：
 
 - 已实现竖屏默认模板和项目数据目录
 - 已实现 `Portrait Generator` EditorWindow
+- 已实现本地 `run_task_auto_analysis.sh`、batch 分析入口和最小自动分析服务
+- 已实现窗口侧自动分析桥接、日志落盘和成功后自动刷新分析结果
 - 已实现请求文件写入、分析结果读取和生成结果回写
 - 已实现 Holmas 竖屏 profile
 - 已保留旧 Holmas 横屏 sample 作为回归，不再作为新入口
-- 仍待后续实现图片自动分析服务本身；当前依然要求外部先回写 `UiPrefabSpec`
+- 手动回写分析结果仍保留为兜底，不强制依赖自动分析链路

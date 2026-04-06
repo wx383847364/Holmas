@@ -1,197 +1,22 @@
-# Agent 启动口令清单
+# Agent 启动口令清单（跳转页）
 
-这页只负责可直接复制的启动口令。
+这页已降级为跳转页，用来兼容旧链接。
 
-这页不重复解释：
+原先的覆盖模板、helper 模板、Agent 6 复审模板和 UI 自动生成系统专项模板，已经并入：
 
-- 两阶段工作流为什么这样设计
-- Agent 职责定义、写入边界、验收规则
-- 固定三段收尾和 Git 提交流程
+- [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
 
-详细规则分别看：
+现在的分工如下：
 
-- [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
-- [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
-- [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
+- 新会话默认入口、阶段自动判断、执行前方案格式：
+  - [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
+- Agent 启动、职责边界、验收、Agent 6 闭环：
+  - [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent%20启动与验收规范.md)
+- skill 选择、任务模板、显式覆盖模板：
+  - [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
+- helper 的注册表、状态机、复用和压缩规则：
+  - [线程级辅助 subagent 角色](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/线程级辅助%20subagent%20角色.md)
 
-## 新会话入口
+如果你只是想找“可直接复制的说法”，从这里继续跳：
 
-```text
-按长期主文档规则执行。
-```
-
-如果你要确认进入执行阶段：
-
-```text
-按长期主文档规则执行。
-开始执行：……
-如果需要，按长期 subagent 编组方案和线程级辅助 subagent 角色自动判断并启动合适的 helper 或真实 subagent。
-按阶段里程碑进入 Agent 6 审查闭环，直到通过后再收尾。
-```
-
-如果任务明确，直接跳过 briefing：
-
-```text
-按长期主文档规则执行，默认启动subagent。
-```
-
-如果这轮禁止真实 subagent：
-
-```text
-这轮先不要开真实 subagent。
-```
-
-## 通用模板
-
-```text
-按长期主文档里的 Agent 启动与验收规范，执行 Agent X。
-目标：……
-是否启动真实 subagent：自动判断 / 是 / 否。
-完成后按验收规范汇报，并执行文档维护流程。
-```
-
-## 最短口令
-
-适合职责和任务都已经明确时直接下达：
-
-```text
-按长期主文档里的 Agent 启动与验收规范，执行 Agent 1。
-目标：……
-```
-
-## Agent 1
-
-适合边界、Shared、入口、骨架。
-
-```text
-按长期主文档里的 Agent 启动与验收规范，执行 Agent 1。
-目标：冻结 Shared DTO，补 HotUpdate 骨架。
-这次不要启动其他 agent。
-完成后按验收规范自检，并执行文档维护流程。
-```
-
-## Agent 2
-
-适合地图、棋盘、terrain、扫雷规则。
-
-```text
-按长期主文档里的 Agent 启动与验收规范，执行 Agent 2。
-目标：实现 terrain -> BoardTemplate -> LevelSnapshot，只做地图与棋盘第一阶段。
-不要修改 App.Shared，不要碰 UI。
-完成后按验收规范汇报，并执行文档维护流程。
-```
-
-## Agent 3
-
-适合任务、奖励、任务推进、长期成长。
-
-```text
-按长期主文档里的 Agent 启动与验收规范，执行 Agent 3。
-目标：实现任务栏、任务抽取、奖励计算和任务推进第一阶段。
-不要修改 App.Shared，不要碰 HotUpdate 入口，不要碰 UI。
-完成后按验收规范汇报，并执行文档维护流程。
-```
-
-## Agent 4
-
-适合界面接线、Presenter、联调验证。
-
-```text
-按长期主文档里的 Agent 启动与验收规范，执行 Agent 4。
-目标：接任务栏、领奖、结算和主界面第一阶段。
-这次不要改 Shared，不要写奖励公式和棋盘底层逻辑。
-完成后按验收规范汇报，并执行文档维护流程。
-```
-
-## Agent 5
-
-适合测试、回归、专项验证。
-
-```text
-按长期主文档里的 Agent 启动与验收规范，执行 Agent 5。
-目标：为当前阶段补单元测试、集成测试和回归验证，并检查其他 agent 的实现是否正确。
-这次不要主改业务实现。
-完成后按验收规范汇报，并执行文档维护流程。
-```
-
-## Agent 6
-
-适合阶段里程碑审查和复审。
-
-```text
-按长期主文档里的 Agent 启动与验收规范，执行 Agent 6。
-目标：对当前交付做独立挑刺与问题审查，给出 通过 / 通过，但有非阻塞建议 / 未通过，退回修复 的结论。
-这次不要主改业务实现，只输出问题、归属和复审条件。
-完成后按验收规范汇报，并执行文档维护流程。
-```
-
-## Agent 6 复审
-
-```text
-优先让上一轮同一审查链的 Agent 6 继续复审；只有原实例超时、不可用或上下文明显失真时，才改由同职责 reviewer 接手同一 review_chain_id。
-目标：基于上一轮同一审查链给出的未通过结论，检查这轮修复是否已经满足复审条件，并给出 通过 / 通过，但有非阻塞建议 / 未通过，退回修复 的结论。
-这次仍然不要主改业务实现，只输出剩余问题、严重级别、修复归属和新的复审条件。
-完成后按验收规范汇报，并执行文档维护流程。
-```
-
-## 启动真实 subagent
-
-```text
-按长期主文档里的 Agent 启动与验收规范，启动 Agent 2 真实 subagent。
-目标：……
-完成后把修改文件、输入输出、风险和阻塞汇报给我，并执行文档维护流程。
-```
-
-## helper role
-
-```text
-按长期主文档规则执行。
-先查线程里有没有同职责 helper；有就优先复用。
-如果没有，再启动一个 文档 / 主线判断 helper。
-目标：只读查看长期主文档、迭代记录和必要代码入口，输出当前主线、当前阻塞、下一步建议，以及建议从哪个执行型 Agent 继续。
-```
-
-```text
-按长期主文档规则执行。
-先查线程里有没有同职责 helper；有就优先复用。
-如果没有，再启动一个 规则 / 流程审计 helper。
-目标：只读审计协作规则、收尾规则、文档维护规则和 subagent 复用规则，输出规则缺口、误判点和最值得补的规则项。
-```
-
-## Agent 6 退回后修复链
-
-```text
-按长期主文档里的 Agent 启动与验收规范继续当前修复链。
-Agent 6 已经退回 findings。
-先检查当前有没有对应职责的原实现真实 subagent。
-如果有，就退回原实现方继续修。
-如果没有，而当前线程已进入执行调度阶段且未显式禁止真实 subagent，就自动补起同职责真实 subagent 接手修复。
-修完后默认优先交回同一审查链复审；如果原审查实例超时、不可用或上下文明显失真，再由同职责 reviewer 接手同一 review_chain_id。不要停下来等我再次确认。
-```
-
-## UI 自动生成系统专项
-
-适合 `doc/长期主文档/UI自动生成系统` 和 `Assets/Tools/UiPrefabGenerator` 相关任务。
-
-```text
-按长期主文档规则执行。
-这轮任务属于 UI 自动生成系统专项。
-优先遵循 $ui-prefab-governance；如果任务涉及 DesignPacket、UiPrefabSpec、PrefabBindingManifest、生成流程或校验回归，再叠加 $ui-prefab-pipeline。
-按 UI 自动生成系统专区中的执行派工单拆分 subagent，并遵守子目录独占写入边界。
-完成后同步专区文档、旧稿跳转页、相关 skill 和迭代记录。
-```
-
-```text
-按长期主文档规则执行，默认启动subagent。
-这轮任务属于 UI 自动生成系统专项。
-先执行 Subagent 1 / Foundation-Contracts。
-目标：冻结专区权威正文、asmdef 分层、核心不可变契约和 adapter 接口边界，并交付 contracts freeze note。
-```
-
-```text
-按长期主文档规则执行，默认启动subagent。
-这轮任务属于 UI 自动生成系统专项。
-执行 Subagent 3 / Generator-Manifest。
-目标：基于 approved spec 冻结 prefab 草稿生成步骤、节点命名、组件白名单、资源槽位规则，并交付 sample manifest。
-不要修改 Runtime/Core/Contracts、Runtime/Core/Intake、Runtime/HolmasAdapter、Editor/Validation 或 Tests。
-```
+- [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
