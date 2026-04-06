@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 import re
 import subprocess
+import sys
 
 
 LONG_DIR_NAME = "长期主文档"
@@ -59,6 +60,7 @@ COMMIT_TITLE_PREFIX = {
     "未识别": "提交：",
 }
 PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
+LAST_FINALIZE_REPORT_RELATIVE = Path("codex") / "last_finalize_report.json"
 COMMIT_MODULE_SEQUENCE_START = 1
 COMMIT_MODULE_DEFAULT = "610"
 DOC_MODULE_PATTERNS = [
@@ -459,6 +461,13 @@ def pending_commit_cache_path(doc_root: Path):
     return git_dir / PENDING_COMMIT_CACHE_RELATIVE
 
 
+def last_finalize_report_path(doc_root: Path):
+    git_dir = git_dir_for_doc_root(doc_root)
+    if git_dir is None:
+        return None
+    return git_dir / LAST_FINALIZE_REPORT_RELATIVE
+
+
 def current_head_commit(doc_root: Path) -> str:
     repo_root = doc_root.resolve().parent
     result = subprocess.run(
@@ -498,6 +507,77 @@ def read_pending_commit_suggestion(doc_root: Path):
     if cache_path is None or not cache_path.exists():
         return None
     return json.loads(cache_path.read_text(encoding="utf-8"))
+
+
+def current_worktree_status(doc_root: Path):
+    repo_root = doc_root.resolve().parent
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "status", "--short"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return []
+    return [line.rstrip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def validate_last_finalize_report(doc_root: Path):
+    payload = read_last_finalize_report(doc_root)
+    if not payload:
+        return {
+            "valid": False,
+            "reasons": ["未找到最近一次完整收尾状态缓存。"],
+            "payload": None,
+        }
+
+    reasons = []
+    current_head = current_head_commit(doc_root)
+    current_status = current_worktree_status(doc_root)
+    report_text = payload.get("report_text", "")
+
+    if not payload.get("head_commit"):
+        reasons.append("收尾状态缺少 head_commit，无法确认它对应的是哪次仓库状态。")
+    elif current_head != payload.get("head_commit"):
+        reasons.append("当前 HEAD 已变化，最近一次完整收尾状态不再对应当前提交基线。")
+
+    if payload.get("worktree_status", []) != current_status:
+        reasons.append("当前工作区状态已变化，最近一次完整收尾状态不再对应当前工作区。")
+
+    for marker in ("文档维护：", "Git 提交建议：", "会话建议："):
+        if marker not in report_text:
+            reasons.append(f"收尾输出缺少 `{marker}` 段，不能视为完整收尾。")
+
+    return {
+        "valid": not reasons,
+        "reasons": reasons,
+        "payload": payload,
+        "current_head": current_head,
+        "current_worktree_status": current_status,
+    }
+
+
+def write_last_finalize_report(doc_root: Path, payload):
+    report_path = last_finalize_report_path(doc_root)
+    if report_path is None:
+        return None
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return report_path
+
+
+def clear_last_finalize_report(doc_root: Path):
+    report_path = last_finalize_report_path(doc_root)
+    if report_path is None or not report_path.exists():
+        return
+    report_path.unlink()
+
+
+def read_last_finalize_report(doc_root: Path):
+    report_path = last_finalize_report_path(doc_root)
+    if report_path is None or not report_path.exists():
+        return None
+    return json.loads(report_path.read_text(encoding="utf-8"))
 
 
 def suggest_commit_message(doc_root: Path, summary: str, done, risks, agent6_review: str, doc_log_skipped: bool):
@@ -1528,6 +1608,13 @@ def main():
     )
 
     sub.add_parser("show-pending-commit", help="Show the latest cached suitable commit suggestion")
+    sub.add_parser("show-last-finalize", help="Show the latest cached complete finalize report")
+    sub.add_parser("check-last-finalize", help="Validate whether the latest complete finalize report still matches the current repo state")
+
+    record_finalize = sub.add_parser("record-last-finalize", help="Record the latest complete finalize report")
+    record_finalize.add_argument("--summary", required=True, help="Round summary used for finalize")
+    record_finalize.add_argument("--agent6-review", required=True, help="Agent 6 review state at finalize time")
+    record_finalize.add_argument("--doc-log-skipped", action="store_true", help="Mark that this finalize skipped project doc logging")
 
     backfill = sub.add_parser("backfill-agent-status", help="Backfill default agent status into iteration logs")
     backfill.add_argument("--from", dest="from_date", required=True, help="Start date in YYYYMMDD")
@@ -1537,12 +1624,16 @@ def main():
     ensure_dirs(doc_root)
 
     if args.command == "sync":
+        previous_status = current_worktree_status(doc_root)
         sync_indexes(doc_root)
+        if current_worktree_status(doc_root) != previous_status:
+            clear_last_finalize_report(doc_root)
         print(f"[ok] synced indexes under {doc_root}")
         return
 
     if args.command == "new-iteration":
         path = create_iteration(doc_root, args.title, args.goal, args.status)
+        clear_last_finalize_report(doc_root)
         print(f"[ok] created iteration log: {path}")
         return
 
@@ -1557,6 +1648,7 @@ def main():
             args.next_steps,
             args.agent_status,
         )
+        clear_last_finalize_report(doc_root)
         print(f"[ok] updated iteration log: {path}")
         print("[warn] 当前只完成了迭代记录更新，这仍属于半收尾。")
         print("[warn] 如需完成收尾，请继续执行 update_project_docs.py suggest-handoff 或 scripts/finalize_task.sh。")
@@ -1587,6 +1679,42 @@ def main():
         if not payload:
             raise SystemExit("未找到最近一次可直接复用的提交建议缓存。")
         print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "show-last-finalize":
+        payload = read_last_finalize_report(doc_root)
+        if not payload:
+            raise SystemExit("未找到最近一次完整收尾状态缓存。")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "check-last-finalize":
+        result = validate_last_finalize_report(doc_root)
+        if not result["valid"]:
+            message = "\n".join(f"- {reason}" for reason in result["reasons"])
+            raise SystemExit(f"最近一次完整收尾状态校验失败：\n{message}")
+        payload = result["payload"] or {}
+        print("[ok] 最近一次完整收尾状态仍然有效。")
+        print(f"summary: {payload.get('summary', '')}")
+        print(f"created_at: {payload.get('created_at', '')}")
+        print(f"head_commit: {payload.get('head_commit', '')}")
+        return
+
+    if args.command == "record-last-finalize":
+        report_text = sys.stdin.read().strip()
+        payload = {
+            "summary": args.summary,
+            "agent6_review": args.agent6_review,
+            "doc_log_skipped": args.doc_log_skipped,
+            "head_commit": current_head_commit(doc_root),
+            "worktree_status": current_worktree_status(doc_root),
+            "report_text": report_text,
+            "created_at": datetime.now().isoformat(timespec="seconds"),
+        }
+        path = write_last_finalize_report(doc_root, payload)
+        if path is None:
+            raise SystemExit("当前不在 Git 仓库中，无法写入最近一次完整收尾状态。")
+        print(f"[ok] recorded finalize report: {path}")
         return
 
     if args.command == "backfill-agent-status":

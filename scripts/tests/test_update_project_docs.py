@@ -62,6 +62,12 @@ def create_doc_root(root: Path) -> Path:
     return doc_root
 
 
+def init_git_repo(root: Path) -> None:
+    subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=root, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "config", "user.email", "codex@example.com"], cwd=root, check=True, capture_output=True, text=True)
+
+
 class UpdateProjectDocsTests(unittest.TestCase):
     def test_finalize_task_help_mentions_sync_for_overview_and_index(self):
         completed = subprocess.run(
@@ -405,6 +411,82 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("这仍属于半收尾", completed.stdout)
             self.assertIn("suggest-handoff", completed.stdout)
 
+    def test_append_iteration_clears_cached_last_finalize_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            write_file(root, "README.md", "seed\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=root, check=True, capture_output=True, text=True)
+
+            update_project_docs.write_last_finalize_report(
+                doc_root,
+                {
+                    "summary": "已有完整收尾",
+                    "agent6_review": "passed",
+                    "doc_log_skipped": False,
+                    "head_commit": "abc123",
+                    "worktree_status": "",
+                    "report_text": "文档维护：已执行",
+                    "created_at": "2026-04-06T10:00:00",
+                },
+            )
+
+            write_file(
+                root,
+                "doc/迭代记录/迭代记录_20260405_001.md",
+                """
+                # 迭代记录 2026-04-05 001
+
+                ## 分工状态
+
+                - Agent 1：待补充
+                - Agent 2：待补充
+                - Agent 3：待补充
+                - Agent 4：待补充
+                - Agent 5：待补充
+                - Agent 6：待补充
+
+                ## 工作日志
+
+                ## 完成项
+
+                - 暂无
+
+                ## 风险与阻塞
+
+                - 暂无
+
+                ## 下一步
+
+                - 待补充
+                """,
+            )
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(scripts_dir / "update_project_docs.py"),
+                    "--doc-root",
+                    str(root / "doc"),
+                    "append-iteration",
+                    "--latest",
+                    "--summary",
+                    "补一条文档记录",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIsNone(update_project_docs.read_last_finalize_report(doc_root))
+
     def test_finalize_task_forwards_agent_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
@@ -471,6 +553,149 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("- Agent 5：已启动并完成核心脚本验证", text)
             self.assertIn("- Agent 6：挑刺与问题审查，默认在阶段里程碑完成后按需启动", text)
             self.assertIn("- 分工状态改为长期规则源驱动", text)
+
+    def test_finalize_task_records_last_finalize_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo_root = Path(temp_dir)
+            scripts_dir = repo_root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            doc_root = create_doc_root(repo_root)
+            init_git_repo(repo_root)
+            write_file(repo_root, "README.md", "seed\n")
+            subprocess.run(["git", "add", "README.md"], cwd=repo_root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=repo_root, check=True, capture_output=True, text=True)
+
+            iteration_path = write_file(
+                repo_root,
+                "doc/迭代记录/迭代记录_20260402_001.md",
+                """
+                # 迭代记录 2026-04-02 001
+
+                ## 分工状态
+
+                - Agent 1：待补充
+                - Agent 2：待补充
+                - Agent 3：待补充
+                - Agent 4：待补充
+                - Agent 5：待补充
+                - Agent 6：待补充
+
+                ## 工作日志
+
+                ## 完成项
+
+                - 暂无
+
+                ## 风险与阻塞
+
+                - 暂无
+
+                ## 下一步
+
+                - 待补充
+                """,
+            )
+
+            completed = subprocess.run(
+                [
+                    "bash",
+                    str(scripts_dir / "finalize_task.sh"),
+                    "--file",
+                    str(iteration_path),
+                    "--summary",
+                    "修复新会话收尾断裂问题",
+                    "--done",
+                    "补齐 completion finalize 阶段",
+                    "--agent6-review",
+                    "passed",
+                    "--skip-temp-cleanup",
+                ],
+                cwd=repo_root,
+                env={**os.environ, "CODEX_HOME": str(repo_root / ".codex")},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            payload = update_project_docs.read_last_finalize_report(doc_root)
+            self.assertIsNotNone(payload)
+            assert payload is not None
+            self.assertEqual(payload["summary"], "修复新会话收尾断裂问题")
+            self.assertEqual(payload["agent6_review"], "passed")
+            self.assertIn("文档维护：已执行", payload["report_text"])
+            self.assertTrue((repo_root / ".git" / "codex" / "last_finalize_report.json").exists())
+
+    def test_finalize_task_accepts_repo_relative_iteration_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo_root = Path(temp_dir)
+            scripts_dir = repo_root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            create_doc_root(repo_root)
+            init_git_repo(repo_root)
+            write_file(repo_root, "README.md", "seed\n")
+            subprocess.run(["git", "add", "README.md"], cwd=repo_root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=repo_root, check=True, capture_output=True, text=True)
+
+            iteration_path = write_file(
+                repo_root,
+                "doc/迭代记录/迭代记录_20260402_001.md",
+                """
+                # 迭代记录 2026-04-02 001
+
+                ## 分工状态
+
+                - Agent 1：待补充
+                - Agent 2：待补充
+                - Agent 3：待补充
+                - Agent 4：待补充
+                - Agent 5：待补充
+                - Agent 6：待补充
+
+                ## 工作日志
+
+                ## 完成项
+
+                - 暂无
+
+                ## 风险与阻塞
+
+                - 暂无
+
+                ## 下一步
+
+                - 待补充
+                """,
+            )
+
+            completed = subprocess.run(
+                [
+                    "bash",
+                    str(scripts_dir / "finalize_task.sh"),
+                    "--file",
+                    "doc/迭代记录/迭代记录_20260402_001.md",
+                    "--summary",
+                    "校验相对路径收尾",
+                    "--done",
+                    "允许 finalize_task 直接接受仓库相对路径",
+                    "--agent6-review",
+                    "not-required",
+                    "--skip-temp-cleanup",
+                ],
+                cwd=repo_root,
+                env={**os.environ, "CODEX_HOME": str(repo_root / ".codex")},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("文档维护：已执行", completed.stdout)
+            self.assertIn("校验相对路径收尾", iteration_path.read_text(encoding="utf-8"))
 
     def test_finalize_task_outputs_fixed_wrapup_sections_with_chinese_commit_message(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -544,6 +769,176 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("- 为提交建议补中文标题和内容", completed.stdout)
             self.assertIn("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。", completed.stdout)
             self.assertIn("会话建议：", completed.stdout)
+
+    def test_show_last_finalize_cli_prints_cached_report(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            write_file(root, "README.md", "seed\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=root, check=True, capture_output=True, text=True)
+
+            update_project_docs.write_last_finalize_report(
+                doc_root,
+                {
+                    "summary": "最近一次完整收尾",
+                    "agent6_review": "passed",
+                    "doc_log_skipped": False,
+                    "head_commit": "abc123",
+                    "worktree_status": " M doc/长期主文档/项目总览.md",
+                    "report_text": "文档维护：已执行\nGit 提交建议：适合提交",
+                    "created_at": "2026-04-06T10:00:00",
+                },
+            )
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(scripts_dir / "update_project_docs.py"),
+                    "--doc-root",
+                    str(root / "doc"),
+                    "show-last-finalize",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("最近一次完整收尾", completed.stdout)
+            self.assertIn("Git 提交建议：适合提交", completed.stdout)
+
+    def test_check_last_finalize_cli_passes_when_state_matches(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            write_file(root, "README.md", "seed\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=root, check=True, capture_output=True, text=True)
+
+            update_project_docs.write_last_finalize_report(
+                doc_root,
+                {
+                    "summary": "最近一次完整收尾",
+                    "agent6_review": "passed",
+                    "doc_log_skipped": False,
+                    "head_commit": update_project_docs.current_head_commit(doc_root),
+                    "worktree_status": update_project_docs.current_worktree_status(doc_root),
+                    "report_text": "文档维护：已执行\nGit 提交建议：适合提交\n会话建议：继续当前会话",
+                    "created_at": "2026-04-06T10:00:00",
+                },
+            )
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(scripts_dir / "update_project_docs.py"),
+                    "--doc-root",
+                    str(root / "doc"),
+                    "check-last-finalize",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("[ok] 最近一次完整收尾状态仍然有效。", completed.stdout)
+
+    def test_check_last_finalize_cli_fails_when_worktree_changed(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            write_file(root, "README.md", "seed\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=root, check=True, capture_output=True, text=True)
+
+            update_project_docs.write_last_finalize_report(
+                doc_root,
+                {
+                    "summary": "最近一次完整收尾",
+                    "agent6_review": "passed",
+                    "doc_log_skipped": False,
+                    "head_commit": update_project_docs.current_head_commit(doc_root),
+                    "worktree_status": update_project_docs.current_worktree_status(doc_root),
+                    "report_text": "文档维护：已执行\nGit 提交建议：适合提交\n会话建议：继续当前会话",
+                    "created_at": "2026-04-06T10:00:00",
+                },
+            )
+            write_file(root, "notes.txt", "changed\n")
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(scripts_dir / "update_project_docs.py"),
+                    "--doc-root",
+                    str(root / "doc"),
+                    "check-last-finalize",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("当前工作区状态已变化", completed.stderr or completed.stdout)
+
+    def test_sync_keeps_last_finalize_report_when_worktree_status_is_unchanged(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            write_file(root, "README.md", "seed\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=root, check=True, capture_output=True, text=True)
+
+            update_project_docs.write_last_finalize_report(
+                doc_root,
+                {
+                    "summary": "最近一次完整收尾",
+                    "agent6_review": "passed",
+                    "doc_log_skipped": False,
+                    "head_commit": update_project_docs.current_head_commit(doc_root),
+                    "worktree_status": update_project_docs.current_worktree_status(doc_root),
+                    "report_text": "文档维护：已执行\nGit 提交建议：适合提交\n会话建议：继续当前会话",
+                    "created_at": "2026-04-06T10:00:00",
+                },
+            )
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(scripts_dir / "update_project_docs.py"),
+                    "--doc-root",
+                    str(root / "doc"),
+                    "sync",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIsNotNone(update_project_docs.read_last_finalize_report(doc_root))
 
     def test_finalize_task_auto_syncs_skills_when_skill_source_changes(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -24,7 +24,11 @@
 按长期主文档规则执行。
 ```
 
-这句固定表示主线程先走两阶段工作流。
+这句固定表示主线程走完整的三阶段工作流：
+
+- `briefing`
+- `execution dispatch`
+- `completion finalize`
 
 ## 阶段 A：briefing
 
@@ -59,6 +63,20 @@
 - 是否进入 Agent 6 阶段里程碑审查闭环
 - 是否需要复用已有实例或自动补位
 
+## 阶段 C：completion finalize
+
+只要这轮发生了 repo 级改动，结束前就必须进入收尾阶段。
+
+固定要求：
+
+- 不允许把 `append-iteration + sync` 视为已完成收尾
+- 默认必须执行 `bash scripts/finalize_task.sh`
+- 只有在明确无法走 shell 收尾时，才允许退回 `update_project_docs.py suggest-handoff`
+- 默认完整链固定为：`finalize_task.sh -> check-last-finalize -> final`
+- 只有看到了 `文档维护 / Git 提交建议 / 会话建议` 三段输出，才能视为当前轮真正结束
+- `finalize_task.sh` 完成后，应以 `.git/codex/last_finalize_report.json` 作为最近一次完整收尾状态
+- 在发送 final 前，必须通过 `python3 scripts/update_project_docs.py --doc-root doc check-last-finalize`
+
 ## 最短执行确认模板
 
 ```text
@@ -81,4 +99,4 @@
 - `按长期主文档规则执行。` 不等于“已经有现成 Agent 实例”
 - `按长期主文档规则执行。` 也不等于“新会话一上来就扫代码”
 - 如果你显式补充“这轮不要开真实 subagent”或“先只给建议”，该限制优先于默认入口
-- 任务结束后，固定按 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md) 收尾
+- `按长期主文档规则执行。` 不只约束开始，也约束结束；任务结束后必须按 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md) 收尾

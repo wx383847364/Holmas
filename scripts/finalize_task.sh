@@ -53,6 +53,8 @@ usage() {
   - 默认会在收尾末尾输出固定三段：`文档维护`、`Git 提交建议`、`会话建议`
   - 如果 `Git 提交建议` 为“适合提交”，还会固定追加一条 `提交确认` 提示，提醒可直接回复 `1 / 确认 / 提交 / 直接提交`
   - 如果适合提交，脚本会默认生成中文 `标题：` 和 `内容：`
+  - 完整收尾后会写入 `.git/codex/last_finalize_report.json`，作为最近一次完整收尾状态
+  - 收尾完成后，建议立刻执行 `python3 scripts/update_project_docs.py --doc-root doc check-last-finalize`
   - 即使这轮被判定为事务性协助，也仍会给出 `Git 提交建议` 和 `会话建议`
   - `迭代记录建议`、原因说明和启动卡会作为附加信息继续输出
   - 会自动同步主文档索引和迭代记录索引
@@ -156,6 +158,35 @@ fi
 if [[ "${TARGET_MODE}" == "file" && -z "${TARGET_FILE}" ]]; then
     echo "[error] 使用 --file 时必须提供目标迭代记录文件。" >&2
     exit 1
+fi
+
+normalize_target_file() {
+    local raw_path="$1"
+    if [[ -z "${raw_path}" ]]; then
+        echo ""
+        return
+    fi
+
+    if [[ "${raw_path}" = /* ]]; then
+        echo "${raw_path}"
+        return
+    fi
+
+    if [[ -f "${REPO_ROOT}/${raw_path}" ]]; then
+        echo "${REPO_ROOT}/${raw_path}"
+        return
+    fi
+
+    if [[ -f "${DOC_ROOT}/${raw_path}" ]]; then
+        echo "${DOC_ROOT}/${raw_path}"
+        return
+    fi
+
+    echo "${REPO_ROOT}/${raw_path}"
+}
+
+if [[ "${TARGET_MODE}" == "file" ]]; then
+    TARGET_FILE="$(normalize_target_file "${TARGET_FILE}")"
 fi
 
 should_skip_doc_logging() {
@@ -343,4 +374,20 @@ fi
 
 echo
 echo "[info] 会话衔接建议..."
-"${HANDOFF_ARGS[@]}"
+HANDOFF_OUTPUT="$("${HANDOFF_ARGS[@]}")"
+printf '%s\n' "${HANDOFF_OUTPUT}"
+
+if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    RECORD_FINALIZE_ARGS=(
+        python3
+        "${REPO_ROOT}/scripts/update_project_docs.py"
+        --doc-root "${DOC_ROOT}"
+        record-last-finalize
+        --summary "${SUMMARY}"
+        --agent6-review "${AGENT6_REVIEW}"
+    )
+    if [[ "${SKIP_DOC_LOGGING}" -eq 1 ]]; then
+        RECORD_FINALIZE_ARGS+=(--doc-log-skipped)
+    fi
+    printf '%s\n' "${HANDOFF_OUTPUT}" | "${RECORD_FINALIZE_ARGS[@]}"
+fi
