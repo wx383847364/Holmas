@@ -484,5 +484,11 @@ MVP 通过标准固定为：
 - 本页已冻结高精度双输出链路的总体方向
 - 已明确首轮只做 MVP，不一次性并入真实云 provider 和高拟真 preview
 - 已明确 `6 个 subagent` 的推荐编组和启动顺序
-- 后续实现应优先做 `review-only evidence contract + intake/gating 扩展 + 更强的 spec 解释器`
+- 已在 `Assets/Tools/UiPrefabGenerator` 和 `Assets/UiPrefabGeneratorData` 范围内落地首轮收缩版 MVP
+- 已落地 `review-only evidence contract + intake/gating 扩展 + 更强的 spec 解释器`
+- 已补齐 `structured preview` 的首轮结构化产物与窗口摘要，不包含逐元素人工编辑
+- review-only 额外产物已接入 `analysis_result.json`、task artifact 存储与 `Portrait Generator` 摘要区
+- 首轮高价值规则已覆盖 `title_text / primary_button / numeric_value_display`
+- bridge 已兼容旧 batch 回写脚本，review-only 额外产物缺席时仍允许按核心 5 份产物完成主链校验
+- 当前实现继续固定为 `local deterministic/mock provider + review-only evidence`，真实 OpenAI provider 后置
 - 配套 Mermaid 流程图正文见：[14_Holmas高精度UI识别与重建流程图](./14_Holmas高精度UI识别与重建流程图.md)
