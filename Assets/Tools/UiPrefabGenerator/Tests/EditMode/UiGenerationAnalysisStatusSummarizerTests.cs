@@ -101,6 +101,62 @@ namespace UiPrefabGenerator.Tests.EditMode
             Assert.That(summary.SelectedMatchCount, Is.EqualTo(1));
         }
 
+        [Test]
+        public void Build_IncludesReviewIssuesAndPreviewCounts()
+        {
+            UiGenerationAnalysisResult result = CreateBaseResult();
+            result.VisualUnderstanding = new VisualUnderstandingBundle
+            {
+                ConfidenceSummary = new VisualConfidenceSummary
+                {
+                    LowConfidenceElementCount = 2,
+                },
+            };
+            result.VisualReviewReport = new VisualReviewReport
+            {
+                Issues =
+                {
+                    new VisualReviewIssue
+                    {
+                        IssueId = "blocking_role",
+                        Severity = "blocking",
+                        Summary = "missing primary button",
+                    },
+                    new VisualReviewIssue
+                    {
+                        IssueId = "warning_text",
+                        Severity = "warning",
+                        Summary = "title text needs review",
+                    },
+                },
+            };
+            result.PreviewRenderPlan = new PreviewRenderPlan
+            {
+                Nodes =
+                {
+                    new PreviewRenderNode { NodeId = "title" },
+                    new PreviewRenderNode { NodeId = "button" },
+                },
+            };
+            result.PreviewDiffReport = new PreviewDiffReport
+            {
+                Regions =
+                {
+                    new PreviewDiffRegion { RegionId = "diff1" },
+                },
+            };
+
+            UiGenerationAnalysisStatusSummary summary = UiGenerationAnalysisStatusSummarizer.Build(result);
+
+            Assert.That(summary.BlockingReviewIssueCount, Is.EqualTo(1));
+            Assert.That(summary.ReviewIssueCount, Is.EqualTo(2));
+            Assert.That(summary.LowConfidenceElementCount, Is.EqualTo(2));
+            Assert.That(summary.PreviewNodeCount, Is.EqualTo(2));
+            Assert.That(summary.PreviewDiffRegionCount, Is.EqualTo(1));
+            Assert.That(summary.UnresolvedSummaries, Has.Member("blocking：missing primary button"));
+            Assert.That(summary.WarningSummaries, Has.Member("review：title text needs review"));
+        }
+
         private static UiGenerationAnalysisResult CreateBaseResult()
         {
             var result = new UiGenerationAnalysisResult

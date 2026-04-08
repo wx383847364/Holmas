@@ -63,5 +63,81 @@ namespace UiPrefabGenerator.Tests.EditMode
                     issue => issue.Kind == DesignPacketIntakeIssueKind.UnsupportedRule &&
                              issue.FieldPath == "rules[3].rule_id"));
         }
+
+        [Test]
+        public void Analyze_ElementHintsProduceStructuredIssues()
+        {
+            var packet = new DesignPacket
+            {
+                PageId = "agency_main",
+                PageTitle = "Agency Main",
+                PrefabName = "AgencyMainPanel",
+                DesignImages =
+                {
+                    new DesignImageReference
+                    {
+                        ImageId = "default",
+                        ImagePath = "Design/AgencyMain/default.png",
+                        StateId = "default",
+                    },
+                },
+                States =
+                {
+                    new DesignStateDefinition
+                    {
+                        StateId = "default",
+                        Description = "default state",
+                    },
+                },
+                ExpectedSemanticRoles =
+                {
+                    "title_text",
+                    "primary_button",
+                },
+                ElementHints =
+                {
+                    new DesignElementHint
+                    {
+                        HintId = "title",
+                        SemanticRole = "title_text",
+                        DisplayText = "Agency Main",
+                        Confidence = 0.62f,
+                        Bounds = new UiRect
+                        {
+                            X = 0.1f,
+                            Y = 0.1f,
+                            Width = 0.8f,
+                            Height = 0.08f,
+                        },
+                    },
+                    new DesignElementHint
+                    {
+                        HintId = "duplicate_title",
+                        SemanticRole = "title_text",
+                        DisplayText = "Agency Main Duplicate",
+                        Confidence = 0.85f,
+                        Bounds = new UiRect
+                        {
+                            X = 0.1f,
+                            Y = 0.22f,
+                            Width = 0.8f,
+                            Height = 0.08f,
+                        },
+                    },
+                },
+            };
+
+            DesignPacketIntakeAssessment assessment = new DefaultDesignPacketIntakeAnalyzer().Analyze(packet);
+
+            Assert.That(
+                assessment.UnresolvedItems,
+                Has.Some.Matches<DesignPacketIntakeIssue>(issue => issue.Kind == DesignPacketIntakeIssueKind.LowConfidenceEvidence));
+            Assert.That(
+                assessment.UnresolvedItems,
+                Has.Some.Matches<DesignPacketIntakeIssue>(issue => issue.Kind == DesignPacketIntakeIssueKind.MissingCriticalControl));
+            Assert.That(
+                assessment.UnresolvedItems,
+                Has.Some.Matches<DesignPacketIntakeIssue>(issue => issue.Kind == DesignPacketIntakeIssueKind.SemanticConflict));
+        }
     }
 }

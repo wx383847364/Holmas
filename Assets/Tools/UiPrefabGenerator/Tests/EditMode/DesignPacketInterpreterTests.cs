@@ -182,5 +182,85 @@ namespace UiPrefabGenerator.Tests.EditMode
                             node.Components[2].BindingKey == "claim_button"));
             Assert.That(spec.Interactions, Is.Empty);
         }
+
+        [Test]
+        public void Interpret_HighValueRules_AddsTitlePrimaryButtonAndNumericDisplay()
+        {
+            var packet = new DesignPacket
+            {
+                PageId = "agency_main",
+                PageTitle = "Agency Main",
+                PrefabName = "AgencyMainPanel",
+                DesignImages =
+                {
+                    new DesignImageReference
+                    {
+                        ImageId = "default",
+                        ImagePath = "Design/AgencyMain/default.png",
+                        StateId = "default",
+                    },
+                },
+                States =
+                {
+                    new DesignStateDefinition
+                    {
+                        StateId = "default",
+                        Description = "default state",
+                    },
+                },
+                Rules =
+                {
+                    new DesignRuleDefinition { RuleId = "panel_background", Description = "panel background" },
+                    new DesignRuleDefinition { RuleId = "title_text", Description = "title text" },
+                    new DesignRuleDefinition { RuleId = "primary_button", Description = "primary button" },
+                    new DesignRuleDefinition { RuleId = "numeric_value_display", Description = "numeric value" },
+                },
+                AssetSlotHints =
+                {
+                    new DesignAssetSlotHint
+                    {
+                        SlotId = "panel_bg",
+                        Usage = "background",
+                    },
+                },
+                ElementHints =
+                {
+                    new DesignElementHint
+                    {
+                        HintId = "title",
+                        SemanticRole = "title_text",
+                        SuggestedNodeId = "title_text",
+                        LayoutSlot = "title_text",
+                        Confidence = 0.8f,
+                    },
+                    new DesignElementHint
+                    {
+                        HintId = "primary",
+                        SemanticRole = "primary_button",
+                        SuggestedNodeId = "primary_button",
+                        LayoutSlot = "primary_button",
+                        AssetSlot = "primary_button_bg",
+                        Confidence = 0.85f,
+                    },
+                    new DesignElementHint
+                    {
+                        HintId = "numeric",
+                        SemanticRole = "numeric_value_display",
+                        SuggestedNodeId = "numeric_value_display",
+                        LayoutSlot = "numeric_value_display",
+                        Confidence = 0.76f,
+                    },
+                },
+            };
+
+            UiPrefabSpec spec = new DefaultDesignPacketToUiPrefabSpecInterpreter().Interpret(packet);
+
+            Assert.That(spec.Nodes, Has.Some.Matches<UiNodeSpec>(node => node.NodeId == "title_text"));
+            Assert.That(spec.Nodes, Has.Some.Matches<UiNodeSpec>(node => node.NodeId == "primary_button"));
+            Assert.That(spec.Nodes, Has.Some.Matches<UiNodeSpec>(node => node.NodeId == "numeric_value_display"));
+            Assert.That(spec.Bindings, Has.Some.Matches<UiBindingSpec>(binding => binding.NodeId == "title_text" && binding.BindingKey == "title_text"));
+            Assert.That(spec.Bindings, Has.Some.Matches<UiBindingSpec>(binding => binding.NodeId == "numeric_value_display" && binding.BindingKey == "numeric_value"));
+            Assert.That(spec.Interactions, Has.Some.Matches<UiInteractionSpec>(interaction => interaction.NodeId == "primary_button" && interaction.HandlerKey == "primary_action"));
+        }
     }
 }

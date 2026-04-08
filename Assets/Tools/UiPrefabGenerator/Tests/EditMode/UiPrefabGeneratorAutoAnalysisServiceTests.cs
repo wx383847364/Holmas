@@ -23,7 +23,7 @@ namespace UiPrefabGenerator.Tests.EditMode
         {
             PrepareAssetRoot(
                 ("panel_bg_portrait.png", "panel"),
-                ("claim_button_bg_portrait.png", "claim"));
+                ("primary_button_bg_portrait.png", "claim"));
             PrepareTaskRequest(
                 mustHaveNodes: new[] { "task_list", "claim_button", "unknown_badge" },
                 mustHaveInteractions: new[] { "claim_task" });
@@ -35,10 +35,16 @@ namespace UiPrefabGenerator.Tests.EditMode
             Assert.That(result.Success, Is.True);
             Assert.That(result.UiPrefabSpec.GenerationProfileId, Is.EqualTo("holmas_ugui_portrait"));
             Assert.That(result.UiPrefabSpec.Nodes, Has.Some.Matches<UiPrefabGenerator.Core.Schema.UiNodeSpec>(node => node.NodeId == "task_list"));
-            Assert.That(result.UiPrefabSpec.Nodes, Has.Some.Matches<UiPrefabGenerator.Core.Schema.UiNodeSpec>(node => node.NodeId == "claim_button"));
+            Assert.That(result.UiPrefabSpec.Nodes, Has.Some.Matches<UiPrefabGenerator.Core.Schema.UiNodeSpec>(node => node.NodeId == "primary_button"));
+            Assert.That(result.UiPrefabSpec.Nodes, Has.Some.Matches<UiPrefabGenerator.Core.Schema.UiNodeSpec>(node => node.NodeId == "title_text"));
             Assert.That(result.UnresolvedItems, Has.Some.EqualTo("unmapped_must_have_node:unknown_badge"));
             Assert.That(result.ResourceMatchReport.Matches, Has.Some.Matches<UiPrefabGenerator.Core.ResourceMatch.UiAssetSlotMatch>(match => match.AssetSlot == "panel_bg" && !string.IsNullOrWhiteSpace(match.SelectedAssetPath)));
-            Assert.That(result.ResourceMatchReport.Matches, Has.Some.Matches<UiPrefabGenerator.Core.ResourceMatch.UiAssetSlotMatch>(match => match.AssetSlot == "claim_button_bg" && !string.IsNullOrWhiteSpace(match.SelectedAssetPath)));
+            Assert.That(result.ResourceMatchReport.Matches, Has.Some.Matches<UiPrefabGenerator.Core.ResourceMatch.UiAssetSlotMatch>(match => match.AssetSlot == "primary_button_bg" && !string.IsNullOrWhiteSpace(match.SelectedAssetPath)));
+            Assert.That(result.VisualUnderstanding, Is.Not.Null);
+            Assert.That(result.VisualUnderstanding.Elements, Has.Some.Matches<UiPrefabGenerator.Core.Schema.VisualElementEvidence>(element => element.SemanticRole == "primary_button"));
+            Assert.That(result.VisualReviewReport, Is.Not.Null);
+            Assert.That(result.PreviewRenderPlan, Is.Not.Null);
+            Assert.That(result.PreviewDiffReport, Is.Not.Null);
         }
 
         [Test]
@@ -57,6 +63,8 @@ namespace UiPrefabGenerator.Tests.EditMode
             Assert.That(result.ResourceMatchReport.Matches[0].Candidates.Count, Is.GreaterThanOrEqualTo(1));
             Assert.That(result.ResourceMatchReport.Matches[0].SelectedAssetPath, Is.Empty);
             Assert.That(result.ResourceMatchReport.UnresolvedSlots, Has.Member("panel_bg"));
+            Assert.That(result.PreviewRenderPlan.Nodes.Count, Is.GreaterThanOrEqualTo(2));
+            Assert.That(result.PreviewDiffReport.Regions.Count, Is.GreaterThanOrEqualTo(1));
         }
 
         private static void PrepareTaskRequest(string[] mustHaveNodes, string[] mustHaveInteractions)

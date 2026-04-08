@@ -6,6 +6,9 @@
     "design_images=1",
     "states=1",
     "rules=3",
-    "asset_slot_hints=2"
+    "asset_slot_hints=2",
+    "expected_semantic_roles=0",
+    "element_hints=0",
+    "review_hints=0"
   ]
 }

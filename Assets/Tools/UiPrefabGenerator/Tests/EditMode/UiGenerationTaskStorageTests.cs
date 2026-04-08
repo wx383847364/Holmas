@@ -294,9 +294,16 @@ namespace UiPrefabGenerator.Tests.EditMode
                 UiGenerationTaskStorage.SaveAnalysisArtifacts(taskDirectory, analysis);
 
                 Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.AnalysisResultFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.VisualUnderstandingFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.VisualReviewReportFileName)), Is.True);
                 Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.DesignPacketFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.IntakeAssessmentFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.GatingReportFileName)), Is.True);
                 Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.UiPrefabSpecFileName)), Is.True);
                 Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.ResourceMatchReportFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.PreviewRenderPlanFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.PreviewRenderImageFileName)), Is.True);
+                Assert.That(File.Exists(UiPrefabGeneratorTestSupport.ToAbsolutePath(taskDirectory + "/" + UiGenerationDataPaths.PreviewDiffReportFileName)), Is.True);
 
                 UiGenerationAnalysisResult loadedResult;
                 string error;
@@ -307,6 +314,11 @@ namespace UiPrefabGenerator.Tests.EditMode
                 Assert.That(loadedResult.ProfileId, Is.EqualTo("analysis_profile"));
                 Assert.That(loadedResult.ResourceMatchReport.Matches.Count, Is.EqualTo(1));
                 Assert.That(loadedResult.ResourceMatchReport.UnresolvedSlots, Has.Member("claim_button_bg"));
+                Assert.That(loadedResult.VisualUnderstanding.Elements, Has.Count.EqualTo(1));
+                Assert.That(loadedResult.VisualReviewReport.Issues, Has.Count.EqualTo(1));
+                Assert.That(loadedResult.GatingReport, Is.Not.Null);
+                Assert.That(loadedResult.PreviewRenderPlan.Nodes, Has.Count.EqualTo(1));
+                Assert.That(loadedResult.PreviewDiffReport.Regions, Has.Count.EqualTo(1));
             }
             finally
             {
@@ -432,6 +444,81 @@ namespace UiPrefabGenerator.Tests.EditMode
                 Success = true,
                 TemplateName = templateName,
                 ProfileId = profileId,
+                VisualUnderstanding = new VisualUnderstandingBundle
+                {
+                    TaskId = taskId,
+                    ProviderId = "test_provider",
+                    Elements =
+                    {
+                        new VisualElementEvidence
+                        {
+                            ElementId = "title",
+                            SemanticRole = "title_text",
+                            DisplayName = "Title",
+                            EvidenceBounds = new UiRect
+                            {
+                                X = 0.1f,
+                                Y = 0.1f,
+                                Width = 0.8f,
+                                Height = 0.08f,
+                            },
+                            Confidence = 0.8f,
+                        },
+                    },
+                },
+                VisualReviewReport = new VisualReviewReport
+                {
+                    TaskId = taskId,
+                    ReviewStatus = "needs_review",
+                    WarningIssueCount = 1,
+                    Issues =
+                    {
+                        new VisualReviewIssue
+                        {
+                            IssueId = "title_low_confidence",
+                            Severity = "warning",
+                            Kind = "low_confidence_evidence",
+                            Summary = "title confidence is low",
+                            RequiresHumanDecision = true,
+                        },
+                    },
+                },
+                PreviewRenderPlan = new PreviewRenderPlan
+                {
+                    TaskId = taskId,
+                    PlanVersion = "preview_v1",
+                    Nodes =
+                    {
+                        new PreviewRenderNode
+                        {
+                            NodeId = "title_text",
+                            NodeType = "title_text",
+                            Bounds = new UiRect
+                            {
+                                X = 0.1f,
+                                Y = 0.1f,
+                                Width = 0.8f,
+                                Height = 0.08f,
+                            },
+                        },
+                    },
+                },
+                PreviewDiffReport = new PreviewDiffReport
+                {
+                    TaskId = taskId,
+                    CoverageScore = 0.72f,
+                    LayoutSimilarityScore = 0.88f,
+                    MissingRegionCount = 1,
+                    Regions =
+                    {
+                        new PreviewDiffRegion
+                        {
+                            RegionId = "title_diff",
+                            DiffKind = "text_mismatch",
+                            Summary = "title text needs review",
+                        },
+                    },
+                },
                 DesignPacket = CreateDesignPacket(pageId, pageTitle, prefabName),
                 UiPrefabSpec = CreateUiPrefabSpec(pageId, prefabName),
                 ResourceMatchReport = CreateResourceMatchReport(taskId, "Assets/Res", true),

@@ -31,8 +31,8 @@ usage() {
 说明：
   - 自动复制当前项目到临时目录执行 batchmode 分析
   - 读取指定 task 目录下的 request.json
-  - 在临时工程内生成 analysis_result.json / design_packet.json / ui_prefab_spec.json / resource_match_report.json / analysis_summary.md
-  - 成功后把这 5 份产物同步回原 task 目录
+  - 在临时工程内生成 core artifacts、review-only evidence/gating artifacts 和 structured preview artifacts
+  - 成功后把这些产物同步回原 task 目录
 EOF
 }
 
@@ -257,9 +257,16 @@ sync_analysis_outputs() {
     local source_dir="${TEMP_TASK_DIR}"
     local target_dir="${SOURCE_TASK_DIR}"
     local files=(
+        "visual_understanding.json"
+        "visual_review_report.json"
         "design_packet.json"
+        "design_packet_intake_assessment.json"
+        "gating_report.json"
         "ui_prefab_spec.json"
         "resource_match_report.json"
+        "preview_render_plan.json"
+        "preview_render.png"
+        "preview_diff_report.json"
         "analysis_result.json"
         "analysis_summary.md"
     )
