@@ -28,6 +28,10 @@ namespace UiPrefabGenerator.Core.Intake
         NamingConflict = 7,
         InvalidFieldValue = 8,
         HumanDecisionRequired = 9,
+        LowConfidenceEvidence = 10,
+        MissingCriticalControl = 11,
+        LayoutConflict = 12,
+        SemanticConflict = 13,
     }
 
     [Serializable]

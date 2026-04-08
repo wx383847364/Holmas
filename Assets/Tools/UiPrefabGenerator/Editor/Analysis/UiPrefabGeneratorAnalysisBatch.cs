@@ -94,7 +94,7 @@ namespace UiPrefabGenerator.Editor.Analysis
                 throw new InvalidOperationException("分析结果为空，无法回写。");
             }
 
-            UiGenerationTaskStorage.SaveAnalysisArtifacts(taskDirectory, analysis.AnalysisResult);
+            UiGenerationTaskStorage.SaveAnalysisArtifacts(taskDirectory, analysis.AnalysisResult, analysis.IntakeAssessment);
             UiGenerationJsonFileUtility.SaveText(
                 taskDirectory + "/" + UiGenerationDataPaths.AnalysisSummaryFileName,
                 analysis.AnalysisSummaryMarkdown ?? string.Empty);

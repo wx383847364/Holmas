@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UiPrefabGenerator.Core.ResourceMatch;
 using UiPrefabGenerator.Core.Result;
+using UiPrefabGenerator.Core.Schema;
 using UnityEditor;
 
 namespace UiPrefabGenerator.Editor.Window
@@ -27,6 +28,11 @@ namespace UiPrefabGenerator.Editor.Window
         public int SelectedMatchCount;
         public int UnresolvedItemCount;
         public int UnresolvedSlotCount;
+        public int ReviewIssueCount;
+        public int BlockingReviewIssueCount;
+        public int LowConfidenceElementCount;
+        public int PreviewNodeCount;
+        public int PreviewDiffRegionCount;
         public int WarningCount;
         public int ErrorCount;
         public bool IsWeakResult;
@@ -66,17 +72,32 @@ namespace UiPrefabGenerator.Editor.Window
             summary.SelectedMatchCount = CountSelectedMatches(matchReport.Matches);
             summary.UnresolvedItemCount = result.UnresolvedItems != null ? result.UnresolvedItems.Count : 0;
             summary.UnresolvedSlotCount = matchReport.UnresolvedSlots != null ? matchReport.UnresolvedSlots.Count : 0;
-            summary.WarningCount = SafeCount(result.Warnings) + SafeCount(matchReport.Warnings);
+            summary.ReviewIssueCount = result.VisualReviewReport != null && result.VisualReviewReport.Issues != null
+                ? result.VisualReviewReport.Issues.Count
+                : 0;
+            summary.BlockingReviewIssueCount = CountReviewIssues(result.VisualReviewReport, "blocking");
+            summary.LowConfidenceElementCount = result.VisualUnderstanding != null && result.VisualUnderstanding.ConfidenceSummary != null
+                ? result.VisualUnderstanding.ConfidenceSummary.LowConfidenceElementCount
+                : 0;
+            summary.PreviewNodeCount = result.PreviewRenderPlan != null && result.PreviewRenderPlan.Nodes != null
+                ? result.PreviewRenderPlan.Nodes.Count
+                : 0;
+            summary.PreviewDiffRegionCount = result.PreviewDiffReport != null && result.PreviewDiffReport.Regions != null
+                ? result.PreviewDiffReport.Regions.Count
+                : 0;
+            summary.WarningCount = SafeCount(result.Warnings) + SafeCount(matchReport.Warnings) + CountReviewIssues(result.VisualReviewReport, "warning");
             summary.ErrorCount = SafeCount(result.Errors);
 
             AddUnique(summary.UnresolvedSummaries, result.UnresolvedItems, null);
             AddUnique(summary.UnresolvedSummaries, matchReport.UnresolvedSlots, "未匹配资源槽：");
+            AddReviewIssueSummaries(summary.UnresolvedSummaries, result.VisualReviewReport, "blocking", "blocking：");
             AddUnique(summary.WarningSummaries, result.Warnings, null);
             AddUnique(summary.WarningSummaries, matchReport.Warnings, null);
+            AddReviewIssueSummaries(summary.WarningSummaries, result.VisualReviewReport, "warning", "review：");
             AddUnique(summary.ErrorSummaries, result.Errors, null);
 
             bool hasErrors = !result.Success || summary.ErrorCount > 0;
-            bool hasUnresolved = summary.UnresolvedItemCount > 0 || summary.UnresolvedSlotCount > 0;
+            bool hasUnresolved = summary.UnresolvedItemCount > 0 || summary.UnresolvedSlotCount > 0 || summary.BlockingReviewIssueCount > 0;
             bool hasWarnings = summary.WarningCount > 0;
 
             if (hasErrors)
@@ -144,6 +165,11 @@ namespace UiPrefabGenerator.Editor.Window
                 reasons.Add(string.Format("存在 {0} 个未匹配资源槽", summary.UnresolvedSlotCount));
             }
 
+            if (summary.LowConfidenceElementCount > 0)
+            {
+                reasons.Add(string.Format("存在 {0} 个低置信元素", summary.LowConfidenceElementCount));
+            }
+
             float averageSelectedConfidence = GetAverageSelectedConfidence(matches);
             if (averageSelectedConfidence > 0f && averageSelectedConfidence < 0.35f)
             {
@@ -202,6 +228,26 @@ namespace UiPrefabGenerator.Editor.Window
             return items != null ? items.Count : 0;
         }
 
+        private static int CountReviewIssues(VisualReviewReport report, string severity)
+        {
+            if (report == null || report.Issues == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int i = 0; i < report.Issues.Count; i++)
+            {
+                VisualReviewIssue issue = report.Issues[i];
+                if (issue != null && string.Equals(issue.Severity, severity, StringComparison.OrdinalIgnoreCase))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         private static void AddUnique(List<string> target, List<string> source, string prefix)
         {
             if (target == null || source == null)
@@ -218,6 +264,35 @@ namespace UiPrefabGenerator.Editor.Window
                 }
 
                 string value = string.IsNullOrWhiteSpace(prefix) ? item : prefix + item;
+                if (!target.Contains(value))
+                {
+                    target.Add(value);
+                }
+            }
+        }
+
+        private static void AddReviewIssueSummaries(
+            List<string> target,
+            VisualReviewReport report,
+            string severity,
+            string prefix)
+        {
+            if (target == null || report == null || report.Issues == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < report.Issues.Count; i++)
+            {
+                VisualReviewIssue issue = report.Issues[i];
+                if (issue == null ||
+                    !string.Equals(issue.Severity, severity, StringComparison.OrdinalIgnoreCase) ||
+                    string.IsNullOrWhiteSpace(issue.Summary))
+                {
+                    continue;
+                }
+
+                string value = string.IsNullOrWhiteSpace(prefix) ? issue.Summary : prefix + issue.Summary;
                 if (!target.Contains(value))
                 {
                     target.Add(value);

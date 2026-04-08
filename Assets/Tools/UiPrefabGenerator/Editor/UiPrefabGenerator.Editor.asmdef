@@ -2,7 +2,8 @@
     "name": "UiPrefabGenerator.Editor",
     "rootNamespace": "UiPrefabGenerator.Editor",
     "references": [
-        "UiPrefabGenerator.Core"
+        "UiPrefabGenerator.Core",
+        "UiPrefabGenerator.Core.Intake"
     ],
     "includePlatforms": [
         "Editor"

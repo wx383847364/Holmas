@@ -7,6 +7,10 @@ namespace UiPrefabGenerator.Core.Intake
     public sealed class DefaultDesignPacketToUiPrefabSpecInterpreter : IUiSpecInterpreter
     {
         private const string DefaultGenerationProfileId = "holmas_ugui";
+        private const string PanelBackgroundRuleId = "panel_background";
+        private const string TitleTextRuleId = "title_text";
+        private const string PrimaryButtonRuleId = "primary_button";
+        private const string NumericValueDisplayRuleId = "numeric_value_display";
         private const string TaskListScrollableRuleId = "task_list_scrollable";
         private const string ClaimButtonClickableRuleId = "claim_button_clickable";
         private const string ClaimButtonVisualizedRuleId = "claim_button_visualized";
@@ -39,6 +43,46 @@ namespace UiPrefabGenerator.Core.Intake
             };
 
             spec.Nodes.Add(BuildRootNode(designPacket));
+
+            DesignElementHint titleHint = FindBestElementHint(designPacket, "title_text");
+            if (HasRule(designPacket, TitleTextRuleId) || titleHint != null)
+            {
+                spec.Nodes.Add(BuildTitleTextNode(titleHint));
+                spec.Bindings.Add(new UiBindingSpec
+                {
+                    NodeId = titleHint != null && !string.IsNullOrWhiteSpace(titleHint.SuggestedNodeId)
+                        ? titleHint.SuggestedNodeId
+                        : "title_text",
+                    BindingKey = "title_text",
+                });
+            }
+
+            DesignElementHint primaryButtonHint = FindBestElementHint(designPacket, "primary_button");
+            if (HasRule(designPacket, PrimaryButtonRuleId) || primaryButtonHint != null)
+            {
+                spec.Nodes.Add(BuildPrimaryButtonNode(primaryButtonHint));
+                spec.Interactions.Add(new UiInteractionSpec
+                {
+                    NodeId = primaryButtonHint != null && !string.IsNullOrWhiteSpace(primaryButtonHint.SuggestedNodeId)
+                        ? primaryButtonHint.SuggestedNodeId
+                        : "primary_button",
+                    EventName = "on_click",
+                    HandlerKey = "primary_action",
+                });
+            }
+
+            DesignElementHint numericHint = FindBestElementHint(designPacket, "numeric_value_display");
+            if (HasRule(designPacket, NumericValueDisplayRuleId) || numericHint != null)
+            {
+                spec.Nodes.Add(BuildNumericValueNode(numericHint));
+                spec.Bindings.Add(new UiBindingSpec
+                {
+                    NodeId = numericHint != null && !string.IsNullOrWhiteSpace(numericHint.SuggestedNodeId)
+                        ? numericHint.SuggestedNodeId
+                        : "numeric_value_display",
+                    BindingKey = "numeric_value",
+                });
+            }
 
             if (HasRule(designPacket, TaskListScrollableRuleId))
             {
@@ -88,6 +132,100 @@ namespace UiPrefabGenerator.Core.Intake
             }
 
             return rootNode;
+        }
+
+        private static UiNodeSpec BuildTitleTextNode(DesignElementHint hint)
+        {
+            var node = new UiNodeSpec
+            {
+                NodeId = hint != null && !string.IsNullOrWhiteSpace(hint.SuggestedNodeId)
+                    ? hint.SuggestedNodeId
+                    : "title_text",
+                NodeName = "TitleText",
+                ParentNodeId = "root",
+                Layout = new UiLayoutSpec
+                {
+                    LayoutType = "Anchored",
+                    LayoutSlot = hint != null && !string.IsNullOrWhiteSpace(hint.LayoutSlot)
+                        ? hint.LayoutSlot
+                        : "title_text",
+                },
+            };
+            node.Components.Add(new UiComponentSpec
+            {
+                ComponentType = "RectTransform",
+            });
+            node.Components.Add(new UiComponentSpec
+            {
+                ComponentType = "Text",
+                BindingKey = "title_text",
+            });
+            return node;
+        }
+
+        private static UiNodeSpec BuildPrimaryButtonNode(DesignElementHint hint)
+        {
+            var node = new UiNodeSpec
+            {
+                NodeId = hint != null && !string.IsNullOrWhiteSpace(hint.SuggestedNodeId)
+                    ? hint.SuggestedNodeId
+                    : "primary_button",
+                NodeName = "PrimaryButton",
+                ParentNodeId = "root",
+                Layout = new UiLayoutSpec
+                {
+                    LayoutType = "Anchored",
+                    LayoutSlot = hint != null && !string.IsNullOrWhiteSpace(hint.LayoutSlot)
+                        ? hint.LayoutSlot
+                        : "primary_button",
+                },
+            };
+            node.Components.Add(new UiComponentSpec
+            {
+                ComponentType = "RectTransform",
+            });
+            node.Components.Add(new UiComponentSpec
+            {
+                ComponentType = "Image",
+                AssetSlot = hint != null && !string.IsNullOrWhiteSpace(hint.AssetSlot)
+                    ? hint.AssetSlot
+                    : "primary_button_bg",
+            });
+            node.Components.Add(new UiComponentSpec
+            {
+                ComponentType = "Button",
+                BindingKey = "primary_button",
+            });
+            return node;
+        }
+
+        private static UiNodeSpec BuildNumericValueNode(DesignElementHint hint)
+        {
+            var node = new UiNodeSpec
+            {
+                NodeId = hint != null && !string.IsNullOrWhiteSpace(hint.SuggestedNodeId)
+                    ? hint.SuggestedNodeId
+                    : "numeric_value_display",
+                NodeName = "NumericValueDisplay",
+                ParentNodeId = "root",
+                Layout = new UiLayoutSpec
+                {
+                    LayoutType = "Anchored",
+                    LayoutSlot = hint != null && !string.IsNullOrWhiteSpace(hint.LayoutSlot)
+                        ? hint.LayoutSlot
+                        : "numeric_value_display",
+                },
+            };
+            node.Components.Add(new UiComponentSpec
+            {
+                ComponentType = "RectTransform",
+            });
+            node.Components.Add(new UiComponentSpec
+            {
+                ComponentType = "Text",
+                BindingKey = "numeric_value",
+            });
+            return node;
         }
 
         private static UiNodeSpec BuildScrollableTaskListNode()
@@ -181,6 +319,12 @@ namespace UiPrefabGenerator.Core.Intake
 
         private static string ResolvePrimaryAssetSlot(DesignPacket designPacket)
         {
+            DesignElementHint panelHint = FindBestElementHint(designPacket, "panel_background");
+            if (panelHint != null && !string.IsNullOrWhiteSpace(panelHint.AssetSlot))
+            {
+                return panelHint.AssetSlot;
+            }
+
             if (designPacket == null || designPacket.AssetSlotHints == null)
             {
                 return string.Empty;
@@ -196,6 +340,34 @@ namespace UiPrefabGenerator.Core.Intake
             }
 
             return string.Empty;
+        }
+
+        private static DesignElementHint FindBestElementHint(DesignPacket designPacket, string semanticRole)
+        {
+            if (designPacket == null ||
+                designPacket.ElementHints == null ||
+                string.IsNullOrWhiteSpace(semanticRole))
+            {
+                return null;
+            }
+
+            DesignElementHint bestHint = null;
+            for (int i = 0; i < designPacket.ElementHints.Count; i++)
+            {
+                DesignElementHint hint = designPacket.ElementHints[i];
+                if (hint == null ||
+                    !string.Equals(hint.SemanticRole, semanticRole, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (bestHint == null || hint.Confidence > bestHint.Confidence)
+                {
+                    bestHint = hint;
+                }
+            }
+
+            return bestHint;
         }
     }
 }

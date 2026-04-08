@@ -33,7 +33,9 @@ namespace UiPrefabGenerator.Core.Intake
             ValidateStates(designPacket, assessment);
             ValidateImages(designPacket, assessment);
             ValidateAssetSlotHints(designPacket, assessment);
+            ValidateElementHints(designPacket, assessment);
             ValidateRules(designPacket, assessment);
+            ValidateReviewHints(designPacket, assessment);
             AppendSummaryNotes(designPacket, assessment);
             return assessment;
         }
@@ -321,25 +323,305 @@ namespace UiPrefabGenerator.Core.Intake
             }
         }
 
+        private static void ValidateElementHints(DesignPacket designPacket, DesignPacketIntakeAssessment assessment)
+        {
+            List<DesignElementHint> elementHints = designPacket.ElementHints;
+            List<string> expectedRoles = designPacket.ExpectedSemanticRoles;
+            if ((elementHints == null || elementHints.Count == 0) &&
+                (expectedRoles == null || expectedRoles.Count == 0))
+            {
+                return;
+            }
+
+            var seenHintIds = new HashSet<string>(StringComparer.Ordinal);
+            var roleCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var assetSlotToHintId = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            if (elementHints != null)
+            {
+                for (int i = 0; i < elementHints.Count; i++)
+                {
+                    DesignElementHint hint = elementHints[i];
+                    if (hint == null)
+                    {
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(hint.HintId) && !seenHintIds.Add(hint.HintId))
+                    {
+                        AddIssue(
+                            assessment,
+                            "element_hint_duplicate_" + hint.HintId,
+                            DesignPacketIntakeIssueSeverity.Warning,
+                            DesignPacketIntakeIssueKind.NamingConflict,
+                            "element_hints[" + i + "].hint_id",
+                            "存在重复的 element hint 标识。",
+                            "重复 hint_id: " + hint.HintId,
+                            "保持 hint_id 唯一。",
+                            true);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(hint.SemanticRole))
+                    {
+                        AddIssue(
+                            assessment,
+                            "element_hint_role_missing_" + i,
+                            DesignPacketIntakeIssueSeverity.Warning,
+                            DesignPacketIntakeIssueKind.HumanDecisionRequired,
+                            "element_hints[" + i + "].semantic_role",
+                            "存在缺少语义角色的 element hint。",
+                            "该 hint 无法稳定参与 intake / spec 归一化。",
+                            "补齐 semantic_role，或在人工审阅中忽略该条目。",
+                            true);
+                        continue;
+                    }
+
+                    int roleCount;
+                    roleCounts.TryGetValue(hint.SemanticRole, out roleCount);
+                    roleCounts[hint.SemanticRole] = roleCount + 1;
+
+                    if (hint.Confidence > 0f && hint.Confidence < 0.65f)
+                    {
+                        AddIssue(
+                            assessment,
+                            "element_hint_low_confidence_" + (hint.HintId ?? i.ToString()),
+                            DesignPacketIntakeIssueSeverity.Warning,
+                            DesignPacketIntakeIssueKind.LowConfidenceEvidence,
+                            "element_hints[" + i + "].confidence",
+                            "存在低置信度 element hint。",
+                            "semantic_role=" + hint.SemanticRole + ", confidence=" + hint.Confidence.ToString("0.00"),
+                            "优先人工复核该元素，再决定是否进入后续 spec 审阅。",
+                            true);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(hint.DisplayText) &&
+                        hint.Confidence > 0f &&
+                        hint.Confidence < 0.7f)
+                    {
+                        AddIssue(
+                            assessment,
+                            "element_hint_low_confidence_text_" + (hint.HintId ?? i.ToString()),
+                            DesignPacketIntakeIssueSeverity.Warning,
+                            DesignPacketIntakeIssueKind.LowConfidenceEvidence,
+                            "element_hints[" + i + "].display_text",
+                            "存在低置信文本识别。",
+                            "display_text=" + hint.DisplayText,
+                            "人工确认文本后再决定是否作为 binding 或文案依据。",
+                            true);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(hint.AssetSlot))
+                    {
+                        string existingHintId;
+                        if (assetSlotToHintId.TryGetValue(hint.AssetSlot, out existingHintId))
+                        {
+                            AddIssue(
+                                assessment,
+                                "element_hint_slot_ambiguous_" + hint.AssetSlot,
+                                DesignPacketIntakeIssueSeverity.Warning,
+                                DesignPacketIntakeIssueKind.AmbiguousAssetSlotMapping,
+                                "element_hints[" + i + "].asset_slot",
+                                "存在资源位歧义。",
+                                "多个 hint 竞争同一 asset_slot: " + hint.AssetSlot,
+                                "人工确认最终应绑定的资源位归属。",
+                                true);
+                        }
+                        else
+                        {
+                            assetSlotToHintId[hint.AssetSlot] = hint.HintId ?? string.Empty;
+                        }
+                    }
+
+                    if (HasLayoutConflict(hint.Bounds))
+                    {
+                        AddIssue(
+                            assessment,
+                            "element_hint_layout_conflict_" + (hint.HintId ?? i.ToString()),
+                            DesignPacketIntakeIssueSeverity.Warning,
+                            DesignPacketIntakeIssueKind.LayoutConflict,
+                            "element_hints[" + i + "].bounds",
+                            "存在可疑布局冲突。",
+                            "bounds 的 width/height 非法，或超出有效归一化范围。",
+                            "人工检查该元素边界，再继续 spec 审阅。",
+                            true);
+                    }
+                }
+            }
+
+            if (expectedRoles != null)
+            {
+                for (int i = 0; i < expectedRoles.Count; i++)
+                {
+                    string expectedRole = expectedRoles[i];
+                    if (string.IsNullOrWhiteSpace(expectedRole))
+                    {
+                        continue;
+                    }
+
+                    int count;
+                    roleCounts.TryGetValue(expectedRole, out count);
+                    if (count == 0)
+                    {
+                        AddIssue(
+                            assessment,
+                            "expected_role_missing_" + expectedRole,
+                            DesignPacketIntakeIssueSeverity.Warning,
+                            DesignPacketIntakeIssueKind.MissingCriticalControl,
+                            "expected_semantic_roles[" + i + "]",
+                            "缺少关键控件或语义元素。",
+                            "未在 element hints 中找到 expected semantic role: " + expectedRole,
+                            "人工确认该角色是否确实缺失，或补充证据后重跑分析。",
+                            true);
+                    }
+                    else if (count > 1 && IsSingleOwnerRole(expectedRole))
+                    {
+                        AddIssue(
+                            assessment,
+                            "expected_role_conflict_" + expectedRole,
+                            DesignPacketIntakeIssueSeverity.Warning,
+                            DesignPacketIntakeIssueKind.SemanticConflict,
+                            "expected_semantic_roles[" + i + "]",
+                            "存在语义冲突。",
+                            "单实例角色出现多个候选: " + expectedRole,
+                            "人工确认哪一个候选才是正式语义角色。",
+                            true);
+                    }
+                }
+            }
+        }
+
         private static void AppendSummaryNotes(DesignPacket designPacket, DesignPacketIntakeAssessment assessment)
         {
             assessment.Notes.Add("design_images=" + SafeCount(designPacket.DesignImages));
             assessment.Notes.Add("states=" + SafeCount(designPacket.States));
             assessment.Notes.Add("rules=" + SafeCount(designPacket.Rules));
             assessment.Notes.Add("asset_slot_hints=" + SafeCount(designPacket.AssetSlotHints));
+            assessment.Notes.Add("expected_semantic_roles=" + SafeCount(designPacket.ExpectedSemanticRoles));
+            assessment.Notes.Add("element_hints=" + SafeCount(designPacket.ElementHints));
+            assessment.Notes.Add("review_hints=" + SafeCount(designPacket.ReviewHints));
+        }
+
+        private static void ValidateReviewHints(DesignPacket designPacket, DesignPacketIntakeAssessment assessment)
+        {
+            if (designPacket == null || designPacket.ReviewHints == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < designPacket.ReviewHints.Count; i++)
+            {
+                DesignReviewHint hint = designPacket.ReviewHints[i];
+                if (hint == null || string.IsNullOrWhiteSpace(hint.IssueKind))
+                {
+                    continue;
+                }
+
+                AddIssue(
+                    assessment,
+                    string.IsNullOrWhiteSpace(hint.HintId) ? "review_hint_" + i : hint.HintId,
+                    ParseReviewHintSeverity(hint),
+                    MapReviewHintKind(hint.IssueKind),
+                    "review_hints[" + i + "]",
+                    string.IsNullOrWhiteSpace(hint.Summary) ? "存在待人工确认的 review hint。" : hint.Summary,
+                    hint.Details ?? string.Empty,
+                    hint.SuggestedResolution ?? string.Empty,
+                    hint.RequiresHumanDecision);
+            }
         }
 
         private static bool IsRuleSupported(string ruleId)
         {
             return string.Equals(ruleId, "fullscreen_root", StringComparison.Ordinal) ||
+                   string.Equals(ruleId, "panel_background", StringComparison.Ordinal) ||
+                   string.Equals(ruleId, "title_text", StringComparison.Ordinal) ||
+                   string.Equals(ruleId, "primary_button", StringComparison.Ordinal) ||
+                   string.Equals(ruleId, "numeric_value_display", StringComparison.Ordinal) ||
                    string.Equals(ruleId, "task_list_scrollable", StringComparison.Ordinal) ||
                    string.Equals(ruleId, "claim_button_clickable", StringComparison.Ordinal) ||
                    string.Equals(ruleId, "claim_button_visualized", StringComparison.Ordinal);
         }
 
+        private static bool HasLayoutConflict(UiRect rect)
+        {
+            if (rect == null)
+            {
+                return false;
+            }
+
+            if (rect.Width <= 0f || rect.Height <= 0f)
+            {
+                return true;
+            }
+
+            if (rect.X < 0f || rect.Y < 0f)
+            {
+                return true;
+            }
+
+            if (rect.X + rect.Width > 1.001f || rect.Y + rect.Height > 1.001f)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsSingleOwnerRole(string semanticRole)
+        {
+            return string.Equals(semanticRole, "panel_background", StringComparison.Ordinal) ||
+                   string.Equals(semanticRole, "title_text", StringComparison.Ordinal) ||
+                   string.Equals(semanticRole, "primary_button", StringComparison.Ordinal) ||
+                   string.Equals(semanticRole, "numeric_value_display", StringComparison.Ordinal);
+        }
+
         private static int SafeCount<T>(List<T> items)
         {
             return items == null ? 0 : items.Count;
+        }
+
+        private static DesignPacketIntakeIssueSeverity ParseReviewHintSeverity(DesignReviewHint hint)
+        {
+            if (hint == null)
+            {
+                return DesignPacketIntakeIssueSeverity.Warning;
+            }
+
+            if (hint.BlocksSpec || string.Equals(hint.Severity, "blocking", StringComparison.OrdinalIgnoreCase))
+            {
+                return DesignPacketIntakeIssueSeverity.Blocking;
+            }
+
+            if (string.Equals(hint.Severity, "info", StringComparison.OrdinalIgnoreCase))
+            {
+                return DesignPacketIntakeIssueSeverity.Info;
+            }
+
+            return DesignPacketIntakeIssueSeverity.Warning;
+        }
+
+        private static DesignPacketIntakeIssueKind MapReviewHintKind(string issueKind)
+        {
+            if (string.Equals(issueKind, "low_confidence_evidence", StringComparison.OrdinalIgnoreCase))
+            {
+                return DesignPacketIntakeIssueKind.LowConfidenceEvidence;
+            }
+
+            if (string.Equals(issueKind, "missing_critical_control", StringComparison.OrdinalIgnoreCase))
+            {
+                return DesignPacketIntakeIssueKind.MissingCriticalControl;
+            }
+
+            if (string.Equals(issueKind, "layout_conflict", StringComparison.OrdinalIgnoreCase))
+            {
+                return DesignPacketIntakeIssueKind.LayoutConflict;
+            }
+
+            if (string.Equals(issueKind, "semantic_conflict", StringComparison.OrdinalIgnoreCase))
+            {
+                return DesignPacketIntakeIssueKind.SemanticConflict;
+            }
+
+            return DesignPacketIntakeIssueKind.HumanDecisionRequired;
         }
 
         private static void AddIssue(

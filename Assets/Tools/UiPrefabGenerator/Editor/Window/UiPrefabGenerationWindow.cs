@@ -27,6 +27,7 @@ namespace UiPrefabGenerator.Editor.Window
         private string _currentTaskDirectory = string.Empty;
         private UiGenerationAnalysisResult _analysisResult;
         private UiGenerationExecutionResult _executionResult;
+        private Texture2D _previewRenderTexture;
         private Vector2 _scrollPosition;
 
         [MenuItem("UiPrefabGenerator/Window/Portrait Generator")]
@@ -183,7 +184,7 @@ namespace UiPrefabGenerator.Editor.Window
             EditorGUILayout.LabelField("分析结果", EditorStyles.boldLabel);
             if (_analysisResult == null)
             {
-                EditorGUILayout.HelpBox("还没有读取到分析结果。可以点“自动分析并回写结果”，或手动回写 analysis_result.json / design_packet.json / ui_prefab_spec.json / resource_match_report.json 后再点“刷新分析结果”。", MessageType.None);
+                EditorGUILayout.HelpBox("还没有读取到分析结果。可以点“自动分析并回写结果”，或手动回写 analysis_result.json / design_packet.json / design_packet_intake_assessment.json / gating_report.json / ui_prefab_spec.json / resource_match_report.json，以及 visual_understanding.json / visual_review_report.json / preview_render_plan.json / preview_render.png / preview_diff_report.json 后再点“刷新分析结果”。", MessageType.None);
                 return;
             }
 
@@ -193,18 +194,25 @@ namespace UiPrefabGenerator.Editor.Window
             EditorGUILayout.LabelField(
                 "问题计数",
                 string.Format(
-                    "未解决项 {0} | 未匹配资源槽 {1} | 警告 {2} | 错误 {3}",
+                    "未解决项 {0} | blocking {1} | review {2} | 未匹配资源槽 {3} | 警告 {4} | 错误 {5}",
                     statusSummary.UnresolvedItemCount,
+                    statusSummary.BlockingReviewIssueCount,
+                    statusSummary.ReviewIssueCount,
                     statusSummary.UnresolvedSlotCount,
                     statusSummary.WarningCount,
                     statusSummary.ErrorCount));
             EditorGUILayout.LabelField(
                 "结果覆盖",
                 string.Format(
-                    "节点 {0} | Bindings {1} | 交互 {2} | 资源已选中 {3}/{4}",
+                    "节点 {0} | Bindings {1} | 交互 {2} | 证据元素 {3} | preview {4}/{5} | 资源已选中 {6}/{7}",
                     statusSummary.NodeCount,
                     statusSummary.BindingCount,
                     statusSummary.InteractionCount,
+                    _analysisResult.VisualUnderstanding != null && _analysisResult.VisualUnderstanding.Elements != null
+                        ? _analysisResult.VisualUnderstanding.Elements.Count
+                        : 0,
+                    statusSummary.PreviewNodeCount,
+                    statusSummary.PreviewDiffRegionCount,
                     statusSummary.SelectedMatchCount,
                     statusSummary.MatchCount));
             EditorGUILayout.LabelField("结果强度", statusSummary.IsWeakResult ? "偏弱" : "正常");
@@ -218,6 +226,7 @@ namespace UiPrefabGenerator.Editor.Window
             EditorGUILayout.LabelField("TaskId", _analysisResult.TaskId);
             EditorGUILayout.LabelField("Spec 节点数", statusSummary.NodeCount.ToString());
             EditorGUILayout.LabelField("资源匹配数", statusSummary.MatchCount.ToString());
+            EditorGUILayout.LabelField("低置信元素", statusSummary.LowConfidenceElementCount.ToString());
 
             if (statusSummary.UnresolvedSummaries.Count > 0)
             {
@@ -237,6 +246,36 @@ namespace UiPrefabGenerator.Editor.Window
                 }
             }
 
+            if (_analysisResult.VisualUnderstanding != null && _analysisResult.VisualUnderstanding.Elements != null && _analysisResult.VisualUnderstanding.Elements.Count > 0)
+            {
+                EditorGUILayout.LabelField("视觉证据");
+                for (int i = 0; i < _analysisResult.VisualUnderstanding.Elements.Count; i++)
+                {
+                    var element = _analysisResult.VisualUnderstanding.Elements[i];
+                    if (element == null)
+                    {
+                        continue;
+                    }
+
+                    string text = element.Text != null && !string.IsNullOrWhiteSpace(element.Text.NormalizedText)
+                        ? " text=" + element.Text.NormalizedText
+                        : string.Empty;
+                    EditorGUILayout.LabelField(
+                        "- " + element.SemanticRole + " [" + element.ElementId + "] conf=" + element.Confidence.ToString("0.00") + text);
+                }
+            }
+
+            if (_previewRenderTexture != null)
+            {
+                EditorGUILayout.LabelField("Preview Render");
+                float maxWidth = Mathf.Min(position.width - 48f, 280f);
+                float aspect = _previewRenderTexture.width > 0
+                    ? _previewRenderTexture.height / (float)_previewRenderTexture.width
+                    : 1f;
+                Rect previewRect = GUILayoutUtility.GetRect(maxWidth, maxWidth * aspect, GUILayout.ExpandWidth(false));
+                EditorGUI.DrawPreviewTexture(previewRect, _previewRenderTexture, null, ScaleMode.ScaleToFit);
+            }
+
             if (_analysisResult.ResourceMatchReport != null && _analysisResult.ResourceMatchReport.Matches != null)
             {
                 EditorGUILayout.LabelField("资源候选");
@@ -248,6 +287,37 @@ namespace UiPrefabGenerator.Editor.Window
                         EditorGUILayout.LabelField("- " + match.AssetSlot + " -> " + match.SelectedAssetPath);
                     }
                 }
+            }
+
+            if (_analysisResult.PreviewRenderPlan != null && _analysisResult.PreviewRenderPlan.Nodes != null && _analysisResult.PreviewRenderPlan.Nodes.Count > 0)
+            {
+                EditorGUILayout.LabelField("结构化 Preview");
+                for (int i = 0; i < _analysisResult.PreviewRenderPlan.Nodes.Count; i++)
+                {
+                    var node = _analysisResult.PreviewRenderPlan.Nodes[i];
+                    if (node == null)
+                    {
+                        continue;
+                    }
+
+                    EditorGUILayout.LabelField(
+                        "- " + node.NodeType + " [" + node.NodeId + "] bounds=("
+                        + node.Bounds.X.ToString("0.00") + ", "
+                        + node.Bounds.Y.ToString("0.00") + ", "
+                        + node.Bounds.Width.ToString("0.00") + ", "
+                        + node.Bounds.Height.ToString("0.00") + ")");
+                }
+            }
+
+            if (_analysisResult.PreviewDiffReport != null && _analysisResult.PreviewDiffReport.Regions != null && _analysisResult.PreviewDiffReport.Regions.Count > 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "Preview diff：\n"
+                    + string.Join(
+                        "\n",
+                        _analysisResult.PreviewDiffReport.Regions.ConvertAll(region =>
+                            "- " + region.DiffKind + ": " + region.Summary).ToArray()),
+                    MessageType.Warning);
             }
 
             string summary = UiGenerationTaskStorage.LoadAnalysisSummary(_currentTaskDirectory);
@@ -398,6 +468,7 @@ namespace UiPrefabGenerator.Editor.Window
             _currentTaskDirectory = UiGenerationTaskStorage.CreateTask(request, _sourceImage);
             _analysisResult = null;
             _executionResult = null;
+            _previewRenderTexture = null;
             RememberLastTaskDirectory(_currentTaskDirectory);
             EditorUtility.DisplayDialog("请求已生成", "已写入任务目录：\n" + _currentTaskDirectory, "确定");
         }
@@ -421,6 +492,7 @@ namespace UiPrefabGenerator.Editor.Window
 
             _analysisResult = result;
             _executionResult = null;
+            _previewRenderTexture = UiGenerationTaskStorage.LoadPreviewRenderTexture(_currentTaskDirectory);
             return true;
         }
 

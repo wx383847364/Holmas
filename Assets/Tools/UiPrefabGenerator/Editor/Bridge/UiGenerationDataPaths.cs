@@ -15,9 +15,16 @@ namespace UiPrefabGenerator.Editor.Bridge
 
         public const string RequestFileName = "request.json";
         public const string AnalysisResultFileName = "analysis_result.json";
+        public const string VisualUnderstandingFileName = "visual_understanding.json";
+        public const string VisualReviewReportFileName = "visual_review_report.json";
         public const string DesignPacketFileName = "design_packet.json";
+        public const string IntakeAssessmentFileName = "design_packet_intake_assessment.json";
+        public const string GatingReportFileName = "gating_report.json";
         public const string UiPrefabSpecFileName = "ui_prefab_spec.json";
         public const string ResourceMatchReportFileName = "resource_match_report.json";
+        public const string PreviewRenderPlanFileName = "preview_render_plan.json";
+        public const string PreviewRenderImageFileName = "preview_render.png";
+        public const string PreviewDiffReportFileName = "preview_diff_report.json";
         public const string AnalysisSummaryFileName = "analysis_summary.md";
         public const string ManifestFileName = "prefab_binding_manifest.json";
         public const string ExecutionResultFileName = "generation_result.json";
