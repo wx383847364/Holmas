@@ -2,13 +2,18 @@
 import argparse
 from datetime import datetime
 from pathlib import Path
+import json
 import re
+import subprocess
+import sys
 
 
 LONG_DIR_NAME = "长期主文档"
 ITER_DIR_NAME = "迭代记录"
 LONG_INDEX_NAME = "主文档索引.md"
 ITER_INDEX_NAME = "迭代记录索引.md"
+UI_SYSTEM_DIR_NAME = "UI自动生成系统"
+UI_SYSTEM_OVERVIEW_NAME = "00_总览.md"
 AGENT_RULE_DOC = "协作与执行/Agent 启动与验收规范.md"
 AGENT_STATUS_HEADING = "迭代文档默认分工状态"
 AGENT_LINE_RE = re.compile(r"^\s*-?\s*Agent\s*([1-6])：(.+?)\s*$")
@@ -20,7 +25,14 @@ DEFAULT_PLACEHOLDERS = {
 }
 SESSION_BOOTSTRAP_DOC = "协作与执行/Codex新会话必读.md"
 TASK_WRAPUP_DOC = "协作与执行/任务完成后自动维护文档.md"
+LEGACY_LONG_DOCS = {
+    f"{LONG_DIR_NAME}/方案与数据/Holmas UI 自动生成系统长期方案.md",
+    f"{LONG_DIR_NAME}/方案与数据/UI Prefab 自动生成系统 Agent 规划入口.md",
+    f"{LONG_DIR_NAME}/方案与数据/UI 自动生成系统隔离化孵化方案 v2.md",
+    f"{LONG_DIR_NAME}/方案与数据/UI 自动生成系统隔离化孵化方案 v2 执行派工单与 Skill 规范.md",
+}
 TOPIC_PATTERNS = [
+    ("文档整理", r"文档|主文档|迭代记录|索引|总览|规范|模板|跳转页|规则文档|update_project_docs|finalize_task"),
     ("流程与协作", r"会话|文档维护|交接|协作|启动卡|收尾|流程|自动维护"),
     ("审查与修复", r"Agent\s*6|审查|复审|修复|review|挑刺"),
     ("测试与验证", r"测试|验证|回归|smoke|qa|batchmode"),
@@ -30,6 +42,38 @@ TOPIC_PATTERNS = [
     ("地图与棋盘", r"地图|棋盘|terrain|board|level|扫雷|开图|猫池"),
     ("边界与骨架", r"Shared|DTO|骨架|入口|bootstrap|组合层|boundary"),
 ]
+PROCESS_ONLY_PATTERN = re.compile(
+    r"文档|主文档|迭代记录|索引|启动卡|口令|模板|helper|收尾|去重|精简|pre-commit|commit helper|update_project_docs|finalize_task",
+    re.IGNORECASE,
+)
+COMMIT_TITLE_PREFIX = {
+    "文档整理": "文档：",
+    "流程与协作": "流程：",
+    "审查与修复": "修复：",
+    "测试与验证": "测试：",
+    "UI 与联调": "UI：",
+    "配置表与数值扩展": "配置：",
+    "任务与长期进度": "玩法：",
+    "地图与棋盘": "玩法：",
+    "边界与骨架": "架构：",
+    "通用实现": "提交：",
+    "未识别": "提交：",
+}
+PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
+LAST_FINALIZE_REPORT_RELATIVE = Path("codex") / "last_finalize_report.json"
+COMMIT_MODULE_SEQUENCE_START = 1
+COMMIT_MODULE_DEFAULT = "610"
+DOC_MODULE_PATTERNS = [
+    ("210", r"项目总览|主文档索引|入口页|入口文档|研发入口|当前概览"),
+    ("220", r"架构与边界|边界规范|边界文档|热更新边界规范|boundary"),
+    ("260", r"迭代记录|启动卡|交接|给下一轮的人"),
+    ("270", r"UI 自动生成系统|UiPrefabGenerator|DesignPacket|UiPrefabSpec|PrefabBindingManifest|执行派工单|sample manifest|sample spec"),
+    ("250", r"配表|内容表|成长表|表方案|表结构|数据方案"),
+    ("240", r"落地方案|长期方案|主线方案|Holmas_v1方案|方案"),
+    ("230", r"协作与执行|收尾|finalize_task|suggest-handoff|append-iteration|Codex新会话必读|Agent 启动|启动与验收|subagent|skill"),
+]
+PLAN_PROGRESS_HEADING = "完成情况"
+PLAN_STATUS_VALUES = {"未开始", "进行中", "已完成"}
 
 
 def ensure_dirs(doc_root: Path):
@@ -129,6 +173,26 @@ def extract_prefixed_value(path: Path, prefix: str) -> str:
     return ""
 
 
+def extract_prefixed_value_from_bullets(bullets, prefix: str) -> str:
+    for line in bullets:
+        stripped = line.strip()
+        if stripped.startswith(prefix):
+            return stripped.replace(prefix, "", 1).strip()
+    return ""
+
+
+def extract_plan_progress(path: Path):
+    bullets = extract_section_bullets(path, PLAN_PROGRESS_HEADING)
+    status = extract_prefixed_value_from_bullets(bullets, "- 当前状态：")
+    note = extract_prefixed_value_from_bullets(bullets, "- 进度说明：")
+    if status not in PLAN_STATUS_VALUES:
+        status = "未开始"
+    return {
+        "status": status,
+        "note": note,
+    }
+
+
 def normalize_agent_status_line(line: str) -> str:
     stripped = line.strip()
     if stripped.startswith("- "):
@@ -181,6 +245,71 @@ def classify_topic(text: str) -> str:
     return "通用实现"
 
 
+def classify_commit_module(text: str, topic: str) -> str:
+    compact = " ".join(text.split())
+    if not compact:
+        return COMMIT_MODULE_DEFAULT
+
+    if re.search(r"Assets/HotUpdateContent/Res|HotUpdate Res|Res 目录|资源 meta|Res/|图标资源 meta", compact, re.IGNORECASE):
+        return "320"
+    if re.search(r"图标|贴图|头像|icon", compact, re.IGNORECASE):
+        return "310"
+    if re.search(r"地图资源|关卡资源|terrain 资源|Map/|\.asset\.meta", compact, re.IGNORECASE):
+        return "340"
+    if re.search(r"场景|scene|预制体|prefab", compact, re.IGNORECASE):
+        return "330"
+    if re.search(r"Holmas_AgencyBuildingTable|Holmas_CatTable|Holmas_MapTable|Holmas_MetaLevelTable|Holmas_PlayerLevelTable|Holmas_TaskTable|\.csv|csv|配置表", compact, re.IGNORECASE):
+        return "410"
+    if re.search(r"导表|导出|转换脚本|export report|配置转换", compact, re.IGNORECASE):
+        return "420"
+    if re.search(r"\.json|\.bytes|catalog|json / bytes|holmas_core_config|holmas_cat_meta", compact, re.IGNORECASE):
+        return "430"
+    if re.search(r"schema|协议|数据结构|字段定义", compact, re.IGNORECASE):
+        return "440"
+    if re.search(r"UI 自动生成系统|UiPrefabGenerator|DesignPacket|UiPrefabSpec|PrefabBindingManifest|sample manifest|sample spec", compact, re.IGNORECASE):
+        return "270" if topic == "文档整理" else "620"
+
+    if topic == "文档整理":
+        for code, pattern in DOC_MODULE_PATTERNS:
+            if re.search(pattern, compact, re.IGNORECASE):
+                return code
+        return "230"
+
+    if topic == "流程与协作":
+        return "230"
+
+    if topic == "审查与修复":
+        return "520"
+
+    if topic == "测试与验证":
+        if re.search(r"单元测试|集成测试|EditMode|PlayMode", compact, re.IGNORECASE):
+            return "510"
+        if re.search(r"check_boundary|QA 脚本|校验脚本", compact, re.IGNORECASE):
+            return "530"
+        return "520"
+
+    if topic == "UI 与联调":
+        return "150"
+
+    if topic == "配置表与数值扩展":
+        return "410"
+
+    if topic == "任务与长期进度":
+        return "130"
+
+    if topic == "地图与棋盘":
+        return "140"
+
+    if topic == "边界与骨架":
+        if re.search(r"App\.Shared|Contracts|Shared DTO", compact, re.IGNORECASE):
+            return "110"
+        if re.search(r"App\.AOT|Bootstrap|Infrastructure|YooRuntimeAssets|HybridCLR", compact, re.IGNORECASE):
+            return "120"
+        return "110"
+
+    return COMMIT_MODULE_DEFAULT
+
+
 def first_non_empty(items):
     for item in items:
         if item and item.strip():
@@ -200,6 +329,321 @@ def dedupe_preserve_order(items):
         seen.add(normalized)
         ordered.append(normalized)
     return ordered
+
+
+def bullet_text(item: str) -> str:
+    stripped = item.strip()
+    if stripped.startswith("- "):
+        return stripped[2:].strip()
+    return stripped
+
+
+def is_process_only_item(text: str) -> bool:
+    compact = bullet_text(text)
+    if not compact:
+        return False
+    return classify_topic(compact) == "流程与协作" or bool(PROCESS_ONLY_PATTERN.search(compact))
+
+
+def select_mainline_bullets(handoff_bullets, next_steps, overall_judgement: str):
+    handoff_candidates = [item for item in handoff_bullets if not is_process_only_item(item)]
+    next_candidates = [item for item in next_steps if not is_process_only_item(item)]
+
+    if handoff_candidates:
+        return handoff_candidates[:2]
+    if overall_judgement and not is_process_only_item(overall_judgement):
+        return [overall_judgement]
+    if next_candidates:
+        return next_candidates[:2]
+    if overall_judgement:
+        return [overall_judgement]
+    return next_steps[:2]
+
+
+def simplify_commit_title(text: str) -> str:
+    value = " ".join(text.split()).strip("。；，, ")
+    if not value:
+        return "更新当前任务"
+    value = re.sub(r"^(完成|继续|开始|正在|统一|补充|补齐|更新|修复|实现|新增|收口)", "", value).strip()
+    value = value.strip("：: ")
+    return value or "更新当前任务"
+
+
+def next_commit_sequence(doc_root: Path, module_code: str) -> int:
+    repo_root = doc_root.resolve().parent
+    try:
+        inside_repo = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--is-inside-work-tree"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return COMMIT_MODULE_SEQUENCE_START
+
+    if inside_repo.returncode != 0:
+        return COMMIT_MODULE_SEQUENCE_START
+
+    log_result = subprocess.run(
+        ["git", "-C", str(repo_root), "log", "--format=%s"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if log_result.returncode != 0:
+        return COMMIT_MODULE_SEQUENCE_START
+
+    max_sequence = 0
+    for line in log_result.stdout.splitlines():
+        match = re.match(r"^\[(\d{8})\]\s+", line.strip())
+        if match:
+            full_code = match.group(1)
+            if full_code.startswith(module_code):
+                max_sequence = max(max_sequence, int(full_code[3:]))
+    return max_sequence + 1 if max_sequence else COMMIT_MODULE_SEQUENCE_START
+
+
+def format_commit_sequence(module_code: str, sequence: int) -> str:
+    return f"[{module_code}{sequence:05d}]"
+
+
+def build_commit_title(doc_root: Path, summary: str, done, topic: str) -> str:
+    prefix = COMMIT_TITLE_PREFIX.get(topic, "提交：")
+    base = first_non_empty([summary, done[0] if done else "", "更新当前任务"])
+    simplified = simplify_commit_title(base)
+    if not simplified.startswith(prefix):
+        simplified = f"{prefix}{simplified}"
+    module_code = classify_commit_module(" ".join([summary, *done]), topic)
+    sequence = format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code))
+    if simplified.startswith(f"{sequence} "):
+        return simplified
+    return f"{sequence} {simplified}"
+
+
+def build_commit_content(summary: str, done):
+    items = dedupe_preserve_order(done)
+    if summary:
+        items = dedupe_preserve_order(items + [summary])
+    if not items:
+        items = ["整理并收口当前任务改动"]
+    return items[:4]
+
+
+def git_dir_for_doc_root(doc_root: Path):
+    repo_root = doc_root.resolve().parent
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--git-dir"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return None
+
+    if result.returncode != 0:
+        return None
+
+    git_dir = result.stdout.strip()
+    if not git_dir:
+        return None
+
+    path = Path(git_dir)
+    if not path.is_absolute():
+        path = (repo_root / path).resolve()
+    return path
+
+
+def pending_commit_cache_path(doc_root: Path):
+    git_dir = git_dir_for_doc_root(doc_root)
+    if git_dir is None:
+        return None
+    return git_dir / PENDING_COMMIT_CACHE_RELATIVE
+
+
+def last_finalize_report_path(doc_root: Path):
+    git_dir = git_dir_for_doc_root(doc_root)
+    if git_dir is None:
+        return None
+    return git_dir / LAST_FINALIZE_REPORT_RELATIVE
+
+
+def current_head_commit(doc_root: Path) -> str:
+    repo_root = doc_root.resolve().parent
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
+def write_pending_commit_suggestion(doc_root: Path, commit):
+    cache_path = pending_commit_cache_path(doc_root)
+    if cache_path is None:
+        return
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "title": commit["title"],
+        "content": commit["content"],
+        "head_commit": current_head_commit(doc_root),
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+    }
+    cache_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def clear_pending_commit_suggestion(doc_root: Path):
+    cache_path = pending_commit_cache_path(doc_root)
+    if cache_path is None or not cache_path.exists():
+        return
+    cache_path.unlink()
+
+
+def read_pending_commit_suggestion(doc_root: Path):
+    cache_path = pending_commit_cache_path(doc_root)
+    if cache_path is None or not cache_path.exists():
+        return None
+    return json.loads(cache_path.read_text(encoding="utf-8"))
+
+
+def current_worktree_status(doc_root: Path):
+    repo_root = doc_root.resolve().parent
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "status", "--short"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return []
+    return [line.rstrip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def validate_last_finalize_report(doc_root: Path):
+    payload = read_last_finalize_report(doc_root)
+    if not payload:
+        return {
+            "valid": False,
+            "reasons": ["未找到最近一次完整收尾状态缓存。"],
+            "payload": None,
+        }
+
+    reasons = []
+    current_head = current_head_commit(doc_root)
+    current_status = current_worktree_status(doc_root)
+    report_text = payload.get("report_text", "")
+
+    if not payload.get("head_commit"):
+        reasons.append("收尾状态缺少 head_commit，无法确认它对应的是哪次仓库状态。")
+    elif current_head != payload.get("head_commit"):
+        reasons.append("当前 HEAD 已变化，最近一次完整收尾状态不再对应当前提交基线。")
+
+    if payload.get("worktree_status", []) != current_status:
+        reasons.append("当前工作区状态已变化，最近一次完整收尾状态不再对应当前工作区。")
+
+    for marker in ("文档维护：", "Git 提交建议：", "会话建议："):
+        if marker not in report_text:
+            reasons.append(f"收尾输出缺少 `{marker}` 段，不能视为完整收尾。")
+
+    return {
+        "valid": not reasons,
+        "reasons": reasons,
+        "payload": payload,
+        "current_head": current_head,
+        "current_worktree_status": current_status,
+    }
+
+
+def write_last_finalize_report(doc_root: Path, payload):
+    report_path = last_finalize_report_path(doc_root)
+    if report_path is None:
+        return None
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return report_path
+
+
+def clear_last_finalize_report(doc_root: Path):
+    report_path = last_finalize_report_path(doc_root)
+    if report_path is None or not report_path.exists():
+        return
+    report_path.unlink()
+
+
+def read_last_finalize_report(doc_root: Path):
+    report_path = last_finalize_report_path(doc_root)
+    if report_path is None or not report_path.exists():
+        return None
+    return json.loads(report_path.read_text(encoding="utf-8"))
+
+
+def suggest_commit_message(doc_root: Path, summary: str, done, risks, agent6_review: str, doc_log_skipped: bool):
+    if doc_log_skipped:
+        return {
+            "suitable": False,
+            "reason": "这轮属于事务性协助，没有形成需要写入项目状态的独立里程碑。",
+            "title": "",
+            "content": [],
+        }
+
+    if agent6_review == "failed":
+        return {
+            "suitable": False,
+            "reason": "Agent 6 审查未通过，当前仍在修复链中，暂不适合提交。",
+            "title": "",
+            "content": [],
+        }
+
+    if agent6_review == "pending":
+        return {
+            "suitable": False,
+            "reason": "Agent 6 审查尚未完成，当前还不能确认这轮改动已经收口。",
+            "title": "",
+            "content": [],
+        }
+
+    if agent6_review == "deferred":
+        return {
+            "suitable": False,
+            "reason": "Agent 6 审查当前处于待回补复审，正式审查闭环尚未完成。",
+            "title": "",
+            "content": [],
+        }
+
+    content = build_commit_content(summary, done)
+    topics = {
+        classify_topic(item)
+        for item in [summary, *done]
+        if item and item.strip()
+    }
+    topics.discard("未识别")
+    topics.discard("通用实现")
+    if len(topics) > 1:
+        return {
+            "suitable": False,
+            "reason": "当前总结里仍混有多条主线，建议先拆分后再分别生成提交标题和内容。",
+            "title": "",
+            "content": [],
+        }
+
+    if risks and not done:
+        return {
+            "suitable": False,
+            "reason": "当前仍以风险说明为主，缺少清晰完成项，暂不建议直接提交。",
+            "title": "",
+            "content": [],
+        }
+
+    topic = next(iter(topics), classify_topic(summary))
+    return {
+        "suitable": True,
+        "reason": "",
+        "title": build_commit_title(doc_root, summary, done, topic),
+        "content": content,
+    }
 
 
 def extract_first_text_code_block(path: Path) -> str:
@@ -222,6 +666,8 @@ def suggest_agent_start(bullets):
         (r"Agent\s*1|骨架|Shared|入口冻结", "Agent 1：边界与骨架"),
     ]
     for bullet in bullets:
+        if is_process_only_item(bullet):
+            continue
         for pattern, label in patterns:
             if re.search(pattern, bullet, re.IGNORECASE):
                 return label
@@ -238,12 +684,17 @@ def latest_iteration_context(doc_root: Path):
             "start_agent": "暂无明确建议",
         }
     current_status = extract_section_bullets(latest, "当前状态")
+    handoff = extract_section_bullets(latest, "给下一轮的人")
     next_steps = extract_section_bullets(latest, "下一步")
     stage = current_status[0][2:] if current_status else "暂无"
     if stage.startswith("当前阶段："):
         stage = stage.replace("当前阶段：", "", 1).strip()
-    mainline = "；".join(item[2:] for item in next_steps[:2]) if next_steps else "暂无"
-    start_agent = extract_prefixed_value(latest, "- 建议起始 Agent：") or suggest_agent_start(next_steps)
+    overall_judgement = extract_prefixed_value(latest, "- 整体判断：")
+    mainline_bullets = select_mainline_bullets(handoff, next_steps, overall_judgement)
+    mainline = "；".join(bullet_text(item) for item in mainline_bullets) if mainline_bullets else "暂无"
+    start_agent = extract_prefixed_value(latest, "- 建议起始 Agent：")
+    if not start_agent or start_agent == "待补充":
+        start_agent = suggest_agent_start(handoff + next_steps)
     return {
         "stage": stage,
         "mainline": mainline,
@@ -255,6 +706,8 @@ def classify_long_doc(path: Path):
     if path.name == "项目总览.md":
         return "项目总览"
     parts = set(path.parts)
+    if UI_SYSTEM_DIR_NAME in parts:
+        return "UI自动生成系统"
     if "方案与数据" in parts:
         return "方案与数据"
     if "架构与边界" in parts:
@@ -271,6 +724,8 @@ def scan_long_docs(doc_root: Path):
         if rel.startswith(f"{ITER_DIR_NAME}/"):
             continue
         if rel == f"{LONG_DIR_NAME}/{LONG_INDEX_NAME}":
+            continue
+        if rel in LEGACY_LONG_DOCS:
             continue
         files.append(path)
     return files
@@ -397,12 +852,21 @@ def write_long_index(doc_root: Path):
     latest_docs = recent_files(long_docs, 3)
     grouped = {
         "项目总览": [],
+        "UI自动生成系统": [],
         "方案与数据": [],
         "架构与边界": [],
         "协作与执行": [],
     }
     for path in long_docs:
         grouped[classify_long_doc(path)].append(path)
+    ui_system_overview = next(
+        (
+            path
+            for path in grouped["UI自动生成系统"]
+            if path.name == UI_SYSTEM_OVERVIEW_NAME
+        ),
+        grouped["UI自动生成系统"][0] if grouped["UI自动生成系统"] else None,
+    )
     lines = [
         "# 主文档索引",
         "",
@@ -457,12 +921,16 @@ def write_long_index(doc_root: Path):
         "",
     ]
     if not grouped["方案与数据"]:
-        lines.append("- [ ] 暂无")
+        if ui_system_overview is None:
+            lines.append("- [ ] 暂无")
     else:
+        if ui_system_overview is not None:
+            lines.append(f"- [ ] [UI 自动生成系统专区]({absolute_doc_link(ui_system_overview, doc_root)})")
         for path in grouped["方案与数据"]:
             title = markdown_title(path)
-            rel = relative_markdown_link(path, doc_root)
-            lines.append(f"- [ ] [{title}]({absolute_doc_link(path, doc_root)})")
+            plan_progress = extract_plan_progress(path)
+            label = f"[{plan_progress['status']}] {title}"
+            lines.append(f"- [ ] [{label}]({absolute_doc_link(path, doc_root)})")
     lines += [
         "",
         "### C. 架构与边界",
@@ -515,11 +983,12 @@ def write_iteration_index(doc_root: Path):
     _, iter_dir = ensure_dirs(doc_root)
     iteration_docs = scan_iteration_docs(doc_root)
     latest = iteration_docs[-1] if iteration_docs else None
+    context = latest_iteration_context(doc_root)
     latest_done = extract_section_bullets(latest, "完成项")[:3] if latest else []
     latest_risks = extract_section_bullets(latest, "风险与阻塞")[:3] if latest else []
     latest_next = extract_section_bullets(latest, "下一步")[:3] if latest else []
     latest_updates = recent_files(iteration_docs, 3)
-    suggested_agent = suggest_agent_start(latest_next)
+    suggested_agent = context["start_agent"]
     lines = [
         "# 迭代记录索引",
         "",
@@ -775,7 +1244,6 @@ def latest_iteration_metadata(doc_root: Path):
             "title": "",
             "theme": "",
             "topic": "未识别",
-            "today_major_task_count": 0,
         }
     date_pretty, _ = parse_iteration_key(latest)
     theme = extract_section_text(latest, "本轮主题")
@@ -786,44 +1254,7 @@ def latest_iteration_metadata(doc_root: Path):
         "title": title,
         "theme": theme,
         "topic": classify_topic(f"{title}\n{theme}"),
-        "today_major_task_count": count_today_major_task_entries(latest, datetime.now().strftime("%Y-%m-%d")),
     }
-
-
-def count_today_major_task_entries(path: Path, today: str) -> int:
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except FileNotFoundError:
-        return 0
-
-    count = 0
-    in_work_log = False
-    index = 0
-    while index < len(lines):
-        stripped = lines[index].strip()
-        if stripped == "## 工作日志":
-            in_work_log = True
-            index += 1
-            continue
-        if in_work_log and stripped.startswith("## "):
-            break
-        if in_work_log and stripped.startswith("### "):
-            match = re.match(r"^###\s+(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}\s*$", stripped)
-            if match and match.group(1) == today:
-                first_bullet = ""
-                lookahead = index + 1
-                while lookahead < len(lines):
-                    candidate = lines[lookahead].strip()
-                    if candidate.startswith("### ") or candidate.startswith("## "):
-                        break
-                    if candidate.startswith("- "):
-                        first_bullet = candidate
-                        break
-                    lookahead += 1
-                if first_bullet and first_bullet != "- 创建本轮迭代记录":
-                    count += 1
-        index += 1
-    return count
 
 
 def build_session_bootstrap_prompt(doc_root: Path, goal: str, done, risks, next_steps, docs):
@@ -871,7 +1302,13 @@ def suggest_handoff(
     next_session_docs,
     doc_log_skipped: bool,
     context_compressed: bool,
+    session_major_task_count: int,
 ):
+    commit = suggest_commit_message(doc_root, summary, done, risks, agent6_review, doc_log_skipped)
+    if commit["suitable"]:
+        write_pending_commit_suggestion(doc_root, commit)
+    else:
+        clear_pending_commit_suggestion(doc_root)
     latest = latest_iteration_metadata(doc_root)
     today = datetime.now().strftime("%Y-%m-%d")
     next_focus = first_non_empty([next_session_goal, next_steps[0] if next_steps else "", summary])
@@ -879,13 +1316,13 @@ def suggest_handoff(
     review_gate_open = agent6_review in {"passed", "passed-with-suggestions", "not-required"}
     review_failed = agent6_review == "failed"
     review_pending = agent6_review == "pending"
-    today_major_task_count = latest.get("today_major_task_count", 0)
+    review_deferred = agent6_review == "deferred"
     session_quality_reasons = []
     if context_compressed:
         session_quality_reasons.append("本会话已出现过自动压缩背景信息，后续继续堆叠上下文的收益会明显下降。")
-    if today_major_task_count >= 2:
+    if session_major_task_count >= 2:
         session_quality_reasons.append(
-            f"同一天内已连续完成 {today_major_task_count} 个大任务，当前更适合开一个新会话重新装载上下文。"
+            f"当前会话内已连续完成 {session_major_task_count} 个大任务，当前更适合开一个新会话重新装载上下文。"
         )
     session_quality_degraded = bool(session_quality_reasons)
 
@@ -900,11 +1337,39 @@ def suggest_handoff(
                 "按 Agent 6 审查意见修复当前交付，并准备复审。",
             ]
         )
+    elif review_deferred:
+        if session_quality_degraded:
+            session_advice = "建议新开修复/复审会话"
+            session_reason = "Agent 6 审查已转为待回补复审，当前不能宣告下一阶段通过。 " + " ".join(session_quality_reasons)
+            title = next_session_title or "继续当前修复/验证链"
+            goal = next_session_goal or first_non_empty(
+                [
+                    next_steps[0] if next_steps else "",
+                    risks[0] if risks else "",
+                    "继续当前修复与验证，并在审查结果回传后回补复审。",
+                ]
+            )
+        else:
+            session_advice = "继续当前修复/验证会话"
+            session_reason = "Agent 6 审查已转为待回补复审；当前可继续已知修复与验证，但暂不生成下一阶段启动卡。"
+            title = ""
+            goal = ""
     elif review_pending and not session_quality_degraded:
         session_advice = "继续当前会话"
         session_reason = "Agent 6 审查尚未完成，暂不建议生成下一阶段启动卡。"
         title = ""
         goal = ""
+    elif review_pending and session_quality_degraded:
+        session_advice = "建议新开修复/复审会话"
+        session_reason = "Agent 6 审查已发起但结果尚未回传，当前不能宣告下一阶段通过。 " + " ".join(session_quality_reasons)
+        title = next_session_title or "继续当前修复/复审链"
+        goal = next_session_goal or first_non_empty(
+            [
+                next_steps[0] if next_steps else "",
+                summary,
+                "等待 Agent 6 审查结果回传，并继续当前修复链。",
+            ]
+        )
     else:
         should_new_session = False
         if session_mode == "new":
@@ -956,7 +1421,7 @@ def suggest_handoff(
         if not latest["path"]:
             iteration_advice = "建议新建迭代记录"
             iteration_reason = "当前还没有迭代记录，下一轮需要先建立记录。"
-        elif review_failed or review_pending:
+        elif review_failed or review_pending or review_deferred:
             iteration_advice = "继续当前迭代记录"
             iteration_reason = "当前仍在同一轮修复/复审链路内，不应提前切出新的迭代文件。"
         elif latest["date"] and latest["date"] != today:
@@ -990,6 +1455,8 @@ def suggest_handoff(
         startup_prompt = build_session_bootstrap_prompt(doc_root, goal, done, risks, next_steps, docs)
 
     return {
+        "doc_maintenance_status": "未执行。原因是：这轮属于事务性协助，没有写入项目总览或迭代记录。" if doc_log_skipped else "已执行",
+        "commit_suggestion": commit,
         "session_advice": session_advice,
         "session_reason": session_reason,
         "iteration_advice": iteration_advice,
@@ -1004,7 +1471,26 @@ def suggest_handoff(
 
 def format_handoff_report(report):
     lines = [
-        f"会话建议：{report['session_advice']}",
+        f"文档维护：{report['doc_maintenance_status']}",
+    ]
+    commit = report["commit_suggestion"]
+    if commit["suitable"]:
+        lines += [
+            "Git 提交建议：适合提交",
+            f"标题：{commit['title']}",
+            "内容：",
+            "```text",
+        ]
+        for item in commit["content"]:
+            lines.append(f"- {item}")
+        lines.append("```")
+        lines.append("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。")
+    else:
+        lines.append(f"Git 提交建议：暂不建议提交。原因是：{commit['reason']}")
+        lines.append("提交确认：当前不建议直接提交；如需强制提交，请明确说明。")
+
+    lines.append(f"会话建议：{report['session_advice']}")
+    lines += [
         f"原因是：{report['session_reason']}",
         f"迭代记录建议：{report['iteration_advice']}",
         f"原因是：{report['iteration_reason']}",
@@ -1033,6 +1519,11 @@ def format_handoff_report(report):
         ]
     else:
         lines.append("下一会话启动卡：当前不生成，继续当前会话即可。")
+    lines += [
+        "最终回复要求：发送 final 时，必须显式包含上面的 `文档维护 / Git 提交建议 / 会话建议` 三段内容。",
+        "最终回复要求：`check-last-finalize` 返回 `[ok]` 只表示允许进入 final，不表示可以省略这三段。",
+        "最终回复要求：如果最终回复只总结实现结果、只说“已完成收尾”或只说“脚本已执行”，一律视为未完成收尾。",
+    ]
     return "\n".join(lines)
 
 
@@ -1090,7 +1581,7 @@ def main():
     handoff.add_argument(
         "--agent6-review",
         default="pending",
-        choices=["passed", "passed-with-suggestions", "failed", "pending", "not-required"],
+        choices=["passed", "passed-with-suggestions", "failed", "pending", "deferred", "not-required"],
         help="Current Agent 6 review status",
     )
     handoff.add_argument(
@@ -1114,6 +1605,21 @@ def main():
         action="store_true",
         help="Mark that this session has already shown automatic context compression or obvious context degradation",
     )
+    handoff.add_argument(
+        "--session-major-task-count",
+        type=int,
+        default=0,
+        help="Explicit count of major tasks already completed in the current session",
+    )
+
+    sub.add_parser("show-pending-commit", help="Show the latest cached suitable commit suggestion")
+    sub.add_parser("show-last-finalize", help="Show the latest cached complete finalize report")
+    sub.add_parser("check-last-finalize", help="Validate whether the latest complete finalize report still matches the current repo state")
+
+    record_finalize = sub.add_parser("record-last-finalize", help="Record the latest complete finalize report")
+    record_finalize.add_argument("--summary", required=True, help="Round summary used for finalize")
+    record_finalize.add_argument("--agent6-review", required=True, help="Agent 6 review state at finalize time")
+    record_finalize.add_argument("--doc-log-skipped", action="store_true", help="Mark that this finalize skipped project doc logging")
 
     backfill = sub.add_parser("backfill-agent-status", help="Backfill default agent status into iteration logs")
     backfill.add_argument("--from", dest="from_date", required=True, help="Start date in YYYYMMDD")
@@ -1123,12 +1629,16 @@ def main():
     ensure_dirs(doc_root)
 
     if args.command == "sync":
+        previous_status = current_worktree_status(doc_root)
         sync_indexes(doc_root)
+        if current_worktree_status(doc_root) != previous_status:
+            clear_last_finalize_report(doc_root)
         print(f"[ok] synced indexes under {doc_root}")
         return
 
     if args.command == "new-iteration":
         path = create_iteration(doc_root, args.title, args.goal, args.status)
+        clear_last_finalize_report(doc_root)
         print(f"[ok] created iteration log: {path}")
         return
 
@@ -1143,7 +1653,10 @@ def main():
             args.next_steps,
             args.agent_status,
         )
+        clear_last_finalize_report(doc_root)
         print(f"[ok] updated iteration log: {path}")
+        print("[warn] 当前只完成了迭代记录更新，这仍属于半收尾。")
+        print("[warn] 如需完成收尾，请继续执行 update_project_docs.py suggest-handoff 或 scripts/finalize_task.sh。")
         return
 
     if args.command == "suggest-handoff":
@@ -1161,8 +1674,52 @@ def main():
             args.next_session_doc,
             args.doc_log_skipped,
             args.context_compressed,
+            args.session_major_task_count,
         )
         print(format_handoff_report(report))
+        return
+
+    if args.command == "show-pending-commit":
+        payload = read_pending_commit_suggestion(doc_root)
+        if not payload:
+            raise SystemExit("未找到最近一次可直接复用的提交建议缓存。")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "show-last-finalize":
+        payload = read_last_finalize_report(doc_root)
+        if not payload:
+            raise SystemExit("未找到最近一次完整收尾状态缓存。")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "check-last-finalize":
+        result = validate_last_finalize_report(doc_root)
+        if not result["valid"]:
+            message = "\n".join(f"- {reason}" for reason in result["reasons"])
+            raise SystemExit(f"最近一次完整收尾状态校验失败：\n{message}")
+        payload = result["payload"] or {}
+        print("[ok] 最近一次完整收尾状态仍然有效。")
+        print(f"summary: {payload.get('summary', '')}")
+        print(f"created_at: {payload.get('created_at', '')}")
+        print(f"head_commit: {payload.get('head_commit', '')}")
+        return
+
+    if args.command == "record-last-finalize":
+        report_text = sys.stdin.read().strip()
+        payload = {
+            "summary": args.summary,
+            "agent6_review": args.agent6_review,
+            "doc_log_skipped": args.doc_log_skipped,
+            "head_commit": current_head_commit(doc_root),
+            "worktree_status": current_worktree_status(doc_root),
+            "report_text": report_text,
+            "created_at": datetime.now().isoformat(timespec="seconds"),
+        }
+        path = write_last_finalize_report(doc_root, payload)
+        if path is None:
+            raise SystemExit("当前不在 Git 仓库中，无法写入最近一次完整收尾状态。")
+        print(f"[ok] recorded finalize report: {path}")
         return
 
     if args.command == "backfill-agent-status":

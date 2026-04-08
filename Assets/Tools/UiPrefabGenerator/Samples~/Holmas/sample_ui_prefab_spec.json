@@ -1,0 +1,84 @@
+{
+  "page_id": "agency_main",
+  "prefab_name": "AgencyMainPanel",
+  "root_node_id": "root",
+  "generation_profile_id": "holmas_ugui",
+  "nodes": [
+    {
+      "node_id": "root",
+      "node_name": "AgencyMainPanel",
+      "parent_node_id": "",
+      "components": [
+        {
+          "component_type": "RectTransform",
+          "binding_key": "",
+          "asset_slot": ""
+        },
+        {
+          "component_type": "Image",
+          "binding_key": "",
+          "asset_slot": "panel_bg"
+        }
+      ],
+      "layout": {
+        "layout_type": "FullScreen",
+        "layout_slot": "root"
+      }
+    },
+    {
+      "node_id": "task_list",
+      "node_name": "TaskList",
+      "parent_node_id": "root",
+      "components": [
+        {
+          "component_type": "RectTransform",
+          "binding_key": "",
+          "asset_slot": ""
+        },
+        {
+          "component_type": "ScrollRect",
+          "binding_key": "task_list",
+          "asset_slot": ""
+        }
+      ],
+      "layout": {
+        "layout_type": "VerticalLayout",
+        "layout_slot": "task_list"
+      }
+    },
+    {
+      "node_id": "claim_button",
+      "node_name": "ClaimButton",
+      "parent_node_id": "root",
+      "components": [
+        {
+          "component_type": "RectTransform",
+          "binding_key": "",
+          "asset_slot": ""
+        },
+        {
+          "component_type": "Image",
+          "binding_key": "",
+          "asset_slot": "claim_button_bg"
+        },
+        {
+          "component_type": "Button",
+          "binding_key": "claim_button",
+          "asset_slot": ""
+        }
+      ],
+      "layout": {
+        "layout_type": "Anchored",
+        "layout_slot": "claim_button"
+      }
+    }
+  ],
+  "bindings": [],
+  "interactions": [
+    {
+      "node_id": "claim_button",
+      "event_name": "on_click",
+      "handler_key": "claim_task"
+    }
+  ]
+}

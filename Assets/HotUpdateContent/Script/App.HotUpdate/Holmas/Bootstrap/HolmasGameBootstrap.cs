@@ -7,6 +7,7 @@ using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Services;
+using App.HotUpdate.Holmas.UI;
 using App.Shared.Contracts;
 using IHolmasPromotionCatalog = App.HotUpdate.Holmas.Meta.IHolmasAgencyCatalog;
 using HolmasAgencyPromotionDefinition = App.HotUpdate.Holmas.Meta.HolmasAgencyBuildingDefinition;
@@ -88,6 +89,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
             serviceContainer.RegisterSingleton<IHolmasAgencyCatalog>(promotionCatalog);
             serviceContainer.RegisterSingleton(levelLaunchGateway);
             serviceContainer.RegisterSingleton<IHolmasLevelLaunchGateway>(levelLaunchGateway);
+            HolmasUiBootstrap.EnsureCreated(Context, levelLaunchGateway);
 
             // 这轮已经把地图完成 -> 任务推进 -> 长期进度的运行时编排接入组合层，但仍不提前接 UI。
             Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动，城市宣传编排入口已就位。");

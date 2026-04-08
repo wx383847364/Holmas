@@ -1,0 +1,14 @@
+{
+  "intake_profile_id": "design_packet_review_v1",
+  "has_blocking_issues": false,
+  "unresolved_items": [],
+  "notes": [
+    "design_images=1",
+    "states=1",
+    "rules=3",
+    "asset_slot_hints=2",
+    "expected_semantic_roles=0",
+    "element_hints=0",
+    "review_hints=0"
+  ]
+}

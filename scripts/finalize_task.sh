@@ -22,6 +22,7 @@ SESSION_MODE="auto"
 ITERATION_MODE="auto"
 AGENT6_REVIEW="pending"
 CONTEXT_COMPRESSED=0
+SESSION_MAJOR_TASK_COUNT=0
 NEXT_SESSION_TITLE=""
 NEXT_SESSION_GOAL=""
 NEXT_SESSION_DOCS=()
@@ -36,6 +37,7 @@ usage() {
   scripts/finalize_task.sh --summary "本轮摘要" --agent-status "Agent 5：已启动并完成边界验证"
   scripts/finalize_task.sh --summary "本轮摘要" --agent6-review passed --next "下一阶段目标"
   scripts/finalize_task.sh --summary "本轮摘要" --context-compressed
+  scripts/finalize_task.sh --summary "本轮摘要" --session-major-task-count 2
   scripts/finalize_task.sh --file "doc/迭代记录/迭代记录_YYYYMMDD_001.md" --summary "本轮摘要"
   scripts/finalize_task.sh --summary "本轮摘要" --skip-temp-cleanup
   scripts/finalize_task.sh --summary "更新提交说明" --force-log
@@ -44,11 +46,19 @@ usage() {
   - 默认写入最新一轮迭代记录
   - 会先判断这次是否属于“值得进入项目文档”的任务；纯事务性协助会自动跳过
   - `--agent-status` 只做显式透传；只有本轮确实改变某个 Agent 的分工状态时才传
-  - `--agent6-review` 用来声明 Agent 6 当前审查状态：passed / passed-with-suggestions / failed / pending / not-required
+  - `--agent6-review` 用来声明 Agent 6 当前审查状态：passed / passed-with-suggestions / failed / pending / deferred / not-required
   - `--context-compressed` 用来声明本会话已经出现过自动压缩背景信息，或你已经明确感知到上下文质量下降
+  - `--session-major-task-count` 用来显式声明当前会话已经连续完成了多少个大任务；脚本不再按“同一天”自动推断
   - `--session-mode` 和 `--iteration-mode` 分别控制“会话建议”和“迭代记录建议”，两者彼此独立
-  - 默认会在收尾末尾输出“会话建议 + 迭代记录建议 + 启动卡”，即使这轮被判定为事务性协助也会给出建议
+  - 默认会在收尾末尾输出固定三段：`文档维护`、`Git 提交建议`、`会话建议`
+  - 如果 `Git 提交建议` 为“适合提交”，还会固定追加一条 `提交确认` 提示，提醒可直接回复 `1 / 确认 / 提交 / 直接提交`
+  - 如果适合提交，脚本会默认生成中文 `标题：` 和 `内容：`
+  - 完整收尾后会写入 `.git/codex/last_finalize_report.json`，作为最近一次完整收尾状态
+  - 收尾完成后，建议立刻执行 `python3 scripts/update_project_docs.py --doc-root doc check-last-finalize`
+  - 即使这轮被判定为事务性协助，也仍会给出 `Git 提交建议` 和 `会话建议`
+  - `迭代记录建议`、原因说明和启动卡会作为附加信息继续输出
   - 会自动同步主文档索引和迭代记录索引
+  - `项目总览.md` 和 `主文档索引.md` 虽然不是每次单独点名的必改文档，但会通过 `update_project_docs.py sync` 间接收口
   - 如果当前目录在 Git 仓库中，会自动暂存 doc/ 下被本次更新影响的文件
   - 默认会在收尾末尾自动尝试清理 /tmp 或 /private/tmp 下的 Holmas 临时验证工程
   - 如果 Hub 正在运行或清理失败，只会给出提示，不会中断文档收尾
@@ -103,6 +113,10 @@ while [[ $# -gt 0 ]]; do
             CONTEXT_COMPRESSED=1
             shift
             ;;
+        --session-major-task-count)
+            SESSION_MAJOR_TASK_COUNT="${2:-}"
+            shift 2
+            ;;
         --next-session-title)
             NEXT_SESSION_TITLE="${2:-}"
             shift 2
@@ -144,6 +158,35 @@ fi
 if [[ "${TARGET_MODE}" == "file" && -z "${TARGET_FILE}" ]]; then
     echo "[error] 使用 --file 时必须提供目标迭代记录文件。" >&2
     exit 1
+fi
+
+normalize_target_file() {
+    local raw_path="$1"
+    if [[ -z "${raw_path}" ]]; then
+        echo ""
+        return
+    fi
+
+    if [[ "${raw_path}" = /* ]]; then
+        echo "${raw_path}"
+        return
+    fi
+
+    if [[ -f "${REPO_ROOT}/${raw_path}" ]]; then
+        echo "${REPO_ROOT}/${raw_path}"
+        return
+    fi
+
+    if [[ -f "${DOC_ROOT}/${raw_path}" ]]; then
+        echo "${DOC_ROOT}/${raw_path}"
+        return
+    fi
+
+    echo "${REPO_ROOT}/${raw_path}"
+}
+
+if [[ "${TARGET_MODE}" == "file" ]]; then
+    TARGET_FILE="$(normalize_target_file "${TARGET_FILE}")"
 fi
 
 should_skip_doc_logging() {
@@ -325,6 +368,26 @@ if [[ "${CONTEXT_COMPRESSED}" -eq 1 ]]; then
     HANDOFF_ARGS+=(--context-compressed)
 fi
 
+if [[ "${SESSION_MAJOR_TASK_COUNT}" != "0" ]]; then
+    HANDOFF_ARGS+=(--session-major-task-count "${SESSION_MAJOR_TASK_COUNT}")
+fi
+
 echo
 echo "[info] 会话衔接建议..."
-"${HANDOFF_ARGS[@]}"
+HANDOFF_OUTPUT="$("${HANDOFF_ARGS[@]}")"
+printf '%s\n' "${HANDOFF_OUTPUT}"
+
+if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    RECORD_FINALIZE_ARGS=(
+        python3
+        "${REPO_ROOT}/scripts/update_project_docs.py"
+        --doc-root "${DOC_ROOT}"
+        record-last-finalize
+        --summary "${SUMMARY}"
+        --agent6-review "${AGENT6_REVIEW}"
+    )
+    if [[ "${SKIP_DOC_LOGGING}" -eq 1 ]]; then
+        RECORD_FINALIZE_ARGS+=(--doc-log-skipped)
+    fi
+    printf '%s\n' "${HANDOFF_OUTPUT}" | "${RECORD_FINALIZE_ARGS[@]}"
+fi

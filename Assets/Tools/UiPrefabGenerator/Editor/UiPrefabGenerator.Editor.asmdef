@@ -1,0 +1,19 @@
+{
+    "name": "UiPrefabGenerator.Editor",
+    "rootNamespace": "UiPrefabGenerator.Editor",
+    "references": [
+        "UiPrefabGenerator.Core",
+        "UiPrefabGenerator.Core.Intake"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

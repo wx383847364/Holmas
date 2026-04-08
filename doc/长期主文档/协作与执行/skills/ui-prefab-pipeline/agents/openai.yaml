@@ -1,0 +1,7 @@
+interface:
+  display_name: "UI Prefab Pipeline"
+  short_description: "Enforce DesignPacket to prefab pipeline rules"
+  default_prompt: "Use $ui-prefab-pipeline to define, review, or validate the UI prefab generation pipeline while keeping DesignPacket, UiPrefabSpec, PrefabBindingManifest, sample outputs, and deterministic validation rules aligned."
+
+policy:
+  allow_implicit_invocation: true

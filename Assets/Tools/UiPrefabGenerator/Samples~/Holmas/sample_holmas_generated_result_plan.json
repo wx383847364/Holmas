@@ -1,0 +1,74 @@
+{
+  "profile_id": "holmas_ugui",
+  "prefab_name": "AgencyMainPanel",
+  "prefab_draft_path": "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+  "runtime_binding_namespace": "App.HotUpdate.Holmas.UI.Generated",
+  "entries": [
+    {
+      "node_path": "AgencyMainPanel",
+      "component_type": "RectTransform",
+      "binding_key": "",
+      "asset_slot": "",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=root; component=RectTransform; layout=FullScreen; layout_slot=root; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel",
+      "component_type": "Image",
+      "binding_key": "",
+      "asset_slot": "panel_bg",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=root; component=Image; asset_slot=panel_bg; layout=FullScreen; layout_slot=root; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel/TaskList",
+      "component_type": "RectTransform",
+      "binding_key": "",
+      "asset_slot": "",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=task_list; component=RectTransform; layout=VerticalLayout; layout_slot=task_list; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel/TaskList",
+      "component_type": "ScrollRect",
+      "binding_key": "task_list",
+      "asset_slot": "",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=task_list; component=ScrollRect; binding_key=task_list; layout=VerticalLayout; layout_slot=task_list; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel/ClaimButton",
+      "component_type": "RectTransform",
+      "binding_key": "",
+      "asset_slot": "",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=claim_button; component=RectTransform; layout=Anchored; layout_slot=claim_button; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel/ClaimButton",
+      "component_type": "Image",
+      "binding_key": "",
+      "asset_slot": "claim_button_bg",
+      "event_name": "",
+      "requires_manual_wiring": false,
+      "notes": "node_id=claim_button; component=Image; asset_slot=claim_button_bg; layout=Anchored; layout_slot=claim_button; manual_wiring=false"
+    },
+    {
+      "node_path": "AgencyMainPanel/ClaimButton",
+      "component_type": "Button",
+      "binding_key": "claim_button",
+      "asset_slot": "",
+      "event_name": "on_click",
+      "requires_manual_wiring": true,
+      "notes": "node_id=claim_button; component=Button; binding_key=claim_button; layout=Anchored; layout_slot=claim_button; handler_key=claim_task; manual_wiring=true"
+    }
+  ],
+  "manual_wiring_node_paths": [
+    "AgencyMainPanel/ClaimButton"
+  ]
+}

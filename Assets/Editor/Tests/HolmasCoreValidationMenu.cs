@@ -13,6 +13,7 @@ using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Terrain;
 using App.Shared.Contracts;
+using App.Shared.Holmas.RuntimeData;
 using UnityEditor;
 using UnityEngine;
 using App.HotUpdate.Holmas.Bootstrap;
@@ -71,25 +72,19 @@ public static class HolmasCoreValidationMenu
                 throw new InvalidOperationException("Holmas smoke test failed to recover an active task from the exported config bundle.");
             }
 
-            gateway.StartLevelForCurrentPlayerAsync(
-                1,
-                new[]
-                {
-                    new BoardSpawnEntry
-                    {
-                        CatId = firstTask.Task.CatId,
-                        Weight = 1,
-                    }
-                }).GetAwaiter().GetResult();
-
-            var reveal = context.GameplayRuntime.RevealCell(0, out HolmasProgressionAdvanceResult progressionResult);
             HolmasTaskRuntimeInstance claimableTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(0);
             if (claimableTask == null || claimableTask.Task == null)
             {
                 throw new InvalidOperationException("Holmas smoke test could not recover the active task from the task bar.");
             }
 
-            claimableTask.Task.CurrentCount = claimableTask.Task.TargetCount;
+            var reveal = CompleteTaskThroughFormalMapProgression(context, gateway, 0, out HolmasProgressionAdvanceResult progressionResult);
+            claimableTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(0);
+            if (claimableTask == null || claimableTask.Task == null || !claimableTask.CanClaimReward)
+            {
+                throw new InvalidOperationException("Holmas smoke test failed to make the active task claimable through formal map completion.");
+            }
+
             var claim = context.ClaimTaskReward(0);
             if (!claim.Success)
             {
@@ -98,7 +93,7 @@ public static class HolmasCoreValidationMenu
 
             long requiredGold = CalculatePromotionTotalCost(smokeStagePromotions);
             long currentGold = context.CurrentGoldBalance;
-            int rewardRatePerHour = configBundle.MetaLevels.FirstOrDefault()?.OfflineRewardPerHour ?? 0;
+            int rewardRatePerHour = ResolveOfflineRewardPerHour(configBundle, context.CurrentPlayerLevel);
             if (rewardRatePerHour <= 0)
             {
                 throw new InvalidOperationException("Holmas smoke test recovered an invalid offline reward rate from exported config.");
@@ -187,6 +182,142 @@ public static class HolmasCoreValidationMenu
         }
 
         return totalCost;
+    }
+
+    private static BoardRevealResult CompleteTaskThroughFormalMapProgression(
+        HolmasApplicationContext context,
+        IHolmasLevelLaunchGateway gateway,
+        int slotIndex,
+        out HolmasProgressionAdvanceResult progressionResult)
+    {
+        if (context == null)
+        {
+            throw new ArgumentNullException(nameof(context));
+        }
+
+        if (gateway == null)
+        {
+            throw new ArgumentNullException(nameof(gateway));
+        }
+
+        progressionResult = null;
+        BoardRevealResult finalReveal = null;
+
+        HolmasTaskRuntimeInstance runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
+        if (runtimeTask == null || runtimeTask.Task == null)
+        {
+            throw new InvalidOperationException($"Holmas smoke test could not recover the active task from slot {slotIndex}.");
+        }
+
+        int maxAttempts = Math.Max(runtimeTask.Task.TargetCount, 1) * 4;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
+            if (runtimeTask == null || runtimeTask.Task == null)
+            {
+                throw new InvalidOperationException($"Holmas smoke test lost the active task from slot {slotIndex} before claim.");
+            }
+
+            if (runtimeTask.CanClaimReward)
+            {
+                return finalReveal ?? new BoardRevealResult(-1) { IsValidAction = true, Completed = true };
+            }
+
+            string taskInstanceId = runtimeTask.Task.TaskInstanceId;
+            int progressBefore = runtimeTask.Task.CurrentCount;
+
+            gateway.StartLevelForCurrentPlayerAsync(
+                attempt + 1,
+                new[]
+                {
+                    new BoardSpawnEntry
+                    {
+                        CatId = runtimeTask.Task.CatId,
+                        Weight = 1,
+                    }
+                }).GetAwaiter().GetResult();
+
+            finalReveal = CompleteCurrentLevelByRevealingAllCats(context, out progressionResult);
+
+            runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
+            if (runtimeTask == null || runtimeTask.Task == null)
+            {
+                throw new InvalidOperationException($"Holmas smoke test lost the active task from slot {slotIndex} after map completion.");
+            }
+
+            if (!string.Equals(runtimeTask.Task.TaskInstanceId, taskInstanceId, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Holmas smoke test unexpectedly replaced the active task before reward claim.");
+            }
+
+            if (progressionResult == null || !progressionResult.ProgressedTaskIds.Contains(taskInstanceId))
+            {
+                throw new InvalidOperationException("Holmas smoke test did not record formal task progression after map completion.");
+            }
+
+            if (runtimeTask.Task.CurrentCount <= progressBefore)
+            {
+                throw new InvalidOperationException("Holmas smoke test did not increase task progress after formal map completion.");
+            }
+        }
+
+        throw new InvalidOperationException($"Holmas smoke test could not finish the active task through formal map progression within {maxAttempts} attempts.");
+    }
+
+    private static BoardRevealResult CompleteCurrentLevelByRevealingAllCats(
+        HolmasApplicationContext context,
+        out HolmasProgressionAdvanceResult progressionResult)
+    {
+        if (context == null)
+        {
+            throw new ArgumentNullException(nameof(context));
+        }
+
+        if (context.GameplayRuntime?.CurrentLevelSnapshot?.SpawnedCats == null)
+        {
+            throw new InvalidOperationException("Holmas smoke test could not recover the current level snapshot.");
+        }
+
+        if (context.GameplayRuntime.CurrentLevelSnapshot.SpawnedCats.Count == 0)
+        {
+            throw new InvalidOperationException("Holmas smoke test generated an empty cat snapshot and cannot validate task progression.");
+        }
+
+        progressionResult = null;
+        BoardRevealResult finalReveal = null;
+        foreach (SpawnedCatData spawnedCat in context.GameplayRuntime.CurrentLevelSnapshot.SpawnedCats.OrderBy(item => item.CellIndex))
+        {
+            finalReveal = context.GameplayRuntime.RevealCell(spawnedCat.CellIndex, out HolmasProgressionAdvanceResult revealProgressionResult);
+            if (!finalReveal.IsValidAction || !finalReveal.FoundCat)
+            {
+                throw new InvalidOperationException($"Holmas smoke test failed to reveal spawned cat at cell {spawnedCat.CellIndex}.");
+            }
+
+            if (revealProgressionResult != null)
+            {
+                progressionResult = revealProgressionResult;
+            }
+        }
+
+        if (finalReveal == null || !finalReveal.Completed || progressionResult == null)
+        {
+            throw new InvalidOperationException("Holmas smoke test failed to complete the current level through formal cat reveals.");
+        }
+
+        return finalReveal;
+    }
+
+    private static int ResolveOfflineRewardPerHour(HolmasConfigCatalogBundle configBundle, int playerLevel)
+    {
+        if (configBundle?.MetaLevels == null)
+        {
+            return 0;
+        }
+
+        int effectiveLevel = Math.Max(1, playerLevel);
+        HolmasMetaLevelRow metaLevel = configBundle.MetaLevels.FirstOrDefault(
+            row => row != null && row.PlayerLevel == effectiveLevel);
+        return metaLevel?.OfflineRewardPerHour ?? 0;
     }
 
     private static void UpgradePromotions(HolmasGameplayRuntime runtime, IReadOnlyList<HolmasAgencyBuildingDefinition> promotions)

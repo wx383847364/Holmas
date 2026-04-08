@@ -1,0 +1,7 @@
+interface:
+  display_name: "UI Prefab Governance"
+  short_description: "Enforce UI prefab system doc and dispatch boundaries"
+  default_prompt: "Use $ui-prefab-governance to plan, review, or rewrite the UI prefab generation system while keeping the doc zone, subagent dispatch format, directory ownership, and Holmas trial-project boundaries consistent."
+
+policy:
+  allow_implicit_invocation: true
