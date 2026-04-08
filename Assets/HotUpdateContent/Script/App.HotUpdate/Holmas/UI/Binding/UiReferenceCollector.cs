@@ -31,8 +31,11 @@ namespace App.HotUpdate.Holmas.UI.Binding
             _entries.Add(UiBindingEntry.Create(bindingKey, target, eventName, nodePath));
         }
 
-        public bool TryGetEntry(string bindingKey, string eventName, string nodePath, out UiBindingEntry entry)
+        public bool TryGetEntry(string bindingKey, string eventName, string nodePath, string componentType, out UiBindingEntry entry)
         {
+            UiBindingEntry bestEntry = null;
+            int bestScore = -1;
+
             for (int i = 0; i < _entries.Count; i++)
             {
                 UiBindingEntry current = _entries[i];
@@ -41,27 +44,46 @@ namespace App.HotUpdate.Holmas.UI.Binding
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(bindingKey) && current.BindingKey == bindingKey)
+                if (!current.Matches(bindingKey, eventName, nodePath, componentType))
                 {
-                    entry = current;
-                    return true;
+                    continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(eventName) && current.EventName == eventName)
+                int score = 0;
+                if (!string.IsNullOrWhiteSpace(bindingKey))
                 {
-                    entry = current;
-                    return true;
+                    score++;
                 }
 
-                if (!string.IsNullOrWhiteSpace(nodePath) && current.NodePath == nodePath)
+                if (!string.IsNullOrWhiteSpace(eventName))
                 {
-                    entry = current;
-                    return true;
+                    score++;
+                }
+
+                if (!string.IsNullOrWhiteSpace(nodePath))
+                {
+                    score++;
+                }
+
+                if (!string.IsNullOrWhiteSpace(componentType))
+                {
+                    score++;
+                }
+
+                if (score > bestScore)
+                {
+                    bestEntry = current;
+                    bestScore = score;
                 }
             }
 
-            entry = null;
-            return false;
+            entry = bestEntry;
+            return entry != null;
+        }
+
+        public bool TryGetEntry(string bindingKey, string eventName, string nodePath, out UiBindingEntry entry)
+        {
+            return TryGetEntry(bindingKey, eventName, nodePath, null, out entry);
         }
     }
 }

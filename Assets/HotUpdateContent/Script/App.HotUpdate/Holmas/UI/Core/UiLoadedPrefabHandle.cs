@@ -22,6 +22,8 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         public GameObject InstanceRoot { get; }
 
+        public bool IsPlaceholder => PrefabAsset == null;
+
         public UiReferenceCollector EnsureReferenceCollector()
         {
             if (InstanceRoot == null)

@@ -22,6 +22,31 @@ namespace App.HotUpdate.Holmas.UI.Binding
 
         public Component Target => _target;
 
+        public bool Matches(string bindingKey, string eventName, string nodePath, string componentType)
+        {
+            if (!MatchesField(_bindingKey, bindingKey))
+            {
+                return false;
+            }
+
+            if (!MatchesField(_eventName, eventName))
+            {
+                return false;
+            }
+
+            if (!MatchesField(_nodePath, nodePath))
+            {
+                return false;
+            }
+
+            if (!MatchesField(_componentType, componentType))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public static UiBindingEntry Create(string bindingKey, Component target, string eventName, string nodePath)
         {
             return new UiBindingEntry
@@ -32,6 +57,11 @@ namespace App.HotUpdate.Holmas.UI.Binding
                 _nodePath = nodePath ?? string.Empty,
                 _target = target,
             };
+        }
+
+        private static bool MatchesField(string actual, string expected)
+        {
+            return string.IsNullOrWhiteSpace(expected) || string.Equals(actual, expected, StringComparison.Ordinal);
         }
     }
 }

@@ -27,7 +27,9 @@ namespace App.HotUpdate.Holmas.UI.Core
             Root = root;
             LoadedHandle = loadedHandle;
             Definition = definition;
-            BindingResolver = new UiBindingResolver(loadedHandle != null ? loadedHandle.EnsureReferenceCollector() : null);
+            BindingResolver = new UiBindingResolver(
+                loadedHandle != null ? loadedHandle.EnsureReferenceCollector() : null,
+                definition != null ? definition.BindingManifest : null);
 
             if (definition.Kind != DeclaredKind)
             {

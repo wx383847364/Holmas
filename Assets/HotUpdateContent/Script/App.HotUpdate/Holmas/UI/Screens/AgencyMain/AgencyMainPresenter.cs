@@ -16,7 +16,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             _context = context;
         }
 
-        public AgencyMainVm Build(string status = null)
+        public AgencyMainVm Build(string status = null, bool isFallbackView = false)
         {
             var viewModel = new AgencyMainVm
             {
@@ -25,11 +25,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 TaskSummary = BuildTaskSummary(),
                 BoardSummary = BuildBoardSummary(),
                 Status = string.IsNullOrWhiteSpace(status)
-                    ? "v2 UI skeleton ready. TODO: replace placeholder view with generated prefab + binding manifest."
+                    ? (isFallbackView
+                        ? "AgencyMain formal prefab missing or bindings incomplete. Running compatibility fallback layout."
+                        : "AgencyMain formal prefab + explicit bindings active.")
                     : status,
                 PrimaryActionLabel = "Open Level",
                 PrimaryActionEnabled = _context != null && _context.GameplayRuntime != null,
-                IsPlaceholderView = true,
+                IsPlaceholderView = isFallbackView,
             };
 
             return viewModel;

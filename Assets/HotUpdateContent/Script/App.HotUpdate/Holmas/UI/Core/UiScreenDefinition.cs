@@ -1,4 +1,5 @@
 using System;
+using App.HotUpdate.Holmas.UI.Binding;
 
 namespace App.HotUpdate.Holmas.UI.Core
 {
@@ -45,5 +46,7 @@ namespace App.HotUpdate.Holmas.UI.Core
         public string SheetGroupId { get; set; }
 
         public bool Exclusive { get; set; }
+
+        public UiBindingManifest BindingManifest { get; set; }
     }
 }

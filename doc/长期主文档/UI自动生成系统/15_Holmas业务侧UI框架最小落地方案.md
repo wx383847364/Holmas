@@ -18,18 +18,24 @@
 ## 完成情况
 
 - 当前状态：进行中
-- 进度说明：`App.HotUpdate/Holmas/UI` 已落下 v2 第一批最小代码骨架，完成 `Bootstrap / Core / Binding / Screens/AgencyMain` 目录与首批核心类型，`HolmasUiBootstrap` 已改为指向新 `UiRoot`
+- 进度说明：`App.HotUpdate/Holmas/UI` 已从 v2 第一批最小代码骨架推进到 `AgencyMain` 正式 prefab + 显式 binding 消费链首版可运行状态，默认入口已切到 `Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab`
 - 已完成：
   - `UiRoot / UiScreenService / UiScreenDefinition / UiNavigationState / IUiPrefabLoader / UiLoadedPrefabHandle`
   - `UiScreenController` 及 `Page / Popup / Sheet / Overlay` 语义化派生层
   - `UiBindingEntry / UiReferenceCollector / UiBindingResolver`
   - `AgencyMainPageController / Presenter / View / Bindings / Vm`
+  - `AgencyMainGeneratedBindings` 形式的最小 generated 结果消费桥，先由业务侧运行时消费正式 prefab 地址与显式 binding manifest
+  - `AgencyMainPanel.prefab` 最小正式资产，显式挂载 `UiReferenceCollector`、`AgencyMainView` 与 `SafeAreaContent + UiSafeAreaFitter`
+  - `AgencyMainBindings.Resolve()` 已按 `binding_key + node_path + event_name` 真实消费 prefab 上的显式 binding
+  - 借鉴旧 `UIMatch` 的“安全区收边”思路，正式沉淀为 `UiSafeAreaFitter`；不复用旧 `Tmp` 脚本实现
+  - `Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Tool/Tmp` 旧临时脚本已删除，不再阻断这条最小正式链路的 batchmode 验证
   - 旧 `HolmasUiRoot` 已标注为过渡态保留
 - 未完成：
-  - 正式 prefab 地址、manifest 数据源与生成结果接入
+  - 生成器直出业务侧运行时 binding 文件，替换当前最小兼容的 `AgencyMainGeneratedBindings`
   - popup / sheet / overlay 的真实业务页面样例
   - 转场动画、点击空白关闭、复杂缓存与对象池
   - 更完整的运行时验证与 UI 资产联调
+  - 恢复并补齐整仓 EditMode / smoke 验证，而不只是在隔离工程中跑 `AgencyMain` 最小验证
 
 ## 冻结目标与非目标
 

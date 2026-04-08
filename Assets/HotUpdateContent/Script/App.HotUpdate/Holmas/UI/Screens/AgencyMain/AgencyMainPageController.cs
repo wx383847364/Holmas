@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.UI.Core;
+using App.HotUpdate.Holmas.UI.Generated;
 
 namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
 {
@@ -14,6 +15,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
         private AgencyMainPresenter _presenter;
         private AgencyMainView _view;
         private AgencyMainBindings _bindings;
+        private bool _isFallbackLayout;
         private bool _isBusy;
 
         protected override void OnCreate()
@@ -25,7 +27,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 _view = RootObject.AddComponent<AgencyMainView>();
             }
 
-            _view?.EnsurePlaceholderLayout();
+            _isFallbackLayout = !AgencyMainBindings.HasCompleteBindings(BindingResolver);
+            if (_isFallbackLayout)
+            {
+                if (RootObject != null)
+                {
+                    RootObject.name = AgencyMainGeneratedBindings.PrefabName;
+                }
+
+                _view?.EnsureFallbackLayout();
+            }
         }
 
         protected override void OnBind()
@@ -62,7 +73,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
 
         private void Refresh(string status)
         {
-            AgencyMainVm viewModel = _presenter != null ? _presenter.Build(status) : new AgencyMainVm();
+            AgencyMainVm viewModel = _presenter != null
+                ? _presenter.Build(status, _isFallbackLayout || (LoadedHandle != null && LoadedHandle.IsPlaceholder))
+                : new AgencyMainVm();
             viewModel.PrimaryActionEnabled = !_isBusy && viewModel.PrimaryActionEnabled;
             _view?.Render(viewModel);
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.UI.Generated;
 using App.HotUpdate.Holmas.UI.Screens.AgencyMain;
 using UnityEngine;
 using UnityEngine.UI;
@@ -124,7 +125,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                 // TODO: 正式生成 prefab/address 接入后，改成最终产物地址。
                 new UiScreenDefinition(
                     AgencyMainScreenId,
-                    "Generated/Holmas/Portrait/AgencyMainPanel",
+                    AgencyMainGeneratedBindings.PrefabAssetPath,
                     UiScreenKind.Page,
                     typeof(AgencyMainPageController))
                 {
@@ -133,6 +134,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                     BlockInputDuringTransition = true,
                     PreloadOnBootstrap = true,
                     Exclusive = true,
+                    BindingManifest = AgencyMainGeneratedBindings.Manifest,
                 },
             };
 

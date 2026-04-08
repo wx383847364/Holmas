@@ -1,4 +1,5 @@
 using App.HotUpdate.Holmas.UI.Binding;
+using App.HotUpdate.Holmas.UI.Core;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -10,17 +11,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
         private AgencyMainBindings _bindings;
         private UnityAction _currentPrimaryAction;
 
-        public void EnsurePlaceholderLayout()
+        public void EnsureFallbackLayout()
         {
+            gameObject.name = AgencyMainBindings.RootNodePath;
+
             UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>();
             if (collector == null)
             {
                 collector = gameObject.AddComponent<UiReferenceCollector>();
-            }
-
-            if (collector.EntryCount > 0)
-            {
-                return;
             }
 
             RectTransform rootRect = gameObject.GetComponent<RectTransform>();
@@ -38,10 +36,76 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
 
             background.color = new Color(0.09f, 0.12f, 0.16f, 0.95f);
 
-            VerticalLayoutGroup layout = gameObject.GetComponent<VerticalLayoutGroup>();
+            RectTransform contentRect = GetOrCreateContentRoot();
+            collector.RegisterOrReplace(AgencyMainBindings.RootPanelKey, rootRect, nodePath: AgencyMainBindings.RootNodePath);
+
+            Text titleText = GetOrCreateText(contentRect, "TitleText", "AgencyMain", 44, FontStyle.Bold, TextAnchor.MiddleLeft);
+            collector.RegisterOrReplace(
+                AgencyMainBindings.TitleTextKey,
+                titleText,
+                nodePath: AgencyMainBindings.TitleTextNodePath);
+
+            Text summaryText = GetOrCreateText(contentRect, "SummaryText", "AgencyMain summary", 28, FontStyle.Normal, TextAnchor.UpperLeft);
+            summaryText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            summaryText.verticalOverflow = VerticalWrapMode.Overflow;
+            collector.RegisterOrReplace(
+                AgencyMainBindings.SummaryTextKey,
+                summaryText,
+                nodePath: AgencyMainBindings.SummaryTextNodePath);
+
+            Text taskSummaryText = GetOrCreateText(contentRect, "TaskSummaryText", "Task summary", 24, FontStyle.Normal, TextAnchor.UpperLeft);
+            taskSummaryText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            taskSummaryText.verticalOverflow = VerticalWrapMode.Overflow;
+            collector.RegisterOrReplace(
+                AgencyMainBindings.TaskSummaryTextKey,
+                taskSummaryText,
+                nodePath: AgencyMainBindings.TaskSummaryTextNodePath);
+
+            Text boardSummaryText = GetOrCreateText(contentRect, "BoardSummaryText", "Board summary", 24, FontStyle.Normal, TextAnchor.UpperLeft);
+            boardSummaryText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            boardSummaryText.verticalOverflow = VerticalWrapMode.Overflow;
+            collector.RegisterOrReplace(
+                AgencyMainBindings.BoardSummaryTextKey,
+                boardSummaryText,
+                nodePath: AgencyMainBindings.BoardSummaryTextNodePath);
+
+            Text statusText = GetOrCreateText(contentRect, "StatusText", "Status", 24, FontStyle.Italic, TextAnchor.UpperLeft);
+            statusText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            statusText.verticalOverflow = VerticalWrapMode.Overflow;
+            collector.RegisterOrReplace(
+                AgencyMainBindings.StatusTextKey,
+                statusText,
+                nodePath: AgencyMainBindings.StatusTextNodePath);
+
+            Button actionButton = GetOrCreateButton(contentRect, "PrimaryActionButton", "Open Level");
+            collector.RegisterOrReplace(
+                AgencyMainBindings.PrimaryActionButtonKey,
+                actionButton,
+                AgencyMainBindings.PrimaryActionButtonClickEvent,
+                AgencyMainBindings.PrimaryActionButtonNodePath);
+        }
+
+        private RectTransform GetOrCreateContentRoot()
+        {
+            GameObject contentObject = GetOrCreateChild(transform, AgencyMainBindings.ContentNodeName);
+            RectTransform contentRect = contentObject.GetComponent<RectTransform>();
+            if (contentRect == null)
+            {
+                contentRect = contentObject.AddComponent<RectTransform>();
+            }
+
+            Stretch(contentRect);
+
+            UiSafeAreaFitter safeAreaFitter = contentObject.GetComponent<UiSafeAreaFitter>();
+            if (safeAreaFitter == null)
+            {
+                safeAreaFitter = contentObject.AddComponent<UiSafeAreaFitter>();
+            }
+
+            VerticalLayoutGroup layout = contentObject.GetComponent<VerticalLayoutGroup>();
             if (layout == null)
             {
-                layout = gameObject.AddComponent<VerticalLayoutGroup>();
+                layout = contentObject.AddComponent<VerticalLayoutGroup>();
             }
 
             layout.padding = new RectOffset(48, 48, 96, 48);
@@ -50,38 +114,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             layout.childControlHeight = false;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
-
-            collector.RegisterOrReplace(AgencyMainBindings.RootPanelKey, rootRect, nodePath: "Root");
-
-            Text titleText = CreateText("TitleText", "AgencyMain", 44, FontStyle.Bold, TextAnchor.MiddleLeft);
-            collector.RegisterOrReplace(AgencyMainBindings.TitleTextKey, titleText, nodePath: "Root/TitleText");
-
-            Text summaryText = CreateText("SummaryText", "AgencyMain summary", 28, FontStyle.Normal, TextAnchor.UpperLeft);
-            summaryText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            summaryText.verticalOverflow = VerticalWrapMode.Overflow;
-            collector.RegisterOrReplace(AgencyMainBindings.SummaryTextKey, summaryText, nodePath: "Root/SummaryText");
-
-            Text taskSummaryText = CreateText("TaskSummaryText", "Task summary", 24, FontStyle.Normal, TextAnchor.UpperLeft);
-            taskSummaryText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            taskSummaryText.verticalOverflow = VerticalWrapMode.Overflow;
-            collector.RegisterOrReplace(AgencyMainBindings.TaskSummaryTextKey, taskSummaryText, nodePath: "Root/TaskSummaryText");
-
-            Text boardSummaryText = CreateText("BoardSummaryText", "Board summary", 24, FontStyle.Normal, TextAnchor.UpperLeft);
-            boardSummaryText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            boardSummaryText.verticalOverflow = VerticalWrapMode.Overflow;
-            collector.RegisterOrReplace(AgencyMainBindings.BoardSummaryTextKey, boardSummaryText, nodePath: "Root/BoardSummaryText");
-
-            Text statusText = CreateText("StatusText", "Status", 24, FontStyle.Italic, TextAnchor.UpperLeft);
-            statusText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            statusText.verticalOverflow = VerticalWrapMode.Overflow;
-            collector.RegisterOrReplace(AgencyMainBindings.StatusTextKey, statusText, nodePath: "Root/StatusText");
-
-            Button actionButton = CreateButton("PrimaryActionButton", "Refresh");
-            collector.RegisterOrReplace(
-                AgencyMainBindings.PrimaryActionButtonKey,
-                actionButton,
-                AgencyMainBindings.PrimaryActionButtonClickEvent,
-                "Root/PrimaryActionButton");
+            return contentRect;
         }
 
         public void Bind(AgencyMainBindings bindings)
@@ -148,21 +181,30 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 if (buttonLabel != null)
                 {
                     buttonLabel.text = string.IsNullOrWhiteSpace(viewModel.PrimaryActionLabel)
-                        ? "Refresh"
+                        ? "Open Level"
                         : viewModel.PrimaryActionLabel;
                 }
             }
         }
 
-        private Text CreateText(string objectName, string textValue, int fontSize, FontStyle fontStyle, TextAnchor anchor)
+        private Text GetOrCreateText(Transform parent, string objectName, string textValue, int fontSize, FontStyle fontStyle, TextAnchor anchor)
         {
-            var textObject = new GameObject(objectName);
-            textObject.transform.SetParent(transform, false);
-            var rectTransform = textObject.AddComponent<RectTransform>();
+            GameObject textObject = GetOrCreateChild(parent, objectName);
+            RectTransform rectTransform = textObject.GetComponent<RectTransform>();
+            if (rectTransform == null)
+            {
+                rectTransform = textObject.AddComponent<RectTransform>();
+            }
+
             rectTransform.sizeDelta = new Vector2(0f, fontSize * 1.8f);
 
-            var text = textObject.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Text text = textObject.GetComponent<Text>();
+            if (text == null)
+            {
+                text = textObject.AddComponent<Text>();
+            }
+
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = fontSize;
             text.fontStyle = fontStyle;
             text.alignment = anchor;
@@ -171,27 +213,54 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             return text;
         }
 
-        private Button CreateButton(string objectName, string textValue)
+        private Button GetOrCreateButton(Transform parent, string objectName, string textValue)
         {
-            var buttonObject = new GameObject(objectName);
-            buttonObject.transform.SetParent(transform, false);
-            var rectTransform = buttonObject.AddComponent<RectTransform>();
+            GameObject buttonObject = GetOrCreateChild(parent, objectName);
+            RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+            if (rectTransform == null)
+            {
+                rectTransform = buttonObject.AddComponent<RectTransform>();
+            }
+
             rectTransform.sizeDelta = new Vector2(0f, 96f);
 
-            var image = buttonObject.AddComponent<Image>();
+            Image image = buttonObject.GetComponent<Image>();
+            if (image == null)
+            {
+                image = buttonObject.AddComponent<Image>();
+            }
+
             image.color = new Color(0.23f, 0.45f, 0.75f, 1f);
 
-            var button = buttonObject.AddComponent<Button>();
+            Button button = buttonObject.GetComponent<Button>();
+            if (button == null)
+            {
+                button = buttonObject.AddComponent<Button>();
+            }
+
             ColorBlock colors = button.colors;
             colors.normalColor = image.color;
             colors.highlightedColor = new Color(0.28f, 0.50f, 0.82f, 1f);
             colors.pressedColor = new Color(0.15f, 0.31f, 0.58f, 1f);
             button.colors = colors;
 
-            Text label = CreateText($"{objectName}_Label", textValue, 28, FontStyle.Bold, TextAnchor.MiddleCenter);
+            Text label = GetOrCreateText(buttonObject.transform, $"{objectName}_Label", textValue, 28, FontStyle.Bold, TextAnchor.MiddleCenter);
             label.transform.SetParent(buttonObject.transform, false);
             Stretch(label.rectTransform);
             return button;
+        }
+
+        private static GameObject GetOrCreateChild(Transform parent, string objectName)
+        {
+            Transform child = parent.Find(objectName);
+            if (child != null)
+            {
+                return child.gameObject;
+            }
+
+            var childObject = new GameObject(objectName);
+            childObject.transform.SetParent(parent, false);
+            return childObject;
         }
 
         private static void Stretch(RectTransform rectTransform)
