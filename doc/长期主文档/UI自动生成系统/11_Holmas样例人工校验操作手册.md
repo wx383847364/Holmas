@@ -75,7 +75,7 @@
 在仓库根目录执行：
 
 ```bash
-python3 scripts/ui_prefab_generator/check_ui_generator_layout.py
+python3 tools/ui_prefab_generator/check_ui_generator_layout.py
 ```
 
 通过标准：
@@ -94,7 +94,7 @@ python3 scripts/ui_prefab_generator/check_ui_generator_layout.py
 在仓库根目录执行：
 
 ```bash
-scripts/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh
+tools/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh
 ```
 
 通过标准：
@@ -117,7 +117,7 @@ scripts/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh
 在仓库根目录执行：
 
 ```bash
-scripts/ui_prefab_generator/run_sample_ui_pipeline.sh --keep-temp-on-success --log-prefix manual_walkthrough
+tools/ui_prefab_generator/run_sample_ui_pipeline.sh --keep-temp-on-success --log-prefix manual_walkthrough
 ```
 
 推荐带上 `--keep-temp-on-success`，因为你后面要亲自打开生成出的 prefab。  

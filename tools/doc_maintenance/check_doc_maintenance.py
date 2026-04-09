@@ -5,14 +5,14 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC_ROOT = REPO_ROOT / "doc"
 ITER_DIR = DOC_ROOT / "迭代记录"
 ITER_INDEX = ITER_DIR / "迭代记录索引.md"
 LONG_INDEX = DOC_ROOT / "长期主文档" / "主文档索引.md"
 
 ALWAYS_REQUIRE_PREFIXES = (
-    "scripts/",
+    "tools/",
     "ProjectSettings/",
     "Packages/",
     ".githooks/",
@@ -123,7 +123,7 @@ def is_iteration_log(path: str) -> bool:
 
 def sync_indexes() -> None:
     subprocess.run(
-        ["python3", str(REPO_ROOT / "scripts/update_project_docs.py"), "--doc-root", str(DOC_ROOT), "sync"],
+        ["python3", str(REPO_ROOT / "tools/doc_maintenance/update_project_docs.py"), "--doc-root", str(DOC_ROOT), "sync"],
         check=True,
         cwd=str(REPO_ROOT),
     )
@@ -157,7 +157,7 @@ def main() -> int:
     message = (
         "[doc-check] 检测到本次提交包含实现或流程相关改动，但没有暂存任何迭代记录文件。\n"
         "[doc-check] 请先执行文档收尾，例如：\n"
-        "  scripts/finalize_task.sh --summary \"本轮完成了什么\" --done \"已完成项\" --next \"下一步\"\n"
+        "  tools/doc_maintenance/finalize_task.sh --summary \"本轮完成了什么\" --done \"已完成项\" --next \"下一步\"\n"
         "[doc-check] 完成后重新 git add 并提交。\n"
     )
     sys.stderr.write(message)

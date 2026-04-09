@@ -16,7 +16,7 @@
 
 ## Summary
 
-这份规范固定 Holmas 项目的 Agent 启动方式和验收方式。  
+这份规范固定 Holmas 项目的 Agent 启动方式和验收方式。
 目标不是“每次临时想一遍怎么分工”，而是把启动协议、写入边界、验收门和修复闭环收成一套稳定规则。
 
 ## 新会话默认入口
@@ -164,7 +164,7 @@
 
 ## 迭代文档默认分工状态
 
-这一节专门给 `scripts/update_project_docs.py` 读取。  
+这一节专门给 `tools/doc_maintenance/update_project_docs.py` 读取。
 如果后续要调整迭代记录里的默认分工状态，只改这里，不要去改脚本里的自由文本。
 
 - Agent 1：Shared 与骨架继续保持冻结，本轮未改

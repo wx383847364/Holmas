@@ -8,8 +8,9 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "check_boundary.py"
-REPO_ROOT = Path(__file__).resolve().parents[2]
+TOOLS_ROOT = Path(__file__).resolve().parents[2]
+SCRIPT_PATH = TOOLS_ROOT / "validation" / "check_boundary.py"
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 spec = importlib.util.spec_from_file_location("check_boundary", SCRIPT_PATH)
 check_boundary = importlib.util.module_from_spec(spec)
@@ -151,7 +152,7 @@ class CheckBoundaryTests(unittest.TestCase):
 
     def test_shell_wrapper_forwards_arguments(self):
         completed = subprocess.run(
-            ["bash", str(REPO_ROOT / "scripts/check_boundary.sh"), "--json"],
+            ["bash", str(REPO_ROOT / "tools/validation/check_boundary.sh"), "--json"],
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
@@ -162,7 +163,7 @@ class CheckBoundaryTests(unittest.TestCase):
         self.assertIn("summary", payload)
 
     def test_batch_wrapper_contains_argument_passthrough(self):
-        batch_path = REPO_ROOT / "scripts/check_boundary.bat"
+        batch_path = REPO_ROOT / "tools/validation/check_boundary.bat"
         content = batch_path.read_text(encoding="utf-8")
         self.assertIn("%*", content)
         self.assertIn("check_boundary.py", content)

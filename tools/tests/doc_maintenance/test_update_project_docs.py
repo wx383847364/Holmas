@@ -10,9 +10,10 @@ from pathlib import Path
 from shutil import copy2
 
 
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "update_project_docs.py"
-FINALIZE_SCRIPT = Path(__file__).resolve().parents[1] / "finalize_task.sh"
-SYNC_SKILLS_SCRIPT = Path(__file__).resolve().parents[1] / "sync_codex_skills.sh"
+TOOLS_ROOT = Path(__file__).resolve().parents[2]
+SCRIPT_PATH = TOOLS_ROOT / "doc_maintenance" / "update_project_docs.py"
+FINALIZE_SCRIPT = TOOLS_ROOT / "doc_maintenance" / "finalize_task.sh"
+SYNC_SKILLS_SCRIPT = TOOLS_ROOT / "repo_maintenance" / "sync_codex_skills.sh"
 
 spec = importlib.util.spec_from_file_location("update_project_docs", SCRIPT_PATH)
 update_project_docs = importlib.util.module_from_spec(spec)
@@ -66,6 +67,23 @@ def init_git_repo(root: Path) -> None:
     subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
     subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=root, check=True, capture_output=True, text=True)
     subprocess.run(["git", "config", "user.email", "codex@example.com"], cwd=root, check=True, capture_output=True, text=True)
+
+
+def install_doc_maintenance_tools(root: Path, include_finalize: bool = False) -> Path:
+    doc_tools_dir = root / "tools" / "doc_maintenance"
+    doc_tools_dir.mkdir(parents=True, exist_ok=True)
+    copy2(SCRIPT_PATH, doc_tools_dir / "update_project_docs.py")
+    if include_finalize:
+        copy2(FINALIZE_SCRIPT, doc_tools_dir / "finalize_task.sh")
+    return doc_tools_dir
+
+
+def install_repo_maintenance_tools(root: Path, include_sync: bool = False) -> Path:
+    repo_tools_dir = root / "tools" / "repo_maintenance"
+    repo_tools_dir.mkdir(parents=True, exist_ok=True)
+    if include_sync:
+        copy2(SYNC_SKILLS_SCRIPT, repo_tools_dir / "sync_codex_skills.sh")
+    return repo_tools_dir
 
 
 class UpdateProjectDocsTests(unittest.TestCase):
@@ -354,9 +372,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_append_iteration_cli_warns_that_wrapup_is_incomplete(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            scripts_dir = root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_tools_dir = install_doc_maintenance_tools(root)
             create_doc_root(root)
             write_file(
                 root,
@@ -392,7 +408,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "python3",
-                    str(scripts_dir / "update_project_docs.py"),
+                    str(doc_tools_dir / "update_project_docs.py"),
                     "--doc-root",
                     str(root / "doc"),
                     "append-iteration",
@@ -414,9 +430,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_append_iteration_clears_cached_last_finalize_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            scripts_dir = root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_tools_dir = install_doc_maintenance_tools(root)
             doc_root = create_doc_root(root)
             init_git_repo(root)
             write_file(root, "README.md", "seed\n")
@@ -470,7 +484,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "python3",
-                    str(scripts_dir / "update_project_docs.py"),
+                    str(doc_tools_dir / "update_project_docs.py"),
                     "--doc-root",
                     str(root / "doc"),
                     "append-iteration",
@@ -490,10 +504,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_finalize_task_forwards_agent_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            scripts_dir = repo_root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
-            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            doc_tools_dir = install_doc_maintenance_tools(repo_root, include_finalize=True)
             doc_root = create_doc_root(repo_root)
 
             iteration_path = write_file(
@@ -530,7 +541,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "bash",
-                    str(scripts_dir / "finalize_task.sh"),
+                    str(doc_tools_dir / "finalize_task.sh"),
                     "--file",
                     str(iteration_path),
                     "--summary",
@@ -557,10 +568,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_finalize_task_records_last_finalize_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            scripts_dir = repo_root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
-            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            doc_tools_dir = install_doc_maintenance_tools(repo_root, include_finalize=True)
             doc_root = create_doc_root(repo_root)
             init_git_repo(repo_root)
             write_file(repo_root, "README.md", "seed\n")
@@ -601,7 +609,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "bash",
-                    str(scripts_dir / "finalize_task.sh"),
+                    str(doc_tools_dir / "finalize_task.sh"),
                     "--file",
                     str(iteration_path),
                     "--summary",
@@ -631,10 +639,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_finalize_task_accepts_repo_relative_iteration_file(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            scripts_dir = repo_root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
-            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            doc_tools_dir = install_doc_maintenance_tools(repo_root, include_finalize=True)
             create_doc_root(repo_root)
             init_git_repo(repo_root)
             write_file(repo_root, "README.md", "seed\n")
@@ -675,7 +680,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "bash",
-                    str(scripts_dir / "finalize_task.sh"),
+                    str(doc_tools_dir / "finalize_task.sh"),
                     "--file",
                     "doc/迭代记录/迭代记录_20260402_001.md",
                     "--summary",
@@ -700,10 +705,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_finalize_task_outputs_fixed_wrapup_sections_with_chinese_commit_message(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            scripts_dir = repo_root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
-            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
+            doc_tools_dir = install_doc_maintenance_tools(repo_root, include_finalize=True)
             create_doc_root(repo_root)
 
             iteration_path = write_file(
@@ -740,7 +742,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "bash",
-                    str(scripts_dir / "finalize_task.sh"),
+                    str(doc_tools_dir / "finalize_task.sh"),
                     "--file",
                     str(iteration_path),
                     "--summary",
@@ -773,9 +775,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_show_last_finalize_cli_prints_cached_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            scripts_dir = root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_tools_dir = install_doc_maintenance_tools(root)
             doc_root = create_doc_root(root)
             init_git_repo(root)
             write_file(root, "README.md", "seed\n")
@@ -798,7 +798,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "python3",
-                    str(scripts_dir / "update_project_docs.py"),
+                    str(doc_tools_dir / "update_project_docs.py"),
                     "--doc-root",
                     str(root / "doc"),
                     "show-last-finalize",
@@ -816,9 +816,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_check_last_finalize_cli_passes_when_state_matches(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            scripts_dir = root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_tools_dir = install_doc_maintenance_tools(root)
             doc_root = create_doc_root(root)
             init_git_repo(root)
             write_file(root, "README.md", "seed\n")
@@ -841,7 +839,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "python3",
-                    str(scripts_dir / "update_project_docs.py"),
+                    str(doc_tools_dir / "update_project_docs.py"),
                     "--doc-root",
                     str(root / "doc"),
                     "check-last-finalize",
@@ -858,9 +856,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_check_last_finalize_cli_fails_when_worktree_changed(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            scripts_dir = root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_tools_dir = install_doc_maintenance_tools(root)
             doc_root = create_doc_root(root)
             init_git_repo(root)
             write_file(root, "README.md", "seed\n")
@@ -884,7 +880,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "python3",
-                    str(scripts_dir / "update_project_docs.py"),
+                    str(doc_tools_dir / "update_project_docs.py"),
                     "--doc-root",
                     str(root / "doc"),
                     "check-last-finalize",
@@ -901,9 +897,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_sync_keeps_last_finalize_report_when_worktree_status_is_unchanged(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            scripts_dir = root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
+            doc_tools_dir = install_doc_maintenance_tools(root)
             doc_root = create_doc_root(root)
             init_git_repo(root)
             write_file(root, "README.md", "seed\n")
@@ -926,7 +920,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "python3",
-                    str(scripts_dir / "update_project_docs.py"),
+                    str(doc_tools_dir / "update_project_docs.py"),
                     "--doc-root",
                     str(root / "doc"),
                     "sync",
@@ -943,11 +937,8 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_finalize_task_auto_syncs_skills_when_skill_source_changes(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            scripts_dir = repo_root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
-            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
-            copy2(SYNC_SKILLS_SCRIPT, scripts_dir / "sync_codex_skills.sh")
+            doc_tools_dir = install_doc_maintenance_tools(repo_root, include_finalize=True)
+            install_repo_maintenance_tools(repo_root, include_sync=True)
             create_doc_root(repo_root)
             iteration_path = write_file(
                 repo_root,
@@ -997,7 +988,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "bash",
-                    str(scripts_dir / "finalize_task.sh"),
+                    str(doc_tools_dir / "finalize_task.sh"),
                     "--file",
                     str(iteration_path),
                     "--summary",
@@ -1019,11 +1010,8 @@ class UpdateProjectDocsTests(unittest.TestCase):
     def test_finalize_task_skips_skill_sync_when_skill_source_is_unchanged(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            scripts_dir = repo_root / "scripts"
-            scripts_dir.mkdir(parents=True, exist_ok=True)
-            copy2(SCRIPT_PATH, scripts_dir / "update_project_docs.py")
-            copy2(FINALIZE_SCRIPT, scripts_dir / "finalize_task.sh")
-            copy2(SYNC_SKILLS_SCRIPT, scripts_dir / "sync_codex_skills.sh")
+            doc_tools_dir = install_doc_maintenance_tools(repo_root, include_finalize=True)
+            install_repo_maintenance_tools(repo_root, include_sync=True)
             create_doc_root(repo_root)
             iteration_path = write_file(
                 repo_root,
@@ -1061,7 +1049,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     "bash",
-                    str(scripts_dir / "finalize_task.sh"),
+                    str(doc_tools_dir / "finalize_task.sh"),
                     "--file",
                     str(iteration_path),
                     "--summary",

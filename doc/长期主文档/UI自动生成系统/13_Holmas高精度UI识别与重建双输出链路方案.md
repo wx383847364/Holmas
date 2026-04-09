@@ -320,7 +320,7 @@
 
 - `Assets/Tools/UiPrefabGenerator/Editor/Analysis`
 - `Assets/Tools/UiPrefabGenerator/Editor/Bridge`
-- 必要时 `scripts/ui_prefab_generator`
+- 必要时 `tools/ui_prefab_generator`
 
 禁止写入范围：
 

@@ -195,8 +195,8 @@
 
 ### 端到端
 
-- `python3 scripts/export_holmas_config.py`
-- `bash scripts/run_holmas_validation.sh`
+- `python3 tools/config_export/export_holmas_config.py`
+- `bash tools/validation/run_holmas_validation.sh`
 - 从正式导出配置恢复后直接跑一条宣传升级 smoke
 
 ## 执行顺序

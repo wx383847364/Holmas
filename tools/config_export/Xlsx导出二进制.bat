@@ -3,7 +3,7 @@ setlocal EnableExtensions
 
 chcp 65001 >nul
 
-cd /d "%~dp0\.." || exit /b 1
+cd /d "%~dp0\..\.." || exit /b 1
 
 set "PYTHON_EXE="
 set "PYTHON_ARGS="
@@ -25,7 +25,7 @@ if "%PYTHON_EXE%"=="" (
     exit /b 1
 )
 
-"%PYTHON_EXE%" %PYTHON_ARGS% scripts\export_holmas_config.py %*
+"%PYTHON_EXE%" %PYTHON_ARGS% tools\config_export\export_holmas_config.py %*
 set "STATUS=%ERRORLEVEL%"
 
 echo.

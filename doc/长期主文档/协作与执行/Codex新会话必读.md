@@ -159,10 +159,10 @@ Subagent 2：
 固定要求：
 
 - 不允许把 `append-iteration + sync` 视为已完成收尾
-- 默认必须执行 `bash scripts/finalize_task.sh`
+- 默认必须执行 `bash tools/doc_maintenance/finalize_task.sh`
 - 默认完整链固定为：`finalize_task.sh -> check-last-finalize -> final`
 - `final` 消息里必须显式包含 `文档维护 / Git 提交建议 / 会话建议` 三段内容
-- 发送 final 前，必须通过 `python3 scripts/update_project_docs.py --doc-root doc check-last-finalize`
+- 发送 final 前，必须通过 `python3 tools/doc_maintenance/update_project_docs.py --doc-root doc check-last-finalize`
 
 ## 约束提醒
 

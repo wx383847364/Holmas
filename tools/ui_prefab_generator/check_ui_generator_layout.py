@@ -33,9 +33,9 @@ REQUIRED_PATHS = [
     Path("Assets/Tools/UiPrefabGenerator/Samples~/Holmas/sample_prefab_binding_manifest.json"),
     Path("Assets/Tools/UiPrefabGenerator/Samples~/Holmas/sample_holmas_generated_result_plan.json"),
     Path("Assets/Tools/UiPrefabGenerator/Samples~/Holmas/validation_baseline.json"),
-    Path("scripts/ui_prefab_generator/run_task_auto_analysis.sh"),
-    Path("scripts/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh"),
-    Path("scripts/ui_prefab_generator/run_sample_ui_pipeline.sh"),
+    Path("tools/ui_prefab_generator/run_task_auto_analysis.sh"),
+    Path("tools/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh"),
+    Path("tools/ui_prefab_generator/run_sample_ui_pipeline.sh"),
 ]
 
 META_ROOT = Path("Assets/Tools/UiPrefabGenerator")

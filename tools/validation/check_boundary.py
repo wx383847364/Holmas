@@ -19,7 +19,7 @@ SCOPE_DEFAULT = "default"
 SCOPE_APP_ONLY = "app-only"
 SCOPE_ALL_ASSETS = "all-assets"
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 EXCLUDED_PATH_PREFIXES = (
     "Assets/Editor/",

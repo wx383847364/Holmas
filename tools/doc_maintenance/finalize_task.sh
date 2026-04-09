@@ -7,7 +7,7 @@ set -euo pipefail
 # 避免每次完成任务后只记得改代码，却忘了把本轮结果写回文档体系。
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 DOC_ROOT="${REPO_ROOT}/doc"
 SKILLS_ROOT="${DOC_ROOT}/长期主文档/协作与执行/skills"
 
@@ -33,14 +33,14 @@ SKIP_DOC_LOGGING=0
 usage() {
     cat <<'EOF'
 用法：
-  scripts/finalize_task.sh --summary "本轮摘要" [--done "完成项"] [--risk "风险项"] [--next "下一步"]
-  scripts/finalize_task.sh --summary "本轮摘要" --agent-status "Agent 5：已启动并完成边界验证"
-  scripts/finalize_task.sh --summary "本轮摘要" --agent6-review passed --next "下一阶段目标"
-  scripts/finalize_task.sh --summary "本轮摘要" --context-compressed
-  scripts/finalize_task.sh --summary "本轮摘要" --session-major-task-count 2
-  scripts/finalize_task.sh --file "doc/迭代记录/迭代记录_YYYYMMDD_001.md" --summary "本轮摘要"
-  scripts/finalize_task.sh --summary "本轮摘要" --skip-temp-cleanup
-  scripts/finalize_task.sh --summary "更新提交说明" --force-log
+  tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" [--done "完成项"] [--risk "风险项"] [--next "下一步"]
+  tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --agent-status "Agent 5：已启动并完成边界验证"
+  tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --agent6-review passed --next "下一阶段目标"
+  tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --context-compressed
+  tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --session-major-task-count 2
+  tools/doc_maintenance/finalize_task.sh --file "doc/迭代记录/迭代记录_YYYYMMDD_001.md" --summary "本轮摘要"
+  tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --skip-temp-cleanup
+  tools/doc_maintenance/finalize_task.sh --summary "更新提交说明" --force-log
 
 说明：
   - 默认写入最新一轮迭代记录
@@ -54,7 +54,7 @@ usage() {
   - 如果 `Git 提交建议` 为“适合提交”，还会固定追加一条 `提交确认` 提示，提醒可直接回复 `1 / 确认 / 提交 / 直接提交`
   - 如果适合提交，脚本会默认生成中文 `标题：` 和 `内容：`
   - 完整收尾后会写入 `.git/codex/last_finalize_report.json`，作为最近一次完整收尾状态
-  - 收尾完成后，建议立刻执行 `python3 scripts/update_project_docs.py --doc-root doc check-last-finalize`
+  - 收尾完成后，建议立刻执行 `python3 tools/doc_maintenance/update_project_docs.py --doc-root doc check-last-finalize`
   - 即使这轮被判定为事务性协助，也仍会给出 `Git 提交建议` 和 `会话建议`
   - `迭代记录建议`、原因说明和启动卡会作为附加信息继续输出
   - 会自动同步主文档索引和迭代记录索引
@@ -242,7 +242,7 @@ fi
 if [[ "${SKIP_DOC_LOGGING}" -ne 1 ]]; then
     APPEND_ARGS=(
         python3
-        "${REPO_ROOT}/scripts/update_project_docs.py"
+        "${REPO_ROOT}/tools/doc_maintenance/update_project_docs.py"
         --doc-root "${DOC_ROOT}"
         append-iteration
     )
@@ -283,17 +283,17 @@ if [[ "${SKIP_DOC_LOGGING}" -ne 1 ]]; then
     "${APPEND_ARGS[@]}"
 
     echo "[info] 同步文档索引..."
-    python3 "${REPO_ROOT}/scripts/update_project_docs.py" --doc-root "${DOC_ROOT}" sync
+    python3 "${REPO_ROOT}/tools/doc_maintenance/update_project_docs.py" --doc-root "${DOC_ROOT}" sync
 
     if has_skill_source_changes; then
-        SKILL_SYNC_SCRIPT="${REPO_ROOT}/scripts/sync_codex_skills.sh"
+        SKILL_SYNC_SCRIPT="${REPO_ROOT}/tools/repo_maintenance/sync_codex_skills.sh"
         if [[ -f "${SKILL_SYNC_SCRIPT}" ]]; then
             echo "[info] 检测到项目 skill 真源有改动，自动同步到 ~/.codex/skills ..."
             if ! bash "${SKILL_SYNC_SCRIPT}"; then
-                echo "[warn] 项目 skill 自动同步未完成，请按提示决定是否手动执行 scripts/sync_codex_skills.sh。" >&2
+                echo "[warn] 项目 skill 自动同步未完成，请按提示决定是否手动执行 tools/repo_maintenance/sync_codex_skills.sh。" >&2
             fi
         else
-            echo "[warn] 检测到项目 skill 真源有改动，但未找到 scripts/sync_codex_skills.sh，已跳过自动同步。" >&2
+            echo "[warn] 检测到项目 skill 真源有改动，但未找到 tools/repo_maintenance/sync_codex_skills.sh，已跳过自动同步。" >&2
         fi
     fi
 
@@ -305,11 +305,11 @@ if [[ "${SKIP_DOC_LOGGING}" -ne 1 ]]; then
     fi
 
     if [[ "${SKIP_TEMP_CLEANUP}" -ne 1 ]]; then
-        CLEAN_SCRIPT="${REPO_ROOT}/scripts/clean_hub_temp_projects.sh"
+        CLEAN_SCRIPT="${REPO_ROOT}/tools/repo_maintenance/clean_hub_temp_projects.sh"
         if [[ -f "${CLEAN_SCRIPT}" ]]; then
             echo "[info] 自动清理历史临时验证工程..."
             if ! bash "${CLEAN_SCRIPT}"; then
-                echo "[warn] 临时验证工程自动清理未完成，请按提示决定是否手动执行 scripts/clean_hub_temp_projects.sh。" >&2
+                echo "[warn] 临时验证工程自动清理未完成，请按提示决定是否手动执行 tools/repo_maintenance/clean_hub_temp_projects.sh。" >&2
             fi
         fi
     fi
@@ -319,7 +319,7 @@ fi
 
 HANDOFF_ARGS=(
     python3
-    "${REPO_ROOT}/scripts/update_project_docs.py"
+    "${REPO_ROOT}/tools/doc_maintenance/update_project_docs.py"
     --doc-root "${DOC_ROOT}"
     suggest-handoff
     --summary "${SUMMARY}"
@@ -380,7 +380,7 @@ printf '%s\n' "${HANDOFF_OUTPUT}"
 if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     RECORD_FINALIZE_ARGS=(
         python3
-        "${REPO_ROOT}/scripts/update_project_docs.py"
+        "${REPO_ROOT}/tools/doc_maintenance/update_project_docs.py"
         --doc-root "${DOC_ROOT}"
         record-last-finalize
         --summary "${SUMMARY}"

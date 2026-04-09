@@ -9,7 +9,7 @@ SKIP_HUB_RECORD_CLEANUP=0
 usage() {
     cat <<'EOF'
 用法：
-  scripts/clean_hub_temp_projects.sh [--dry-run] [--force-when-hub-running]
+  tools/repo_maintenance/clean_hub_temp_projects.sh [--dry-run] [--force-when-hub-running]
 
 说明：
   - 只清理 Holmas 验证过程在 /private/tmp 或 /tmp 下留下的临时工程目录

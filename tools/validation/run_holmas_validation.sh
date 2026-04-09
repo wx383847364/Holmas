@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 PROJECT_VERSION_FILE="${REPO_ROOT}/ProjectSettings/ProjectVersion.txt"
 
 EDITOR_PATH="${TUANJIE_EDITOR_PATH:-}"
@@ -21,7 +21,7 @@ TEMP_CREATED_BY_SCRIPT=0
 usage() {
     cat <<'EOF'
 用法：
-  scripts/run_holmas_validation.sh [--editor /path/to/Tuanjie] [--temp-dir /private/tmp/xxx]
+  tools/validation/run_holmas_validation.sh [--editor /path/to/Tuanjie] [--temp-dir /private/tmp/xxx]
                                    [--log-prefix holmas_xxx] [--log-dir /tmp]
                                    [--skip-smoke] [--keep-temp-on-success]
 

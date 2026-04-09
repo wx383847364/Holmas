@@ -110,4 +110,4 @@ Read these references when needed:
 - `references/checklist.md`
 
 Run this for boundary-sensitive changes:
-- `scripts/check_boundary.sh`
+- `tools/validation/check_boundary.sh`

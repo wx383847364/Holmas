@@ -8,4 +8,4 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 
-python3 "${REPO_ROOT}/scripts/check_doc_maintenance.py"
+python3 "${REPO_ROOT}/tools/doc_maintenance/check_doc_maintenance.py"

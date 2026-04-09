@@ -3,15 +3,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 SOURCE_ROOT="${REPO_ROOT}/doc/长期主文档/协作与执行/skills"
 DEST_ROOT="${CODEX_HOME:-${HOME}/.codex}/skills"
 
 usage() {
     cat <<'EOF'
 用法：
-  scripts/sync_codex_skills.sh
-  scripts/sync_codex_skills.sh unity-hotupdate-boundary
+  tools/repo_maintenance/sync_codex_skills.sh
+  tools/repo_maintenance/sync_codex_skills.sh unity-hotupdate-boundary
 
 说明：
   - 默认会把仓库 doc/长期主文档/协作与执行/skills 下的所有 skill 同步到 ~/.codex/skills

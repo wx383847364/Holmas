@@ -1656,7 +1656,7 @@ def main():
         clear_last_finalize_report(doc_root)
         print(f"[ok] updated iteration log: {path}")
         print("[warn] 当前只完成了迭代记录更新，这仍属于半收尾。")
-        print("[warn] 如需完成收尾，请继续执行 update_project_docs.py suggest-handoff 或 scripts/finalize_task.sh。")
+        print("[warn] 如需完成收尾，请继续执行 update_project_docs.py suggest-handoff 或 tools/doc_maintenance/finalize_task.sh。")
         return
 
     if args.command == "suggest-handoff":

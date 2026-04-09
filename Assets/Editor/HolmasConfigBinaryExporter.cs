@@ -30,23 +30,23 @@ namespace Holmas.EditorTools
         private const string CatPreviewName = "holmas_cat_meta.json";
         private const string ReportName = "holmas_export_report.json";
 
-        [MenuItem("Holmas/配置/Xlsx导出二进制")]
+        [MenuItem("Holmas/配置/备用：Editor内Xlsx导出二进制")]
         public static void ExportFromMenu()
         {
             var report = ExportAll();
             string summary = report.Success
-                ? $"Xlsx导出完成，已写入 {report.BinaryWrittenCount} 个二进制文件。"
-                : $"Xlsx导出完成，但存在 {report.ErrorCount} 个错误，已阻止正式 bytes 覆盖。";
+                ? $"备用 Editor 导出完成，已写入 {report.BinaryWrittenCount} 个二进制文件。"
+                : $"备用 Editor 导出完成，但存在 {report.ErrorCount} 个错误，已阻止正式 bytes 覆盖。";
 
             if (report.Success)
             {
                 Debug.Log(summary);
-                EditorUtility.DisplayDialog("Xlsx导出二进制", summary, "OK");
+                EditorUtility.DisplayDialog("备用：Editor内Xlsx导出二进制", summary, "OK");
             }
             else
             {
                 Debug.LogWarning(summary);
-                EditorUtility.DisplayDialog("Xlsx导出二进制", summary + "\n请查看 holmas_export_report.json。", "OK");
+                EditorUtility.DisplayDialog("备用：Editor内Xlsx导出二进制", summary + "\n请查看 holmas_export_report.json。", "OK");
             }
         }
 

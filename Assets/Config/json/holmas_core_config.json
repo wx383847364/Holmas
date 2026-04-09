@@ -1,4 +1,4 @@
-﻿{
+{
     "Version": 4,
     "Maps": [
         {
@@ -315,7 +315,7 @@
             "CountMin": 2,
             "CountMax": 3,
             "RewardValues": [],
-            "LevelRewardFactor": 1.2000000476837159
+            "LevelRewardFactor": 1.2000000476837158
         },
         {
             "TaskTypeId": "task_b3_u_m",
@@ -339,7 +339,7 @@
             "CountMin": 2,
             "CountMax": 3,
             "RewardValues": [],
-            "LevelRewardFactor": 1.2200000286102296
+            "LevelRewardFactor": 1.2200000286102295
         },
         {
             "TaskTypeId": "task_b3_r_s",
@@ -403,7 +403,7 @@
             "CountMin": 3,
             "CountMax": 5,
             "RewardValues": [],
-            "LevelRewardFactor": 1.2000000476837159
+            "LevelRewardFactor": 1.2000000476837158
         },
         {
             "TaskTypeId": "task_b4_ur_s",
@@ -610,7 +610,7 @@
             "CountMin": 4,
             "CountMax": 6,
             "RewardValues": [],
-            "LevelRewardFactor": 1.4500000476837159
+            "LevelRewardFactor": 1.4500000476837158
         },
         {
             "TaskTypeId": "task_b5_all_l",

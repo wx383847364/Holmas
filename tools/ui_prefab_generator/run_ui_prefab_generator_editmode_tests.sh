@@ -18,7 +18,7 @@ TEMP_CREATED_BY_SCRIPT=0
 usage() {
     cat <<'EOF'
 用法：
-  scripts/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh [--editor /path/to/Tuanjie]
+  tools/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh [--editor /path/to/Tuanjie]
                                                                          [--temp-dir /private/tmp/xxx]
                                                                          [--log-prefix ui_prefab_generator_xxx]
                                                                          [--log-dir /tmp]

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 cd "${REPO_ROOT}" || exit 1
 
@@ -16,7 +16,7 @@ else
     exit 1
 fi
 
-"${PYTHON_CMD}" scripts/export_holmas_config.py "$@"
+"${PYTHON_CMD}" tools/config_export/export_holmas_config.py "$@"
 STATUS=$?
 
 echo
