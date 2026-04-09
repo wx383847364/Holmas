@@ -104,13 +104,13 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 if (!result.Success || result.Bundle == null)
                 {
                     logger?.LogWarning(
-                        "HolmasGameBootstrap: 未能加载导出的 CSV 二进制配置，回退到内置样例。原因={0}",
+                        "HolmasGameBootstrap: 未能加载导出的配置二进制包，回退到内置样例。原因={0}",
                         result.FailureReason);
                     return null;
                 }
 
                 logger?.LogInfo(
-                    "HolmasGameBootstrap: 已加载导出的 CSV 二进制配置。maps={0}, tasks={1}, levels={2}, cats={3}",
+                    "HolmasGameBootstrap: 已加载导出的配置二进制包。maps={0}, tasks={1}, levels={2}, cats={3}",
                     result.Bundle.Maps.Count,
                     result.Bundle.TaskTemplates.Count,
                     result.Bundle.PlayerLevels.Count,
@@ -119,7 +119,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
             }
             catch (Exception ex)
             {
-                logger?.LogWarning("HolmasGameBootstrap: 加载导出的 CSV 二进制配置失败，回退到内置样例。{0}", ex.Message);
+                logger?.LogWarning("HolmasGameBootstrap: 加载导出的配置二进制包失败，回退到内置样例。{0}", ex.Message);
                 return null;
             }
         }
@@ -158,6 +158,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
             return new HolmasMetaCatalog(configBundle.MetaLevels.Select(row => new HolmasMetaProgressionDefinition
             {
                 PlayerLevel = row.PlayerLevel,
+                MinExperience = row.MinExperience,
                 OfflineRewardPerHour = row.OfflineRewardPerHour,
                 AdUnlockHours = row.AdUnlockHours,
             }));

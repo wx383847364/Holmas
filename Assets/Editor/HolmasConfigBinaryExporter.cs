@@ -11,18 +11,18 @@ using UnityEngine;
 
 namespace Holmas.EditorTools
 {
-    public static class HolmasCsvBinaryExporter
+    public static class HolmasConfigBinaryExporter
     {
-        private const string CsvRoot = "Assets/Config";
+        private const string ConfigRoot = "Assets/Config";
         private const string JsonRoot = "Assets/Config/json";
         private const string HotUpdateConfigRoot = "Assets/HotUpdateContent/Config";
 
-        private const string MapCsvName = "Holmas_MapTable.csv";
-        private const string CatCsvName = "Holmas_CatTable.csv";
-        private const string TaskCsvName = "Holmas_TaskTable.csv";
-        private const string PlayerLevelCsvName = "Holmas_PlayerLevelTable.csv";
-        private const string MetaLevelCsvName = "Holmas_MetaLevelTable.csv";
-        private const string AgencyBuildingCsvName = "Holmas_AgencyBuildingTable.csv";
+        private const string MapTableName = "Holmas_MapTable.xlsx";
+        private const string CatTableName = "Holmas_CatTable.xlsx";
+        private const string TaskTableName = "Holmas_TaskTable.xlsx";
+        private const string PlayerLevelTableName = "Holmas_PlayerLevelTable.xlsx";
+        private const string MetaLevelTableName = "Holmas_MetaLevelTable.xlsx";
+        private const string AgencyBuildingTableName = "Holmas_AgencyBuildingTable.xlsx";
 
         private const string CoreBinaryName = "holmas_core_config.bytes";
         private const string CatBinaryName = "holmas_cat_meta.bytes";
@@ -30,60 +30,69 @@ namespace Holmas.EditorTools
         private const string CatPreviewName = "holmas_cat_meta.json";
         private const string ReportName = "holmas_export_report.json";
 
-        [MenuItem("Holmas/配置/CSV转二进制")]
+        [MenuItem("Holmas/配置/Xlsx导出二进制")]
         public static void ExportFromMenu()
         {
             var report = ExportAll();
             string summary = report.Success
-                ? $"CSV转二进制完成，已写入 {report.BinaryWrittenCount} 个二进制文件。"
-                : $"CSV转二进制完成，但存在 {report.ErrorCount} 个错误，已阻止正式 bytes 覆盖。";
+                ? $"Xlsx导出完成，已写入 {report.BinaryWrittenCount} 个二进制文件。"
+                : $"Xlsx导出完成，但存在 {report.ErrorCount} 个错误，已阻止正式 bytes 覆盖。";
 
             if (report.Success)
             {
                 Debug.Log(summary);
-                EditorUtility.DisplayDialog("CSV转二进制", summary, "OK");
+                EditorUtility.DisplayDialog("Xlsx导出二进制", summary, "OK");
             }
             else
             {
                 Debug.LogWarning(summary);
-                EditorUtility.DisplayDialog("CSV转二进制", summary + "\n请查看 holmas_export_report.json。", "OK");
+                EditorUtility.DisplayDialog("Xlsx导出二进制", summary + "\n请查看 holmas_export_report.json。", "OK");
             }
         }
 
         public static void ExportFromBatchMode()
         {
-            HolmasCsvExportReport report = ExportAll();
+            HolmasConfigExportReport report = ExportAll();
             if (!report.Success)
             {
-                throw new InvalidOperationException("CSV转二进制失败，请检查 holmas_export_report.json。");
+                throw new InvalidOperationException("Xlsx导出二进制失败，请检查 holmas_export_report.json。");
             }
         }
 
-        public static HolmasCsvExportReport ExportAll()
+        public static HolmasConfigExportReport ExportAll()
         {
-            var report = new HolmasCsvExportReport
+            return ExportAll(ConfigRoot, JsonRoot, HotUpdateConfigRoot, refreshAssetDatabase: true);
+        }
+
+        public static HolmasConfigExportReport ExportAll(
+            string configRoot,
+            string jsonRoot,
+            string hotUpdateConfigRoot,
+            bool refreshAssetDatabase)
+        {
+            var report = new HolmasConfigExportReport
             {
                 ExportedAtUtc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
                 SourceFiles = new[]
                 {
-                    CombineProjectPath(CsvRoot, MapCsvName),
-                    CombineProjectPath(CsvRoot, CatCsvName),
-                    CombineProjectPath(CsvRoot, TaskCsvName),
-                    CombineProjectPath(CsvRoot, PlayerLevelCsvName),
-                    CombineProjectPath(CsvRoot, MetaLevelCsvName),
-                    CombineProjectPath(CsvRoot, AgencyBuildingCsvName),
+                    CombineProjectPath(configRoot, MapTableName),
+                    CombineProjectPath(configRoot, CatTableName),
+                    CombineProjectPath(configRoot, TaskTableName),
+                    CombineProjectPath(configRoot, PlayerLevelTableName),
+                    CombineProjectPath(configRoot, MetaLevelTableName),
+                    CombineProjectPath(configRoot, AgencyBuildingTableName),
                 }
             };
 
-            EnsureDirectory(CombineProjectPath(CsvRoot, "json"));
-            EnsureDirectory(CombineProjectPath(HotUpdateConfigRoot, string.Empty));
+            EnsureDirectory(CombineProjectPath(jsonRoot, string.Empty));
+            EnsureDirectory(CombineProjectPath(hotUpdateConfigRoot, string.Empty));
 
-            var mapTable = LoadMapTable(report);
-            var catTable = LoadCatTable(report);
-            var taskTable = LoadTaskTable(report);
-            var playerLevelTable = LoadPlayerLevelTable(report);
-            var metaLevelTable = LoadMetaLevelTable(report);
-            var agencyBuildingTable = LoadAgencyBuildingTable(report);
+            var mapTable = LoadMapTable(report, configRoot);
+            var catTable = LoadCatTable(report, configRoot);
+            var taskTable = LoadTaskTable(report, configRoot);
+            var playerLevelTable = LoadPlayerLevelTable(report, configRoot);
+            var metaLevelTable = LoadMetaLevelTable(report, configRoot);
+            var agencyBuildingTable = LoadAgencyBuildingTable(report, configRoot);
 
             var catLookup = BuildAliasLookup(catTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.CatId, index)));
             var taskLookup = BuildAliasLookup(taskTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.TaskTypeId, index)));
@@ -93,6 +102,7 @@ namespace Holmas.EditorTools
             NormalizeRows(report, taskTable, catLookup, taskLookup, mapLookup);
             NormalizeRows(report, playerLevelTable, catLookup, taskLookup, mapLookup);
             NormalizeRows(report, mapTable, catLookup, taskLookup, mapLookup);
+            BridgeUpgradeExpFromMetaLevels(report, playerLevelTable, metaLevelTable);
             ValidateMetaLevelTable(report, playerLevelTable, metaLevelTable);
             ValidateAgencyBuildingTable(report, agencyBuildingTable);
 
@@ -101,22 +111,22 @@ namespace Holmas.EditorTools
 
             report.BundleReports = new[]
             {
-                new HolmasCsvBundleReport
+                new HolmasConfigBundleReport
                 {
                     BundleName = "core",
-                    SourceCsvNames = new[] { MapCsvName, TaskCsvName, PlayerLevelCsvName, MetaLevelCsvName, AgencyBuildingCsvName },
-                    PreviewJsonPath = CombineProjectPath(JsonRoot, CorePreviewName),
-                    BinaryPath = CombineProjectPath(HotUpdateConfigRoot, CoreBinaryName),
+                    SourceTableNames = new[] { MapTableName, TaskTableName, PlayerLevelTableName, MetaLevelTableName, AgencyBuildingTableName },
+                    PreviewJsonPath = CombineProjectPath(jsonRoot, CorePreviewName),
+                    BinaryPath = CombineProjectPath(hotUpdateConfigRoot, CoreBinaryName),
                     RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count + metaLevelTable.Rows.Count + agencyBuildingTable.Rows.Count,
                     WarningCount = report.Warnings.Count,
                     ErrorCount = report.Errors.Count,
                 },
-                new HolmasCsvBundleReport
+                new HolmasConfigBundleReport
                 {
                     BundleName = "cat_meta",
-                    SourceCsvNames = new[] { CatCsvName },
-                    PreviewJsonPath = CombineProjectPath(JsonRoot, CatPreviewName),
-                    BinaryPath = CombineProjectPath(HotUpdateConfigRoot, CatBinaryName),
+                    SourceTableNames = new[] { CatTableName },
+                    PreviewJsonPath = CombineProjectPath(jsonRoot, CatPreviewName),
+                    BinaryPath = CombineProjectPath(hotUpdateConfigRoot, CatBinaryName),
                     RowCount = catTable.Rows.Count,
                     WarningCount = report.Warnings.Count,
                     ErrorCount = report.Errors.Count,
@@ -124,11 +134,11 @@ namespace Holmas.EditorTools
             };
 
             File.WriteAllText(
-                CombineProjectPath(JsonRoot, CorePreviewName),
+                CombineProjectPath(jsonRoot, CorePreviewName),
                 HolmasConfigBinaryCodec.ToCoreJson(corePackage, prettyPrint: true),
                 new UTF8Encoding(true));
             File.WriteAllText(
-                CombineProjectPath(JsonRoot, CatPreviewName),
+                CombineProjectPath(jsonRoot, CatPreviewName),
                 HolmasConfigBinaryCodec.ToCatMetaJson(catPackage, prettyPrint: true),
                 new UTF8Encoding(true));
 
@@ -136,10 +146,10 @@ namespace Holmas.EditorTools
             if (!hasFatalErrors)
             {
                 File.WriteAllBytes(
-                    CombineProjectPath(HotUpdateConfigRoot, CoreBinaryName),
+                    CombineProjectPath(hotUpdateConfigRoot, CoreBinaryName),
                     HolmasConfigBinaryCodec.WriteCorePackage(corePackage));
                 File.WriteAllBytes(
-                    CombineProjectPath(HotUpdateConfigRoot, CatBinaryName),
+                    CombineProjectPath(hotUpdateConfigRoot, CatBinaryName),
                     HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage));
                 report.BinaryWrittenCount = 2;
             }
@@ -150,152 +160,149 @@ namespace Holmas.EditorTools
 
             report.Success = !hasFatalErrors;
 
-            WriteJsonPreview(CombineProjectPath(JsonRoot, ReportName), report);
-            AssetDatabase.Refresh();
+            WriteJsonPreview(CombineProjectPath(jsonRoot, ReportName), report);
+            if (refreshAssetDatabase)
+            {
+                AssetDatabase.Refresh();
+            }
             return report;
         }
 
-        private static CsvTable<HolmasMapCsvRow> LoadMapTable(HolmasCsvExportReport report)
+        private static SheetTable<HolmasMapSheetRow> LoadMapTable(HolmasConfigExportReport report, string configRoot)
         {
-            string csvName = MapCsvName;
-            string path = CombineProjectPath(CsvRoot, csvName);
+            string tableName = MapTableName;
+            string path = CombineProjectPath(configRoot, tableName);
             if (!File.Exists(path))
             {
-                report.Errors.Add($"找不到 CSV 文件: {path}");
-                return new CsvTable<HolmasMapCsvRow>(csvName);
+                report.Errors.Add($"找不到 xlsx 文件: {path}");
+                return new SheetTable<HolmasMapSheetRow>(tableName);
             }
 
-            string text = File.ReadAllText(path, Encoding.UTF8);
-            var rows = CsvParser.Parse(text);
+            List<string[]> rows = ReadWorksheetRows(report, path);
             if (rows.Count < 2)
             {
-                report.Errors.Add($"CSV 结构不完整: {path}");
-                return new CsvTable<HolmasMapCsvRow>(csvName);
+                report.Errors.Add($"xlsx 结构不完整: {path}");
+                return new SheetTable<HolmasMapSheetRow>(tableName);
             }
 
             var fieldRow = rows[1];
-            var headerMap = BuildHeaderMap(fieldRow);
-            return new CsvTable<HolmasMapCsvRow>(csvName, ParseMaps(report, path, rows, headerMap));
+            var headerMap = BuildHeaderMap(report, path, fieldRow);
+            return new SheetTable<HolmasMapSheetRow>(tableName, ParseMaps(report, path, rows, headerMap));
         }
 
-        private static CsvTable<HolmasCatCsvRow> LoadCatTable(HolmasCsvExportReport report)
+        private static SheetTable<HolmasCatSheetRow> LoadCatTable(HolmasConfigExportReport report, string configRoot)
         {
-            string csvName = CatCsvName;
-            string path = CombineProjectPath(CsvRoot, csvName);
+            string tableName = CatTableName;
+            string path = CombineProjectPath(configRoot, tableName);
             if (!File.Exists(path))
             {
-                report.Errors.Add($"找不到 CSV 文件: {path}");
-                return new CsvTable<HolmasCatCsvRow>(csvName);
+                report.Errors.Add($"找不到 xlsx 文件: {path}");
+                return new SheetTable<HolmasCatSheetRow>(tableName);
             }
 
-            string text = File.ReadAllText(path, Encoding.UTF8);
-            var rows = CsvParser.Parse(text);
+            List<string[]> rows = ReadWorksheetRows(report, path);
             if (rows.Count < 2)
             {
-                report.Errors.Add($"CSV 结构不完整: {path}");
-                return new CsvTable<HolmasCatCsvRow>(csvName);
+                report.Errors.Add($"xlsx 结构不完整: {path}");
+                return new SheetTable<HolmasCatSheetRow>(tableName);
             }
 
-            var headerMap = BuildHeaderMap(rows[1]);
-            return new CsvTable<HolmasCatCsvRow>(csvName, ParseCats(report, path, rows, headerMap));
+            var headerMap = BuildHeaderMap(report, path, rows[1]);
+            return new SheetTable<HolmasCatSheetRow>(tableName, ParseCats(report, path, rows, headerMap));
         }
 
-        private static CsvTable<HolmasTaskCsvRow> LoadTaskTable(HolmasCsvExportReport report)
+        private static SheetTable<HolmasTaskSheetRow> LoadTaskTable(HolmasConfigExportReport report, string configRoot)
         {
-            string csvName = TaskCsvName;
-            string path = CombineProjectPath(CsvRoot, csvName);
+            string tableName = TaskTableName;
+            string path = CombineProjectPath(configRoot, tableName);
             if (!File.Exists(path))
             {
-                report.Errors.Add($"找不到 CSV 文件: {path}");
-                return new CsvTable<HolmasTaskCsvRow>(csvName);
+                report.Errors.Add($"找不到 xlsx 文件: {path}");
+                return new SheetTable<HolmasTaskSheetRow>(tableName);
             }
 
-            string text = File.ReadAllText(path, Encoding.UTF8);
-            var rows = CsvParser.Parse(text);
+            List<string[]> rows = ReadWorksheetRows(report, path);
             if (rows.Count < 2)
             {
-                report.Errors.Add($"CSV 结构不完整: {path}");
-                return new CsvTable<HolmasTaskCsvRow>(csvName);
+                report.Errors.Add($"xlsx 结构不完整: {path}");
+                return new SheetTable<HolmasTaskSheetRow>(tableName);
             }
 
-            var headerMap = BuildHeaderMap(rows[1]);
-            return new CsvTable<HolmasTaskCsvRow>(csvName, ParseTasks(report, path, rows, headerMap));
+            var headerMap = BuildHeaderMap(report, path, rows[1]);
+            return new SheetTable<HolmasTaskSheetRow>(tableName, ParseTasks(report, path, rows, headerMap));
         }
 
-        private static CsvTable<HolmasPlayerLevelCsvRow> LoadPlayerLevelTable(HolmasCsvExportReport report)
+        private static SheetTable<HolmasPlayerLevelSheetRow> LoadPlayerLevelTable(HolmasConfigExportReport report, string configRoot)
         {
-            string csvName = PlayerLevelCsvName;
-            string path = CombineProjectPath(CsvRoot, csvName);
+            string tableName = PlayerLevelTableName;
+            string path = CombineProjectPath(configRoot, tableName);
             if (!File.Exists(path))
             {
-                report.Errors.Add($"找不到 CSV 文件: {path}");
-                return new CsvTable<HolmasPlayerLevelCsvRow>(csvName);
+                report.Errors.Add($"找不到 xlsx 文件: {path}");
+                return new SheetTable<HolmasPlayerLevelSheetRow>(tableName);
             }
 
-            string text = File.ReadAllText(path, Encoding.UTF8);
-            var rows = CsvParser.Parse(text);
+            List<string[]> rows = ReadWorksheetRows(report, path);
             if (rows.Count < 2)
             {
-                report.Errors.Add($"CSV 结构不完整: {path}");
-                return new CsvTable<HolmasPlayerLevelCsvRow>(csvName);
+                report.Errors.Add($"xlsx 结构不完整: {path}");
+                return new SheetTable<HolmasPlayerLevelSheetRow>(tableName);
             }
 
-            var headerMap = BuildHeaderMap(rows[1]);
-            return new CsvTable<HolmasPlayerLevelCsvRow>(csvName, ParsePlayerLevels(report, path, rows, headerMap));
+            var headerMap = BuildHeaderMap(report, path, rows[1]);
+            return new SheetTable<HolmasPlayerLevelSheetRow>(tableName, ParsePlayerLevels(report, path, rows, headerMap));
         }
 
-        private static CsvTable<HolmasMetaLevelCsvRow> LoadMetaLevelTable(HolmasCsvExportReport report)
+        private static SheetTable<HolmasMetaLevelSheetRow> LoadMetaLevelTable(HolmasConfigExportReport report, string configRoot)
         {
-            string csvName = MetaLevelCsvName;
-            string path = CombineProjectPath(CsvRoot, csvName);
+            string tableName = MetaLevelTableName;
+            string path = CombineProjectPath(configRoot, tableName);
             if (!File.Exists(path))
             {
-                report.Errors.Add($"找不到 CSV 文件: {path}");
-                return new CsvTable<HolmasMetaLevelCsvRow>(csvName);
+                report.Errors.Add($"找不到 xlsx 文件: {path}");
+                return new SheetTable<HolmasMetaLevelSheetRow>(tableName);
             }
 
-            string text = File.ReadAllText(path, Encoding.UTF8);
-            var rows = CsvParser.Parse(text);
+            List<string[]> rows = ReadWorksheetRows(report, path);
             if (rows.Count < 2)
             {
-                report.Errors.Add($"CSV 结构不完整: {path}");
-                return new CsvTable<HolmasMetaLevelCsvRow>(csvName);
+                report.Errors.Add($"xlsx 结构不完整: {path}");
+                return new SheetTable<HolmasMetaLevelSheetRow>(tableName);
             }
 
-            var headerMap = BuildHeaderMap(rows[1]);
-            return new CsvTable<HolmasMetaLevelCsvRow>(csvName, ParseMetaLevels(report, path, rows, headerMap));
+            var headerMap = BuildHeaderMap(report, path, rows[1]);
+            return new SheetTable<HolmasMetaLevelSheetRow>(tableName, ParseMetaLevels(report, path, rows, headerMap));
         }
 
-        private static CsvTable<HolmasAgencyBuildingCsvRow> LoadAgencyBuildingTable(HolmasCsvExportReport report)
+        private static SheetTable<HolmasAgencyBuildingSheetRow> LoadAgencyBuildingTable(HolmasConfigExportReport report, string configRoot)
         {
-            string csvName = AgencyBuildingCsvName;
-            string path = CombineProjectPath(CsvRoot, csvName);
+            string tableName = AgencyBuildingTableName;
+            string path = CombineProjectPath(configRoot, tableName);
             if (!File.Exists(path))
             {
-                report.Errors.Add($"找不到 CSV 文件: {path}");
-                return new CsvTable<HolmasAgencyBuildingCsvRow>(csvName);
+                report.Errors.Add($"找不到 xlsx 文件: {path}");
+                return new SheetTable<HolmasAgencyBuildingSheetRow>(tableName);
             }
 
-            string text = File.ReadAllText(path, Encoding.UTF8);
-            var rows = CsvParser.Parse(text);
+            List<string[]> rows = ReadWorksheetRows(report, path);
             if (rows.Count < 2)
             {
-                report.Errors.Add($"CSV 结构不完整: {path}");
-                return new CsvTable<HolmasAgencyBuildingCsvRow>(csvName);
+                report.Errors.Add($"xlsx 结构不完整: {path}");
+                return new SheetTable<HolmasAgencyBuildingSheetRow>(tableName);
             }
 
-            var headerMap = BuildHeaderMap(rows[1]);
-            return new CsvTable<HolmasAgencyBuildingCsvRow>(csvName, ParseAgencyBuildings(report, path, rows, headerMap));
+            var headerMap = BuildHeaderMap(report, path, rows[1]);
+            return new SheetTable<HolmasAgencyBuildingSheetRow>(tableName, ParseAgencyBuildings(report, path, rows, headerMap));
         }
 
-        private static List<HolmasMapCsvRow> ParseMaps(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        private static List<HolmasMapSheetRow> ParseMaps(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int mapIdCol = RequireColumn(report, sourcePath, headerMap, "mapId");
             int terrainPathCol = RequireColumn(report, sourcePath, headerMap, "terrainPath");
             int catCountMaxCol = RequireColumn(report, sourcePath, headerMap, "catCountMax");
             int catCountMinCol = RequireColumn(report, sourcePath, headerMap, "catCountMin");
 
-            var list = new List<HolmasMapCsvRow>();
+            var list = new List<HolmasMapSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
             {
                 var row = rows[rowIndex];
@@ -309,7 +316,7 @@ namespace Holmas.EditorTools
                 int catCountMin;
                 bool minOk = TryParseInt(GetCell(row, catCountMinCol), out catCountMin);
 
-                var item = new HolmasMapCsvRow
+                var item = new HolmasMapSheetRow
                 {
                     RowIndex = list.Count,
                     MapId = GetCell(row, mapIdCol),
@@ -354,7 +361,7 @@ namespace Holmas.EditorTools
             return list;
         }
 
-        private static List<HolmasCatCsvRow> ParseCats(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        private static List<HolmasCatSheetRow> ParseCats(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int catIdCol = RequireColumn(report, sourcePath, headerMap, "catId");
             int catNameCol = RequireColumn(report, sourcePath, headerMap, "catName");
@@ -368,7 +375,7 @@ namespace Holmas.EditorTools
             bool hasAnyWeightMissing = false;
             bool hasAnyPriceMissing = false;
 
-            var list = new List<HolmasCatCsvRow>();
+            var list = new List<HolmasCatSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
             {
                 var row = rows[rowIndex];
@@ -377,7 +384,7 @@ namespace Holmas.EditorTools
                     continue;
                 }
 
-                var item = new HolmasCatCsvRow
+                var item = new HolmasCatSheetRow
                 {
                     RowIndex = list.Count,
                     CatId = GetCell(row, catIdCol),
@@ -446,7 +453,7 @@ namespace Holmas.EditorTools
             return list;
         }
 
-        private static List<HolmasTaskCsvRow> ParseTasks(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        private static List<HolmasTaskSheetRow> ParseTasks(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int taskTypeIdCol = RequireColumn(report, sourcePath, headerMap, "taskTypeId");
             int taskKindCol = GetOptionalColumn(headerMap, "taskKind");
@@ -461,7 +468,7 @@ namespace Holmas.EditorTools
                 report.Warnings.Add($"{sourcePath}: 缺少 taskKind 列，已默认全部视为 Money。");
             }
 
-            var list = new List<HolmasTaskCsvRow>();
+            var list = new List<HolmasTaskSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
             {
                 var row = rows[rowIndex];
@@ -492,7 +499,7 @@ namespace Holmas.EditorTools
                 bool countMinOk = TryParseInt(GetCell(row, countMinCol), out countMin);
                 float levelRewardFactor = ParseFloat(GetCell(row, levelRewardFactorCol), defaultValue: 1f, out bool factorOk);
 
-                var item = new HolmasTaskCsvRow
+                var item = new HolmasTaskSheetRow
                 {
                     RowIndex = list.Count,
                     TaskTypeId = GetCell(row, taskTypeIdCol),
@@ -551,16 +558,15 @@ namespace Holmas.EditorTools
             return list;
         }
 
-        private static List<HolmasPlayerLevelCsvRow> ParsePlayerLevels(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        private static List<HolmasPlayerLevelSheetRow> ParsePlayerLevels(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int playerLevelCol = RequireColumn(report, sourcePath, headerMap, "playerLevel");
-            int upgradeExpCol = RequireColumn(report, sourcePath, headerMap, "upgradeExp");
             int taskTypeIdsCol = RequireColumn(report, sourcePath, headerMap, "taskTypeIds");
             int taskTypeWeightsCol = RequireColumn(report, sourcePath, headerMap, "taskTypeWeights");
             int mapIdsCol = RequireColumn(report, sourcePath, headerMap, "mapIds");
             int mapWeightsCol = RequireColumn(report, sourcePath, headerMap, "mapWeights");
 
-            var list = new List<HolmasPlayerLevelCsvRow>();
+            var list = new List<HolmasPlayerLevelSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
             {
                 var row = rows[rowIndex];
@@ -571,14 +577,12 @@ namespace Holmas.EditorTools
 
                 int playerLevel;
                 bool levelOk = TryParseInt(GetCell(row, playerLevelCol), out playerLevel);
-                int upgradeExp;
-                bool expOk = TryParseInt(GetCell(row, upgradeExpCol), out upgradeExp);
 
-                var item = new HolmasPlayerLevelCsvRow
+                var item = new HolmasPlayerLevelSheetRow
                 {
                     RowIndex = list.Count,
                     PlayerLevel = playerLevel,
-                    UpgradeExp = upgradeExp,
+                    UpgradeExp = 0,
                     TaskTypeIds = SplitArray(GetCell(row, taskTypeIdsCol)),
                     TaskTypeWeights = ParseIntArrayStrict(GetCell(row, taskTypeWeightsCol), sourcePath, rowIndex + 1, report),
                     MapIds = SplitArray(GetCell(row, mapIdsCol)),
@@ -588,12 +592,6 @@ namespace Holmas.EditorTools
                 if (!levelOk)
                 {
                     report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 playerLevel 无法解析。");
-                    continue;
-                }
-
-                if (!expOk)
-                {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 upgradeExp 无法解析。");
                     continue;
                 }
 
@@ -627,14 +625,15 @@ namespace Holmas.EditorTools
             return list;
         }
 
-        private static List<HolmasMetaLevelCsvRow> ParseMetaLevels(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        private static List<HolmasMetaLevelSheetRow> ParseMetaLevels(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int playerLevelCol = RequireColumn(report, sourcePath, headerMap, "playerLevel");
+            int minExperienceCol = RequireColumn(report, sourcePath, headerMap, "minExperience");
             int offlineRewardPerHourCol = RequireColumn(report, sourcePath, headerMap, "offlineRewardPerHour");
             int adUnlockHoursCol = RequireColumn(report, sourcePath, headerMap, "adUnlockHours");
             int notesCol = GetOptionalColumn(headerMap, "notes");
 
-            var list = new List<HolmasMetaLevelCsvRow>();
+            var list = new List<HolmasMetaLevelSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
             {
                 var row = rows[rowIndex];
@@ -645,15 +644,18 @@ namespace Holmas.EditorTools
 
                 int playerLevel;
                 bool levelOk = TryParseInt(GetCell(row, playerLevelCol), out playerLevel);
+                int minExperience;
+                bool minExperienceOk = TryParseInt(GetCell(row, minExperienceCol), out minExperience);
                 int offlineRewardPerHour;
                 bool offlineOk = TryParseInt(GetCell(row, offlineRewardPerHourCol), out offlineRewardPerHour);
                 int adUnlockHours;
                 bool adOk = TryParseInt(GetCell(row, adUnlockHoursCol), out adUnlockHours);
 
-                var item = new HolmasMetaLevelCsvRow
+                var item = new HolmasMetaLevelSheetRow
                 {
                     RowIndex = list.Count,
                     PlayerLevel = playerLevel,
+                    MinExperience = minExperience,
                     OfflineRewardPerHour = offlineRewardPerHour,
                     AdUnlockHours = adUnlockHours,
                     Notes = GetCell(row, notesCol),
@@ -662,6 +664,12 @@ namespace Holmas.EditorTools
                 if (!levelOk)
                 {
                     report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 playerLevel 无法解析。");
+                    continue;
+                }
+
+                if (!minExperienceOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 minExperience 无法解析。");
                     continue;
                 }
 
@@ -683,7 +691,39 @@ namespace Holmas.EditorTools
             return list;
         }
 
-        private static List<HolmasAgencyBuildingCsvRow> ParseAgencyBuildings(HolmasCsvExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        private static void BridgeUpgradeExpFromMetaLevels(
+            HolmasConfigExportReport report,
+            SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable,
+            SheetTable<HolmasMetaLevelSheetRow> metaLevelTable)
+        {
+            if (playerLevelTable == null || metaLevelTable == null)
+            {
+                return;
+            }
+
+            Dictionary<int, HolmasMetaLevelSheetRow> metaRows = metaLevelTable.Rows
+                .Where(row => row != null && row.PlayerLevel > 0)
+                .GroupBy(row => row.PlayerLevel)
+                .ToDictionary(group => group.Key, group => group.First());
+
+            foreach (HolmasPlayerLevelSheetRow playerRow in playerLevelTable.Rows)
+            {
+                if (playerRow == null)
+                {
+                    continue;
+                }
+
+                if (!metaRows.TryGetValue(playerRow.PlayerLevel, out HolmasMetaLevelSheetRow metaRow) || metaRow == null)
+                {
+                    report.Warnings.Add($"缺少玩家等级 {playerRow.PlayerLevel} 对应的 MetaLevel，无法桥接 upgradeExp。");
+                    continue;
+                }
+
+                playerRow.UpgradeExp = metaRow.MinExperience;
+            }
+        }
+
+        private static List<HolmasAgencyBuildingSheetRow> ParseAgencyBuildings(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int stageIdCol = RequireColumn(report, sourcePath, headerMap, "agencyStageId");
             int stageNameCol = RequireColumn(report, sourcePath, headerMap, "stageName");
@@ -692,7 +732,7 @@ namespace Holmas.EditorTools
             int promotionCostsCol = RequireColumn(report, sourcePath, headerMap, "promotionUpgradeCosts");
             int notesCol = GetOptionalColumn(headerMap, "notes");
 
-            var list = new List<HolmasAgencyBuildingCsvRow>();
+            var list = new List<HolmasAgencyBuildingSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
             {
                 var row = rows[rowIndex];
@@ -708,7 +748,7 @@ namespace Holmas.EditorTools
                 int[] levelCaps = ParseIntArrayStrict(GetCell(row, promotionCapsCol), sourcePath, rowIndex + 1, report);
                 var upgradeCosts = ParseNestedIntArrays(GetCell(row, promotionCostsCol), sourcePath, rowIndex + 1, report);
 
-                var item = new HolmasAgencyBuildingCsvRow
+                var item = new HolmasAgencyBuildingSheetRow
                 {
                     RowIndex = list.Count,
                     AgencyStageId = stageId,
@@ -763,12 +803,12 @@ namespace Holmas.EditorTools
         }
 
         private static void ValidateMetaLevelTable(
-            HolmasCsvExportReport report,
-            CsvTable<HolmasPlayerLevelCsvRow> playerLevelTable,
-            CsvTable<HolmasMetaLevelCsvRow> metaLevelTable)
+            HolmasConfigExportReport report,
+            SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable,
+            SheetTable<HolmasMetaLevelSheetRow> metaLevelTable)
         {
-            var metaRows = metaLevelTable?.Rows ?? new List<HolmasMetaLevelCsvRow>();
-            var playerRows = playerLevelTable?.Rows ?? new List<HolmasPlayerLevelCsvRow>();
+            var metaRows = metaLevelTable?.Rows ?? new List<HolmasMetaLevelSheetRow>();
+            var playerRows = playerLevelTable?.Rows ?? new List<HolmasPlayerLevelSheetRow>();
 
             if (metaRows.Count == 0)
             {
@@ -800,7 +840,7 @@ namespace Holmas.EditorTools
                 return;
             }
 
-            var playerLevelLookup = new Dictionary<int, HolmasPlayerLevelCsvRow>();
+            var playerLevelLookup = new Dictionary<int, HolmasPlayerLevelSheetRow>();
             var seenPlayerLevels = new HashSet<int>();
             int expectedPlayerLevel = 1;
             for (int i = 0; i < playerRows.Count; i++)
@@ -873,6 +913,18 @@ namespace Holmas.EditorTools
                     return;
                 }
 
+                if (row.MinExperience < 0)
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 的 minExperience 不能为负: level={row.PlayerLevel}。");
+                    return;
+                }
+
+                if (i > 0 && metaRows[i - 1] != null && row.MinExperience <= metaRows[i - 1].MinExperience)
+                {
+                    report.Errors.Add($"Holmas_MetaLevelTable 的 minExperience 必须严格递增: level={row.PlayerLevel}。");
+                    return;
+                }
+
                 if (row.OfflineRewardPerHour < 0)
                 {
                     report.Errors.Add($"Holmas_MetaLevelTable 的 offlineRewardPerHour 不能为负: level={row.PlayerLevel}。");
@@ -884,13 +936,19 @@ namespace Holmas.EditorTools
                     report.Errors.Add($"Holmas_MetaLevelTable 的 adUnlockHours 必须大于 0: level={row.PlayerLevel}。");
                     return;
                 }
+
+                if (playerRow.UpgradeExp != row.MinExperience)
+                {
+                    report.Errors.Add($"Holmas_PlayerLevelTable 与 Holmas_MetaLevelTable 的升级门槛桥接不一致: level={row.PlayerLevel}。");
+                    return;
+                }
             }
 
         }
 
-        private static void ValidateAgencyBuildingTable(HolmasCsvExportReport report, CsvTable<HolmasAgencyBuildingCsvRow> agencyBuildingTable)
+        private static void ValidateAgencyBuildingTable(HolmasConfigExportReport report, SheetTable<HolmasAgencyBuildingSheetRow> agencyBuildingTable)
         {
-            var rows = agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingCsvRow>();
+            var rows = agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingSheetRow>();
             if (rows.Count == 0)
             {
                 report.Errors.Add("缺少 Holmas_AgencyBuildingTable 数据。");
@@ -978,7 +1036,7 @@ namespace Holmas.EditorTools
                         return;
                     }
 
-                    HolmasAgencyBuildingCostCsvRow costRow = row.PromotionUpgradeCosts[promotionIndex];
+                    HolmasAgencyBuildingCostSheetRow costRow = row.PromotionUpgradeCosts[promotionIndex];
                     int[] costs = costRow == null ? Array.Empty<int>() : costRow.Costs ?? Array.Empty<int>();
                     if (costs.Length != cap)
                     {
@@ -999,8 +1057,8 @@ namespace Holmas.EditorTools
         }
 
         private static void NormalizeRows(
-            HolmasCsvExportReport report,
-            CsvTable<HolmasMapCsvRow> mapTable,
+            HolmasConfigExportReport report,
+            SheetTable<HolmasMapSheetRow> mapTable,
             Dictionary<string, int> catLookup,
             Dictionary<string, int> taskLookup,
             Dictionary<string, int> mapLookup)
@@ -1017,8 +1075,8 @@ namespace Holmas.EditorTools
         }
 
         private static void NormalizeRows(
-            HolmasCsvExportReport report,
-            CsvTable<HolmasCatCsvRow> catTable,
+            HolmasConfigExportReport report,
+            SheetTable<HolmasCatSheetRow> catTable,
             Dictionary<string, int> catLookup,
             Dictionary<string, int> taskLookup,
             Dictionary<string, int> mapLookup)
@@ -1036,8 +1094,8 @@ namespace Holmas.EditorTools
         }
 
         private static void NormalizeRows(
-            HolmasCsvExportReport report,
-            CsvTable<HolmasTaskCsvRow> taskTable,
+            HolmasConfigExportReport report,
+            SheetTable<HolmasTaskSheetRow> taskTable,
             Dictionary<string, int> catLookup,
             Dictionary<string, int> taskLookup,
             Dictionary<string, int> mapLookup)
@@ -1070,8 +1128,8 @@ namespace Holmas.EditorTools
         }
 
         private static void NormalizeRows(
-            HolmasCsvExportReport report,
-            CsvTable<HolmasPlayerLevelCsvRow> levelTable,
+            HolmasConfigExportReport report,
+            SheetTable<HolmasPlayerLevelSheetRow> levelTable,
             Dictionary<string, int> catLookup,
             Dictionary<string, int> taskLookup,
             Dictionary<string, int> mapLookup)
@@ -1116,11 +1174,11 @@ namespace Holmas.EditorTools
         }
 
         private static HolmasCoreConfigPackage BuildCorePackage(
-            CsvTable<HolmasMapCsvRow> mapTable,
-            CsvTable<HolmasTaskCsvRow> taskTable,
-            CsvTable<HolmasPlayerLevelCsvRow> playerLevelTable,
-            CsvTable<HolmasMetaLevelCsvRow> metaLevelTable,
-            CsvTable<HolmasAgencyBuildingCsvRow> agencyBuildingTable)
+            SheetTable<HolmasMapSheetRow> mapTable,
+            SheetTable<HolmasTaskSheetRow> taskTable,
+            SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable,
+            SheetTable<HolmasMetaLevelSheetRow> metaLevelTable,
+            SheetTable<HolmasAgencyBuildingSheetRow> agencyBuildingTable)
         {
             return new HolmasCoreConfigPackage
             {
@@ -1151,20 +1209,21 @@ namespace Holmas.EditorTools
                     MapIndices = row.MapIndices ?? Array.Empty<int>(),
                     MapWeights = row.MapWeights ?? Array.Empty<int>(),
                 }).ToArray(),
-                MetaLevels = (metaLevelTable?.Rows ?? new List<HolmasMetaLevelCsvRow>()).Select(row => new HolmasMetaLevelRow
+                MetaLevels = (metaLevelTable?.Rows ?? new List<HolmasMetaLevelSheetRow>()).Select(row => new HolmasMetaLevelRow
                 {
                     PlayerLevel = row.PlayerLevel,
+                    MinExperience = row.MinExperience,
                     OfflineRewardPerHour = row.OfflineRewardPerHour,
                     AdUnlockHours = row.AdUnlockHours,
                     Notes = row.Notes ?? string.Empty,
                 }).ToArray(),
-                AgencyBuildings = (agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingCsvRow>()).Select(row => new HolmasAgencyBuildingRow
+                AgencyBuildings = (agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingSheetRow>()).Select(row => new HolmasAgencyBuildingRow
                 {
                     AgencyStageId = row.AgencyStageId,
                     StageName = row.StageName ?? string.Empty,
                     PromotionIds = row.PromotionIds ?? Array.Empty<string>(),
                     PromotionLevelCaps = row.PromotionLevelCaps ?? Array.Empty<int>(),
-                    PromotionUpgradeCosts = (row.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostCsvRow>())
+                    PromotionUpgradeCosts = (row.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostSheetRow>())
                         .Select(costRow => new HolmasAgencyBuildingCostRow
                         {
                             Costs = costRow?.Costs ?? Array.Empty<int>(),
@@ -1175,7 +1234,7 @@ namespace Holmas.EditorTools
             };
         }
 
-        private static HolmasCatMetaPackage BuildCatMetaPackage(CsvTable<HolmasCatCsvRow> catTable)
+        private static HolmasCatMetaPackage BuildCatMetaPackage(SheetTable<HolmasCatSheetRow> catTable)
         {
             return new HolmasCatMetaPackage
             {
@@ -1257,9 +1316,15 @@ namespace Holmas.EditorTools
             }
         }
 
-        private static Dictionary<string, int> BuildHeaderMap(string[] headerRow)
+        private static Dictionary<string, int> BuildHeaderMap(HolmasConfigExportReport report, string sourcePath, string[] headerRow)
         {
             var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            if (headerRow == null)
+            {
+                report.Errors.Add($"{sourcePath} 缺少字段名行。");
+                return map;
+            }
+
             for (int i = 0; i < headerRow.Length; i++)
             {
                 string header = headerRow[i] == null ? string.Empty : headerRow[i].Trim();
@@ -1268,16 +1333,34 @@ namespace Holmas.EditorTools
                     continue;
                 }
 
-                if (!map.ContainsKey(header))
+                if (map.ContainsKey(header))
                 {
-                    map[header] = i;
+                    report.Errors.Add($"{sourcePath} 存在重复字段名: {header}");
+                    continue;
                 }
+
+                map[header] = i;
             }
 
             return map;
         }
 
-        private static int RequireColumn(HolmasCsvExportReport report, string sourcePath, Dictionary<string, int> headerMap, string columnName)
+        private static List<string[]> ReadWorksheetRows(HolmasConfigExportReport report, string sourcePath)
+        {
+            if (HolmasXlsxTableReader.TryReadFirstWorksheet(sourcePath, out List<string[]> rows, out string error))
+            {
+                return rows;
+            }
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                report.Errors.Add(error);
+            }
+
+            return new List<string[]>();
+        }
+
+        private static int RequireColumn(HolmasConfigExportReport report, string sourcePath, Dictionary<string, int> headerMap, string columnName)
         {
             int index = GetOptionalColumn(headerMap, columnName);
             if (index < 0)
@@ -1352,7 +1435,7 @@ namespace Holmas.EditorTools
             return ok ? value : defaultValue;
         }
 
-        private static int[] ParseIntArray(string text, string sourcePath, int rowNumber, HolmasCsvExportReport report)
+        private static int[] ParseIntArray(string text, string sourcePath, int rowNumber, HolmasConfigExportReport report)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -1385,7 +1468,7 @@ namespace Holmas.EditorTools
             return values.ToArray();
         }
 
-        private static int[] ParseIntArrayStrict(string text, string sourcePath, int rowNumber, HolmasCsvExportReport report)
+        private static int[] ParseIntArrayStrict(string text, string sourcePath, int rowNumber, HolmasConfigExportReport report)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -1419,11 +1502,11 @@ namespace Holmas.EditorTools
             return long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
         }
 
-        private static HolmasAgencyBuildingCostCsvRow[] ParseNestedIntArrays(string text, string sourcePath, int rowNumber, HolmasCsvExportReport report)
+        private static HolmasAgencyBuildingCostSheetRow[] ParseNestedIntArrays(string text, string sourcePath, int rowNumber, HolmasConfigExportReport report)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
-                return Array.Empty<HolmasAgencyBuildingCostCsvRow>();
+                return Array.Empty<HolmasAgencyBuildingCostSheetRow>();
             }
 
             var segments = text
@@ -1432,7 +1515,7 @@ namespace Holmas.EditorTools
                 .Where(item => !string.IsNullOrWhiteSpace(item))
                 .ToArray();
 
-            var rows = new List<HolmasAgencyBuildingCostCsvRow>(segments.Length);
+            var rows = new List<HolmasAgencyBuildingCostSheetRow>(segments.Length);
             for (int i = 0; i < segments.Length; i++)
             {
                 string segment = segments[i];
@@ -1454,7 +1537,7 @@ namespace Holmas.EditorTools
                     costs.Add(cost);
                 }
 
-                rows.Add(new HolmasAgencyBuildingCostCsvRow
+                rows.Add(new HolmasAgencyBuildingCostSheetRow
                 {
                     Costs = costs.ToArray(),
                 });
@@ -1546,13 +1629,13 @@ namespace Holmas.EditorTools
     }
 
     [Serializable]
-    public sealed class HolmasCsvExportReport
+    public sealed class HolmasConfigExportReport
     {
         public string ExportedAtUtc;
         public bool Success;
         public int BinaryWrittenCount;
         public string[] SourceFiles;
-        public HolmasCsvBundleReport[] BundleReports;
+        public HolmasConfigBundleReport[] BundleReports;
         public List<string> Errors = new List<string>();
         public List<string> Warnings = new List<string>();
 
@@ -1568,10 +1651,10 @@ namespace Holmas.EditorTools
     }
 
     [Serializable]
-    public sealed class HolmasCsvBundleReport
+    public sealed class HolmasConfigBundleReport
     {
         public string BundleName;
-        public string[] SourceCsvNames;
+        public string[] SourceTableNames;
         public string PreviewJsonPath;
         public string BinaryPath;
         public int RowCount;
@@ -1584,11 +1667,11 @@ namespace Holmas.EditorTools
     {
         public int Version;
         public string ExportedAtUtc;
-        public HolmasMapCsvRow[] Maps;
-        public HolmasTaskCsvRow[] Tasks;
-        public HolmasPlayerLevelCsvRow[] PlayerLevels;
-        public HolmasMetaLevelCsvRow[] MetaLevels;
-        public HolmasAgencyBuildingCsvRow[] AgencyBuildings;
+        public HolmasMapSheetRow[] Maps;
+        public HolmasTaskSheetRow[] Tasks;
+        public HolmasPlayerLevelSheetRow[] PlayerLevels;
+        public HolmasMetaLevelSheetRow[] MetaLevels;
+        public HolmasAgencyBuildingSheetRow[] AgencyBuildings;
     }
 
     [Serializable]
@@ -1596,11 +1679,11 @@ namespace Holmas.EditorTools
     {
         public int Version;
         public string ExportedAtUtc;
-        public HolmasCatCsvRow[] Cats;
+        public HolmasCatSheetRow[] Cats;
     }
 
     [Serializable]
-    public sealed class HolmasMapCsvRow
+    public sealed class HolmasMapSheetRow
     {
         public int RowIndex;
         public string MapId;
@@ -1612,7 +1695,7 @@ namespace Holmas.EditorTools
     }
 
     [Serializable]
-    public sealed class HolmasCatCsvRow
+    public sealed class HolmasCatSheetRow
     {
         public int RowIndex;
         public string CatId;
@@ -1627,7 +1710,7 @@ namespace Holmas.EditorTools
     }
 
     [Serializable]
-    public sealed class HolmasTaskCsvRow
+    public sealed class HolmasTaskSheetRow
     {
         public int RowIndex;
         public string TaskTypeId;
@@ -1643,7 +1726,7 @@ namespace Holmas.EditorTools
     }
 
     [Serializable]
-    public sealed class HolmasPlayerLevelCsvRow
+    public sealed class HolmasPlayerLevelSheetRow
     {
         public int RowIndex;
         public int PlayerLevel;
@@ -1657,43 +1740,44 @@ namespace Holmas.EditorTools
     }
 
     [Serializable]
-    public sealed class HolmasMetaLevelCsvRow
+    public sealed class HolmasMetaLevelSheetRow
     {
         public int RowIndex;
         public int PlayerLevel;
+        public int MinExperience;
         public int OfflineRewardPerHour;
         public int AdUnlockHours;
         public string Notes;
     }
 
     [Serializable]
-    public sealed class HolmasAgencyBuildingCostCsvRow
+    public sealed class HolmasAgencyBuildingCostSheetRow
     {
         public int[] Costs;
     }
 
     [Serializable]
-    public sealed class HolmasAgencyBuildingCsvRow
+    public sealed class HolmasAgencyBuildingSheetRow
     {
         public int RowIndex;
         public int AgencyStageId;
         public string StageName;
         public string[] PromotionIds;
         public int[] PromotionLevelCaps;
-        public HolmasAgencyBuildingCostCsvRow[] PromotionUpgradeCosts;
+        public HolmasAgencyBuildingCostSheetRow[] PromotionUpgradeCosts;
         public string Notes;
     }
 
     [Serializable]
-    internal sealed class CsvTable<T>
+    internal sealed class SheetTable<T>
     {
-        public CsvTable(string name)
+        public SheetTable(string name)
         {
             Name = name;
             Rows = new List<T>();
         }
 
-        public CsvTable(string name, List<T> rows)
+        public SheetTable(string name, List<T> rows)
             : this(name)
         {
             if (rows != null)
@@ -1704,114 +1788,6 @@ namespace Holmas.EditorTools
 
         public string Name { get; private set; }
         public List<T> Rows { get; private set; }
-    }
-
-    internal static class CsvParser
-    {
-        public static List<string[]> Parse(string text)
-        {
-            var rows = new List<string[]>();
-            if (string.IsNullOrEmpty(text))
-            {
-                return rows;
-            }
-
-            text = text.TrimStart('\uFEFF');
-            var currentRow = new List<string>();
-            var currentCell = new StringBuilder();
-            bool inQuotes = false;
-            bool cellHasContent = false;
-
-            for (int i = 0; i < text.Length; i++)
-            {
-                char c = text[i];
-                if (inQuotes)
-                {
-                    if (c == '"')
-                    {
-                        if (i + 1 < text.Length && text[i + 1] == '"')
-                        {
-                            currentCell.Append('"');
-                            i++;
-                        }
-                        else
-                        {
-                            inQuotes = false;
-                        }
-                    }
-                    else
-                    {
-                        currentCell.Append(c);
-                    }
-                    continue;
-                }
-
-                if (c == '"')
-                {
-                    inQuotes = true;
-                    cellHasContent = true;
-                    continue;
-                }
-
-                if (c == ',')
-                {
-                    currentRow.Add(currentCell.ToString());
-                    currentCell.Length = 0;
-                    cellHasContent = false;
-                    continue;
-                }
-
-                if (c == '\r')
-                {
-                    continue;
-                }
-
-                if (c == '\n')
-                {
-                    currentRow.Add(currentCell.ToString());
-                    currentCell.Length = 0;
-                    if (currentRow.Count > 0 && (cellHasContent || !IsBlankCsvRow(currentRow)))
-                    {
-                        rows.Add(currentRow.ToArray());
-                    }
-                    currentRow.Clear();
-                    cellHasContent = false;
-                    continue;
-                }
-
-                currentCell.Append(c);
-                cellHasContent = true;
-            }
-
-            if (inQuotes || currentCell.Length > 0 || currentRow.Count > 0)
-            {
-                currentRow.Add(currentCell.ToString());
-                if (currentRow.Count > 0 && !IsBlankCsvRow(currentRow))
-                {
-                    rows.Add(currentRow.ToArray());
-                }
-            }
-
-            return rows;
-        }
-
-        private static bool IsBlankCsvRow(List<string> row)
-        {
-            if (row == null || row.Count == 0)
-            {
-                return true;
-            }
-
-            for (int i = 0; i < row.Count; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(row[i]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
     }
 }
 #endif

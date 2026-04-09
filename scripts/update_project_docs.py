@@ -37,7 +37,7 @@ TOPIC_PATTERNS = [
     ("审查与修复", r"Agent\s*6|审查|复审|修复|review|挑刺"),
     ("测试与验证", r"测试|验证|回归|smoke|qa|batchmode"),
     ("UI 与联调", r"UI|界面|prefab|presenter|controller|联调|图标"),
-    ("配置表与数值扩展", r"配置表|导表|csv|json|bytes|catalog|数值|buildingtable|leveltable"),
+    ("配置表与数值扩展", r"配置表|导表|xlsx|json|bytes|catalog|数值|buildingtable|leveltable"),
     ("任务与长期进度", r"任务|成长|长期|进度|奖励|建筑升级|agency|playerLevel|playerlevel"),
     ("地图与棋盘", r"地图|棋盘|terrain|board|level|扫雷|开图|猫池"),
     ("边界与骨架", r"Shared|DTO|骨架|入口|bootstrap|组合层|boundary"),
@@ -258,7 +258,7 @@ def classify_commit_module(text: str, topic: str) -> str:
         return "340"
     if re.search(r"场景|scene|预制体|prefab", compact, re.IGNORECASE):
         return "330"
-    if re.search(r"Holmas_AgencyBuildingTable|Holmas_CatTable|Holmas_MapTable|Holmas_MetaLevelTable|Holmas_PlayerLevelTable|Holmas_TaskTable|\.csv|csv|配置表", compact, re.IGNORECASE):
+    if re.search(r"Holmas_AgencyBuildingTable|Holmas_CatTable|Holmas_MapTable|Holmas_MetaLevelTable|Holmas_PlayerLevelTable|Holmas_TaskTable|\.xlsx|xlsx|配置表", compact, re.IGNORECASE):
         return "410"
     if re.search(r"导表|导出|转换脚本|export report|配置转换", compact, re.IGNORECASE):
         return "420"

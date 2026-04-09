@@ -104,7 +104,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return false;
             }
 
-            if (!TryBuildMetaLevels(corePackage.MetaLevels, playerLevels, out var metaLevels, report))
+            if (!TryBuildMetaLevels(corePackage.Version, corePackage.MetaLevels, playerLevels, out var metaLevels, report))
             {
                 return false;
             }
@@ -429,6 +429,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         }
 
         private static bool TryBuildMetaLevels(
+            int packageVersion,
             IReadOnlyList<HolmasMetaLevelRow> rows,
             IReadOnlyList<HolmasPlayerLevelDefinition> playerLevels,
             out List<HolmasMetaLevelRow> metaLevels,
@@ -495,14 +496,35 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (playerLevelLookup.TryGetValue(row.PlayerLevel, out var playerLevel))
+                if (!playerLevelLookup.TryGetValue(row.PlayerLevel, out var playerLevel) || playerLevel == null)
                 {
-                    _ = playerLevel;
+                    report.AddError($"MetaLevels 找不到对应的 PlayerLevel 定义: level={row.PlayerLevel}。");
+                    return false;
+                }
+
+                int minExperience = packageVersion >= 4 ? row.MinExperience : playerLevel.UpgradeExp;
+                if (minExperience < 0)
+                {
+                    report.AddError($"MetaLevels 的 minExperience 不能为负: level={row.PlayerLevel}。");
+                    return false;
+                }
+
+                if (i > 0 && minExperience <= metaLevels[i - 1].MinExperience)
+                {
+                    report.AddError($"MetaLevels 的 minExperience 必须严格递增: level={row.PlayerLevel}。");
+                    return false;
+                }
+
+                if (packageVersion >= 4 && playerLevel.UpgradeExp != minExperience)
+                {
+                    report.AddError($"MetaLevels.level={row.PlayerLevel} 的 minExperience 与 PlayerLevels.UpgradeExp 不一致。");
+                    return false;
                 }
 
                 metaLevels.Add(new HolmasMetaLevelRow
                 {
                     PlayerLevel = row.PlayerLevel,
+                    MinExperience = minExperience,
                     OfflineRewardPerHour = row.OfflineRewardPerHour,
                     AdUnlockHours = row.AdUnlockHours,
                     Notes = row.Notes ?? string.Empty,

@@ -109,7 +109,7 @@
 340xxxxx 地图 / Terrain / 关卡资源
 
 4xxxxxxx 配置 / 数据
-410xxxxx 原始配置表 / CSV
+410xxxxx 原始配置表 / xlsx
 420xxxxx 配置导出 / 转换脚本
 430xxxxx json / bytes / catalog 产物
 440xxxxx 配置协议 / schema / 数据结构
@@ -155,7 +155,7 @@
 340xxxxx 地图 / Terrain / 关卡资源
 
 4xxxxxxx 配置 / 数据
-410xxxxx 原始配置表 / CSV
+410xxxxx 原始配置表 / xlsx
 420xxxxx 配置导出 / 转换脚本
 430xxxxx json / bytes / catalog 产物
 440xxxxx 配置协议 / schema / 数据结构
@@ -182,7 +182,7 @@
 270 UI 自动生成系统文档
 320 HotUpdate Res
 330 Prefab / Unity 资产 / meta
-410 CSV / 原始配置
+410 xlsx / 原始配置
 420 配置导出脚本
 520 测试 / 回归 / validation
 620 UiPrefabGenerator
@@ -213,7 +213,7 @@
 [23000001] 流程：收紧半收尾失败态规则入口
 [25000001] 文档：补齐正式建筑内容表方案
 [32000001] 玩法：补齐 Res 目录资源 meta 文件
-[41000001] 配置：更新 Holmas_TaskTable.csv
+[41000001] 配置：更新 Holmas_TaskTable.xlsx
 [62000001] UI：补 sample manifest 输出校验
 ```
 

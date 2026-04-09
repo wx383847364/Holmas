@@ -184,18 +184,23 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         private static HolmasCoreConfigPackage ReadCorePackage(BinaryReader reader, out string error)
         {
             error = string.Empty;
-            if (!ReadAndValidateHeader(reader, HolmasConfigBinaryFormat.CoreMagic, out var version, out error))
+            if (!ReadAndValidateHeader(
+                    reader,
+                    HolmasConfigBinaryFormat.CoreMagic,
+                    out var codecVersion,
+                    out var packageVersion,
+                    out error))
             {
                 return null;
             }
 
             var package = new HolmasCoreConfigPackage
             {
-                Version = version,
+                Version = packageVersion,
                 Maps = ReadMapRows(reader),
                 Tasks = ReadTaskRows(reader),
                 PlayerLevels = ReadPlayerLevelRows(reader),
-                MetaLevels = ReadMetaLevelRows(reader),
+                MetaLevels = ReadMetaLevelRows(reader, codecVersion),
                 AgencyBuildings = ReadAgencyBuildingRows(reader),
             };
 
@@ -205,22 +210,33 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         private static HolmasCatMetaPackage ReadCatMetaPackage(BinaryReader reader, out string error)
         {
             error = string.Empty;
-            if (!ReadAndValidateHeader(reader, HolmasConfigBinaryFormat.CatMetaMagic, out var version, out error))
+            if (!ReadAndValidateHeader(
+                    reader,
+                    HolmasConfigBinaryFormat.CatMetaMagic,
+                    out _,
+                    out var packageVersion,
+                    out error))
             {
                 return null;
             }
 
             var package = new HolmasCatMetaPackage
             {
-                Version = version,
+                Version = packageVersion,
                 Cats = ReadCatRows(reader),
             };
 
             return package;
         }
 
-        private static bool ReadAndValidateHeader(BinaryReader reader, int expectedMagic, out int packageVersion, out string error)
+        private static bool ReadAndValidateHeader(
+            BinaryReader reader,
+            int expectedMagic,
+            out int codecVersion,
+            out int packageVersion,
+            out string error)
         {
+            codecVersion = 0;
             packageVersion = 0;
             error = string.Empty;
 
@@ -231,8 +247,9 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return false;
             }
 
-            int codecVersion = reader.ReadInt32();
-            if (codecVersion != HolmasConfigBinaryFormat.CurrentVersion)
+            codecVersion = reader.ReadInt32();
+            if (codecVersion < HolmasConfigBinaryFormat.MinSupportedVersion ||
+                codecVersion > HolmasConfigBinaryFormat.CurrentVersion)
             {
                 error = $"配置包编解码版本不支持: {codecVersion}。";
                 return false;
@@ -392,20 +409,24 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             {
                 HolmasMetaLevelRow row = rows[i] ?? new HolmasMetaLevelRow();
                 writer.Write(row.PlayerLevel);
+                writer.Write(row.MinExperience);
                 writer.Write(row.OfflineRewardPerHour);
                 writer.Write(row.AdUnlockHours);
             }
         }
 
-        private static HolmasMetaLevelRow[] ReadMetaLevelRows(BinaryReader reader)
+        private static HolmasMetaLevelRow[] ReadMetaLevelRows(BinaryReader reader, int codecVersion)
         {
             int count = ReadNonNegativeCount(reader);
             var rows = new HolmasMetaLevelRow[count];
             for (int i = 0; i < count; i++)
             {
+                int playerLevel = reader.ReadInt32();
+                int minExperience = codecVersion >= 4 ? reader.ReadInt32() : 0;
                 rows[i] = new HolmasMetaLevelRow
                 {
-                    PlayerLevel = reader.ReadInt32(),
+                    PlayerLevel = playerLevel,
+                    MinExperience = minExperience,
                     OfflineRewardPerHour = reader.ReadInt32(),
                     AdUnlockHours = reader.ReadInt32(),
                 };

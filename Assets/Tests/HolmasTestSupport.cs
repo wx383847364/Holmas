@@ -118,12 +118,14 @@ namespace Holmas.Tests
                 new HolmasMetaProgressionDefinition
                 {
                     PlayerLevel = 1,
+                    MinExperience = 0,
                     OfflineRewardPerHour = 6,
                     AdUnlockHours = 24,
                 },
                 new HolmasMetaProgressionDefinition
                 {
                     PlayerLevel = 2,
+                    MinExperience = 100,
                     OfflineRewardPerHour = 8,
                     AdUnlockHours = 24,
                 }

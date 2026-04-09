@@ -53,12 +53,12 @@
 
 ## 表结构
 
-建议继续使用两张原始 CSV：
+建议继续使用两张原始 xlsx：
 
-- `Assets/Config/Holmas_MetaLevelTable.csv`
-- `Assets/Config/Holmas_AgencyBuildingTable.csv`
+- `Assets/Config/Holmas_MetaLevelTable.xlsx`
+- `Assets/Config/Holmas_AgencyBuildingTable.xlsx`
 
-`Holmas_MetaLevelTable.csv` 字段固定为：
+`Holmas_MetaLevelTable.xlsx` 字段固定为：
 
 - `playerLevel`
   - 玩家等级，范围 `1-20`
@@ -71,9 +71,9 @@
 - `notes`
   - 策划备注列，不进入运行时导出
 
-运行时只消费前 `4` 个字段，`notes` 仅保留在原始 CSV 中。
+运行时只消费前 `4` 个字段，`notes` 仅保留在原始 xlsx 中。
 
-`Holmas_AgencyBuildingTable.csv` 语义同步改为宣传系统：
+`Holmas_AgencyBuildingTable.xlsx` 语义同步改为宣传系统：
 
 - `agencyStageId`
   - 当前城市阶段标识，按城市一行组织宣传升级配置
@@ -200,7 +200,7 @@
   - 要改为同时加载完整成长表和宣传升级表
 
 - 现有导表链
-  - 在 `CSV转二进制` 流程中加入 meta 表与宣传升级表导出
+  - 在 `Xlsx导出二进制` 流程中加入 meta 表与宣传升级表导出
   - 继续合并进核心配置包，不额外拆第三个 bytes 文件
 
 ## 测试要求
@@ -232,7 +232,7 @@
 - 广告槽位解锁时长从表里读取，而不是继续写死 `24` 小时
 
 - `playerLevel` 提升后，任务补位和地图请求继续使用同等级配置
-- 与当前内容表、地图表及宣传升级表组合后，`CSV转二进制` 和 `run_holmas_validation.sh` 继续通过
+- 与当前内容表、地图表及宣传升级表组合后，`Xlsx导出二进制` 和 `run_holmas_validation.sh` 继续通过
 
 ## 本轮不做
 
@@ -246,9 +246,9 @@
 
 这份方案的默认实现顺序是：
 
-1. 新增长期成长原始 CSV
-2. 新增城市宣传升级原始 CSV
-3. 将两张表纳入现有 `CSV -> json / bytes` 导出链
+1. 新增长期成长原始 xlsx
+2. 新增城市宣传升级原始 xlsx
+3. 将两张表纳入现有 `xlsx -> json / bytes` 导出链
 4. 扩展 `HolmasMetaProgressionDefinition` 与宣传升级读取结构
 5. 接入宣传升级驱动的经验输入，并替换默认经验源与 `1` 级兜底 meta catalog
 6. 复用现有内容表做整体验证

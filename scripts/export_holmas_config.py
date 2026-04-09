@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import codecs
 import glob
 import os
 import platform
@@ -12,45 +11,30 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
 
 
-CSV_FILES = (
-    "Holmas_MapTable.csv",
-    "Holmas_CatTable.csv",
-    "Holmas_TaskTable.csv",
-    "Holmas_PlayerLevelTable.csv",
-    "Holmas_MetaLevelTable.csv",
-    "Holmas_AgencyBuildingTable.csv",
+XLSX_FILES = (
+    "Holmas_MapTable.xlsx",
+    "Holmas_CatTable.xlsx",
+    "Holmas_TaskTable.xlsx",
+    "Holmas_PlayerLevelTable.xlsx",
+    "Holmas_MetaLevelTable.xlsx",
+    "Holmas_AgencyBuildingTable.xlsx",
 )
 
-EXECUTE_METHOD = "Holmas.EditorTools.HolmasCsvBinaryExporter.ExportFromBatchMode"
+EXECUTE_METHOD = "Holmas.EditorTools.HolmasConfigBinaryExporter.ExportFromBatchMode"
 SUCCESS_MARKER = "Exiting batchmode successfully now!"
 
 
-@dataclass(frozen=True)
-class CsvCheckResult:
-    path: Path
-    source_encoding: str
-    had_bom: bool
-    changed: bool
-
-
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Holmas CSV -> JSON/bytes 导出工具。")
+    parser = argparse.ArgumentParser(description="Holmas Xlsx -> JSON/bytes 导出工具。")
     parser.add_argument("--editor", help="显式指定 Unity/Tuanjie 编辑器可执行文件路径。")
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="只检查 CSV 编码和编辑器路径，不执行 Unity batchmode 导出。",
-    )
-    parser.add_argument(
-        "--skip-bom-fix",
-        action="store_true",
-        help="发现 UTF-8 BOM 或 Excel 本地编码时不自动修复，直接报错退出。",
+        help="只检查 Xlsx 源文件和编辑器路径，不执行 Unity batchmode 导出。",
     )
     return parser.parse_args()
 
@@ -58,13 +42,13 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     repo_root = Path(__file__).resolve().parent.parent
-    csv_root = repo_root / "Assets" / "Config"
+    config_root = repo_root / "Assets" / "Config"
 
     print(f"[info] project root: {repo_root}")
-    print(f"[info] csv root: {csv_root}")
+    print(f"[info] config root: {config_root}")
 
-    csv_results = check_and_fix_csv_files(csv_root, skip_bom_fix=args.skip_bom_fix)
-    print_csv_summary(csv_results)
+    check_xlsx_files(config_root)
+    print_xlsx_summary(config_root)
 
     editor_path = resolve_editor_path(repo_root, args.editor)
     print(f"[info] editor: {editor_path}")
@@ -94,81 +78,18 @@ def main() -> int:
     return 0
 
 
-def check_and_fix_csv_files(csv_root: Path, skip_bom_fix: bool) -> list[CsvCheckResult]:
-    results: list[CsvCheckResult] = []
-    missing = [csv_root / name for name in CSV_FILES if not (csv_root / name).is_file()]
+def check_xlsx_files(config_root: Path) -> None:
+    missing = [config_root / name for name in XLSX_FILES if not (config_root / name).is_file()]
     if missing:
         joined = "\n".join(str(path) for path in missing)
-        raise SystemExit(f"[error] 找不到以下 CSV 文件：\n{joined}")
-
-    for csv_name in CSV_FILES:
-        path = csv_root / csv_name
-        raw = path.read_bytes()
-        newline = detect_newline(raw)
-
-        if raw.startswith(codecs.BOM_UTF8):
-            text = raw.decode("utf-8-sig")
-            if skip_bom_fix:
-                raise SystemExit(f"[error] {path} 是 UTF-8 with BOM，请先转成 UTF-8 无 BOM 或移除 --skip-bom-fix。")
-
-            with path.open("w", encoding="utf-8", newline="") as handle:
-                handle.write(normalize_newlines(text, newline))
-            results.append(CsvCheckResult(path=path, source_encoding="utf-8-sig", had_bom=True, changed=True))
-            continue
-
-        try:
-            raw.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            excel_text = try_decode_excel_ansi(raw)
-            if excel_text is None:
-                raise SystemExit(f"[error] {path} 不是合法 UTF-8 文件，也无法按 Excel 常见本地编码读取：{exc}") from exc
-
-            if skip_bom_fix:
-                raise SystemExit(f"[error] {path} 是 Excel 本地编码（{excel_text[1]}），请先转成 UTF-8 无 BOM 或移除 --skip-bom-fix。")
-
-            with path.open("w", encoding="utf-8", newline="") as handle:
-                handle.write(normalize_newlines(excel_text[0], newline))
-            results.append(CsvCheckResult(path=path, source_encoding=excel_text[1], had_bom=False, changed=True))
-            continue
-
-        results.append(CsvCheckResult(path=path, source_encoding="utf-8", had_bom=False, changed=False))
-
-    return results
+        raise SystemExit(f"[error] 找不到以下 Xlsx 文件：\n{joined}")
 
 
-def detect_newline(raw: bytes) -> str:
-    if b"\r\n" in raw:
-        return "\r\n"
-    if b"\r" in raw:
-        return "\r"
-    return "\n"
-
-
-def normalize_newlines(text: str, newline: str) -> str:
-    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", newline)
-
-
-def print_csv_summary(results: Iterable[CsvCheckResult]) -> None:
-    for result in results:
-        relative = result.path.relative_to(result.path.parents[2])
-        if result.changed:
-            if result.had_bom:
-                print(f"[info] 已将 UTF-8 BOM 转为无 BOM：{relative}")
-            else:
-                print(f"[info] 已将 {result.source_encoding} 转为 UTF-8 无 BOM：{relative}")
-        elif result.had_bom:
-            print(f"[info] 检测到 BOM：{relative}")
-        else:
-            print(f"[info] UTF-8 无 BOM：{relative}")
-
-
-def try_decode_excel_ansi(raw: bytes) -> tuple[str, str] | None:
-    for encoding in ("gb18030", "gbk"):
-        try:
-            return raw.decode(encoding), encoding
-        except UnicodeDecodeError:
-            continue
-    return None
+def print_xlsx_summary(config_root: Path) -> None:
+    for file_name in XLSX_FILES:
+        path = config_root / file_name
+        relative = path.relative_to(config_root.parents[1])
+        print(f"[info] xlsx source: {relative}")
 
 
 def resolve_editor_path(repo_root: Path, override: str | None) -> Path:

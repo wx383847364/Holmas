@@ -601,18 +601,21 @@ namespace Holmas.Tests
                 new HolmasMetaProgressionDefinition
                 {
                     PlayerLevel = 1,
+                    MinExperience = 0,
                     OfflineRewardPerHour = 6,
                     AdUnlockHours = 24,
                 },
                 new HolmasMetaProgressionDefinition
                 {
                     PlayerLevel = 2,
+                    MinExperience = 1,
                     OfflineRewardPerHour = 8,
                     AdUnlockHours = 12,
                 },
                 new HolmasMetaProgressionDefinition
                 {
                     PlayerLevel = 3,
+                    MinExperience = 2,
                     OfflineRewardPerHour = 10,
                     AdUnlockHours = 24,
                 },
@@ -626,9 +629,9 @@ namespace Holmas.Tests
                 null,
                 new[]
                 {
-                    new HolmasPlayerLevelDefinition { PlayerLevel = 1, UpgradeExp = 0 },
-                    new HolmasPlayerLevelDefinition { PlayerLevel = 2, UpgradeExp = 1 },
-                    new HolmasPlayerLevelDefinition { PlayerLevel = 3, UpgradeExp = 2 },
+                    new HolmasPlayerLevelDefinition { PlayerLevel = 1, UpgradeExp = 900 },
+                    new HolmasPlayerLevelDefinition { PlayerLevel = 2, UpgradeExp = 1900 },
+                    new HolmasPlayerLevelDefinition { PlayerLevel = 3, UpgradeExp = 2900 },
                 });
         }
 

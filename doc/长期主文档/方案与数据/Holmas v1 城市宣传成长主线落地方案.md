@@ -35,10 +35,10 @@
 
 继续保留两张原始表：
 
-- `Assets/Config/Holmas_MetaLevelTable.csv`
-- `Assets/Config/Holmas_AgencyBuildingTable.csv`
+- `Assets/Config/Holmas_MetaLevelTable.xlsx`
+- `Assets/Config/Holmas_AgencyBuildingTable.xlsx`
 
-### Holmas_MetaLevelTable.csv
+### Holmas_MetaLevelTable.xlsx
 
 字段保持：
 
@@ -54,7 +54,7 @@
 0,40,85,135,190,250,320,400,490,590,700,825,965,1120,1290,1475,1675,1840,1930,2000
 ```
 
-### Holmas_AgencyBuildingTable.csv
+### Holmas_AgencyBuildingTable.xlsx
 
 虽然文件名暂时保留，但表内字段正式改成：
 
@@ -79,10 +79,10 @@
 
 ## 导表与校验协议
 
-`CSV转二进制` 需要扩展以下规则：
+`Xlsx导出二进制` 需要扩展以下规则：
 
-- `Holmas_PlayerLevelTable.csv` 行数必须锁死为 `20`
-- `Holmas_PlayerLevelTable.csv` 必须与 `Holmas_MetaLevelTable.csv` 行数完全一致
+- `Holmas_PlayerLevelTable.xlsx` 行数必须锁死为 `20`
+- `Holmas_PlayerLevelTable.xlsx` 必须与 `Holmas_MetaLevelTable.xlsx` 行数完全一致
 - `agencyStageId` 必须连续 `1..100`
 - `stageName` 不允许重复
 - `promotionIds` 长度固定为 `4`
@@ -163,7 +163,7 @@
 
 ### 配表校验
 
-- `Holmas_AgencyBuildingTable.csv` 共 `100` 行
+- `Holmas_AgencyBuildingTable.xlsx` 共 `100` 行
 - `agencyStageId` 连续 `1..100`
 - `stageName` 唯一
 - 每行固定 `4` 个 `promotionIds`

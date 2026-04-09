@@ -14,13 +14,13 @@ using UnityEngine;
 
 namespace Holmas.Tests
 {
-    public sealed class HolmasCsvConfigTests
+    public sealed class HolmasConfigExportTests
     {
         [Test]
-        public void HolmasCsvSampleTables_AreConsistentAndMoneyOnly()
+        public void HolmasExportedTables_AreConsistentAndMoneyOnly()
         {
-            CsvConfigTables tables = LoadSampleTables();
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            ExportConfigTables tables = LoadSampleTables();
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(errors, Is.Empty, string.Join(Environment.NewLine, errors));
             Assert.That(tables.Cats, Has.Count.EqualTo(49));
@@ -37,9 +37,9 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasCsvSampleTables_CanDriveRuntimeGeneration()
+        public void HolmasExportedTables_CanDriveRuntimeGeneration()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
 
             HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
             HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
@@ -73,17 +73,17 @@ namespace Holmas.Tests
             foreach (HolmasTaskGenerationResult generated in refill.GeneratedTasks)
             {
                 Assert.That(generated.Task, Is.Not.Null);
-                CsvTaskRow taskRow = tables.Tasks.Single(item => string.Equals(item.TaskTypeId, generated.Task.SourceTaskTypeId, StringComparison.Ordinal));
-                CsvCatRow catRow = tables.Cats.Single(item => string.Equals(item.CatId, generated.Task.CatId, StringComparison.Ordinal));
+                ExportTaskRow taskRow = tables.Tasks.Single(item => string.Equals(item.TaskTypeId, generated.Task.SourceTaskTypeId, StringComparison.Ordinal));
+                ExportCatRow catRow = tables.Cats.Single(item => string.Equals(item.CatId, generated.Task.CatId, StringComparison.Ordinal));
                 int expectedReward = (int)Math.Round(catRow.Price * generated.Task.TargetCount * taskRow.LevelRewardFactor, MidpointRounding.AwayFromZero);
                 Assert.That(generated.Task.Reward, Is.EqualTo(expectedReward));
             }
         }
 
         [Test]
-        public void HolmasCsvSampleTables_CanRoundTripThroughBinaryCatalogFactory()
+        public void HolmasExportedTables_CanRoundTripThroughBinaryCatalogFactory()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
             HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
 
@@ -107,7 +107,7 @@ namespace Holmas.Tests
         [Test]
         public void HolmasConfigCatalogFactory_RejectsMissingMetaLevels()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
             HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
             corePackage.MetaLevels = Array.Empty<HolmasMetaLevelRow>();
@@ -124,7 +124,7 @@ namespace Holmas.Tests
         [Test]
         public void HolmasConfigCatalogFactory_RejectsMissingAgencyPromotions()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
             HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
             corePackage.AgencyBuildings = Array.Empty<HolmasAgencyBuildingRow>();
@@ -141,7 +141,7 @@ namespace Holmas.Tests
         [Test]
         public void HolmasConfigCatalogFactory_RejectsTruncatedMetaLevels()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
             HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
             corePackage.MetaLevels = corePackage.MetaLevels.Take(corePackage.MetaLevels.Length - 1).ToArray();
@@ -156,23 +156,24 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasCsvSampleTables_FollowRarityBandsAndMapUnlockPlan()
+        public void HolmasExportedTables_FollowRarityBandsAndMapUnlockPlan()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
 
             Assert.That(tables.Cats.Count(item => item.Rarity == 1), Is.EqualTo(20));
             Assert.That(tables.Cats.Count(item => item.Rarity == 2), Is.EqualTo(14));
             Assert.That(tables.Cats.Count(item => item.Rarity == 3), Is.EqualTo(10));
             Assert.That(tables.Cats.Count(item => item.Rarity == 4), Is.EqualTo(5));
 
-            int[] expectedUpgradeExp = { 0, 9, 21, 36, 51, 66, 81, 96, 111, 126, 141, 156, 171, 186, 201, 216, 231, 246, 261, 276 };
+            int[] expectedUpgradeExp = { 0, 40, 85, 135, 190, 250, 320, 400, 490, 590, 700, 825, 965, 1120, 1290, 1475, 1675, 1840, 1930, 2000 };
+            Assert.That(tables.MetaLevels.Select(item => item.MinExperience), Is.EqualTo(expectedUpgradeExp));
             Assert.That(tables.Levels.Select(item => item.UpgradeExp), Is.EqualTo(expectedUpgradeExp));
             Assert.That(tables.MetaLevels.Select(item => item.PlayerLevel).ToArray(), Is.EqualTo(Enumerable.Range(1, 20).ToArray()));
             Assert.That(tables.AgencyBuildings.Select(item => item.AgencyStageId), Is.EqualTo(Enumerable.Range(1, 100).ToArray()));
             Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds.SequenceEqual(new[] { "leaflet", "radio", "online", "tv" })), Is.True);
             Assert.That(tables.AgencyBuildings.All(item => item.PromotionLevelCaps.SequenceEqual(new[] { 5, 5, 5, 5 })), Is.True);
 
-            foreach (CsvLevelRow level in tables.Levels)
+            foreach (ExportLevelRow level in tables.Levels)
             {
                 Assert.That(level.MapWeights.Sum(), Is.EqualTo(100), $"等级 {level.PlayerLevel} 的地图权重和应为 100。");
 
@@ -192,14 +193,31 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasCsvSampleTables_AllLevelsCanGenerateRequestsAndFillFiveUniqueTasks()
+        public void HolmasConfigCatalogFactory_ReadsLegacyV3MetaThresholdsFromPlayerLevels()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+
+            byte[] coreBytes = WriteLegacyV3CorePackage(corePackage);
+            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
+
+            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle, Is.Not.Null);
+            Assert.That(bundle.MetaLevels.Select(item => item.MinExperience), Is.EqualTo(tables.Levels.Select(item => item.UpgradeExp)));
+        }
+
+        [Test]
+        public void HolmasExportedTables_AllLevelsCanGenerateRequestsAndFillFiveUniqueTasks()
+        {
+            ExportConfigTables tables = LoadSampleTables();
             HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
             HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
             var requestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource());
 
-            foreach (CsvLevelRow levelRow in tables.Levels)
+            foreach (ExportLevelRow levelRow in tables.Levels)
             {
                 var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(), new FixedUtcClock { UtcNowMilliseconds = 1000 });
                 HolmasTaskBarState taskBar = taskService.CreateDefaultTaskBarState();
@@ -208,7 +226,7 @@ namespace Holmas.Tests
                 Assert.That(requestResult.Success, Is.True, $"等级 {levelRow.PlayerLevel} 地图请求生成失败：{requestResult.FailureReason}");
                 Assert.That(levelRow.MapIds, Contains.Item(requestResult.SelectedMapId), $"等级 {levelRow.PlayerLevel} 抽到了未开放地图。");
 
-                CsvMapRow selectedMap = tables.Maps.Single(item => string.Equals(item.MapId, requestResult.SelectedMapId, StringComparison.Ordinal));
+                ExportMapRow selectedMap = tables.Maps.Single(item => string.Equals(item.MapId, requestResult.SelectedMapId, StringComparison.Ordinal));
                 Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(selectedMap.CatCountMin));
                 Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(selectedMap.CatCountMax));
 
@@ -231,9 +249,9 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasCsvSampleTables_CurrentTaskPoolCanDriveMapSpawnPool()
+        public void HolmasExportedTables_CurrentTaskPoolCanDriveMapSpawnPool()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
             HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
             var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(), new FixedUtcClock { UtcNowMilliseconds = 1000 });
@@ -267,34 +285,34 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasCsvValidator_RejectsMissingCatReference()
+        public void HolmasExportValidator_RejectsMissingCatReference()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             tables.Tasks[0].CatIdList = new[] { "999" };
 
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(errors.Any(item => item.Contains("找不到猫配置")), Is.True);
         }
 
         [Test]
-        public void HolmasCsvValidator_RejectsMetaLevelMismatch()
+        public void HolmasExportValidator_RejectsMetaLevelMismatch()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             tables.Levels[1].UpgradeExp = tables.Levels[0].UpgradeExp;
 
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(errors.Any(item => item.Contains("升级经验") || item.Contains("严格递增")), Is.True, string.Join(Environment.NewLine, errors));
         }
 
         [Test]
-        public void HolmasCsvValidator_RejectsPromotionShapeMismatch()
+        public void HolmasExportValidator_RejectsPromotionShapeMismatch()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             tables.AgencyBuildings[0].PromotionLevelCaps = new[] { 5, 5 };
 
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(
                 errors.Any(item => item.Contains("宣传 ID 与等级上限数量不一致") || item.Contains("宣传 ID 与升级费用数量不一致")),
@@ -303,75 +321,195 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasCsvValidator_RejectsNonPositivePromotionCost()
+        public void HolmasExportValidator_RejectsNonPositivePromotionCost()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             tables.AgencyBuildings[0].PromotionUpgradeCosts[0][0] = 0;
 
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(errors.Any(item => item.Contains("非正费用")), Is.True, string.Join(Environment.NewLine, errors));
         }
 
         [Test]
-        public void HolmasCsvValidator_RejectsWeightLengthMismatch()
+        public void HolmasExportValidator_RejectsWeightLengthMismatch()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             tables.Levels[0].TaskTypeWeights = new[] { 100 };
 
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(errors.Any(item => item.Contains("长度不一致")), Is.True);
         }
 
         [Test]
-        public void HolmasCsvValidator_RejectsMinGreaterThanMax()
+        public void HolmasExportValidator_RejectsMinGreaterThanMax()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             tables.Maps[0].CatCountMin = 5;
             tables.Maps[0].CatCountMax = 3;
 
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(errors.Any(item => item.Contains("猫数范围非法")), Is.True);
         }
 
         [Test]
-        public void HolmasCsvValidator_RejectsEmptyTerrainPath()
+        public void HolmasExportValidator_RejectsEmptyTerrainPath()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             tables.Maps[1].TerrainPath = string.Empty;
 
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(errors.Any(item => item.Contains("TerrainPath")), Is.True);
         }
 
         [Test]
-        public void HolmasCsvValidator_RejectsGambleTaskKind()
+        public void HolmasExportValidator_RejectsGambleTaskKind()
         {
-            CsvConfigTables tables = LoadSampleTables();
+            ExportConfigTables tables = LoadSampleTables();
             tables.Tasks[0].TaskKind = "Gamble";
 
-            IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
+            IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
             Assert.That(errors.Any(item => item.Contains("Gamble")), Is.True);
         }
 
-        private static CsvConfigTables LoadSampleTables()
+        private static ExportConfigTables LoadSampleTables()
         {
-            return new CsvConfigTables
+            string corePath = Path.Combine(Application.dataPath, "Config", "json", "holmas_core_config.json");
+            string catPath = Path.Combine(Application.dataPath, "Config", "json", "holmas_cat_meta.json");
+            Assert.That(File.Exists(corePath), Is.True, $"找不到导出配置: {corePath}");
+            Assert.That(File.Exists(catPath), Is.True, $"找不到导出配置: {catPath}");
+
+            string coreJson = File.ReadAllText(corePath).TrimStart('\uFEFF');
+            string catJson = File.ReadAllText(catPath).TrimStart('\uFEFF');
+            bool coreOk = HolmasConfigBinaryCodec.TryReadCoreJson(coreJson, out HolmasCoreConfigPackage corePackage, out string coreError);
+            bool catOk = HolmasConfigBinaryCodec.TryReadCatMetaJson(catJson, out HolmasCatMetaPackage catPackage, out string catError);
+
+            Assert.That(coreOk, Is.True, coreError);
+            Assert.That(catOk, Is.True, catError);
+            Dictionary<int, int> minExperienceByLevel = ResolveMinExperienceByLevel(corePackage);
+
+            return new ExportConfigTables
             {
-                Cats = LoadCats("Holmas_CatTable.csv"),
-                Maps = LoadMaps("Holmas_MapTable.csv"),
-                Tasks = LoadTasks("Holmas_TaskTable.csv"),
-                Levels = LoadLevels("Holmas_PlayerLevelTable.csv"),
-                MetaLevels = LoadMetaLevels("Holmas_MetaLevelTable.csv"),
-                AgencyBuildings = LoadAgencyBuildings("Holmas_AgencyBuildingTable.csv"),
+                Cats = (catPackage.Cats ?? Array.Empty<HolmasCatMetaRow>()).Select(item => new ExportCatRow
+                {
+                    CatId = item.CatId,
+                    CatName = item.CatName,
+                    IconPath = item.IconPath,
+                    Rarity = item.Rarity,
+                    Weight = item.Weight,
+                    Price = item.Price,
+                }).ToList(),
+                Maps = (corePackage.Maps ?? Array.Empty<HolmasMapRow>()).Select(item => new ExportMapRow
+                {
+                    MapId = item.MapId,
+                    TerrainPath = item.TerrainPath,
+                    CatCountMax = item.CatCountMax,
+                    CatCountMin = item.CatCountMin,
+                }).ToList(),
+                Tasks = BuildTaskRows(corePackage, catPackage),
+                Levels = BuildLevelRows(corePackage),
+                MetaLevels = (corePackage.MetaLevels ?? Array.Empty<HolmasMetaLevelRow>()).Select(item => new ExportMetaLevelRow
+                {
+                    PlayerLevel = item.PlayerLevel,
+                    MinExperience = minExperienceByLevel.TryGetValue(item.PlayerLevel, out int minExperience)
+                        ? minExperience
+                        : item.MinExperience,
+                    OfflineRewardPerHour = item.OfflineRewardPerHour,
+                    AdUnlockHours = item.AdUnlockHours,
+                    Notes = item.Notes,
+                }).ToList(),
+                AgencyBuildings = (corePackage.AgencyBuildings ?? Array.Empty<HolmasAgencyBuildingRow>()).Select(item => new ExportAgencyBuildingRow
+                {
+                    AgencyStageId = item.AgencyStageId,
+                    StageName = item.StageName,
+                    PromotionIds = item.PromotionIds.ToArray(),
+                    PromotionLevelCaps = item.PromotionLevelCaps.ToArray(),
+                    PromotionUpgradeCosts = item.PromotionUpgradeCosts.Select(costs => (costs?.Costs ?? Array.Empty<int>()).ToArray()).ToArray(),
+                    Notes = item.Notes,
+                }).ToList(),
             };
         }
 
-        private static HolmasTaskCatalog BuildTaskCatalog(CsvConfigTables tables)
+        private static List<ExportTaskRow> BuildTaskRows(HolmasCoreConfigPackage corePackage, HolmasCatMetaPackage catPackage)
+        {
+            string[] catIds = (catPackage.Cats ?? Array.Empty<HolmasCatMetaRow>()).Select(item => item.CatId).ToArray();
+            return (corePackage.Tasks ?? Array.Empty<HolmasTaskRow>()).Select(item => new ExportTaskRow
+            {
+                TaskTypeId = item.TaskTypeId,
+                TaskKind = item.TaskKind.ToString(),
+                CatIdList = (item.CatIndices ?? Array.Empty<int>())
+                    .Where(index => index >= 0 && index < catIds.Length)
+                    .Select(index => catIds[index])
+                    .ToArray(),
+                CountMax = item.CountMax,
+                CountMin = item.CountMin,
+                RewardArray = (item.RewardValues ?? Array.Empty<int>()).Select(value => value.ToString(CultureInfo.InvariantCulture)).ToArray(),
+                LevelRewardFactor = item.LevelRewardFactor,
+            }).ToList();
+        }
+
+        private static Dictionary<int, int> ResolveMinExperienceByLevel(HolmasCoreConfigPackage corePackage)
+        {
+            var result = new Dictionary<int, int>();
+            if (corePackage == null)
+            {
+                return result;
+            }
+
+            if (corePackage.Version >= 4)
+            {
+                foreach (HolmasMetaLevelRow metaLevel in corePackage.MetaLevels ?? Array.Empty<HolmasMetaLevelRow>())
+                {
+                    if (metaLevel == null)
+                    {
+                        continue;
+                    }
+
+                    result[metaLevel.PlayerLevel] = metaLevel.MinExperience;
+                }
+
+                return result;
+            }
+
+            foreach (HolmasPlayerLevelRow playerLevel in corePackage.PlayerLevels ?? Array.Empty<HolmasPlayerLevelRow>())
+            {
+                if (playerLevel == null)
+                {
+                    continue;
+                }
+
+                result[playerLevel.PlayerLevel] = playerLevel.UpgradeExp;
+            }
+
+            return result;
+        }
+
+        private static List<ExportLevelRow> BuildLevelRows(HolmasCoreConfigPackage corePackage)
+        {
+            string[] taskIds = (corePackage.Tasks ?? Array.Empty<HolmasTaskRow>()).Select(item => item.TaskTypeId).ToArray();
+            string[] mapIds = (corePackage.Maps ?? Array.Empty<HolmasMapRow>()).Select(item => item.MapId).ToArray();
+            return (corePackage.PlayerLevels ?? Array.Empty<HolmasPlayerLevelRow>()).Select(item => new ExportLevelRow
+            {
+                PlayerLevel = item.PlayerLevel,
+                UpgradeExp = item.UpgradeExp,
+                TaskTypeIds = (item.TaskTypeIndices ?? Array.Empty<int>())
+                    .Where(index => index >= 0 && index < taskIds.Length)
+                    .Select(index => taskIds[index])
+                    .ToArray(),
+                TaskTypeWeights = item.TaskTypeWeights.ToArray(),
+                MapIds = (item.MapIndices ?? Array.Empty<int>())
+                    .Where(index => index >= 0 && index < mapIds.Length)
+                    .Select(index => mapIds[index])
+                    .ToArray(),
+                MapWeights = item.MapWeights.ToArray(),
+            }).ToList();
+        }
+
+        private static HolmasTaskCatalog BuildTaskCatalog(ExportConfigTables tables)
         {
             return new HolmasTaskCatalog(
                 tables.Cats.Select(item => new HolmasCatDefinition
@@ -399,7 +537,7 @@ namespace Holmas.Tests
                 }));
         }
 
-        private static HolmasMapCatalog BuildMapCatalog(CsvConfigTables tables)
+        private static HolmasMapCatalog BuildMapCatalog(ExportConfigTables tables)
         {
             return new HolmasMapCatalog(
                 tables.Maps.Select(item => new HolmasMapDefinition
@@ -411,7 +549,7 @@ namespace Holmas.Tests
                 }));
         }
 
-        private static IReadOnlyList<BoardSpawnEntry> BuildSpawnPool(IEnumerable<CsvCatRow> cats)
+        private static IReadOnlyList<BoardSpawnEntry> BuildSpawnPool(IEnumerable<ExportCatRow> cats)
         {
             return cats.Select(item => new BoardSpawnEntry
             {
@@ -427,19 +565,19 @@ namespace Holmas.Tests
             Assert.That(activeCatIds.Count, Is.EqualTo(activeCatIds.Distinct(StringComparer.Ordinal).Count()), $"等级 {playerLevel} 的任务栏存在重复猫种。");
         }
 
-        private static void AssertTaskRewardsMatchConfig(CsvConfigTables tables, IEnumerable<TaskInstanceData> tasks)
+        private static void AssertTaskRewardsMatchConfig(ExportConfigTables tables, IEnumerable<TaskInstanceData> tasks)
         {
             foreach (TaskInstanceData task in tasks)
             {
                 Assert.That(task, Is.Not.Null);
-                CsvTaskRow taskRow = tables.Tasks.Single(item => string.Equals(item.TaskTypeId, task.SourceTaskTypeId, StringComparison.Ordinal));
-                CsvCatRow catRow = tables.Cats.Single(item => string.Equals(item.CatId, task.CatId, StringComparison.Ordinal));
+                ExportTaskRow taskRow = tables.Tasks.Single(item => string.Equals(item.TaskTypeId, task.SourceTaskTypeId, StringComparison.Ordinal));
+                ExportCatRow catRow = tables.Cats.Single(item => string.Equals(item.CatId, task.CatId, StringComparison.Ordinal));
                 int expectedReward = (int)Math.Round(catRow.Price * task.TargetCount * taskRow.LevelRewardFactor, MidpointRounding.AwayFromZero);
                 Assert.That(task.Reward, Is.EqualTo(expectedReward), $"任务 {task.SourceTaskTypeId}/{task.CatId} 奖励公式不匹配。");
             }
         }
 
-        private static HolmasCoreConfigPackage BuildCorePackage(CsvConfigTables tables)
+        private static HolmasCoreConfigPackage BuildCorePackage(ExportConfigTables tables)
         {
             Dictionary<string, int> catIndexById = tables.Cats
                 .Select((item, index) => new { item.CatId, Index = index })
@@ -482,6 +620,7 @@ namespace Holmas.Tests
                 MetaLevels = tables.MetaLevels.Select(item => new HolmasMetaLevelRow
                 {
                     PlayerLevel = item.PlayerLevel,
+                    MinExperience = item.MinExperience,
                     OfflineRewardPerHour = item.OfflineRewardPerHour,
                     AdUnlockHours = item.AdUnlockHours,
                     Notes = item.Notes,
@@ -501,7 +640,7 @@ namespace Holmas.Tests
             };
         }
 
-        private static HolmasCatMetaPackage BuildCatPackage(CsvConfigTables tables)
+        private static HolmasCatMetaPackage BuildCatPackage(ExportConfigTables tables)
         {
             return new HolmasCatMetaPackage
             {
@@ -532,319 +671,9 @@ namespace Holmas.Tests
             return HolmasTaskKind.Money;
         }
 
-        private static List<CsvCatRow> LoadCats(string fileName)
-        {
-            var rows = ReadCsvTable(fileName);
-            var result = new List<CsvCatRow>();
-            foreach (var row in rows.Skip(2))
-            {
-                if (row.Length < 6)
-                {
-                    continue;
-                }
-
-                result.Add(new CsvCatRow
-                {
-                    CatId = row[0],
-                    CatName = row[1],
-                    IconPath = row[2],
-                    Rarity = ParseInt(row[3]),
-                    Weight = ParseInt(row[4]),
-                    Price = ParseInt(row[5]),
-                });
-            }
-
-            return result;
-        }
-
-        private static List<CsvMapRow> LoadMaps(string fileName)
-        {
-            var rows = ReadCsvTable(fileName);
-            var result = new List<CsvMapRow>();
-            foreach (var row in rows.Skip(2))
-            {
-                if (row.Length < 4)
-                {
-                    continue;
-                }
-
-                result.Add(new CsvMapRow
-                {
-                    MapId = row[0],
-                    TerrainPath = row[1],
-                    CatCountMax = ParseInt(row[2]),
-                    CatCountMin = ParseInt(row[3]),
-                });
-            }
-
-            return result;
-        }
-
-        private static List<CsvTaskRow> LoadTasks(string fileName)
-        {
-            var rows = ReadCsvTable(fileName);
-            var headerMap = BuildColumnMap(rows[1]);
-            int taskTypeIdCol = GetColumnIndex(headerMap, "taskTypeId");
-            int taskKindCol = GetOptionalColumnIndex(headerMap, "taskKind");
-            int catIdListCol = GetColumnIndex(headerMap, "catIdList");
-            int countMaxCol = GetColumnIndex(headerMap, "countMax");
-            int countMinCol = GetColumnIndex(headerMap, "countMin");
-            int rewardArrayCol = GetOptionalColumnIndex(headerMap, "rewardArray");
-            int levelRewardFactorCol = GetColumnIndex(headerMap, "levelRewardFactor");
-            var result = new List<CsvTaskRow>();
-            foreach (var row in rows.Skip(2))
-            {
-                if (row.Length == 0)
-                {
-                    continue;
-                }
-
-                result.Add(new CsvTaskRow
-                {
-                    TaskTypeId = GetRowValue(row, taskTypeIdCol),
-                    TaskKind = NormalizeTaskKindText(GetRowValue(row, taskKindCol)),
-                    CatIdList = SplitCsvList(GetRowValue(row, catIdListCol)),
-                    CountMax = ParseInt(GetRowValue(row, countMaxCol)),
-                    CountMin = ParseInt(GetRowValue(row, countMinCol)),
-                    RewardArray = SplitCsvList(GetRowValue(row, rewardArrayCol)),
-                    LevelRewardFactor = ParseFloat(GetRowValue(row, levelRewardFactorCol)),
-                });
-            }
-
-            return result;
-        }
-
-        private static List<CsvLevelRow> LoadLevels(string fileName)
-        {
-            var rows = ReadCsvTable(fileName);
-            var result = new List<CsvLevelRow>();
-            foreach (var row in rows.Skip(2))
-            {
-                if (row.Length < 6)
-                {
-                    continue;
-                }
-
-                result.Add(new CsvLevelRow
-                {
-                    PlayerLevel = ParseInt(row[0]),
-                    UpgradeExp = ParseInt(row[1]),
-                    TaskTypeIds = SplitCsvList(row[2]),
-                    TaskTypeWeights = SplitIntList(row[3]),
-                    MapIds = SplitCsvList(row[4]),
-                    MapWeights = SplitIntList(row[5]),
-                });
-            }
-
-            return result;
-        }
-
-        private static List<CsvMetaLevelRow> LoadMetaLevels(string fileName)
-        {
-            var rows = ReadCsvTable(fileName);
-            var result = new List<CsvMetaLevelRow>();
-            foreach (var row in rows.Skip(2))
-            {
-                if (row.Length < 4)
-                {
-                    continue;
-                }
-
-                result.Add(new CsvMetaLevelRow
-                {
-                    PlayerLevel = ParseInt(row[0]),
-                    OfflineRewardPerHour = ParseInt(row[1]),
-                    AdUnlockHours = ParseInt(row[2]),
-                    Notes = row.Length > 3 ? row[3] : string.Empty,
-                });
-            }
-
-            return result;
-        }
-
-        private static List<CsvAgencyBuildingRow> LoadAgencyBuildings(string fileName)
-        {
-            var rows = ReadCsvTable(fileName);
-            var headerMap = BuildColumnMap(rows[1]);
-            int stageIdCol = GetColumnIndex(headerMap, "agencyStageId");
-            int stageNameCol = GetColumnIndex(headerMap, "stageName");
-            int promotionIdsCol = GetColumnIndex(headerMap, "promotionIds");
-            int promotionLevelCapsCol = GetColumnIndex(headerMap, "promotionLevelCaps");
-            int promotionUpgradeCostsCol = GetColumnIndex(headerMap, "promotionUpgradeCosts");
-            int notesCol = GetOptionalColumnIndex(headerMap, "notes");
-            var result = new List<CsvAgencyBuildingRow>();
-            foreach (var row in rows.Skip(2))
-            {
-                if (row.Length == 0)
-                {
-                    continue;
-                }
-
-                result.Add(new CsvAgencyBuildingRow
-                {
-                    AgencyStageId = ParseInt(GetRowValue(row, stageIdCol)),
-                    StageName = GetRowValue(row, stageNameCol),
-                    PromotionIds = SplitCsvList(GetRowValue(row, promotionIdsCol)),
-                    PromotionLevelCaps = SplitIntList(GetRowValue(row, promotionLevelCapsCol)),
-                    PromotionUpgradeCosts = SplitNestedIntLists(GetRowValue(row, promotionUpgradeCostsCol)),
-                    Notes = GetRowValue(row, notesCol),
-                });
-            }
-
-            return result;
-        }
-
-        private static string[][] ReadCsvTable(string fileName)
-        {
-            string path = Path.Combine(Application.dataPath, "Config", fileName);
-            Assert.That(File.Exists(path), Is.True, $"找不到配置文件: {path}");
-
-            var lines = File.ReadAllLines(path)
-                .Where(line => !string.IsNullOrWhiteSpace(line))
-                .Select(ParseCsvLine)
-                .ToArray();
-            Assert.That(lines.Length, Is.GreaterThanOrEqualTo(2), $"配置文件行数不足: {path}");
-            return lines;
-        }
-
-        private static string[] ParseCsvLine(string line)
-        {
-            if (line == null)
-            {
-                return Array.Empty<string>();
-            }
-
-            var values = new List<string>();
-            var current = new System.Text.StringBuilder();
-            bool inQuotes = false;
-
-            for (int i = 0; i < line.Length; i++)
-            {
-                char ch = line[i];
-                if (ch == '\"')
-                {
-                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '\"')
-                    {
-                        current.Append('\"');
-                        i++;
-                    }
-                    else
-                    {
-                        inQuotes = !inQuotes;
-                    }
-                }
-                else if (ch == ',' && !inQuotes)
-                {
-                    values.Add(TrimCell(current.ToString()));
-                    current.Clear();
-                }
-                else
-                {
-                    current.Append(ch);
-                }
-            }
-
-            values.Add(TrimCell(current.ToString()));
-            return values.ToArray();
-        }
-
-        private static Dictionary<string, int> BuildColumnMap(string[] headerRow)
-        {
-            var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            if (headerRow == null)
-            {
-                return map;
-            }
-
-            for (int i = 0; i < headerRow.Length; i++)
-            {
-                string key = TrimCell(headerRow[i]);
-                if (!string.IsNullOrWhiteSpace(key) && !map.ContainsKey(key))
-                {
-                    map[key] = i;
-                }
-            }
-
-            return map;
-        }
-
-        private static int GetColumnIndex(Dictionary<string, int> headerMap, string name)
-        {
-            Assert.That(headerMap.ContainsKey(name), Is.True, $"配置表缺少列: {name}");
-            return headerMap[name];
-        }
-
-        private static int GetOptionalColumnIndex(Dictionary<string, int> headerMap, string name)
-        {
-            return headerMap.TryGetValue(name, out int value) ? value : -1;
-        }
-
-        private static string GetRowValue(string[] row, int index)
-        {
-            if (row == null || index < 0 || index >= row.Length)
-            {
-                return string.Empty;
-            }
-
-            return TrimCell(row[index]);
-        }
-
         private static string NormalizeTaskKindText(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? "Money" : value.Trim();
-        }
-
-        private static string TrimCell(string value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return string.Empty;
-            }
-
-            string trimmed = value.Trim();
-            if (trimmed.Length > 0 && trimmed[0] == '\uFEFF')
-            {
-                trimmed = trimmed.Substring(1);
-            }
-
-            if (trimmed.Length >= 2 && trimmed[0] == '\"' && trimmed[trimmed.Length - 1] == '\"')
-            {
-                trimmed = trimmed.Substring(1, trimmed.Length - 2);
-            }
-
-            return trimmed;
-        }
-
-        private static string[] SplitCsvList(string cell)
-        {
-            if (string.IsNullOrWhiteSpace(cell))
-            {
-                return Array.Empty<string>();
-            }
-
-            return cell.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(item => item.Trim())
-                .Where(item => !string.IsNullOrWhiteSpace(item))
-                .ToArray();
-        }
-
-        private static int[] SplitIntList(string cell)
-        {
-            return SplitCsvList(cell)
-                .Select(ParseInt)
-                .ToArray();
-        }
-
-        private static int[][] SplitNestedIntLists(string cell)
-        {
-            if (string.IsNullOrWhiteSpace(cell))
-            {
-                return Array.Empty<int[]>();
-            }
-
-            return cell.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(item => SplitIntList(item.Trim()))
-                .ToArray();
         }
 
         private static int ParseInt(string cell)
@@ -858,39 +687,17 @@ namespace Holmas.Tests
             return value;
         }
 
-        private static long ParseLong(string cell)
+        private sealed class ExportConfigTables
         {
-            long value;
-            if (!long.TryParse(cell, NumberStyles.Integer, CultureInfo.InvariantCulture, out value))
-            {
-                return 0L;
-            }
-
-            return value;
+            public List<ExportCatRow> Cats { get; set; } = new List<ExportCatRow>();
+            public List<ExportMapRow> Maps { get; set; } = new List<ExportMapRow>();
+            public List<ExportTaskRow> Tasks { get; set; } = new List<ExportTaskRow>();
+            public List<ExportLevelRow> Levels { get; set; } = new List<ExportLevelRow>();
+            public List<ExportMetaLevelRow> MetaLevels { get; set; } = new List<ExportMetaLevelRow>();
+            public List<ExportAgencyBuildingRow> AgencyBuildings { get; set; } = new List<ExportAgencyBuildingRow>();
         }
 
-        private static float ParseFloat(string cell)
-        {
-            float value;
-            if (!float.TryParse(cell, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
-            {
-                return 0f;
-            }
-
-            return value;
-        }
-
-        private sealed class CsvConfigTables
-        {
-            public List<CsvCatRow> Cats { get; set; } = new List<CsvCatRow>();
-            public List<CsvMapRow> Maps { get; set; } = new List<CsvMapRow>();
-            public List<CsvTaskRow> Tasks { get; set; } = new List<CsvTaskRow>();
-            public List<CsvLevelRow> Levels { get; set; } = new List<CsvLevelRow>();
-            public List<CsvMetaLevelRow> MetaLevels { get; set; } = new List<CsvMetaLevelRow>();
-            public List<CsvAgencyBuildingRow> AgencyBuildings { get; set; } = new List<CsvAgencyBuildingRow>();
-        }
-
-        private sealed class CsvCatRow
+        private sealed class ExportCatRow
         {
             public string CatId = string.Empty;
             public string CatName = string.Empty;
@@ -900,7 +707,7 @@ namespace Holmas.Tests
             public int Price;
         }
 
-        private sealed class CsvMapRow
+        private sealed class ExportMapRow
         {
             public string MapId = string.Empty;
             public string TerrainPath = string.Empty;
@@ -908,7 +715,7 @@ namespace Holmas.Tests
             public int CatCountMin;
         }
 
-        private sealed class CsvTaskRow
+        private sealed class ExportTaskRow
         {
             public string TaskTypeId = string.Empty;
             public string TaskKind = string.Empty;
@@ -919,7 +726,7 @@ namespace Holmas.Tests
             public float LevelRewardFactor = 1f;
         }
 
-        private sealed class CsvLevelRow
+        private sealed class ExportLevelRow
         {
             public int PlayerLevel;
             public int UpgradeExp;
@@ -929,15 +736,16 @@ namespace Holmas.Tests
             public int[] MapWeights = Array.Empty<int>();
         }
 
-        private sealed class CsvMetaLevelRow
+        private sealed class ExportMetaLevelRow
         {
             public int PlayerLevel;
+            public int MinExperience;
             public int OfflineRewardPerHour;
             public int AdUnlockHours;
             public string Notes = string.Empty;
         }
 
-        private sealed class CsvAgencyBuildingRow
+        private sealed class ExportAgencyBuildingRow
         {
             public int AgencyStageId;
             public string StageName = string.Empty;
@@ -947,9 +755,9 @@ namespace Holmas.Tests
             public string Notes = string.Empty;
         }
 
-        private static class CsvConfigValidator
+        private static class ExportConfigValidator
         {
-            public static List<string> Validate(CsvConfigTables tables)
+            public static List<string> Validate(ExportConfigTables tables)
             {
                 var errors = new List<string>();
                 if (tables == null)
@@ -967,10 +775,10 @@ namespace Holmas.Tests
                 return errors;
             }
 
-            private static void ValidateCats(IEnumerable<CsvCatRow> cats, List<string> errors)
+            private static void ValidateCats(IEnumerable<ExportCatRow> cats, List<string> errors)
             {
                 var seen = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var cat in cats ?? Array.Empty<CsvCatRow>())
+                foreach (var cat in cats ?? Array.Empty<ExportCatRow>())
                 {
                     if (cat == null)
                     {
@@ -1011,10 +819,10 @@ namespace Holmas.Tests
                 }
             }
 
-            private static void ValidateMaps(IEnumerable<CsvMapRow> maps, List<string> errors)
+            private static void ValidateMaps(IEnumerable<ExportMapRow> maps, List<string> errors)
             {
                 var seen = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var map in maps ?? Array.Empty<CsvMapRow>())
+                foreach (var map in maps ?? Array.Empty<ExportMapRow>())
                 {
                     if (map == null)
                     {
@@ -1045,12 +853,12 @@ namespace Holmas.Tests
                 }
             }
 
-            private static void ValidateTasks(IEnumerable<CsvTaskRow> tasks, IReadOnlyList<CsvCatRow> cats, List<string> errors)
+            private static void ValidateTasks(IEnumerable<ExportTaskRow> tasks, IReadOnlyList<ExportCatRow> cats, List<string> errors)
             {
                 var seen = new HashSet<string>(StringComparer.Ordinal);
-                var catIds = new HashSet<string>((cats ?? Array.Empty<CsvCatRow>()).Where(item => item != null).Select(item => item.CatId), StringComparer.Ordinal);
+                var catIds = new HashSet<string>((cats ?? Array.Empty<ExportCatRow>()).Where(item => item != null).Select(item => item.CatId), StringComparer.Ordinal);
 
-                foreach (var task in tasks ?? Array.Empty<CsvTaskRow>())
+                foreach (var task in tasks ?? Array.Empty<ExportTaskRow>())
                 {
                     if (task == null)
                     {
@@ -1126,14 +934,14 @@ namespace Holmas.Tests
                 }
             }
 
-            private static void ValidateLevels(IEnumerable<CsvLevelRow> levels, IReadOnlyList<CsvTaskRow> tasks, IReadOnlyList<CsvMapRow> maps, List<string> errors)
+            private static void ValidateLevels(IEnumerable<ExportLevelRow> levels, IReadOnlyList<ExportTaskRow> tasks, IReadOnlyList<ExportMapRow> maps, List<string> errors)
             {
-                var taskIds = new HashSet<string>((tasks ?? Array.Empty<CsvTaskRow>()).Where(item => item != null).Select(item => item.TaskTypeId), StringComparer.Ordinal);
-                var mapIds = new HashSet<string>((maps ?? Array.Empty<CsvMapRow>()).Where(item => item != null).Select(item => item.MapId), StringComparer.Ordinal);
+                var taskIds = new HashSet<string>((tasks ?? Array.Empty<ExportTaskRow>()).Where(item => item != null).Select(item => item.TaskTypeId), StringComparer.Ordinal);
+                var mapIds = new HashSet<string>((maps ?? Array.Empty<ExportMapRow>()).Where(item => item != null).Select(item => item.MapId), StringComparer.Ordinal);
                 var seen = new HashSet<int>();
-                CsvLevelRow previousLevel = null;
+                ExportLevelRow previousLevel = null;
 
-                foreach (var level in levels ?? Array.Empty<CsvLevelRow>())
+                foreach (var level in levels ?? Array.Empty<ExportLevelRow>())
                 {
                     if (level == null)
                     {
@@ -1184,13 +992,14 @@ namespace Holmas.Tests
                 }
             }
 
-            private static void ValidateMetaLevels(IEnumerable<CsvMetaLevelRow> levels, IReadOnlyList<CsvLevelRow> playerLevels, List<string> errors)
+            private static void ValidateMetaLevels(IEnumerable<ExportMetaLevelRow> levels, IReadOnlyList<ExportLevelRow> playerLevels, List<string> errors)
             {
                 var seen = new HashSet<int>();
                 int expectedLevel = 1;
                 int metaLevelCount = 0;
+                ExportMetaLevelRow previousLevel = null;
 
-                foreach (var level in levels ?? Array.Empty<CsvMetaLevelRow>())
+                foreach (var level in levels ?? Array.Empty<ExportMetaLevelRow>())
                 {
                     metaLevelCount++;
                     if (level == null)
@@ -1220,10 +1029,35 @@ namespace Holmas.Tests
                         errors.Add($"长期成长表的离线奖励非法: {level.PlayerLevel}");
                     }
 
+                    if (level.MinExperience < 0)
+                    {
+                        errors.Add($"长期成长表的累计经验非法: {level.PlayerLevel}");
+                    }
+
+                    if (playerLevels != null)
+                    {
+                        ExportLevelRow playerLevel = playerLevels.FirstOrDefault(item => item != null && item.PlayerLevel == level.PlayerLevel);
+                        if (playerLevel == null)
+                        {
+                            errors.Add($"长期成长表缺少对应玩家等级: {level.PlayerLevel}");
+                        }
+                        else if (playerLevel.UpgradeExp != level.MinExperience)
+                        {
+                            errors.Add($"长期成长表与玩家等级升级经验不一致: {level.PlayerLevel}");
+                        }
+                    }
+
+                    if (previousLevel != null && level.MinExperience <= previousLevel.MinExperience)
+                    {
+                        errors.Add($"长期成长表的累计经验必须严格递增: {level.PlayerLevel}");
+                    }
+
                     if (level.AdUnlockHours <= 0)
                     {
                         errors.Add($"长期成长表的广告解锁时长非法: {level.PlayerLevel}");
                     }
+
+                    previousLevel = level;
                     expectedLevel++;
                 }
 
@@ -1233,7 +1067,7 @@ namespace Holmas.Tests
                 }
             }
 
-            private static void ValidateAgencyPromotions(IEnumerable<CsvAgencyBuildingRow> buildings, List<string> errors)
+            private static void ValidateAgencyPromotions(IEnumerable<ExportAgencyBuildingRow> buildings, List<string> errors)
             {
                 var seenStages = new HashSet<int>();
                 var seenStageNames = new HashSet<string>(StringComparer.Ordinal);
@@ -1241,7 +1075,7 @@ namespace Holmas.Tests
                 string[] expectedPromotionIds = { "leaflet", "radio", "online", "tv" };
                 int[] expectedPromotionCaps = { 5, 5, 5, 5 };
 
-                foreach (var buildingRow in buildings ?? Array.Empty<CsvAgencyBuildingRow>())
+                foreach (var buildingRow in buildings ?? Array.Empty<ExportAgencyBuildingRow>())
                 {
                     if (buildingRow == null)
                     {
@@ -1376,6 +1210,121 @@ namespace Holmas.Tests
                 {
                     errors.Add($"玩家等级 {playerLevel} 的{label}权重没有任何正值。");
                 }
+            }
+        }
+
+        private static byte[] WriteLegacyV3CorePackage(HolmasCoreConfigPackage package)
+        {
+            package = package ?? new HolmasCoreConfigPackage();
+            using (var stream = new MemoryStream())
+            using (var writer = new BinaryWriter(stream))
+            {
+                writer.Write(HolmasConfigBinaryFormat.CoreMagic);
+                writer.Write(HolmasConfigBinaryFormat.MinSupportedVersion);
+                writer.Write(HolmasConfigBinaryFormat.MinSupportedVersion);
+                WriteLegacyMapRows(writer, package.Maps);
+                WriteLegacyTaskRows(writer, package.Tasks);
+                WriteLegacyPlayerLevelRows(writer, package.PlayerLevels);
+                WriteLegacyMetaLevelRows(writer, package.MetaLevels);
+                WriteLegacyAgencyBuildingRows(writer, package.AgencyBuildings);
+                writer.Flush();
+                return stream.ToArray();
+            }
+        }
+
+        private static void WriteLegacyMapRows(BinaryWriter writer, HolmasMapRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasMapRow>();
+            writer.Write(rows.Length);
+            foreach (HolmasMapRow row in rows)
+            {
+                writer.Write(row?.MapId ?? string.Empty);
+                writer.Write(row?.TerrainPath ?? string.Empty);
+                writer.Write(row?.CatCountMin ?? 0);
+                writer.Write(row?.CatCountMax ?? 0);
+            }
+        }
+
+        private static void WriteLegacyTaskRows(BinaryWriter writer, HolmasTaskRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasTaskRow>();
+            writer.Write(rows.Length);
+            foreach (HolmasTaskRow row in rows)
+            {
+                writer.Write(row?.TaskTypeId ?? string.Empty);
+                writer.Write((byte)(row?.TaskKind ?? HolmasTaskKind.Money));
+                WriteLegacyIntArray(writer, row?.CatIndices);
+                writer.Write(row?.CountMin ?? 0);
+                writer.Write(row?.CountMax ?? 0);
+                WriteLegacyIntArray(writer, row?.RewardValues);
+                writer.Write(row?.LevelRewardFactor ?? 0f);
+            }
+        }
+
+        private static void WriteLegacyPlayerLevelRows(BinaryWriter writer, HolmasPlayerLevelRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasPlayerLevelRow>();
+            writer.Write(rows.Length);
+            foreach (HolmasPlayerLevelRow row in rows)
+            {
+                writer.Write(row?.PlayerLevel ?? 0);
+                writer.Write(row?.UpgradeExp ?? 0);
+                WriteLegacyIntArray(writer, row?.TaskTypeIndices);
+                WriteLegacyIntArray(writer, row?.TaskTypeWeights);
+                WriteLegacyIntArray(writer, row?.MapIndices);
+                WriteLegacyIntArray(writer, row?.MapWeights);
+            }
+        }
+
+        private static void WriteLegacyMetaLevelRows(BinaryWriter writer, HolmasMetaLevelRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasMetaLevelRow>();
+            writer.Write(rows.Length);
+            foreach (HolmasMetaLevelRow row in rows)
+            {
+                writer.Write(row?.PlayerLevel ?? 0);
+                writer.Write(row?.OfflineRewardPerHour ?? 0);
+                writer.Write(row?.AdUnlockHours ?? 0);
+            }
+        }
+
+        private static void WriteLegacyAgencyBuildingRows(BinaryWriter writer, HolmasAgencyBuildingRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasAgencyBuildingRow>();
+            writer.Write(rows.Length);
+            foreach (HolmasAgencyBuildingRow row in rows)
+            {
+                writer.Write(row?.AgencyStageId ?? 0);
+                writer.Write(row?.StageName ?? string.Empty);
+                WriteLegacyStringArray(writer, row?.PromotionIds);
+                WriteLegacyIntArray(writer, row?.PromotionLevelCaps);
+
+                HolmasAgencyBuildingCostRow[] costRows = row?.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostRow>();
+                writer.Write(costRows.Length);
+                foreach (HolmasAgencyBuildingCostRow costRow in costRows)
+                {
+                    WriteLegacyIntArray(writer, costRow?.Costs);
+                }
+            }
+        }
+
+        private static void WriteLegacyStringArray(BinaryWriter writer, string[] values)
+        {
+            values = values ?? Array.Empty<string>();
+            writer.Write(values.Length);
+            foreach (string value in values)
+            {
+                writer.Write(value ?? string.Empty);
+            }
+        }
+
+        private static void WriteLegacyIntArray(BinaryWriter writer, int[] values)
+        {
+            values = values ?? Array.Empty<int>();
+            writer.Write(values.Length);
+            foreach (int value in values)
+            {
+                writer.Write(value);
             }
         }
     }

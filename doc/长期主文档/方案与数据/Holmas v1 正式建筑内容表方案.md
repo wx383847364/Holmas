@@ -141,7 +141,7 @@ agencyStageId,stageName,promotionIds,promotionLevelCaps,promotionUpgradeCosts,no
 
 ## 正式宣传内容表示例
 
-`Holmas_AgencyBuildingTable.csv` 可改为下面这种结构。
+`Holmas_AgencyBuildingTable.xlsx` 可改为下面这种结构。
 
 这里只展示前 `5` 级城市示例，完整版本按同样规则扩到 `100` 级：
 

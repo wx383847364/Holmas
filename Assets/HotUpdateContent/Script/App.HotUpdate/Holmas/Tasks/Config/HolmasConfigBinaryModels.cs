@@ -11,7 +11,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public const int CoreMagic = 0x48434F52; // HCOR
         public const int CatMetaMagic = 0x48434154; // HCAT
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
+        public const int MinSupportedVersion = 3;
     }
 
     /// <summary>
@@ -89,6 +90,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     public sealed class HolmasMetaLevelRow
     {
         public int PlayerLevel;
+        public int MinExperience;
         public int OfflineRewardPerHour;
         public int AdUnlockHours;
         public string Notes = string.Empty;

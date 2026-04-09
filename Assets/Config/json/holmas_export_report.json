@@ -1,24 +1,24 @@
 {
-    "ExportedAtUtc": "2026-04-03T20:18:55.9504060Z",
+    "ExportedAtUtc": "2026-04-09T15:10:51.2480880Z",
     "Success": true,
     "BinaryWrittenCount": 2,
     "SourceFiles": [
-        "Assets/Config/Holmas_MapTable.csv",
-        "Assets/Config/Holmas_CatTable.csv",
-        "Assets/Config/Holmas_TaskTable.csv",
-        "Assets/Config/Holmas_PlayerLevelTable.csv",
-        "Assets/Config/Holmas_MetaLevelTable.csv",
-        "Assets/Config/Holmas_AgencyBuildingTable.csv"
+        "Assets/Config/Holmas_MapTable.xlsx",
+        "Assets/Config/Holmas_CatTable.xlsx",
+        "Assets/Config/Holmas_TaskTable.xlsx",
+        "Assets/Config/Holmas_PlayerLevelTable.xlsx",
+        "Assets/Config/Holmas_MetaLevelTable.xlsx",
+        "Assets/Config/Holmas_AgencyBuildingTable.xlsx"
     ],
     "BundleReports": [
         {
             "BundleName": "core",
-            "SourceCsvNames": [
-                "Holmas_MapTable.csv",
-                "Holmas_TaskTable.csv",
-                "Holmas_PlayerLevelTable.csv",
-                "Holmas_MetaLevelTable.csv",
-                "Holmas_AgencyBuildingTable.csv"
+            "SourceTableNames": [
+                "Holmas_MapTable.xlsx",
+                "Holmas_TaskTable.xlsx",
+                "Holmas_PlayerLevelTable.xlsx",
+                "Holmas_MetaLevelTable.xlsx",
+                "Holmas_AgencyBuildingTable.xlsx"
             ],
             "PreviewJsonPath": "Assets/Config/json/holmas_core_config.json",
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_core_config.bytes",
@@ -28,8 +28,8 @@
         },
         {
             "BundleName": "cat_meta",
-            "SourceCsvNames": [
-                "Holmas_CatTable.csv"
+            "SourceTableNames": [
+                "Holmas_CatTable.xlsx"
             ],
             "PreviewJsonPath": "Assets/Config/json/holmas_cat_meta.json",
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_cat_meta.bytes",

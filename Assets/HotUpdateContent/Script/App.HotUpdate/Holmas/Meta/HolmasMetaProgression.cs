@@ -65,6 +65,7 @@ namespace App.HotUpdate.Holmas.Meta
     public sealed class HolmasMetaProgressionDefinition
     {
         public int PlayerLevel;
+        public int MinExperience;
         public int OfflineRewardPerHour;
         public int AdUnlockHours = 24;
     }
@@ -205,7 +206,6 @@ namespace App.HotUpdate.Holmas.Meta
     public sealed class HolmasMetaProgressionService
     {
         private IHolmasMetaCatalog _catalog;
-        private readonly IHolmasTaskCatalog _playerLevelCatalog;
         private readonly IHolmasExperienceSource _experienceSource;
         private readonly IHolmasOfflineRewardSource _offlineRewardSource;
         private readonly IHolmasUtcClock _clock;
@@ -218,7 +218,7 @@ namespace App.HotUpdate.Holmas.Meta
             IHolmasUtcClock clock = null)
         {
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            _playerLevelCatalog = playerLevelCatalog ?? throw new ArgumentNullException(nameof(playerLevelCatalog));
+            _ = playerLevelCatalog ?? throw new ArgumentNullException(nameof(playerLevelCatalog));
             _experienceSource = experienceSource ?? throw new ArgumentNullException(nameof(experienceSource));
             _offlineRewardSource = offlineRewardSource ?? throw new ArgumentNullException(nameof(offlineRewardSource));
             _clock = clock;
@@ -352,9 +352,9 @@ namespace App.HotUpdate.Holmas.Meta
             int currentLevel = Math.Max(1, state.PlayerLevel);
             int nextLevel = currentLevel;
 
-            while (_playerLevelCatalog.TryGetPlayerLevel(nextLevel + 1, out HolmasPlayerLevelDefinition nextDefinition))
+            while (_catalog.TryGetPlayerLevel(nextLevel + 1, out HolmasMetaProgressionDefinition nextDefinition))
             {
-                if (nextDefinition == null || state.Experience < nextDefinition.UpgradeExp)
+                if (nextDefinition == null || state.Experience < Math.Max(0, nextDefinition.MinExperience))
                 {
                     break;
                 }

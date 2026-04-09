@@ -1,5 +1,5 @@
 ﻿{
-    "Version": 3,
+    "Version": 4,
     "Cats": [
         {
             "CatId": "1",
@@ -7,7 +7,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_01.png",
             "Rarity": 1,
             "Weight": 1000,
-            "Price": 10
+            "Price": 1000
         },
         {
             "CatId": "2",
@@ -15,7 +15,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_02.png",
             "Rarity": 1,
             "Weight": 990,
-            "Price": 20
+            "Price": 1200
         },
         {
             "CatId": "3",
@@ -23,7 +23,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_03.png",
             "Rarity": 1,
             "Weight": 980,
-            "Price": 30
+            "Price": 1400
         },
         {
             "CatId": "4",
@@ -31,7 +31,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_04.png",
             "Rarity": 1,
             "Weight": 970,
-            "Price": 40
+            "Price": 1600
         },
         {
             "CatId": "5",
@@ -39,7 +39,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_05.png",
             "Rarity": 1,
             "Weight": 960,
-            "Price": 50
+            "Price": 1800
         },
         {
             "CatId": "6",
@@ -47,7 +47,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_06.png",
             "Rarity": 1,
             "Weight": 950,
-            "Price": 60
+            "Price": 3500
         },
         {
             "CatId": "7",
@@ -55,7 +55,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_07.png",
             "Rarity": 1,
             "Weight": 940,
-            "Price": 70
+            "Price": 3800
         },
         {
             "CatId": "8",
@@ -63,7 +63,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_08.png",
             "Rarity": 1,
             "Weight": 930,
-            "Price": 80
+            "Price": 4100
         },
         {
             "CatId": "9",
@@ -71,7 +71,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_09.png",
             "Rarity": 1,
             "Weight": 920,
-            "Price": 90
+            "Price": 4400
         },
         {
             "CatId": "10",
@@ -79,7 +79,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_10.png",
             "Rarity": 1,
             "Weight": 910,
-            "Price": 100
+            "Price": 4700
         },
         {
             "CatId": "11",
@@ -87,7 +87,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_11.png",
             "Rarity": 1,
             "Weight": 900,
-            "Price": 110
+            "Price": 5000
         },
         {
             "CatId": "12",
@@ -95,7 +95,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_12.png",
             "Rarity": 1,
             "Weight": 890,
-            "Price": 120
+            "Price": 5300
         },
         {
             "CatId": "13",
@@ -103,7 +103,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_13.png",
             "Rarity": 1,
             "Weight": 880,
-            "Price": 130
+            "Price": 5600
         },
         {
             "CatId": "14",
@@ -111,7 +111,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_14.png",
             "Rarity": 1,
             "Weight": 870,
-            "Price": 140
+            "Price": 5900
         },
         {
             "CatId": "15",
@@ -119,7 +119,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_15.png",
             "Rarity": 1,
             "Weight": 860,
-            "Price": 150
+            "Price": 6200
         },
         {
             "CatId": "16",
@@ -127,7 +127,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_16.png",
             "Rarity": 1,
             "Weight": 850,
-            "Price": 160
+            "Price": 6500
         },
         {
             "CatId": "17",
@@ -135,7 +135,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_17.png",
             "Rarity": 1,
             "Weight": 840,
-            "Price": 170
+            "Price": 6800
         },
         {
             "CatId": "18",
@@ -143,7 +143,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_18.png",
             "Rarity": 1,
             "Weight": 830,
-            "Price": 180
+            "Price": 7100
         },
         {
             "CatId": "19",
@@ -151,7 +151,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_19.png",
             "Rarity": 1,
             "Weight": 820,
-            "Price": 190
+            "Price": 7400
         },
         {
             "CatId": "20",
@@ -159,7 +159,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_20.png",
             "Rarity": 1,
             "Weight": 810,
-            "Price": 200
+            "Price": 7700
         },
         {
             "CatId": "21",
@@ -167,7 +167,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_21.png",
             "Rarity": 2,
             "Weight": 800,
-            "Price": 210
+            "Price": 12500
         },
         {
             "CatId": "22",
@@ -175,7 +175,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_22.png",
             "Rarity": 2,
             "Weight": 790,
-            "Price": 220
+            "Price": 12800
         },
         {
             "CatId": "23",
@@ -183,7 +183,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_23.png",
             "Rarity": 2,
             "Weight": 780,
-            "Price": 230
+            "Price": 13100
         },
         {
             "CatId": "24",
@@ -191,7 +191,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_24.png",
             "Rarity": 2,
             "Weight": 770,
-            "Price": 240
+            "Price": 13400
         },
         {
             "CatId": "25",
@@ -199,7 +199,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_25.png",
             "Rarity": 2,
             "Weight": 760,
-            "Price": 250
+            "Price": 13700
         },
         {
             "CatId": "26",
@@ -207,7 +207,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_26.png",
             "Rarity": 2,
             "Weight": 750,
-            "Price": 260
+            "Price": 14000
         },
         {
             "CatId": "27",
@@ -215,7 +215,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_27.png",
             "Rarity": 2,
             "Weight": 740,
-            "Price": 270
+            "Price": 14300
         },
         {
             "CatId": "28",
@@ -223,7 +223,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_28.png",
             "Rarity": 2,
             "Weight": 730,
-            "Price": 280
+            "Price": 14600
         },
         {
             "CatId": "29",
@@ -231,7 +231,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_29.png",
             "Rarity": 2,
             "Weight": 720,
-            "Price": 290
+            "Price": 14900
         },
         {
             "CatId": "30",
@@ -239,7 +239,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_30.png",
             "Rarity": 2,
             "Weight": 710,
-            "Price": 300
+            "Price": 15200
         },
         {
             "CatId": "31",
@@ -247,7 +247,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_31.png",
             "Rarity": 2,
             "Weight": 700,
-            "Price": 310
+            "Price": 15500
         },
         {
             "CatId": "32",
@@ -255,7 +255,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_32.png",
             "Rarity": 2,
             "Weight": 690,
-            "Price": 320
+            "Price": 15800
         },
         {
             "CatId": "33",
@@ -263,7 +263,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_33.png",
             "Rarity": 2,
             "Weight": 680,
-            "Price": 330
+            "Price": 16100
         },
         {
             "CatId": "34",
@@ -271,7 +271,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_34.png",
             "Rarity": 2,
             "Weight": 670,
-            "Price": 340
+            "Price": 16400
         },
         {
             "CatId": "35",
@@ -279,7 +279,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_35.png",
             "Rarity": 3,
             "Weight": 660,
-            "Price": 350
+            "Price": 16700
         },
         {
             "CatId": "36",
@@ -287,7 +287,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_36.png",
             "Rarity": 3,
             "Weight": 650,
-            "Price": 360
+            "Price": 17000
         },
         {
             "CatId": "37",
@@ -295,7 +295,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_37.png",
             "Rarity": 3,
             "Weight": 640,
-            "Price": 370
+            "Price": 17300
         },
         {
             "CatId": "38",
@@ -303,7 +303,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_38.png",
             "Rarity": 3,
             "Weight": 630,
-            "Price": 380
+            "Price": 17600
         },
         {
             "CatId": "39",
@@ -311,7 +311,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_39.png",
             "Rarity": 3,
             "Weight": 620,
-            "Price": 390
+            "Price": 17900
         },
         {
             "CatId": "40",
@@ -319,7 +319,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_40.png",
             "Rarity": 3,
             "Weight": 610,
-            "Price": 400
+            "Price": 18200
         },
         {
             "CatId": "41",
@@ -327,7 +327,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_41.png",
             "Rarity": 3,
             "Weight": 600,
-            "Price": 410
+            "Price": 34500
         },
         {
             "CatId": "42",
@@ -335,7 +335,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_42.png",
             "Rarity": 3,
             "Weight": 590,
-            "Price": 420
+            "Price": 35000
         },
         {
             "CatId": "43",
@@ -343,7 +343,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_43.png",
             "Rarity": 3,
             "Weight": 580,
-            "Price": 430
+            "Price": 35500
         },
         {
             "CatId": "44",
@@ -351,7 +351,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_44.png",
             "Rarity": 3,
             "Weight": 570,
-            "Price": 440
+            "Price": 36000
         },
         {
             "CatId": "45",
@@ -359,7 +359,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_45.png",
             "Rarity": 4,
             "Weight": 560,
-            "Price": 450
+            "Price": 36500
         },
         {
             "CatId": "46",
@@ -367,7 +367,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_46.png",
             "Rarity": 4,
             "Weight": 550,
-            "Price": 460
+            "Price": 37000
         },
         {
             "CatId": "47",
@@ -375,7 +375,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_47.png",
             "Rarity": 4,
             "Weight": 540,
-            "Price": 470
+            "Price": 37500
         },
         {
             "CatId": "48",
@@ -383,7 +383,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_48.png",
             "Rarity": 4,
             "Weight": 530,
-            "Price": 480
+            "Price": 38000
         },
         {
             "CatId": "49",
@@ -391,7 +391,7 @@
             "IconPath": "Assets/HotUpdateContent/Res/Icons/cat_49.png",
             "Rarity": 4,
             "Weight": 520,
-            "Price": 490
+            "Price": 38500
         }
     ]
 }

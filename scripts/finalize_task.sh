@@ -207,7 +207,7 @@ should_skip_doc_logging() {
     fi
 
     local trivial_pattern='提交日志|提交标题|commit message|commit title|pr 标题|pr 描述|写日志和标题|写一下标题和内容|润色提交说明|总结一下修改了什么|快捷键|剪切|复制|翻译|改写文案'
-    local substantive_pattern='新增|接入|实现|修复|重构|迁移|导入|配置表|csv|资源|地图|猫表|任务表|等级表|测试|验证|脚本|流程|规则|自动维护|项目总览|迭代记录|清理临时|hotupdate|yooassets'
+    local substantive_pattern='新增|接入|实现|修复|重构|迁移|导入|配置表|xlsx|资源|地图|猫表|任务表|等级表|测试|验证|脚本|流程|规则|自动维护|项目总览|迭代记录|清理临时|hotupdate|yooassets'
 
     if printf '%s' "${combined_text}" | grep -Eqi "${trivial_pattern}"; then
         if ! printf '%s' "${combined_text}" | grep -Eqi "${substantive_pattern}"; then
