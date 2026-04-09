@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Progression;
+using App.HotUpdate.Holmas.Tasks.Config;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
 
@@ -17,6 +18,7 @@ namespace Holmas.Tests
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(catalog);
             var metaService = new HolmasMetaProgressionService(
                 catalog,
+                CreatePlayerLevelCatalog(),
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
@@ -53,6 +55,7 @@ namespace Holmas.Tests
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(catalog);
             var metaService = new HolmasMetaProgressionService(
                 catalog,
+                CreatePlayerLevelCatalog(),
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
@@ -84,6 +87,7 @@ namespace Holmas.Tests
             var clock = new FixedUtcClock { UtcNowMilliseconds = 789_000 };
             var metaService = new HolmasMetaProgressionService(
                 catalog,
+                CreatePlayerLevelCatalog(),
                 sharedPolicy,
                 sharedPolicy,
                 clock);
@@ -108,6 +112,7 @@ namespace Holmas.Tests
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(catalog);
             var metaService = new HolmasMetaProgressionService(
                 catalog,
+                CreatePlayerLevelCatalog(),
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 1_000 });
@@ -127,6 +132,7 @@ namespace Holmas.Tests
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(metaCatalog);
             var metaService = new HolmasMetaProgressionService(
                 metaCatalog,
+                CreatePlayerLevelCatalog(),
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
@@ -168,6 +174,7 @@ namespace Holmas.Tests
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(metaCatalog);
             var metaService = new HolmasMetaProgressionService(
                 metaCatalog,
+                CreatePlayerLevelCatalog(),
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
@@ -193,6 +200,7 @@ namespace Holmas.Tests
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(metaCatalog);
             var metaService = new HolmasMetaProgressionService(
                 metaCatalog,
+                CreatePlayerLevelCatalog(),
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
@@ -221,6 +229,7 @@ namespace Holmas.Tests
             var sharedPolicy = new HolmasDefaultMetaExperienceSource(metaCatalog);
             var metaService = new HolmasMetaProgressionService(
                 metaCatalog,
+                CreatePlayerLevelCatalog(),
                 sharedPolicy,
                 sharedPolicy,
                 new FixedUtcClock { UtcNowMilliseconds = 123456 });
@@ -245,25 +254,35 @@ namespace Holmas.Tests
                 new HolmasMetaProgressionDefinition
                 {
                     PlayerLevel = 1,
-                    MinExperience = 0,
                     OfflineRewardPerHour = 6,
                     AdUnlockHours = 24,
                 },
                 new HolmasMetaProgressionDefinition
                 {
                     PlayerLevel = 2,
-                    MinExperience = 1,
                     OfflineRewardPerHour = 8,
                     AdUnlockHours = 12,
                 },
                 new HolmasMetaProgressionDefinition
                 {
                     PlayerLevel = 3,
-                    MinExperience = 2,
                     OfflineRewardPerHour = 10,
                     AdUnlockHours = 24,
                 },
             });
+        }
+
+        private static HolmasTaskCatalog CreatePlayerLevelCatalog()
+        {
+            return new HolmasTaskCatalog(
+                null,
+                null,
+                new[]
+                {
+                    new HolmasPlayerLevelDefinition { PlayerLevel = 1, UpgradeExp = 0 },
+                    new HolmasPlayerLevelDefinition { PlayerLevel = 2, UpgradeExp = 1 },
+                    new HolmasPlayerLevelDefinition { PlayerLevel = 3, UpgradeExp = 2 },
+                });
         }
 
         private static HolmasAgencyCatalog CreatePromotionCatalog()

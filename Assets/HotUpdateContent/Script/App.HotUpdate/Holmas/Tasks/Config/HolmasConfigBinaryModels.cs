@@ -89,7 +89,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     public sealed class HolmasMetaLevelRow
     {
         public int PlayerLevel;
-        public long MinExperience;
         public int OfflineRewardPerHour;
         public int AdUnlockHours;
         public string Notes = string.Empty;

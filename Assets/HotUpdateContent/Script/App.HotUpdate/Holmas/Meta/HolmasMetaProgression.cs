@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using App.HotUpdate.Holmas.Progression;
+using App.HotUpdate.Holmas.Tasks.Config;
 using App.Shared.Holmas.RuntimeData;
 
 namespace App.HotUpdate.Holmas.Meta
@@ -64,7 +65,6 @@ namespace App.HotUpdate.Holmas.Meta
     public sealed class HolmasMetaProgressionDefinition
     {
         public int PlayerLevel;
-        public long MinExperience;
         public int OfflineRewardPerHour;
         public int AdUnlockHours = 24;
     }
@@ -205,17 +205,20 @@ namespace App.HotUpdate.Holmas.Meta
     public sealed class HolmasMetaProgressionService
     {
         private IHolmasMetaCatalog _catalog;
+        private readonly IHolmasTaskCatalog _playerLevelCatalog;
         private readonly IHolmasExperienceSource _experienceSource;
         private readonly IHolmasOfflineRewardSource _offlineRewardSource;
         private readonly IHolmasUtcClock _clock;
 
         public HolmasMetaProgressionService(
             IHolmasMetaCatalog catalog,
+            IHolmasTaskCatalog playerLevelCatalog,
             IHolmasExperienceSource experienceSource,
             IHolmasOfflineRewardSource offlineRewardSource,
             IHolmasUtcClock clock = null)
         {
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+            _playerLevelCatalog = playerLevelCatalog ?? throw new ArgumentNullException(nameof(playerLevelCatalog));
             _experienceSource = experienceSource ?? throw new ArgumentNullException(nameof(experienceSource));
             _offlineRewardSource = offlineRewardSource ?? throw new ArgumentNullException(nameof(offlineRewardSource));
             _clock = clock;
@@ -349,9 +352,9 @@ namespace App.HotUpdate.Holmas.Meta
             int currentLevel = Math.Max(1, state.PlayerLevel);
             int nextLevel = currentLevel;
 
-            while (_catalog.TryGetPlayerLevel(nextLevel + 1, out HolmasMetaProgressionDefinition nextDefinition))
+            while (_playerLevelCatalog.TryGetPlayerLevel(nextLevel + 1, out HolmasPlayerLevelDefinition nextDefinition))
             {
-                if (nextDefinition == null || state.Experience < nextDefinition.MinExperience)
+                if (nextDefinition == null || state.Experience < nextDefinition.UpgradeExp)
                 {
                     break;
                 }

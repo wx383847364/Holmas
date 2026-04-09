@@ -449,7 +449,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             }
 
             var seenLevels = new HashSet<int>();
-            long previousMinExperience = long.MinValue;
             int expectedLevel = 1;
             var playerLevelLookup = playerLevels == null
                 ? new Dictionary<int, HolmasPlayerLevelDefinition>()
@@ -484,14 +483,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (row.MinExperience <= previousMinExperience)
-                {
-                    report.AddError($"MetaLevels 的 minExperience 必须严格递增: level={row.PlayerLevel}。");
-                    return false;
-                }
-
-                previousMinExperience = row.MinExperience;
-
                 if (row.OfflineRewardPerHour < 0)
                 {
                     report.AddError($"MetaLevels 的 offlineRewardPerHour 不能为负: level={row.PlayerLevel}。");
@@ -506,27 +497,16 @@ namespace App.HotUpdate.Holmas.Tasks.Config
 
                 if (playerLevelLookup.TryGetValue(row.PlayerLevel, out var playerLevel))
                 {
-                    if (playerLevel.UpgradeExp != row.MinExperience)
-                    {
-                        report.AddError($"MetaLevels.minExperience 与 PlayerLevelTable.upgradeExp 不一致: level={row.PlayerLevel}。");
-                        return false;
-                    }
+                    _ = playerLevel;
                 }
 
                 metaLevels.Add(new HolmasMetaLevelRow
                 {
                     PlayerLevel = row.PlayerLevel,
-                    MinExperience = row.MinExperience,
                     OfflineRewardPerHour = row.OfflineRewardPerHour,
                     AdUnlockHours = row.AdUnlockHours,
                     Notes = row.Notes ?? string.Empty,
                 });
-            }
-
-            if (metaLevels[metaLevels.Count - 1].MinExperience != 2000)
-            {
-                report.AddError($"MetaLevels 最终等级的 minExperience 必须为 2000，当前为 {metaLevels[metaLevels.Count - 1].MinExperience}。");
-                return false;
             }
 
             return true;

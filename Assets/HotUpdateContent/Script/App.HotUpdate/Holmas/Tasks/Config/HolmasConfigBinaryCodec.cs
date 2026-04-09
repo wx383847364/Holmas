@@ -392,7 +392,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             {
                 HolmasMetaLevelRow row = rows[i] ?? new HolmasMetaLevelRow();
                 writer.Write(row.PlayerLevel);
-                writer.Write(row.MinExperience);
                 writer.Write(row.OfflineRewardPerHour);
                 writer.Write(row.AdUnlockHours);
             }
@@ -407,7 +406,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 rows[i] = new HolmasMetaLevelRow
                 {
                     PlayerLevel = reader.ReadInt32(),
-                    MinExperience = reader.ReadInt64(),
                     OfflineRewardPerHour = reader.ReadInt32(),
                     AdUnlockHours = reader.ReadInt32(),
                 };
