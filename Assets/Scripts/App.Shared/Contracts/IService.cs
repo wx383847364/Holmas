@@ -1,5 +1,57 @@
 namespace App.Shared.Contracts
 {
+    public sealed class UiSafeAreaInfo
+    {
+        public int Left { get; set; }
+        public int Right { get; set; }
+        public int Top { get; set; }
+        public int Bottom { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+
+        public UiSafeAreaInfo Clone()
+        {
+            return new UiSafeAreaInfo
+            {
+                Left = Left,
+                Right = Right,
+                Top = Top,
+                Bottom = Bottom,
+                Width = Width,
+                Height = Height,
+            };
+        }
+    }
+
+    public sealed class WeChatWindowInfo
+    {
+        public int ScreenWidth { get; set; }
+        public int ScreenHeight { get; set; }
+        public int WindowWidth { get; set; }
+        public int WindowHeight { get; set; }
+        public float PixelRatio { get; set; } = 1f;
+        public int StatusBarHeight { get; set; }
+        public bool IsFallback { get; set; }
+        public bool IsAvailable { get; set; }
+        public UiSafeAreaInfo SafeArea { get; set; } = new UiSafeAreaInfo();
+
+        public WeChatWindowInfo Clone()
+        {
+            return new WeChatWindowInfo
+            {
+                ScreenWidth = ScreenWidth,
+                ScreenHeight = ScreenHeight,
+                WindowWidth = WindowWidth,
+                WindowHeight = WindowHeight,
+                PixelRatio = PixelRatio,
+                StatusBarHeight = StatusBarHeight,
+                IsFallback = IsFallback,
+                IsAvailable = IsAvailable,
+                SafeArea = SafeArea != null ? SafeArea.Clone() : new UiSafeAreaInfo(),
+            };
+        }
+    }
+
     /// <summary>
     /// 服务接口基类，所有服务都应实现此接口
     /// </summary>
@@ -79,6 +131,7 @@ namespace App.Shared.Contracts
         System.Threading.Tasks.Task<string> LoginAsync();
         System.Threading.Tasks.Task<bool> ShowRewardedAdAsync(string adUnitId);
         System.Threading.Tasks.Task<bool> RequestPaymentAsync(string orderId, string paymentParams);
+        bool TryGetWindowInfo(out WeChatWindowInfo windowInfo);
     }
 
     /// <summary>

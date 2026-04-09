@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.UI.Generated;
 using App.HotUpdate.Holmas.UI.Screens.AgencyMain;
+using App.Shared.Contracts;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,10 +20,13 @@ namespace App.HotUpdate.Holmas.UI.Core
         private HolmasApplicationContext _context;
         private IHolmasLevelLaunchGateway _levelLaunchGateway;
         private UiScreenService _screenService;
+        private RectTransform _unsafeBackgroundLayer;
+        private RectTransform _safeAreaRoot;
         private RectTransform _pageLayer;
         private RectTransform _popupLayer;
         private RectTransform _sheetLayer;
         private RectTransform _overlayLayer;
+        private RectTransform _debugLayer;
         private GameObject _inputBlocker;
         private bool _built;
         private bool _bootstrapStarted;
@@ -33,6 +37,10 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         public UiScreenService ScreenService => _screenService;
 
+        public RectTransform UnsafeBackgroundLayer => _unsafeBackgroundLayer;
+
+        public RectTransform SafeAreaRoot => _safeAreaRoot;
+
         public RectTransform PageLayer => _pageLayer;
 
         public RectTransform PopupLayer => _popupLayer;
@@ -41,10 +49,13 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         public RectTransform OverlayLayer => _overlayLayer;
 
+        public RectTransform DebugLayer => _debugLayer;
+
         public void Initialize(HolmasApplicationContext context, IHolmasLevelLaunchGateway levelLaunchGateway)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _levelLaunchGateway = levelLaunchGateway ?? throw new ArgumentNullException(nameof(levelLaunchGateway));
+            ConfigureSafeAreaRuntime();
 
             if (!_built)
             {
@@ -89,7 +100,7 @@ namespace App.HotUpdate.Holmas.UI.Core
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1080f, 1920f);
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
+            scaler.matchWidthOrHeight = 1f;
 
             if (gameObject.GetComponent<GraphicRaycaster>() == null)
             {
@@ -103,11 +114,19 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
 
             Stretch(rootRect);
-            _pageLayer = CreateLayer("PageLayer");
-            _popupLayer = CreateLayer("PopupLayer");
-            _sheetLayer = CreateLayer("SheetLayer");
-            _overlayLayer = CreateLayer("OverlayLayer");
-            _inputBlocker = CreateInputBlocker();
+            _unsafeBackgroundLayer = CreateLayer("UnsafeBackgroundLayer", rootRect);
+            _safeAreaRoot = CreateLayer("SafeAreaRoot", rootRect);
+            if (_safeAreaRoot.gameObject.GetComponent<UiSafeAreaFitter>() == null)
+            {
+                _safeAreaRoot.gameObject.AddComponent<UiSafeAreaFitter>();
+            }
+
+            _pageLayer = CreateLayer("PageLayer", _safeAreaRoot);
+            _popupLayer = CreateLayer("PopupLayer", _safeAreaRoot);
+            _sheetLayer = CreateLayer("SheetLayer", _safeAreaRoot);
+            _overlayLayer = CreateLayer("OverlayLayer", _safeAreaRoot);
+            _debugLayer = CreateLayer("DebugLayer", rootRect);
+            _inputBlocker = CreateInputBlocker(rootRect);
             SetInputBlocked(false);
         }
 
@@ -167,19 +186,27 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
         }
 
-        private RectTransform CreateLayer(string name)
+        private void ConfigureSafeAreaRuntime()
+        {
+            IWeChatBridge weChatBridge = _context?.ServiceContainer != null
+                ? _context.ServiceContainer.Get<IWeChatBridge>()
+                : null;
+            UiSafeAreaRuntime.Configure(weChatBridge);
+        }
+
+        private RectTransform CreateLayer(string name, Transform parent)
         {
             var layerObject = new GameObject(name);
-            layerObject.transform.SetParent(transform, false);
+            layerObject.transform.SetParent(parent, false);
             RectTransform rectTransform = layerObject.AddComponent<RectTransform>();
             Stretch(rectTransform);
             return rectTransform;
         }
 
-        private GameObject CreateInputBlocker()
+        private GameObject CreateInputBlocker(Transform parent)
         {
             var blocker = new GameObject("InputBlocker");
-            blocker.transform.SetParent(transform, false);
+            blocker.transform.SetParent(parent, false);
             RectTransform rectTransform = blocker.AddComponent<RectTransform>();
             Stretch(rectTransform);
 

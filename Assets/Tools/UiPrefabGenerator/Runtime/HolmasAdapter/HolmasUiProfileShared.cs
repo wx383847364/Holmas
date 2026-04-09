@@ -4,6 +4,8 @@ namespace UiPrefabGenerator.HolmasAdapter
 {
     internal static class HolmasUiProfileShared
     {
+        public const string TmpLegacyDirectory = "Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Tool/Tmp";
+
         private static readonly string[] AllowedTypes =
         {
             "RectTransform",
@@ -11,12 +13,16 @@ namespace UiPrefabGenerator.HolmasAdapter
             "Image",
             "RawImage",
             "Text",
+            "TextMeshProUGUI",
+            "TMP_Text",
             "Button",
             "Toggle",
             "Slider",
             "Scrollbar",
             "ScrollRect",
             "InputField",
+            "TMP_InputField",
+            "TMP_Dropdown",
             "Mask",
             "RectMask2D",
             "HorizontalLayoutGroup",

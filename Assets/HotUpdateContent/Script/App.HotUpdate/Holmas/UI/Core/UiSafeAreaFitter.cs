@@ -56,8 +56,14 @@ namespace App.HotUpdate.Holmas.UI.Core
                 return;
             }
 
-            Rect safeArea = Screen.safeArea;
-            Vector2Int screenSize = new Vector2Int(Mathf.Max(Screen.width, 1), Mathf.Max(Screen.height, 1));
+            Rect safeArea;
+            Vector2Int screenSize;
+            if (!UiSafeAreaRuntime.TryGetSafeArea(out safeArea, out screenSize))
+            {
+                safeArea = Screen.safeArea;
+                screenSize = new Vector2Int(Mathf.Max(Screen.width, 1), Mathf.Max(Screen.height, 1));
+            }
+
             if (!force &&
                 safeArea == _lastSafeArea &&
                 screenSize == _lastScreenSize &&

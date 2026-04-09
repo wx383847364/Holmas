@@ -1,5 +1,6 @@
 using System;
 using App.Shared.Contracts;
+using UnityEngine;
 
 namespace App.AOT.Platform.WeChat
 {
@@ -9,6 +10,7 @@ namespace App.AOT.Platform.WeChat
     public class WeChatBridge : IWeChatBridge
     {
         private IAppLogger _logger;
+        private WeChatWindowInfo _windowInfo;
 
         public WeChatBridge()
         {
@@ -25,7 +27,7 @@ namespace App.AOT.Platform.WeChat
         public void Initialize()
         {
             _logger?.LogInfo("WeChatBridge: 初始化微信桥接...");
-            // TODO: 初始化微信JSBridge
+            RefreshWindowInfo();
         }
 
         public void Update(float deltaTime)
@@ -36,6 +38,19 @@ namespace App.AOT.Platform.WeChat
         public void Shutdown()
         {
             _logger?.LogInfo("WeChatBridge: 已关闭");
+        }
+
+        public bool TryGetWindowInfo(out WeChatWindowInfo windowInfo)
+        {
+            RefreshWindowInfo();
+            if (_windowInfo == null || !_windowInfo.IsAvailable)
+            {
+                windowInfo = null;
+                return false;
+            }
+
+            windowInfo = _windowInfo.Clone();
+            return true;
         }
 
         /// <summary>
@@ -78,6 +93,54 @@ namespace App.AOT.Platform.WeChat
         {
             // TODO: 从微信API获取网络状态
             return NetworkState.Unknown;
+        }
+
+        private void RefreshWindowInfo()
+        {
+            Rect safeArea = Screen.safeArea;
+            int screenWidth = Mathf.Max(Screen.width, 1);
+            int screenHeight = Mathf.Max(Screen.height, 1);
+
+            int left = Mathf.RoundToInt(safeArea.xMin);
+            int bottom = Mathf.RoundToInt(safeArea.yMin);
+            int safeWidth = Mathf.RoundToInt(safeArea.width);
+            int safeHeight = Mathf.RoundToInt(safeArea.height);
+            int right = Mathf.Max(0, screenWidth - left - safeWidth);
+            int top = Mathf.Max(0, screenHeight - bottom - safeHeight);
+
+            _windowInfo = new WeChatWindowInfo
+            {
+                ScreenWidth = screenWidth,
+                ScreenHeight = screenHeight,
+                WindowWidth = screenWidth,
+                WindowHeight = screenHeight,
+                PixelRatio = 1f,
+                StatusBarHeight = top,
+                IsFallback = true,
+                IsAvailable = true,
+                SafeArea = new UiSafeAreaInfo
+                {
+                    Left = left,
+                    Right = right,
+                    Top = top,
+                    Bottom = bottom,
+                    Width = safeWidth,
+                    Height = safeHeight,
+                },
+            };
+
+            _logger?.LogDebug(
+                "WeChatBridge: window info refreshed. screen={0}x{1}, safeArea={2},{3},{4},{5}, top={6}, bottom={7}, left={8}, right={9}",
+                _windowInfo.ScreenWidth,
+                _windowInfo.ScreenHeight,
+                safeArea.xMin,
+                safeArea.yMin,
+                safeArea.width,
+                safeArea.height,
+                top,
+                bottom,
+                left,
+                right);
         }
     }
 
