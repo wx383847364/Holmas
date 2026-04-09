@@ -165,10 +165,8 @@ namespace Holmas.Tests
             Assert.That(tables.Cats.Count(item => item.Rarity == 3), Is.EqualTo(10));
             Assert.That(tables.Cats.Count(item => item.Rarity == 4), Is.EqualTo(5));
 
-            int[] expectedUpgradeExp = { 0, 40, 85, 135, 190, 250, 320, 400, 490, 590, 700, 825, 965, 1120, 1290, 1475, 1675, 1840, 1930, 2000 };
-            long[] expectedMetaMinExperience = { 0, 40, 85, 135, 190, 250, 320, 400, 490, 590, 700, 825, 965, 1120, 1290, 1475, 1675, 1840, 1930, 2000 };
+            int[] expectedUpgradeExp = { 0, 9, 21, 36, 51, 66, 81, 96, 111, 126, 141, 156, 171, 186, 201, 216, 231, 246, 261, 276 };
             Assert.That(tables.Levels.Select(item => item.UpgradeExp), Is.EqualTo(expectedUpgradeExp));
-            Assert.That(tables.MetaLevels.Select(item => item.MinExperience).ToArray(), Is.EqualTo(expectedMetaMinExperience));
             Assert.That(tables.MetaLevels.Select(item => item.PlayerLevel).ToArray(), Is.EqualTo(Enumerable.Range(1, 20).ToArray()));
             Assert.That(tables.AgencyBuildings.Select(item => item.AgencyStageId), Is.EqualTo(Enumerable.Range(1, 100).ToArray()));
             Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds.SequenceEqual(new[] { "leaflet", "radio", "online", "tv" })), Is.True);
@@ -283,11 +281,11 @@ namespace Holmas.Tests
         public void HolmasCsvValidator_RejectsMetaLevelMismatch()
         {
             CsvConfigTables tables = LoadSampleTables();
-            tables.MetaLevels[0].MinExperience = tables.MetaLevels[1].MinExperience;
+            tables.Levels[1].UpgradeExp = tables.Levels[0].UpgradeExp;
 
             IReadOnlyList<string> errors = CsvConfigValidator.Validate(tables);
 
-            Assert.That(errors.Any(item => item.Contains("长期成长经验门槛") || item.Contains("严格递增")), Is.True, string.Join(Environment.NewLine, errors));
+            Assert.That(errors.Any(item => item.Contains("升级经验") || item.Contains("严格递增")), Is.True, string.Join(Environment.NewLine, errors));
         }
 
         [Test]
@@ -484,7 +482,6 @@ namespace Holmas.Tests
                 MetaLevels = tables.MetaLevels.Select(item => new HolmasMetaLevelRow
                 {
                     PlayerLevel = item.PlayerLevel,
-                    MinExperience = item.MinExperience,
                     OfflineRewardPerHour = item.OfflineRewardPerHour,
                     AdUnlockHours = item.AdUnlockHours,
                     Notes = item.Notes,
@@ -648,7 +645,7 @@ namespace Holmas.Tests
             var result = new List<CsvMetaLevelRow>();
             foreach (var row in rows.Skip(2))
             {
-                if (row.Length < 5)
+                if (row.Length < 4)
                 {
                     continue;
                 }
@@ -656,10 +653,9 @@ namespace Holmas.Tests
                 result.Add(new CsvMetaLevelRow
                 {
                     PlayerLevel = ParseInt(row[0]),
-                    MinExperience = ParseLong(row[1]),
-                    OfflineRewardPerHour = ParseInt(row[2]),
-                    AdUnlockHours = ParseInt(row[3]),
-                    Notes = row[4],
+                    OfflineRewardPerHour = ParseInt(row[1]),
+                    AdUnlockHours = ParseInt(row[2]),
+                    Notes = row.Length > 3 ? row[3] : string.Empty,
                 });
             }
 
@@ -936,7 +932,6 @@ namespace Holmas.Tests
         private sealed class CsvMetaLevelRow
         {
             public int PlayerLevel;
-            public long MinExperience;
             public int OfflineRewardPerHour;
             public int AdUnlockHours;
             public string Notes = string.Empty;
@@ -1136,6 +1131,7 @@ namespace Holmas.Tests
                 var taskIds = new HashSet<string>((tasks ?? Array.Empty<CsvTaskRow>()).Where(item => item != null).Select(item => item.TaskTypeId), StringComparer.Ordinal);
                 var mapIds = new HashSet<string>((maps ?? Array.Empty<CsvMapRow>()).Where(item => item != null).Select(item => item.MapId), StringComparer.Ordinal);
                 var seen = new HashSet<int>();
+                CsvLevelRow previousLevel = null;
 
                 foreach (var level in levels ?? Array.Empty<CsvLevelRow>())
                 {
@@ -1161,6 +1157,11 @@ namespace Holmas.Tests
                         errors.Add($"升级经验非法: {level.PlayerLevel}");
                     }
 
+                    if (previousLevel != null && level.UpgradeExp <= previousLevel.UpgradeExp)
+                    {
+                        errors.Add($"升级经验必须严格递增: {level.PlayerLevel}");
+                    }
+
                     if (level.TaskTypeIds == null || level.TaskTypeWeights == null || level.TaskTypeIds.Length != level.TaskTypeWeights.Length)
                     {
                         errors.Add($"玩家等级配置的任务标识和权重长度不一致: {level.PlayerLevel}");
@@ -1178,13 +1179,14 @@ namespace Holmas.Tests
                     {
                         ValidateWeightedIds(level.PlayerLevel, level.MapIds, level.MapWeights, mapIds, "地图", errors);
                     }
+
+                    previousLevel = level;
                 }
             }
 
             private static void ValidateMetaLevels(IEnumerable<CsvMetaLevelRow> levels, IReadOnlyList<CsvLevelRow> playerLevels, List<string> errors)
             {
                 var seen = new HashSet<int>();
-                long previousMinExperience = long.MinValue;
                 int expectedLevel = 1;
                 int metaLevelCount = 0;
 
@@ -1213,16 +1215,6 @@ namespace Holmas.Tests
                         errors.Add($"长期成长表存在重复玩家等级: {level.PlayerLevel}");
                     }
 
-                    if (level.MinExperience < 0)
-                    {
-                        errors.Add($"长期成长表的经验门槛非法: {level.PlayerLevel}");
-                    }
-
-                    if (previousMinExperience >= level.MinExperience)
-                    {
-                        errors.Add($"长期成长经验门槛必须严格递增: {level.PlayerLevel}");
-                    }
-
                     if (level.OfflineRewardPerHour < 0)
                     {
                         errors.Add($"长期成长表的离线奖励非法: {level.PlayerLevel}");
@@ -1232,8 +1224,6 @@ namespace Holmas.Tests
                     {
                         errors.Add($"长期成长表的广告解锁时长非法: {level.PlayerLevel}");
                     }
-
-                    previousMinExperience = level.MinExperience;
                     expectedLevel++;
                 }
 

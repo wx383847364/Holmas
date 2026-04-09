@@ -135,7 +135,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
             var randomSource = new HolmasSystemRandomSource();
             var metaSource = new HolmasDefaultMetaExperienceSource(metaCatalog);
             var taskProgressService = new HolmasTaskProgressService(taskCatalog, randomSource, clock);
-            var metaProgressionService = new HolmasMetaProgressionService(metaCatalog, metaSource, metaSource, clock);
+            var metaProgressionService = new HolmasMetaProgressionService(metaCatalog, taskCatalog, metaSource, metaSource, clock);
             var promotionProgressionService = new HolmasAgencyProgressionService(promotionCatalog, metaProgressionService);
             var progressionCoordinator = new HolmasProgressionCoordinator(taskProgressService, metaProgressionService);
 
@@ -158,7 +158,6 @@ namespace App.HotUpdate.Holmas.Bootstrap
             return new HolmasMetaCatalog(configBundle.MetaLevels.Select(row => new HolmasMetaProgressionDefinition
             {
                 PlayerLevel = row.PlayerLevel,
-                MinExperience = row.MinExperience,
                 OfflineRewardPerHour = row.OfflineRewardPerHour,
                 AdUnlockHours = row.AdUnlockHours,
             }));
