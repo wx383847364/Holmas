@@ -16,6 +16,8 @@ namespace UiPrefabGenerator.Tests.EditMode
             Assert.That(profile.DraftPrefabRoot, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas"));
             Assert.That(profile.AllowedComponentTypes, Has.Member("Button"));
             Assert.That(profile.AllowedComponentTypes, Has.Member("ScrollRect"));
+            Assert.That(profile.AllowedComponentTypes, Has.Member("TextMeshProUGUI"));
+            Assert.That(profile.AllowedComponentTypes, Has.Member("TMP_InputField"));
             Assert.That(portraitProfile.ProfileId, Is.EqualTo("holmas_ugui_portrait"));
             Assert.That(portraitProfile.DraftPrefabRoot, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait"));
         }
