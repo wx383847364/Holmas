@@ -132,6 +132,7 @@
 bash tools/doc_maintenance/finalize_task.sh
 ```
 
+- 收尾默认会自动尝试清理 `/tmp` 或 `/private/tmp` 下的 Holmas 临时验证工程；如果这轮需要保留现场排查，显式追加 `--skip-temp-cleanup`
 - 不要把“代码写完”“文档写完”“测试跑完”当成任务结束
 - 不要把“是否 git commit”写死为固定结论；所有任务都必须进入收尾规范，再由收尾规范判断是否适合提交、是否需要补文档和同步记录
 
