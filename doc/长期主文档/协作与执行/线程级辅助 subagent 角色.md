@@ -7,7 +7,7 @@
 - 新会话默认入口和阶段判断总规则
 - 执行型 `Agent 1 ~ 6` 的职责边界和验收规则
 - helper 的覆盖模板
-- 固定三段收尾和 Git 提交流程
+- 固定三段收尾和 Git 提交建议/确认规则
 
 相关入口分别看：
 
@@ -15,6 +15,7 @@
 - [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
 - [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
 - [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
+- [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
 
 ## Summary
 
@@ -262,4 +263,5 @@ helper role 的回传固定使用三段式：
 - 新会话默认入口继续看 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
 - 执行型真实 subagent 的启动、调度、职责、验收和 Agent 6 闭环继续看 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
 - helper 的覆盖模板继续看 [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
-- 文档收尾与 Git 提交建议继续看 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
+- 文档收尾继续看 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
+- Git 提交建议格式、确认词和 `commit / push` 口径继续看 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)

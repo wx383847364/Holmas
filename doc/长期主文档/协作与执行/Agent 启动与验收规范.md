@@ -6,13 +6,14 @@
 
 - 新会话入口页的完整说明
 - 可直接复制的覆盖模板
-- 固定三段收尾和 Git 提交流程
+- 固定三段收尾和 Git 提交建议/确认规则
 
 对应入口分别看：
 
 - [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
 - [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
 - [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
+- [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
 
 ## Summary
 
@@ -483,6 +484,7 @@ Agent 6 审查结果：通过
 8. Agent 6 未通过时，先按固定路由规则退回实现方修复；修完后默认优先交回同一审查链复审
 9. 只有所有相关阶段里程碑都通过 Agent 6 后，才决定是否进入下一个阶段或做最终汇总
 10. 本轮结束后，执行 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
+11. 如果收尾后还要按确认词继续执行 `git commit / push`，再按 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md) 处理
 
 如果这轮同时有多个实现 subagent，则每条链都按下面的闭环方式执行：
 

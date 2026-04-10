@@ -10,7 +10,7 @@
 
 - 新会话默认入口和阶段自动判断规则
 - `Agent 1 ~ Agent 6` 的职责边界、允许写入范围和验收规则
-- 固定三段收尾、`finalize_task.sh` 和 Git 提交流程
+- 固定三段收尾、`finalize_task.sh` 和 Git 提交建议/确认规则
 
 详细规则分别看：
 
@@ -18,6 +18,7 @@
 - [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
 - [线程级辅助 subagent 角色](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/线程级辅助%20subagent%20角色.md)
 - [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
+- [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
 
 ## 当前核心 skill
 
@@ -382,3 +383,4 @@ Agent 6 已经退回 findings。
 - 再按 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 决定由主线程直做、复用 helper，还是启动真实 subagent。
 - 需要 helper 时，helper 的角色、注册表、复用和压缩规则统一看 [线程级辅助 subagent 角色](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/线程级辅助 subagent 角色.md)。
 - 任务结束后，固定按 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md) 收尾。
+- 如果收尾后还要按确认词继续执行 `git commit / push`，具体格式和提示词统一看 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)。

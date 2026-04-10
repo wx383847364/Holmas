@@ -51,7 +51,7 @@ usage() {
   - `--session-major-task-count` 用来显式声明当前会话已经连续完成了多少个大任务；脚本不再按“同一天”自动推断
   - `--session-mode` 和 `--iteration-mode` 分别控制“会话建议”和“迭代记录建议”，两者彼此独立
   - 默认会在收尾末尾输出固定三段：`文档维护`、`Git 提交建议`、`会话建议`
-  - 如果 `Git 提交建议` 为“适合提交”，还会固定追加一条 `提交确认` 提示，提醒可直接回复 `1 / 确认 / 提交 / 直接提交`
+  - 如果 `Git 提交建议` 为“适合提交”，还会固定追加一条 `提交确认` 提示，提醒可直接回复 `1（提交并推送） / 2（只提交） / 确认 / 提交 / 直接提交（只提交）`
   - 如果适合提交，脚本会默认生成中文 `标题：` 和 `内容：`
   - 完整收尾后会写入 `.git/codex/last_finalize_report.json`，作为最近一次完整收尾状态
   - 收尾完成后，建议立刻执行 `python3 tools/doc_maintenance/update_project_docs.py --doc-root doc check-last-finalize`

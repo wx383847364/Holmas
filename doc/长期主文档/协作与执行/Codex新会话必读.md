@@ -96,6 +96,7 @@
 - 协作 / 执行：
   - 先看 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
   - 收尾时看 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
+  - 如果本轮要按确认词直接提交或推送，再看 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
 
 ## 执行硬规则
 
@@ -119,6 +120,7 @@
 ### 任务结束后
 
 - 只要一轮任务结束，就必须进入 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md) 的统一收尾规范
+- 如果这轮要沿提交确认词继续执行 `git commit / push`，具体提示词和执行口径统一看 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
 - 收尾时必须处理：
   - 文档维护
   - 验证结论
@@ -136,6 +138,6 @@ bash tools/doc_maintenance/finalize_task.sh
 本页不展开：
 
 - 收尾脚本参数
-- Git 提交流程细则
+- Git 提交建议与确认规则细则
 - 文档维护命令细节
 - 最终回复模板

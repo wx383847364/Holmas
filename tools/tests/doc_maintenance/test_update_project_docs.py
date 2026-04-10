@@ -769,7 +769,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("内容：", completed.stdout)
             self.assertIn("- 为收尾流程补固定三段输出", completed.stdout)
             self.assertIn("- 为提交建议补中文标题和内容", completed.stdout)
-            self.assertIn("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。", completed.stdout)
+            self.assertIn("提交确认：如需我继续执行，请回复 1（提交并推送） / 2（只提交） / 确认 / 提交 / 直接提交（只提交）。", completed.stdout)
             self.assertIn("会话建议：", completed.stdout)
 
     def test_show_last_finalize_cli_prints_cached_report(self):
@@ -831,7 +831,12 @@ class UpdateProjectDocsTests(unittest.TestCase):
                     "doc_log_skipped": False,
                     "head_commit": update_project_docs.current_head_commit(doc_root),
                     "worktree_status": update_project_docs.current_worktree_status(doc_root),
-                    "report_text": "文档维护：已执行\nGit 提交建议：适合提交\n会话建议：继续当前会话",
+                    "report_text": (
+                        "文档维护：已执行\n"
+                        "Git 提交建议：适合提交\n"
+                        f"{update_project_docs.SUITABLE_COMMIT_CONFIRMATION}\n"
+                        "会话建议：继续当前会话"
+                    ),
                     "created_at": "2026-04-06T10:00:00",
                 },
             )
@@ -871,7 +876,12 @@ class UpdateProjectDocsTests(unittest.TestCase):
                     "doc_log_skipped": False,
                     "head_commit": update_project_docs.current_head_commit(doc_root),
                     "worktree_status": update_project_docs.current_worktree_status(doc_root),
-                    "report_text": "文档维护：已执行\nGit 提交建议：适合提交\n会话建议：继续当前会话",
+                    "report_text": (
+                        "文档维护：已执行\n"
+                        "Git 提交建议：适合提交\n"
+                        f"{update_project_docs.SUITABLE_COMMIT_CONFIRMATION}\n"
+                        "会话建议：继续当前会话"
+                    ),
                     "created_at": "2026-04-06T10:00:00",
                 },
             )
@@ -894,6 +904,51 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertNotEqual(completed.returncode, 0)
             self.assertIn("当前工作区状态已变化", completed.stderr or completed.stdout)
 
+    def test_check_last_finalize_cli_fails_when_confirmation_prompt_is_outdated(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_tools_dir = install_doc_maintenance_tools(root)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            write_file(root, "README.md", "seed\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=root, check=True, capture_output=True, text=True)
+
+            update_project_docs.write_last_finalize_report(
+                doc_root,
+                {
+                    "summary": "最近一次完整收尾",
+                    "agent6_review": "passed",
+                    "doc_log_skipped": False,
+                    "head_commit": update_project_docs.current_head_commit(doc_root),
+                    "worktree_status": update_project_docs.current_worktree_status(doc_root),
+                    "report_text": (
+                        "文档维护：已执行\n"
+                        "Git 提交建议：适合提交\n"
+                        "提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。\n"
+                        "会话建议：继续当前会话"
+                    ),
+                    "created_at": "2026-04-06T10:00:00",
+                },
+            )
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(doc_tools_dir / "update_project_docs.py"),
+                    "--doc-root",
+                    str(root / "doc"),
+                    "check-last-finalize",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("最新 `提交确认` 提示词", completed.stderr or completed.stdout)
+
     def test_sync_keeps_last_finalize_report_when_worktree_status_is_unchanged(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -912,7 +967,12 @@ class UpdateProjectDocsTests(unittest.TestCase):
                     "doc_log_skipped": False,
                     "head_commit": update_project_docs.current_head_commit(doc_root),
                     "worktree_status": update_project_docs.current_worktree_status(doc_root),
-                    "report_text": "文档维护：已执行\nGit 提交建议：适合提交\n会话建议：继续当前会话",
+                    "report_text": (
+                        "文档维护：已执行\n"
+                        "Git 提交建议：适合提交\n"
+                        f"{update_project_docs.SUITABLE_COMMIT_CONFIRMATION}\n"
+                        "会话建议：继续当前会话"
+                    ),
                     "created_at": "2026-04-06T10:00:00",
                 },
             )
@@ -1273,7 +1333,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("文档维护：已执行", formatted)
             self.assertIn("Git 提交建议：适合提交", formatted)
             self.assertIn("标题：[23000001] 流程：新会话启动与收尾流程", formatted)
-            self.assertIn("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。", formatted)
+            self.assertIn("提交确认：如需我继续执行，请回复 1（提交并推送） / 2（只提交） / 确认 / 提交 / 直接提交（只提交）。", formatted)
             self.assertIn("会话建议：", formatted)
 
     def test_classify_topic_prefers_document_category_for_doc_words(self):

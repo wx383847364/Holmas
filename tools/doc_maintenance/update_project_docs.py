@@ -25,6 +25,9 @@ DEFAULT_PLACEHOLDERS = {
 }
 SESSION_BOOTSTRAP_DOC = "协作与执行/Codex新会话必读.md"
 TASK_WRAPUP_DOC = "协作与执行/任务完成后自动维护文档.md"
+GIT_COMMIT_RULE_DOC = "协作与执行/Git 提交建议与确认规则.md"
+SUITABLE_COMMIT_CONFIRMATION = "提交确认：如需我继续执行，请回复 1（提交并推送） / 2（只提交） / 确认 / 提交 / 直接提交（只提交）。"
+UNSUITABLE_COMMIT_CONFIRMATION = "提交确认：当前不建议直接提交；如需强制提交，请明确说明。"
 LEGACY_LONG_DOCS = {
     f"{LONG_DIR_NAME}/方案与数据/Holmas UI 自动生成系统长期方案.md",
     f"{LONG_DIR_NAME}/方案与数据/UI Prefab 自动生成系统 Agent 规划入口.md",
@@ -548,6 +551,11 @@ def validate_last_finalize_report(doc_root: Path):
         if marker not in report_text:
             reasons.append(f"收尾输出缺少 `{marker}` 段，不能视为完整收尾。")
 
+    if "Git 提交建议：适合提交" in report_text and SUITABLE_COMMIT_CONFIRMATION not in report_text:
+        reasons.append("收尾输出缺少适合提交场景的最新 `提交确认` 提示词，不能视为完整收尾。")
+    if "Git 提交建议：暂不建议提交" in report_text and UNSUITABLE_COMMIT_CONFIRMATION not in report_text:
+        reasons.append("收尾输出缺少暂不建议提交场景的最新 `提交确认` 提示词，不能视为完整收尾。")
+
     return {
         "valid": not reasons,
         "reasons": reasons,
@@ -946,6 +954,8 @@ def write_long_index(doc_root: Path):
     lines += [
         "",
         "### D. 协作与执行",
+        "",
+        "- 收尾入口统一看任务收尾与文档维护流程；如果本轮要按确认词继续执行 `git commit / push`，再看 Git 提交建议与确认规则。",
         "",
     ]
     if not grouped["协作与执行"]:
@@ -1455,6 +1465,7 @@ def suggest_handoff(
     default_docs = [
         (doc_root / LONG_DIR_NAME / SESSION_BOOTSTRAP_DOC).resolve().as_posix(),
         (doc_root / LONG_DIR_NAME / TASK_WRAPUP_DOC).resolve().as_posix(),
+        (doc_root / LONG_DIR_NAME / GIT_COMMIT_RULE_DOC).resolve().as_posix(),
     ]
     if latest["path"]:
         default_docs.append(latest["path"].resolve().as_posix())
@@ -1496,10 +1507,10 @@ def format_handoff_report(report):
         for item in commit["content"]:
             lines.append(f"- {item}")
         lines.append("```")
-        lines.append("提交确认：如需我直接提交到 git，请回复 1 / 确认 / 提交 / 直接提交。")
+        lines.append(SUITABLE_COMMIT_CONFIRMATION)
     else:
         lines.append(f"Git 提交建议：暂不建议提交。原因是：{commit['reason']}")
-        lines.append("提交确认：当前不建议直接提交；如需强制提交，请明确说明。")
+        lines.append(UNSUITABLE_COMMIT_CONFIRMATION)
 
     lines.append(f"会话建议：{report['session_advice']}")
     lines += [
