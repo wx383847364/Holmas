@@ -1288,6 +1288,16 @@ def build_session_bootstrap_prompt(doc_root: Path, goal: str, done, risks, next_
     return "\n".join(lines)
 
 
+def build_session_description(title: str, goal: str):
+    title = (title or "").strip()
+    goal = (goal or "").strip()
+    if title and goal:
+        return f"{title}。目标：{goal}"
+    if title:
+        return title
+    return goal
+
+
 def suggest_handoff(
     doc_root: Path,
     summary: str,
@@ -1351,12 +1361,12 @@ def suggest_handoff(
             )
         else:
             session_advice = "继续当前修复/验证会话"
-            session_reason = "Agent 6 审查已转为待回补复审；当前可继续已知修复与验证，但暂不生成下一阶段启动卡。"
+            session_reason = "Agent 6 审查已转为待回补复审；当前可继续已知修复与验证，但暂不生成下一个会话可复制提示词。"
             title = ""
             goal = ""
     elif review_pending and not session_quality_degraded:
         session_advice = "继续当前会话"
-        session_reason = "Agent 6 审查尚未完成，暂不建议生成下一阶段启动卡。"
+        session_reason = "Agent 6 审查尚未完成，暂不建议生成下一个会话可复制提示词。"
         title = ""
         goal = ""
     elif review_pending and session_quality_degraded:
@@ -1453,6 +1463,7 @@ def suggest_handoff(
     startup_prompt = ""
     if title and goal:
         startup_prompt = build_session_bootstrap_prompt(doc_root, goal, done, risks, next_steps, docs)
+    session_description = build_session_description(title, goal)
 
     return {
         "doc_maintenance_status": "未执行。原因是：这轮属于事务性协助，没有写入项目总览或迭代记录。" if doc_log_skipped else "已执行",
@@ -1463,6 +1474,7 @@ def suggest_handoff(
         "iteration_reason": iteration_reason,
         "title": title,
         "goal": goal,
+        "session_description": session_description,
         "docs": docs,
         "startup_prompt": startup_prompt,
         "doc_log_skipped": doc_log_skipped,
@@ -1507,18 +1519,20 @@ def format_handoff_report(report):
         lines += [
             f"下一会话标题：{report['title']}",
             f"下一会话目标：{report['goal']}",
+            f"下一个会话描述：{report['session_description']}",
             "建议先读：",
         ]
         for item in report["docs"]:
             lines.append(f"- {item}")
         lines += [
-            "建议首条消息：",
+            "下一个会话可复制提示词：",
             "```text",
             report["startup_prompt"],
             "```",
         ]
     else:
-        lines.append("下一会话启动卡：当前不生成，继续当前会话即可。")
+        lines.append("下一个会话描述：当前不生成，继续当前会话即可。")
+        lines.append("下一个会话可复制提示词：当前不生成，继续当前会话即可。")
     lines += [
         "最终回复要求：发送 final 时，必须显式包含上面的 `文档维护 / Git 提交建议 / 会话建议` 三段内容。",
         "最终回复要求：`check-last-finalize` 返回 `[ok]` 只表示允许进入 final，不表示可以省略这三段。",
