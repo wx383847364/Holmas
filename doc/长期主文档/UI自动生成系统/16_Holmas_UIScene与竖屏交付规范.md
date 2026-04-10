@@ -27,6 +27,7 @@
 - 适配验收台
 - 不进入生产 BuildSettings
 - 不承载正式业务引用
+- 默认导出到 `Assets/Editor/Holmas/UiWorkbench/Exports`，不直接导出到运行时资源目录
 
 ### `SampleScene` 与 `MinesweeperScene`
 
@@ -72,6 +73,9 @@ UIScene
 - `XxxSheet.prefab`
 - `XxxOverlay.prefab`
 - 对应 `binding/manifest`
+
+`UIScene` 导出物只用于 workbench 预览、人工校验和 promotion 前检查。  
+正式运行时页面仍以业务侧正式目录中的 prefab + binding/manifest 为准。
 
 页面 prefab 推荐固定结构：
 

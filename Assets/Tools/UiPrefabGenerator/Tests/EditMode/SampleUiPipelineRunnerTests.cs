@@ -14,11 +14,11 @@ namespace UiPrefabGenerator.Tests.EditMode
                 var report = new DefaultSampleUiPipelineRunner().Run(new SampleUiPipelineRequest
                 {
                     DesignPacket = SampleFixtureLoader.LoadDesignPacket(),
-                    Profile = new HolmasUiProjectProfile(),
+                    Profile = new HolmasPortraitUiProjectProfile(),
                 });
 
                 Assert.That(report.Success, Is.True);
-                Assert.That(report.PrefabDraftPath, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab"));
+                Assert.That(report.PrefabDraftPath, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
                 SampleFixtureAssert.AreEqual(report.PreviewGeneration.Manifest, SampleFixtureLoader.LoadPrefabBindingManifest());
                 SampleFixtureAssert.AreEqual(
                     ((UiPrefabGenerator.HolmasAdapter.HolmasGeneratedResultConsumptionResult)report.AdapterResult).Plan,
@@ -46,7 +46,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                 var request = new SampleUiPipelineRequest
                 {
                     DesignPacket = SampleFixtureLoader.LoadDesignPacket(),
-                    Profile = new HolmasUiProjectProfile(),
+                    Profile = new HolmasPortraitUiProjectProfile(),
                 };
 
                 SampleUiPipelineReport first = runner.Run(request);

@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
-using App.HotUpdate.Holmas.UI.Generated;
-using App.HotUpdate.Holmas.UI.Screens.AgencyMain;
+using App.HotUpdate.Holmas.UI;
 using App.Shared.Contracts;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,8 +13,6 @@ namespace App.HotUpdate.Holmas.UI.Core
     /// </summary>
     public sealed class UiRoot : MonoBehaviour
     {
-        public const string AgencyMainScreenId = "agency.main";
-
         private HolmasApplicationContext _context;
         private IHolmasLevelLaunchGateway _levelLaunchGateway;
         private UiScreenService _screenService;
@@ -28,6 +24,9 @@ namespace App.HotUpdate.Holmas.UI.Core
         private RectTransform _overlayLayer;
         private RectTransform _debugLayer;
         private GameObject _inputBlocker;
+        private GameObject _popupBackdrop;
+        private Button _popupBackdropButton;
+        private Action _popupBackdropClickAction;
         private bool _built;
         private bool _bootstrapStarted;
 
@@ -122,11 +121,17 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
 
             _pageLayer = CreateLayer("PageLayer", _safeAreaRoot);
-            _popupLayer = CreateLayer("PopupLayer", _safeAreaRoot);
+            _popupBackdrop = CreatePopupBackdrop(rootRect);
+            _popupLayer = CreateLayer("PopupLayer", rootRect);
+            if (_popupLayer.gameObject.GetComponent<UiSafeAreaFitter>() == null)
+            {
+                _popupLayer.gameObject.AddComponent<UiSafeAreaFitter>();
+            }
             _sheetLayer = CreateLayer("SheetLayer", _safeAreaRoot);
             _overlayLayer = CreateLayer("OverlayLayer", _safeAreaRoot);
             _debugLayer = CreateLayer("DebugLayer", rootRect);
             _inputBlocker = CreateInputBlocker(rootRect);
+            BringPopupModalLayersToFront();
             SetInputBlocked(false);
         }
 
@@ -139,28 +144,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private void RegisterDefaultScreens()
         {
-            var definitions = new List<UiScreenDefinition>
-            {
-                // TODO: 正式生成 prefab/address 接入后，改成最终产物地址。
-                new UiScreenDefinition(
-                    AgencyMainScreenId,
-                    AgencyMainGeneratedBindings.PrefabAssetPath,
-                    UiScreenKind.Page,
-                    typeof(AgencyMainPageController))
-                {
-                    Layer = "Page",
-                    CachePolicy = UiCachePolicy.KeepInstance,
-                    BlockInputDuringTransition = true,
-                    PreloadOnBootstrap = true,
-                    Exclusive = true,
-                    BindingManifest = AgencyMainGeneratedBindings.Manifest,
-                },
-            };
-
-            for (int i = 0; i < definitions.Count; i++)
-            {
-                _screenService.RegisterDefinition(definitions[i]);
-            }
+            HolmasUiScreenCatalog.RegisterAll(_screenService);
         }
 
         private async Task BootstrapAsync()
@@ -175,9 +159,10 @@ namespace App.HotUpdate.Holmas.UI.Core
                     }
                 }
 
-                if (!_screenService.IsOpen(AgencyMainScreenId))
+                string startupScreenId = HolmasUiScreenCatalog.DefaultStartupScreenId;
+                if (!_screenService.IsOpen(startupScreenId))
                 {
-                    await _screenService.OpenPageAsync(AgencyMainScreenId);
+                    await _screenService.OpenPageAsync(startupScreenId);
                 }
             }
             catch (Exception ex)
@@ -215,6 +200,62 @@ namespace App.HotUpdate.Holmas.UI.Core
             image.raycastTarget = true;
             blocker.transform.SetAsLastSibling();
             return blocker;
+        }
+
+        public void ConfigurePopupBackdrop(bool isVisible, bool clickOutsideToClose, Action onClick)
+        {
+            _popupBackdropClickAction = clickOutsideToClose ? onClick : null;
+            if (_popupBackdropButton != null)
+            {
+                _popupBackdropButton.interactable = clickOutsideToClose;
+            }
+
+            if (_popupBackdrop != null)
+            {
+                _popupBackdrop.SetActive(isVisible);
+                BringPopupModalLayersToFront();
+            }
+        }
+
+        private GameObject CreatePopupBackdrop(Transform parent)
+        {
+            var backdrop = new GameObject("PopupBackdrop");
+            backdrop.transform.SetParent(parent, false);
+            RectTransform rectTransform = backdrop.AddComponent<RectTransform>();
+            Stretch(rectTransform);
+
+            var image = backdrop.AddComponent<Image>();
+            image.color = new Color(0f, 0f, 0f, 0.45f);
+            image.raycastTarget = true;
+
+            _popupBackdropButton = backdrop.AddComponent<Button>();
+            _popupBackdropButton.transition = Selectable.Transition.None;
+            _popupBackdropButton.onClick.AddListener(HandlePopupBackdropClicked);
+            backdrop.SetActive(false);
+            return backdrop;
+        }
+
+        private void HandlePopupBackdropClicked()
+        {
+            _popupBackdropClickAction?.Invoke();
+        }
+
+        private void BringPopupModalLayersToFront()
+        {
+            if (_popupBackdrop != null)
+            {
+                _popupBackdrop.transform.SetAsLastSibling();
+            }
+
+            if (_popupLayer != null)
+            {
+                _popupLayer.transform.SetAsLastSibling();
+            }
+
+            if (_inputBlocker != null)
+            {
+                _inputBlocker.transform.SetAsLastSibling();
+            }
         }
 
         private static void Stretch(RectTransform rectTransform)

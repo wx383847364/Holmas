@@ -66,6 +66,13 @@ namespace App.HotUpdate.Holmas.UI.Core
                 return;
             }
 
+            UiOverlayController currentOverlay = _navigationState.CurrentOverlay;
+            if (currentOverlay != null)
+            {
+                await CloseAsync(currentOverlay.Definition.Id);
+                return;
+            }
+
             UiPageController currentPage = _navigationState.CurrentPage;
             if (currentPage == null)
             {
@@ -133,7 +140,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                         await OpenSheetRuntimeAsync(runtime, payload);
                         break;
                     case UiScreenKind.Overlay:
-                        OpenOverlayRuntime(runtime, payload);
+                        await OpenOverlayRuntimeAsync(runtime, payload);
                         break;
                 }
 
@@ -191,6 +198,7 @@ namespace App.HotUpdate.Holmas.UI.Core
             runtime.BringToFront();
             runtime.Open(payload);
             _navigationState.PushPopup(runtime.Controller as UiPopupController);
+            UpdatePopupBackdrop();
         }
 
         private async Task OpenSheetRuntimeAsync(UiScreenRuntime runtime, object payload)
@@ -212,10 +220,12 @@ namespace App.HotUpdate.Holmas.UI.Core
             _navigationState.SetActiveSheet(groupId, runtime.Controller as UiSheetController);
         }
 
-        private void OpenOverlayRuntime(UiScreenRuntime runtime, object payload)
+        private async Task OpenOverlayRuntimeAsync(UiScreenRuntime runtime, object payload)
         {
+            await CloseActiveOverlayIfNeededAsync(runtime);
             runtime.BringToFront();
             runtime.Open(payload);
+            _navigationState.SetCurrentOverlay(runtime.Controller as UiOverlayController);
         }
 
         private Task CloseRuntimeAsync(UiScreenRuntime runtime)
@@ -237,9 +247,13 @@ namespace App.HotUpdate.Holmas.UI.Core
                     break;
                 case UiScreenKind.Popup:
                     _navigationState.RemovePopup(runtime.Controller as UiPopupController);
+                    UpdatePopupBackdrop();
                     break;
                 case UiScreenKind.Sheet:
                     _navigationState.RemoveSheet(runtime.Controller as UiSheetController);
+                    break;
+                case UiScreenKind.Overlay:
+                    _navigationState.RemoveOverlay(runtime.Controller as UiOverlayController);
                     break;
             }
 
@@ -258,6 +272,17 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
 
             return Task.CompletedTask;
+        }
+
+        private async Task CloseActiveOverlayIfNeededAsync(UiScreenRuntime runtimeToOpen)
+        {
+            UiOverlayController currentOverlay = _navigationState.CurrentOverlay;
+            if (currentOverlay == null || ReferenceEquals(currentOverlay, runtimeToOpen.Controller))
+            {
+                return;
+            }
+
+            await CloseAsync(currentOverlay.Definition.Id);
         }
 
         private void DestroyRuntime(UiScreenRuntime runtime)
@@ -325,6 +350,22 @@ namespace App.HotUpdate.Holmas.UI.Core
         {
             _navigationState.ReleaseInputLock();
             _root.SetInputBlocked(_navigationState.IsInputLocked);
+        }
+
+        private void UpdatePopupBackdrop()
+        {
+            UiPopupController topPopup = _navigationState.TopPopup;
+            bool isVisible = topPopup != null;
+            bool clickOutsideToClose = isVisible && topPopup.Definition.ClickOutsideToClose;
+            _root.ConfigurePopupBackdrop(
+                isVisible,
+                clickOutsideToClose,
+                clickOutsideToClose ? HandlePopupBackdropClicked : (Action)null);
+        }
+
+        private void HandlePopupBackdropClicked()
+        {
+            _ = CloseTopPopupAsync();
         }
 
         private sealed class UiScreenRuntime

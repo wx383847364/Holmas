@@ -407,7 +407,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   prefabName: 
-  exportRootPath: Assets/HotUpdateContent/Res/Perfabs/UI
+  exportRootPath: Assets/Editor/Holmas/UiWorkbench/Exports
 --- !u!1 &400
 GameObject:
   m_ObjectHideFlags: 0

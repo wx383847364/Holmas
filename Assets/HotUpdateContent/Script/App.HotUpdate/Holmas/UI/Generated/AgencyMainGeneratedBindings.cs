@@ -9,17 +9,20 @@ namespace App.HotUpdate.Holmas.UI.Generated
     /// </summary>
     public static class AgencyMainGeneratedBindings
     {
-        public const string ScreenId = "agency.main";
         public const string PrefabName = "AgencyMainPanel";
         public const string PrefabAssetPath = "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab";
 
         private static readonly UiBindingManifest ManifestInstance = BuildManifest();
+        private static readonly UiRuntimeScreenDescriptor DescriptorInstance =
+            new UiRuntimeScreenDescriptor(PrefabName, PrefabAssetPath, ManifestInstance);
 
         public static UiBindingManifest Manifest => ManifestInstance;
 
+        public static UiRuntimeScreenDescriptor Descriptor => DescriptorInstance;
+
         private static UiBindingManifest BuildManifest()
         {
-            var manifest = new UiBindingManifest(ScreenId, PrefabName, PrefabAssetPath);
+            var manifest = new UiBindingManifest("agency.main", PrefabName, PrefabAssetPath);
 
             manifest.AddEntry(
                 AgencyMainBindings.RootPanelKey,

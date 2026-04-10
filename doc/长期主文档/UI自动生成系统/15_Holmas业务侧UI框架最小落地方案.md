@@ -25,14 +25,16 @@
   - `UiBindingEntry / UiReferenceCollector / UiBindingResolver`
   - `AgencyMainPageController / Presenter / View / Bindings / Vm`
   - `AgencyMainGeneratedBindings` 形式的最小 generated 结果消费桥，先由业务侧运行时消费正式 prefab 地址与显式 binding manifest
+  - 页面注册入口改为“页面目录自注册 + 薄 catalog 聚合”，不再继续把 screen id、controller、prefab 路径散落到全局大表
+  - generated 结果已开始收口为运行时 descriptor，页面注册层只消费正式 prefab 路径与 binding manifest
   - `AgencyMainPanel.prefab` 最小正式资产，显式挂载 `UiReferenceCollector`、`AgencyMainView` 与 `SafeAreaContent + UiSafeAreaFitter`
   - `AgencyMainBindings.Resolve()` 已按 `binding_key + node_path + event_name` 真实消费 prefab 上的显式 binding
   - 借鉴旧 `UIMatch` 的“安全区收边”思路，正式沉淀为 `UiSafeAreaFitter`；不复用旧 `Tmp` 脚本实现
   - `Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Tool/Tmp` 旧临时脚本已删除，不再阻断这条最小正式链路的 batchmode 验证
   - 旧 `HolmasUiRoot` 已标注为过渡态保留
 - 未完成：
-  - 生成器直出业务侧运行时 binding 文件，替换当前最小兼容的 `AgencyMainGeneratedBindings`
-  - popup / sheet / overlay 的真实业务页面样例
+  - 生成器直出页面级 runtime descriptor，替换当前最小兼容的 `AgencyMainGeneratedBindings`
+  - popup / sheet / overlay 的真实业务页面样例与 descriptor 接入
   - 转场动画、点击空白关闭、复杂缓存与对象池
   - 更完整的运行时验证与 UI 资产联调
   - 恢复并补齐整仓 EditMode / smoke 验证，而不只是在隔离工程中跑 `AgencyMain` 最小验证
@@ -110,6 +112,7 @@
 - 创建四类 UI 容器
 - 持有 `UiScreenService`
 - 持有全局输入阻断层
+- 调用薄 catalog 完成默认页面注册
 
 固定 4 类容器：
 
@@ -118,7 +121,7 @@
 - `Sheet`
 - `Overlay`
 
-`UiRoot` 是宿主与业务 UI 的总入口，不承载页面业务逻辑。
+`UiRoot` 是宿主与业务 UI 的总入口，不承载页面业务逻辑，也不长期硬编码具体页面定义。
 
 ### `UiScreenService`
 

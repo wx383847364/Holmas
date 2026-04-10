@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UiPrefabGenerator.Core.Profile;
 using UiPrefabGenerator.Core.Schema;
 
 namespace UiPrefabGenerator.HolmasAdapter
@@ -38,16 +39,16 @@ namespace UiPrefabGenerator.HolmasAdapter
 
     public sealed class HolmasGeneratedResultConsumer
     {
-        private readonly HolmasUiProjectProfile _profile;
+        private readonly IProjectUiProfile _profile;
 
         public HolmasGeneratedResultConsumer()
-            : this(new HolmasUiProjectProfile())
+            : this(new HolmasPortraitUiProjectProfile())
         {
         }
 
-        public HolmasGeneratedResultConsumer(HolmasUiProjectProfile profile)
+        public HolmasGeneratedResultConsumer(IProjectUiProfile profile)
         {
-            _profile = profile ?? new HolmasUiProjectProfile();
+            _profile = profile ?? new HolmasPortraitUiProjectProfile();
         }
 
         public HolmasGeneratedResultConsumptionResult Consume(PrefabBindingManifest manifest)
@@ -78,12 +79,12 @@ namespace UiPrefabGenerator.HolmasAdapter
                 return result;
             }
 
-            string expectedDraftPath = _profile.BuildDraftPrefabPath(manifest.PrefabName);
+            string expectedDraftPath = HolmasUiProfileShared.BuildDraftPrefabPath(_profile.DraftPrefabRoot, manifest.PrefabName);
             result.Plan.PrefabName = manifest.PrefabName ?? string.Empty;
             result.Plan.PrefabDraftPath = manifest.PrefabDraftPath ?? string.Empty;
 
             if (!string.IsNullOrWhiteSpace(manifest.PrefabDraftPath) &&
-                !_profile.IsDraftPrefabPathWithinAllowedRoot(manifest.PrefabDraftPath))
+                !HolmasUiProfileShared.IsDraftPrefabPathWithinAllowedRoot(manifest.PrefabDraftPath, _profile.DraftPrefabRoot))
             {
                 result.Errors.Add(string.Format(
                     "PrefabDraftPath 不在 Holmas 允许目录内: {0}。",

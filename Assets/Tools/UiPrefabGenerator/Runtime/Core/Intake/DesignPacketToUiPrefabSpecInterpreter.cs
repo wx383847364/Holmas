@@ -6,7 +6,7 @@ namespace UiPrefabGenerator.Core.Intake
 {
     public sealed class DefaultDesignPacketToUiPrefabSpecInterpreter : IUiSpecInterpreter
     {
-        private const string DefaultGenerationProfileId = "holmas_ugui";
+        private const string DefaultGenerationProfileId = "holmas_ugui_portrait";
         private const string PanelBackgroundRuleId = "panel_background";
         private const string TitleTextRuleId = "title_text";
         private const string PrimaryButtonRuleId = "primary_button";

@@ -1,7 +1,7 @@
 {
-  "profile_id": "holmas_ugui",
+  "profile_id": "holmas_ugui_portrait",
   "prefab_name": "AgencyMainPanel",
-  "prefab_draft_path": "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+  "prefab_draft_path": "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
   "runtime_binding_namespace": "App.HotUpdate.Holmas.UI.Generated",
   "entries": [
     {

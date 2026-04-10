@@ -2,7 +2,7 @@
   "page_id": "agency_main",
   "prefab_name": "AgencyMainPanel",
   "root_node_id": "root",
-  "generation_profile_id": "holmas_ugui",
+  "generation_profile_id": "holmas_ugui_portrait",
   "nodes": [
     {
       "node_id": "root",

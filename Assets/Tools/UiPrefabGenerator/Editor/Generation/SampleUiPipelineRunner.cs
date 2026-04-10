@@ -438,7 +438,7 @@ namespace UiPrefabGenerator.Editor.Generation
             {
                 if (string.Equals(type.Name, "DefaultDesignPacketToUiPrefabSpecInterpreter", StringComparison.Ordinal))
                 {
-                    return Activator.CreateInstance(type, new object[] { null, "holmas_ugui" });
+                    return Activator.CreateInstance(type, new object[] { null, "holmas_ugui_portrait" });
                 }
 
                 throw;

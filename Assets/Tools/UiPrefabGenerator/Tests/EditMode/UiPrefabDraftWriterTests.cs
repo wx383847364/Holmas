@@ -15,7 +15,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             try
             {
                 var spec = SampleFixtureLoader.LoadUiPrefabSpec();
-                var profile = new HolmasUiProjectProfile();
+                var profile = new HolmasPortraitUiProjectProfile();
 
                 UiPrefabDraftWriteResult result = new DefaultUnityPrefabDraftWriter().WriteDraft(new UiPrefabDraftWriteRequest
                 {
@@ -25,7 +25,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                 });
 
                 Assert.That(result.Success, Is.True);
-                Assert.That(result.PrefabDraftPath, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab"));
+                Assert.That(result.PrefabDraftPath, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
 
                 GameObject prefabRoot = PrefabUtility.LoadPrefabContents(result.PrefabDraftPath);
                 try

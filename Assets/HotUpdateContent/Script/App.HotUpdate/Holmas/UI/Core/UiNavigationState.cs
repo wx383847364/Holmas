@@ -8,6 +8,7 @@ namespace App.HotUpdate.Holmas.UI.Core
         private readonly List<UiPageController> _pageStack = new List<UiPageController>();
         private readonly List<UiPopupController> _popupStack = new List<UiPopupController>();
         private readonly Dictionary<string, UiSheetController> _activeSheets = new Dictionary<string, UiSheetController>(StringComparer.Ordinal);
+        private UiOverlayController _currentOverlay;
 
         public IReadOnlyList<UiPageController> PageStack => _pageStack;
 
@@ -22,6 +23,8 @@ namespace App.HotUpdate.Holmas.UI.Core
         public UiPageController CurrentPage => _pageStack.Count > 0 ? _pageStack[_pageStack.Count - 1] : null;
 
         public UiPopupController TopPopup => _popupStack.Count > 0 ? _popupStack[_popupStack.Count - 1] : null;
+
+        public UiOverlayController CurrentOverlay => _currentOverlay;
 
         public void PushPage(UiPageController page)
         {
@@ -112,6 +115,19 @@ namespace App.HotUpdate.Holmas.UI.Core
             if (!string.IsNullOrWhiteSpace(targetKey))
             {
                 _activeSheets.Remove(targetKey);
+            }
+        }
+
+        public void SetCurrentOverlay(UiOverlayController overlay)
+        {
+            _currentOverlay = overlay;
+        }
+
+        public void RemoveOverlay(UiOverlayController overlay)
+        {
+            if (ReferenceEquals(_currentOverlay, overlay))
+            {
+                _currentOverlay = null;
             }
         }
 

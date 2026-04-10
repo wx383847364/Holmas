@@ -5,7 +5,7 @@ namespace App.HotUpdate.Holmas.UI.Core
     [DisallowMultipleComponent]
     public sealed class UiScenePrefabExportMarker : MonoBehaviour
     {
-        public const string DefaultManualUiPrefabRoot = "Assets/HotUpdateContent/Res/Perfabs/UI";
+        public const string DefaultManualUiPrefabRoot = "Assets/Editor/Holmas/UiWorkbench/Exports";
         public const string ExpectedExportRootName = "UIRootPreview";
 
         [SerializeField]

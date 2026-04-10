@@ -29,7 +29,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             var manifest = new PrefabBindingManifest
             {
                 PrefabName = "AgencyMainPanel",
-                PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
             };
             manifest.Entries.Add(new PrefabBindingEntry
             {
@@ -43,7 +43,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             var result = consumer.Consume(manifest);
 
             Assert.That(result.Success, Is.True);
-            Assert.That(result.Plan.ProfileId, Is.EqualTo("holmas_ugui"));
+            Assert.That(result.Plan.ProfileId, Is.EqualTo("holmas_ugui_portrait"));
             Assert.That(result.Plan.ManualWiringNodePaths, Is.EquivalentTo(new[] { "AgencyMainPanel/ClaimButton" }));
         }
     }

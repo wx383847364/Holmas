@@ -15,7 +15,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             UiPrefabGenerationResult generation = new PreviewUnityPrefabGenerator().GenerateDraft(new UiPrefabGenerationRequest
             {
                 Spec = spec,
-                Profile = new HolmasUiProjectProfile(),
+                Profile = new HolmasPortraitUiProjectProfile(),
             });
 
             Assert.That(generation.Success, Is.True);
