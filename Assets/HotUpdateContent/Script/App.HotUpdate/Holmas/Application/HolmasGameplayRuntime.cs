@@ -228,6 +228,18 @@ namespace App.HotUpdate.Holmas.Application
         }
 
         /// <summary>
+        /// 结束当前关卡会话，释放本局状态。
+        /// </summary>
+        public void EndCurrentLevelSession()
+        {
+            CurrentBoardRuntime = null;
+            CurrentBoardTemplate = null;
+            CurrentLevelSnapshot = null;
+            _currentLevelCompletionApplied = false;
+            _logger?.LogInfo("HolmasGameplayRuntime: 已清理当前关卡会话。");
+        }
+
+        /// <summary>
         /// 当前长期成长配置下，广告槽位的到期时间。
         /// </summary>
         public long GetAdUnlockExpireAt(long nowUtcMilliseconds)
@@ -247,6 +259,11 @@ namespace App.HotUpdate.Holmas.Application
                 throw new InvalidOperationException("HolmasGameplayRuntime: 当前还没有启动中的关卡。");
             }
 
+            if (CurrentBoardRuntime.Completed)
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前关卡已经结算，不能继续翻格。");
+            }
+
             BoardRevealResult revealResult = CurrentBoardRuntime.Reveal(cellIndex);
             if (revealResult.IsValidAction && revealResult.Completed)
             {
@@ -254,6 +271,24 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             return revealResult;
+        }
+
+        /// <summary>
+        /// 切换一个格子的旗标状态。
+        /// </summary>
+        public BoardRevealResult ToggleFlag(int cellIndex)
+        {
+            if (CurrentBoardRuntime == null)
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前还没有启动中的关卡。");
+            }
+
+            if (CurrentBoardRuntime.Completed)
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前关卡已经结算，不能继续插旗。");
+            }
+
+            return CurrentBoardRuntime.ToggleFlag(cellIndex);
         }
 
         /// <summary>

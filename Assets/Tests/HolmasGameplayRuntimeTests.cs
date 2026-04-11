@@ -152,6 +152,40 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasGameplayRuntime_EndCurrentLevelSession_ClearsCurrentBoardState()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 1);
+            var assetsRuntime = new FakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+
+            var request = HolmasTestSupport.CreateRequest(
+                "map-reset",
+                TerrainAssetPathUtility.BuildAssetPath("4"),
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            runtime.StartLevelAsync(request).GetAwaiter().GetResult();
+            runtime.EndCurrentLevelSession();
+
+            Assert.That(runtime.CurrentBoardTemplate, Is.Null);
+            Assert.That(runtime.CurrentLevelSnapshot, Is.Null);
+            Assert.That(runtime.CurrentBoardRuntime, Is.Null);
+            Assert.Throws<System.InvalidOperationException>(() => runtime.RevealCell(0, out _));
+        }
+
+        [Test]
         public void HolmasGameplayRuntime_ApplyOfflineSettlement_AddsGoldOnly()
         {
             var catalog = HolmasTestSupport.CreateStandardTaskCatalog();

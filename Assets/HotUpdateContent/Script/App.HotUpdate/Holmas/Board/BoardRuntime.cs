@@ -151,6 +151,11 @@ namespace App.HotUpdate.Holmas.Board
                 IsFlagAction = true,
             };
 
+            if (Completed)
+            {
+                return result;
+            }
+
             if (!IsCellIndexValid(cellIndex) || !_validMask[cellIndex] || _revealedCells[cellIndex])
             {
                 return result;
@@ -170,6 +175,11 @@ namespace App.HotUpdate.Holmas.Board
                 IsValidAction = false,
                 IsIgnored = true,
             };
+
+            if (Completed)
+            {
+                return result;
+            }
 
             if (!IsCellIndexValid(cellIndex) || !_validMask[cellIndex] || _revealedCells[cellIndex] || _flaggedCells[cellIndex])
             {

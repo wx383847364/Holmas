@@ -323,6 +323,31 @@ namespace Holmas.Tests
             Assert.That(runtime.GetCellState(8).IsFoundCat, Is.True);
         }
 
+        [Test]
+        public void BoardRuntime_RejectsFurtherMutationsAfterCompletion()
+        {
+            var template = HolmasTestSupport.CreateBoardTemplate(1, 1);
+            var snapshot = new LevelSnapshot
+            {
+                MapId = "completed-map",
+                TerrainPath = "terrain",
+                Seed = 1,
+                SpawnedCats = new List<SpawnedCatData>(),
+                RevealedCells = new bool[1],
+                Completed = true,
+            };
+
+            var runtime = new BoardRuntime(template, snapshot);
+
+            BoardRevealResult reveal = runtime.Reveal(0);
+            BoardRevealResult toggleFlag = runtime.ToggleFlag(0);
+
+            Assert.That(reveal.IsValidAction, Is.False);
+            Assert.That(reveal.IsIgnored, Is.True);
+            Assert.That(toggleFlag.IsValidAction, Is.False);
+            Assert.That(toggleFlag.IsIgnored, Is.True);
+        }
+
         private sealed class InvalidTerrainDimensionsAsset : ScriptableObject
         {
             public int Rows => 0;

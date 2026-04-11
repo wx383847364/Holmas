@@ -16,6 +16,8 @@ namespace App.HotUpdate.Holmas.UI.Core
         private HolmasApplicationContext _context;
         private IHolmasLevelLaunchGateway _levelLaunchGateway;
         private UiScreenService _screenService;
+        private IBattleWorldHost _battleWorldHost;
+        private HolmasFlowCoordinator _flowCoordinator;
         private RectTransform _unsafeBackgroundLayer;
         private RectTransform _safeAreaRoot;
         private RectTransform _pageLayer;
@@ -35,6 +37,8 @@ namespace App.HotUpdate.Holmas.UI.Core
         public IHolmasLevelLaunchGateway LevelLaunchGateway => _levelLaunchGateway;
 
         public UiScreenService ScreenService => _screenService;
+
+        public HolmasFlowCoordinator FlowCoordinator => _flowCoordinator;
 
         public RectTransform UnsafeBackgroundLayer => _unsafeBackgroundLayer;
 
@@ -60,6 +64,7 @@ namespace App.HotUpdate.Holmas.UI.Core
             {
                 BuildRoot();
                 CreateScreenService();
+                CreateFlowCoordinator();
                 RegisterDefaultScreens();
                 _built = true;
             }
@@ -142,6 +147,19 @@ namespace App.HotUpdate.Holmas.UI.Core
             _screenService = new UiScreenService(this, prefabLoader, navigationState);
         }
 
+        private void CreateFlowCoordinator()
+        {
+            if (_battleWorldHost == null)
+            {
+                _battleWorldHost = new HolmasBattleWorldHost();
+            }
+
+            if (_flowCoordinator == null)
+            {
+                _flowCoordinator = new HolmasFlowCoordinator(this, _battleWorldHost);
+            }
+        }
+
         private void RegisterDefaultScreens()
         {
             HolmasUiScreenCatalog.RegisterAll(_screenService);
@@ -159,10 +177,17 @@ namespace App.HotUpdate.Holmas.UI.Core
                     }
                 }
 
-                string startupScreenId = HolmasUiScreenCatalog.DefaultStartupScreenId;
-                if (!_screenService.IsOpen(startupScreenId))
+                if (_flowCoordinator != null)
                 {
-                    await _screenService.OpenPageAsync(startupScreenId);
+                    await _flowCoordinator.EnterStartupAsync();
+                }
+                else
+                {
+                    string startupScreenId = HolmasUiScreenCatalog.DefaultStartupScreenId;
+                    if (!_screenService.IsOpen(startupScreenId))
+                    {
+                        await _screenService.OpenPageAsync(startupScreenId);
+                    }
                 }
             }
             catch (Exception ex)

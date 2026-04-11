@@ -2,7 +2,8 @@
     "name": "App.HotUpdate",
     "rootNamespace": "App.HotUpdate",
     "references": [
-        "App.Shared"
+        "App.Shared",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

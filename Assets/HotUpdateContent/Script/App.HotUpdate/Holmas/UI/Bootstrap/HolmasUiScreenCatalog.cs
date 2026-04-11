@@ -1,6 +1,9 @@
 using System;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Screens.AgencyMain;
+using App.HotUpdate.Holmas.UI.Screens.Battle;
+using App.HotUpdate.Holmas.UI.Screens.Loading;
+using App.HotUpdate.Holmas.UI.Screens.Main;
 
 namespace App.HotUpdate.Holmas.UI
 {
@@ -10,7 +13,7 @@ namespace App.HotUpdate.Holmas.UI
     /// </summary>
     public static class HolmasUiScreenCatalog
     {
-        public static string DefaultStartupScreenId => AgencyMainScreenRegistration.ScreenId;
+        public static string DefaultStartupScreenId => LoadingScreenRegistration.StartupPageScreenId;
 
         public static void RegisterAll(UiScreenService screenService)
         {
@@ -19,6 +22,10 @@ namespace App.HotUpdate.Holmas.UI
                 throw new ArgumentNullException(nameof(screenService));
             }
 
+            screenService.RegisterDefinition(LoadingScreenRegistration.CreateStartupPageDefinition());
+            screenService.RegisterDefinition(LoadingScreenRegistration.CreateTransitionOverlayDefinition());
+            screenService.RegisterDefinition(MainScreenRegistration.CreateDefinition());
+            screenService.RegisterDefinition(BattleScreenRegistration.CreateDefinition());
             screenService.RegisterDefinition(AgencyMainScreenRegistration.CreateDefinition());
         }
     }

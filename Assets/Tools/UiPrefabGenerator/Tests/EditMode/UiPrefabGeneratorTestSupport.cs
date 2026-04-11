@@ -1,4 +1,5 @@
 using System.IO;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -6,13 +7,40 @@ namespace UiPrefabGenerator.Tests.EditMode
 {
     internal static class UiPrefabGeneratorTestSupport
     {
+        private static readonly string[] PreservedFolderPaths =
+        {
+            "Assets/Res/Perfabs/Generated",
+            "Assets/Res/Perfabs/Generated/Holmas",
+            "Assets/Res/Perfabs/Generated/Holmas/Portrait",
+        };
+
+        private static readonly string[] PreservedAssetPaths =
+        {
+            "Assets/Res/Perfabs/Generated.meta",
+            "Assets/Res/Perfabs/Generated/Holmas.meta",
+            "Assets/Res/Perfabs/Generated/Holmas/Portrait.meta",
+            "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
+            "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab.meta",
+        };
+
+        private static readonly Dictionary<string, string> PreservedAssetContents = new Dictionary<string, string>();
+        private static bool _preservedAssetSnapshotCaptured;
+
+        public static void PreserveTrackedGeneratedAssets()
+        {
+            CapturePreservedAssetsIfNeeded();
+        }
+
         public static void CleanupGeneratedDraftRoot()
         {
+            PreserveTrackedGeneratedAssets();
             DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab");
             DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab");
             DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/Portrait");
             DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas");
             DeleteAssetIfExists("Assets/Res/Perfabs/Generated");
+            AssetDatabase.Refresh();
+            RestorePreservedAssets();
             AssetDatabase.Refresh();
         }
 
@@ -26,6 +54,58 @@ namespace UiPrefabGenerator.Tests.EditMode
         {
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
             return Path.GetFullPath(Path.Combine(projectRoot, assetPath));
+        }
+
+        private static void CapturePreservedAssetsIfNeeded()
+        {
+            if (_preservedAssetSnapshotCaptured)
+            {
+                return;
+            }
+
+            PreservedAssetContents.Clear();
+            for (int i = 0; i < PreservedAssetPaths.Length; i++)
+            {
+                string assetPath = PreservedAssetPaths[i];
+                string absolutePath = ToAbsolutePath(assetPath);
+                if (File.Exists(absolutePath))
+                {
+                    PreservedAssetContents[assetPath] = File.ReadAllText(absolutePath);
+                }
+            }
+
+            _preservedAssetSnapshotCaptured = true;
+        }
+
+        private static void RestorePreservedAssets()
+        {
+            if (!_preservedAssetSnapshotCaptured)
+            {
+                return;
+            }
+
+            for (int i = 0; i < PreservedFolderPaths.Length; i++)
+            {
+                Directory.CreateDirectory(ToAbsolutePath(PreservedFolderPaths[i]));
+            }
+
+            for (int i = 0; i < PreservedAssetPaths.Length; i++)
+            {
+                string assetPath = PreservedAssetPaths[i];
+                if (!PreservedAssetContents.TryGetValue(assetPath, out string content))
+                {
+                    continue;
+                }
+
+                string absolutePath = ToAbsolutePath(assetPath);
+                string directory = Path.GetDirectoryName(absolutePath);
+                if (!string.IsNullOrWhiteSpace(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                File.WriteAllText(absolutePath, content);
+            }
         }
 
         private static void DeleteAssetIfExists(string assetPath)
