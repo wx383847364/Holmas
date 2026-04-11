@@ -1742,7 +1742,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertTrue(report["suitable"])
             self.assertTrue(report["title"].startswith("[23000002] 流程：优化 Git 提交建议快路径与校验链路"))
 
-    def test_suggest_current_commit_reuses_strict_snapshot_cache(self):
+    def test_suggest_current_commit_reuses_unsuitable_snapshot_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             init_git_repo(root)
@@ -1752,10 +1752,8 @@ class UpdateProjectDocsTests(unittest.TestCase):
             subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
             subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=root, check=True, capture_output=True, text=True)
 
-            write_file(root, "tools/doc_maintenance/update_project_docs.py", "print('fast path')\n")
-            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
-
             first = update_project_docs.suggest_current_commit(doc_root)
+            self.assertFalse(first["suitable"])
             with mock.patch.object(
                 update_project_docs,
                 "current_commit_title_and_content",
@@ -1769,7 +1767,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             self.assertEqual(second, first)
 
-    def test_suggest_current_commit_invalidates_cache_when_worktree_changes(self):
+    def test_suggest_current_commit_does_not_reuse_suitable_snapshot_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             init_git_repo(root)
@@ -1780,9 +1778,33 @@ class UpdateProjectDocsTests(unittest.TestCase):
             subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=root, check=True, capture_output=True, text=True)
 
             target.write_text("print('fast path')\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
+            first = update_project_docs.suggest_current_commit(doc_root)
+            self.assertTrue(first["suitable"])
+            with mock.patch.object(
+                update_project_docs,
+                "current_commit_title_and_content",
+                return_value=("230", "[23000002] 流程：优化 Git 提交建议快路径与校验链路", ["x"]),
+            ) as mocked_builder:
+                report = update_project_docs.suggest_current_commit(doc_root)
+
+            self.assertTrue(report["suitable"])
+            self.assertEqual(mocked_builder.call_count, 1)
+
+    def test_suggest_current_commit_invalidates_unsuitable_cache_when_worktree_changes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            init_git_repo(root)
+            doc_root = create_doc_root(root)
+
+            target = write_file(root, "tools/doc_maintenance/update_project_docs.py", "print('seed')\n")
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=root, check=True, capture_output=True, text=True)
+
             update_project_docs.suggest_current_commit(doc_root)
 
-            write_file(root, "tools/tests/doc_maintenance/test_extra.py", "def test_extra():\n    assert True\n")
+            target.write_text("print('fast path')\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
             with mock.patch.object(
                 update_project_docs,
                 "current_commit_title_and_content",

@@ -916,10 +916,7 @@ def suggest_current_commit(doc_root: Path):
 
     cached = cached_current_commit_suggestion(doc_root)
     if cached:
-        if cached.get("suitable"):
-            write_pending_commit_suggestion(doc_root, cached)
-        else:
-            clear_pending_commit_suggestion(doc_root)
+        clear_pending_commit_suggestion(doc_root)
         return cached
 
     entries = parse_worktree_entries(doc_root)
@@ -1034,6 +1031,9 @@ def read_pending_commit_suggestion(doc_root: Path):
 
 
 def write_current_commit_suggestion_cache(doc_root: Path, suggestion):
+    if suggestion.get("suitable"):
+        clear_current_commit_suggestion_cache(doc_root)
+        return
     cache_path = current_commit_suggestion_cache_path(doc_root)
     if cache_path is None:
         return
@@ -1078,6 +1078,8 @@ def cached_current_commit_suggestion(doc_root: Path):
         return None
     suggestion = payload.get("suggestion")
     if not isinstance(suggestion, dict):
+        return None
+    if suggestion.get("suitable"):
         return None
     return suggestion
 
