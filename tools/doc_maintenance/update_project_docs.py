@@ -65,11 +65,14 @@ COMMIT_TITLE_PREFIX = {
 }
 PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
 LAST_FINALIZE_REPORT_RELATIVE = Path("codex") / "last_finalize_report.json"
+COMMIT_SEQUENCE_FETCH_CACHE_RELATIVE = Path("codex") / "commit_sequence_fetch_state.json"
 COMMIT_SEQUENCE_REGISTRY_RELATIVE = Path(LONG_DIR_NAME) / "协作与执行" / "commit_module_sequences.json"
 COMMIT_MODULE_SEQUENCE_START = 1
 COMMIT_MODULE_DEFAULT = "610"
 NUMBERED_COMMIT_RE = re.compile(r"^\[(\d{8})\]\s+")
 SKIPPED_COMMIT_MESSAGE_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
+DEFAULT_COMMIT_SEQUENCE_FETCH_TIMEOUT_SECONDS = 5
+DEFAULT_COMMIT_SEQUENCE_FETCH_MAX_AGE_SECONDS = 300
 DOC_MODULE_PATTERNS = [
     ("210", r"项目总览|主文档索引|入口页|入口文档|研发入口|当前概览"),
     ("220", r"架构与边界|边界规范|边界文档|热更新边界规范|boundary"),
@@ -397,6 +400,13 @@ def commit_sequence_registry_path(doc_root: Path) -> Path:
     return doc_root / COMMIT_SEQUENCE_REGISTRY_RELATIVE
 
 
+def commit_sequence_fetch_cache_path(doc_root: Path):
+    git_dir = git_dir_for_doc_root(doc_root)
+    if git_dir is None:
+        return None
+    return git_dir / COMMIT_SEQUENCE_FETCH_CACHE_RELATIVE
+
+
 def parse_numbered_commit_title(title: str):
     match = NUMBERED_COMMIT_RE.match((title or "").strip())
     if not match:
@@ -455,16 +465,50 @@ def branch_upstream(doc_root: Path) -> str:
     return result.stdout.strip()
 
 
-def fetch_commit_sequence_baseline(doc_root: Path):
+def read_commit_sequence_fetch_cache(doc_root: Path):
+    path = commit_sequence_fetch_cache_path(doc_root)
+    if path is None or not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def write_commit_sequence_fetch_cache(doc_root: Path, payload):
+    path = commit_sequence_fetch_cache_path(doc_root)
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def fetch_commit_sequence_baseline(
+    doc_root: Path,
+    timeout: int = DEFAULT_COMMIT_SEQUENCE_FETCH_TIMEOUT_SECONDS,
+    max_age_seconds: int = DEFAULT_COMMIT_SEQUENCE_FETCH_MAX_AGE_SECONDS,
+    allow_cached: bool = True,
+):
     upstream = branch_upstream(doc_root)
     remotes = list_git_remotes(doc_root)
     if upstream:
         remote = upstream.split("/", 1)[0]
-        fetch_args = ["fetch", "--quiet", "--prune", remote]
+        branch_name = upstream.split("/", 1)[1]
+        fetch_args = [
+            "fetch",
+            "--quiet",
+            "--prune",
+            "--no-tags",
+            remote,
+            f"+refs/heads/{branch_name}:refs/remotes/{upstream}",
+        ]
+        fetch_target = upstream
     elif len(remotes) == 1:
-        fetch_args = ["fetch", "--quiet", "--prune", remotes[0]]
+        fetch_args = ["fetch", "--quiet", "--prune", "--no-tags", remotes[0]]
+        fetch_target = remotes[0]
     elif len(remotes) > 1:
-        fetch_args = ["fetch", "--quiet", "--prune", "--all"]
+        fetch_args = ["fetch", "--quiet", "--prune", "--no-tags", "--all"]
+        fetch_target = "__all__"
     else:
         return {
             "attempted": False,
@@ -472,8 +516,22 @@ def fetch_commit_sequence_baseline(doc_root: Path):
             "message": "未配置远端，跳过 fetch。",
         }
 
+    cached = read_commit_sequence_fetch_cache(doc_root) if allow_cached else None
+    if cached and cached.get("target") == fetch_target:
+        fetched_at = cached.get("fetched_at", "")
+        try:
+            age_seconds = (datetime.now() - datetime.fromisoformat(fetched_at)).total_seconds()
+        except ValueError:
+            age_seconds = max_age_seconds + 1
+        if age_seconds <= max_age_seconds:
+            return {
+                "attempted": False,
+                "ok": True,
+                "message": f"复用 {int(age_seconds)} 秒内的远端基线。",
+            }
+
     try:
-        result = run_git(doc_root, fetch_args, timeout=30)
+        result = run_git(doc_root, fetch_args, timeout=timeout)
     except OSError as exc:
         return {
             "attempted": True,
@@ -493,6 +551,13 @@ def fetch_commit_sequence_baseline(doc_root: Path):
             "ok": False,
             "message": (result.stderr or result.stdout).strip() or "fetch 失败。",
         }
+    write_commit_sequence_fetch_cache(
+        doc_root,
+        {
+            "target": fetch_target,
+            "fetched_at": datetime.now().isoformat(timespec="seconds"),
+        },
+    )
     return {
         "attempted": True,
         "ok": True,
@@ -523,6 +588,35 @@ def collect_commit_sequences_from_git_history(doc_root: Path):
         module_code = parsed["module_code"]
         modules[module_code] = max(modules.get(module_code, 0), parsed["sequence"])
     return modules
+
+
+def latest_module_sequence_from_git_history(doc_root: Path, module_code: str) -> int:
+    pattern = rf"^\[{module_code}"
+    try:
+        inside_repo = run_git(doc_root, ["rev-parse", "--is-inside-work-tree"])
+    except (OSError, subprocess.TimeoutExpired):
+        return 0
+    if inside_repo.returncode != 0:
+        return 0
+
+    try:
+        log_result = run_git(
+            doc_root,
+            ["log", "--format=%s", "--all", "--grep", pattern],
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return 0
+    if log_result.returncode != 0:
+        return 0
+
+    current_max = 0
+    for line in log_result.stdout.splitlines():
+        parsed = parse_numbered_commit_title(line)
+        if not parsed or parsed["module_code"] != module_code:
+            continue
+        current_max = max(current_max, parsed["sequence"])
+    return current_max
 
 
 def merged_commit_sequence_modules(doc_root: Path, fetch_latest: bool = False):
@@ -565,8 +659,13 @@ def sync_commit_sequence_registry(doc_root: Path, fetch_latest: bool = False, st
 
 
 def next_commit_sequence(doc_root: Path, module_code: str, fetch_latest: bool = False) -> int:
-    snapshot = merged_commit_sequence_modules(doc_root, fetch_latest=fetch_latest)
-    current = snapshot["modules"].get(module_code, 0)
+    if fetch_latest:
+        fetch_commit_sequence_baseline(doc_root, allow_cached=False)
+    registry_modules = read_commit_sequence_registry(doc_root)
+    current = max(
+        registry_modules.get(module_code, 0),
+        latest_module_sequence_from_git_history(doc_root, module_code),
+    )
     return current + 1 if current else COMMIT_MODULE_SEQUENCE_START
 
 
@@ -671,6 +770,221 @@ def current_head_subject(doc_root: Path) -> str:
     return result.stdout.strip()
 
 
+def parse_worktree_entries(doc_root: Path):
+    repo_root = repo_root_for_doc_root(doc_root)
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "status", "--porcelain", "-z"],
+            capture_output=True,
+            text=False,
+            check=False,
+        )
+    except OSError:
+        return []
+    if result.returncode != 0:
+        return []
+
+    entries = []
+    parts = result.stdout.split(b"\0")
+    index = 0
+    while index < len(parts):
+        raw = parts[index]
+        index += 1
+        if not raw:
+            continue
+        status = raw[:2].decode("utf-8", errors="replace")
+        path_bytes = raw[3:]
+        if status[0] in {"R", "C"} or status[1] in {"R", "C"}:
+            if index < len(parts) and parts[index]:
+                path_bytes = parts[index]
+                index += 1
+        path_text = path_bytes.decode("utf-8", errors="replace")
+        entries.append(
+            {
+                "line": f"{status} {path_text}",
+                "index_status": status[0],
+                "worktree_status": status[1],
+                "path": path_text,
+            }
+        )
+    return entries
+
+
+def commit_scope_for_path(path: str) -> str:
+    normalized = path.replace("\\", "/")
+    if normalized == "doc/长期主文档/协作与执行/commit_module_sequences.json":
+        return "registry"
+    if normalized.startswith("doc/长期主文档/协作与执行/") or normalized.startswith("tools/doc_maintenance/") or normalized.startswith(".githooks/"):
+        return "230"
+    if normalized.startswith("doc/迭代记录/"):
+        return "260"
+    if normalized.startswith("doc/长期主文档/UI自动生成系统/"):
+        return "270"
+    if normalized.startswith("doc/长期主文档/方案与数据/"):
+        filename = Path(normalized).name
+        if re.search(r"配表|内容表|成长表|表方案|表结构|数据方案", filename, re.IGNORECASE):
+            return "250"
+        return "240"
+    return classify_commit_module(normalized, classify_topic(normalized))
+
+
+def is_bookkeeping_doc_path(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    return normalized in {
+        "doc/长期主文档/主文档索引.md",
+        "doc/迭代记录/迭代记录索引.md",
+    } or normalized.startswith("doc/迭代记录/")
+
+
+def is_auxiliary_test_path(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    return normalized.startswith("tools/tests/") or normalized.startswith("tests/")
+
+
+def dominant_commit_modules(paths):
+    normalized = dedupe_preserve_order(path.replace("\\", "/") for path in paths)
+    if not normalized:
+        return set()
+
+    primary_paths = [path for path in normalized if not is_bookkeeping_doc_path(path) and not is_auxiliary_test_path(path)]
+    if primary_paths:
+        primary_modules = {commit_scope_for_path(path) for path in primary_paths}
+        primary_modules.discard("registry")
+        if primary_modules:
+            return primary_modules
+
+    modules = {commit_scope_for_path(path) for path in normalized}
+    modules.discard("registry")
+    return modules
+
+
+def current_commit_title_and_content(doc_root: Path, paths):
+    normalized = dedupe_preserve_order(path.replace("\\", "/") for path in paths)
+    if normalized == ["doc/长期主文档/协作与执行/commit_module_sequences.json"]:
+        module_code = "230"
+        title = f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))} 流程：同步协作模块编号登记"
+        content = [
+            "更新 commit_module_sequences.json 中协作模块的最新登记值",
+            "同步 230 模块提交编号到最新状态",
+        ]
+        return module_code, title, content
+
+    module_candidates = {commit_scope_for_path(path) for path in normalized}
+    module_codes = dominant_commit_modules(normalized)
+    if not module_codes and "registry" in module_candidates:
+        module_codes = {"230"}
+    if len(module_codes) != 1:
+        return "", "", []
+
+    module_code = next(iter(module_codes))
+    if module_code == "230":
+        if any("suggest-current-commit" in path or "update_project_docs.py" in path for path in normalized):
+            summary = "流程：优化 Git 提交建议快路径与校验链路"
+            content = [
+                "优化 update_project_docs.py 的快路径提交建议与编号校验逻辑",
+                "更新 Git 提交建议与任务收尾规则文档的快路径说明",
+            ]
+            if any(is_auxiliary_test_path(path) for path in normalized):
+                content.append("补充 doc_maintenance 快路径与边界场景回归测试")
+            return module_code, f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))} {summary}", content[:4]
+        else:
+            summary = "流程：同步协作与执行规则"
+    elif module_code == "260":
+        summary = "文档：更新迭代记录"
+    elif module_code == "270":
+        summary = "文档：同步 UI 自动生成系统文档"
+    elif module_code == "250":
+        summary = "文档：更新配表与数据方案"
+    elif module_code == "240":
+        summary = "文档：更新长期方案文档"
+    else:
+        topic = classify_topic(" ".join(normalized))
+        prefix = COMMIT_TITLE_PREFIX.get(topic, "提交：")
+        summary = f"{prefix}收口当前模块改动"
+    title = f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))} {summary}"
+    content = [f"更新 {path}" for path in normalized[:4]]
+    return module_code, title, content
+
+
+def suggest_current_commit(doc_root: Path):
+    repo_check = run_git(doc_root, ["rev-parse", "--is-inside-work-tree"])
+    if repo_check.returncode != 0:
+        clear_pending_commit_suggestion(doc_root)
+        return {
+            "suitable": False,
+            "reason": "当前目录不在 Git 仓库中。",
+            "title": "",
+            "content": [],
+        }
+
+    entries = parse_worktree_entries(doc_root)
+    if not entries:
+        clear_pending_commit_suggestion(doc_root)
+        return {
+            "suitable": False,
+            "reason": "当前仓库没有待提交改动。",
+            "title": "",
+            "content": [],
+        }
+
+    staged_paths = dedupe_preserve_order(entry["path"] for entry in entries if entry["index_status"] not in {" ", "?"})
+    unstaged_paths = dedupe_preserve_order(entry["path"] for entry in entries if entry["worktree_status"] not in {" ", "?"})
+    untracked_paths = dedupe_preserve_order(entry["path"] for entry in entries if "?" in (entry["index_status"], entry["worktree_status"]))
+
+    if staged_paths and unstaged_paths:
+        partially_staged = [path for path in staged_paths if path in unstaged_paths]
+        if partially_staged:
+            clear_pending_commit_suggestion(doc_root)
+            return {
+                "suitable": False,
+                "reason": f"当前存在部分已暂存、部分未暂存的同一路径，边界不清晰：{', '.join(partially_staged[:3])}",
+                "title": "",
+                "content": [],
+            }
+        extra_unstaged = [path for path in unstaged_paths if path not in staged_paths]
+        if extra_unstaged:
+            clear_pending_commit_suggestion(doc_root)
+            return {
+                "suitable": False,
+                "reason": f"当前同时存在已暂存改动和未暂存改动，边界不清晰：{', '.join(extra_unstaged[:3])}",
+                "title": "",
+                "content": [],
+            }
+
+    all_paths = dedupe_preserve_order(staged_paths + unstaged_paths + untracked_paths)
+    module_candidates = {commit_scope_for_path(path) for path in all_paths}
+    effective_modules = dominant_commit_modules(all_paths)
+    if not effective_modules and "registry" in module_candidates:
+        effective_modules = {"230"}
+    if len(effective_modules) > 1:
+        clear_pending_commit_suggestion(doc_root)
+        return {
+            "suitable": False,
+            "reason": f"当前改动跨了多个模块，暂不建议混提：{', '.join(sorted(effective_modules))}",
+            "title": "",
+            "content": [],
+        }
+
+    module_code, title, content = current_commit_title_and_content(doc_root, all_paths)
+    if not module_code or not title:
+        clear_pending_commit_suggestion(doc_root)
+        return {
+            "suitable": False,
+            "reason": "当前改动边界暂时无法稳定归类，建议先补充上下文后再提交。",
+            "title": "",
+            "content": [],
+        }
+
+    commit = {
+        "suitable": True,
+        "reason": "",
+        "title": title,
+        "content": content,
+    }
+    write_pending_commit_suggestion(doc_root, commit)
+    return commit
+
+
 def write_pending_commit_suggestion(doc_root: Path, commit):
     cache_path = pending_commit_cache_path(doc_root)
     if cache_path is None:
@@ -732,9 +1046,18 @@ def validate_commit_message(doc_root: Path, message_file: Path, fetch_latest: bo
             "reason": "非八位编号提交标题，跳过编号校验。",
         }
 
-    snapshot = merged_commit_sequence_modules(doc_root, fetch_latest=fetch_latest)
-    current_modules = snapshot["modules"]
-    current_max = current_modules.get(parsed["module_code"], 0)
+    fetch_info = {
+        "attempted": False,
+        "ok": True,
+        "message": "未执行 fetch。",
+    }
+    if fetch_latest:
+        fetch_info = fetch_commit_sequence_baseline(doc_root, allow_cached=False)
+    registry_modules = read_commit_sequence_registry(doc_root)
+    current_max = max(
+        registry_modules.get(parsed["module_code"], 0),
+        latest_module_sequence_from_git_history(doc_root, parsed["module_code"]),
+    )
     head_parsed = parse_numbered_commit_title(current_head_subject(doc_root))
     is_amending_current_head = bool(head_parsed and head_parsed["full_code"] == parsed["full_code"])
     expected_sequence = head_parsed["sequence"] if is_amending_current_head else current_max + 1 if current_max else COMMIT_MODULE_SEQUENCE_START
@@ -745,16 +1068,16 @@ def validate_commit_message(doc_root: Path, message_file: Path, fetch_latest: bo
             "subject": subject,
             "expected_title": format_commit_sequence(parsed["module_code"], expected_sequence),
             "current_max": current_max,
-            "fetch": snapshot["fetch"],
+            "fetch": fetch_info,
             "reason": (
                 f"模块 {parsed['module_code']} 当前最新编号是 {current_max:05d}，"
                 f"下一次应使用 {format_commit_sequence(parsed['module_code'], expected_sequence)}。"
             ),
         }
 
-    updated_modules = dict(current_modules)
+    updated_modules = dict(registry_modules)
     updated_modules[parsed["module_code"]] = max(updated_modules.get(parsed["module_code"], 0), parsed["sequence"])
-    registry_changed = updated_modules != snapshot["registry_modules"] or not commit_sequence_registry_path(doc_root).exists()
+    registry_changed = updated_modules != registry_modules or not commit_sequence_registry_path(doc_root).exists()
     registry_path = commit_sequence_registry_path(doc_root)
     if registry_changed:
         registry_path = write_commit_sequence_registry(doc_root, updated_modules)
@@ -769,7 +1092,7 @@ def validate_commit_message(doc_root: Path, message_file: Path, fetch_latest: bo
         "sequence": parsed["sequence"],
         "registry_path": str(registry_path),
         "registry_changed": registry_changed,
-        "fetch": snapshot["fetch"],
+        "fetch": fetch_info,
     }
 
 
@@ -1813,6 +2136,29 @@ def format_handoff_report(report):
     return "\n".join(lines)
 
 
+def format_commit_suggestion_report(commit):
+    if commit["suitable"]:
+        lines = [
+            "Git 提交建议：适合提交",
+            f"标题：{commit['title']}",
+            "内容：",
+            "```text",
+        ]
+        for item in commit["content"]:
+            lines.append(f"- {item}")
+        lines += [
+            "```",
+            SUITABLE_COMMIT_CONFIRMATION,
+        ]
+        return "\n".join(lines)
+    return "\n".join(
+        [
+            f"Git 提交建议：暂不建议提交。原因是：{commit['reason']}",
+            UNSUITABLE_COMMIT_CONFIRMATION,
+        ]
+    )
+
+
 def backfill_agent_status(doc_root: Path, from_date: str):
     if not re.fullmatch(r"\d{8}", from_date):
         raise ValueError("--from 必须是 YYYYMMDD 格式，例如 20260330")
@@ -1898,6 +2244,7 @@ def main():
         help="Explicit count of major tasks already completed in the current session",
     )
 
+    sub.add_parser("suggest-current-commit", help="Inspect current repo state and print a direct Git commit suggestion")
     sub.add_parser("show-pending-commit", help="Show the latest cached suitable commit suggestion")
     sync_commit_sequences = sub.add_parser("sync-commit-sequences", help="Sync the tracked per-module commit sequence registry")
     sync_commit_sequences.add_argument("--fetch", action="store_true", help="Fetch remote refs before recalculating sequence registry")
@@ -1972,6 +2319,10 @@ def main():
             args.session_major_task_count,
         )
         print(format_handoff_report(report))
+        return
+
+    if args.command == "suggest-current-commit":
+        print(format_commit_suggestion_report(suggest_current_commit(doc_root)))
         return
 
     if args.command == "show-pending-commit":

@@ -9,6 +9,7 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 from shutil import copy2
+from unittest import mock
 
 
 TOOLS_ROOT = Path(__file__).resolve().parents[2]
@@ -1565,6 +1566,200 @@ class UpdateProjectDocsTests(unittest.TestCase):
             ).stdout
             staged = [chunk.decode("utf-8") for chunk in staged_output.split(b"\0") if chunk]
             self.assertIn("doc/长期主文档/协作与执行/commit_module_sequences.json", staged)
+
+    def test_fetch_commit_sequence_baseline_reuses_recent_cache(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+
+            cache_path = update_project_docs.commit_sequence_fetch_cache_path(doc_root)
+            assert cache_path is not None
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(
+                json.dumps(
+                    {
+                        "target": "origin/main",
+                        "fetched_at": datetime.now().isoformat(timespec="seconds"),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with mock.patch.object(update_project_docs, "branch_upstream", return_value="origin/main"), mock.patch.object(
+                update_project_docs, "list_git_remotes", return_value=["origin"]
+            ), mock.patch.object(update_project_docs, "run_git", side_effect=AssertionError("should not fetch")):
+                result = update_project_docs.fetch_commit_sequence_baseline(doc_root)
+
+            self.assertTrue(result["ok"])
+            self.assertFalse(result["attempted"])
+            self.assertIn("复用", result["message"])
+
+    def test_next_commit_sequence_fetch_latest_bypasses_recent_cache(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+
+            cache_path = update_project_docs.commit_sequence_fetch_cache_path(doc_root)
+            assert cache_path is not None
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(
+                json.dumps(
+                    {
+                        "target": "origin/main",
+                        "fetched_at": datetime.now().isoformat(timespec="seconds"),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with mock.patch.object(update_project_docs, "branch_upstream", return_value="origin/main"), mock.patch.object(
+                update_project_docs, "list_git_remotes", return_value=["origin"]
+            ), mock.patch.object(update_project_docs, "run_git") as mocked_run_git, mock.patch.object(
+                update_project_docs, "latest_module_sequence_from_git_history", return_value=0
+            ):
+                mocked_run_git.side_effect = [
+                    mock.Mock(returncode=0, stdout="", stderr=""),
+                    mock.Mock(returncode=0, stdout="", stderr=""),
+                ]
+                next_sequence = update_project_docs.next_commit_sequence(doc_root, "230", fetch_latest=True)
+
+            self.assertEqual(next_sequence, 1)
+            self.assertGreaterEqual(mocked_run_git.call_count, 1)
+            self.assertEqual(mocked_run_git.call_args_list[0].args[1][:2], ["fetch", "--quiet"])
+
+    def test_suggest_current_commit_handles_registry_only_change(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            init_git_repo(root)
+            doc_root = create_doc_root(root)
+
+            write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=root, check=True, capture_output=True, text=True)
+
+            registry_path = write_file(
+                root,
+                "doc/长期主文档/协作与执行/commit_module_sequences.json",
+                """
+                {
+                  "version": 1,
+                  "modules": {
+                    "230": 1
+                  }
+                }
+                """,
+            )
+            subprocess.run(["git", "add", str(registry_path.relative_to(root))], cwd=root, check=True, capture_output=True, text=True)
+            registry_path.write_text(
+                textwrap.dedent(
+                    """
+                    {
+                      "version": 1,
+                      "modules": {
+                        "230": 2
+                      }
+                    }
+                    """
+                ).lstrip("\n"),
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "add", str(registry_path.relative_to(root))], cwd=root, check=True, capture_output=True, text=True)
+
+            report = update_project_docs.suggest_current_commit(doc_root)
+
+            self.assertTrue(report["suitable"])
+            self.assertEqual(report["title"], "[23000003] 流程：同步协作模块编号登记")
+            self.assertIn("同步 230 模块提交编号到最新状态", report["content"])
+            cache = update_project_docs.read_pending_commit_suggestion(doc_root)
+            self.assertIsNotNone(cache)
+            self.assertEqual(cache["title"], report["title"])
+
+    def test_suggest_current_commit_allows_auxiliary_docs_and_tests_with_single_primary_module(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            init_git_repo(root)
+            doc_root = create_doc_root(root)
+
+            write_file(root, "README.md", "hello\n")
+            write_file(root, "tools/doc_maintenance/update_project_docs.py", "print('seed')\n")
+            write_file(root, "tools/tests/doc_maintenance/test_update_project_docs.py", "def test_seed():\n    assert True\n")
+            write_file(root, "doc/迭代记录/迭代记录索引.md", "# 索引\n")
+            write_file(root, "doc/长期主文档/主文档索引.md", "# 主文档索引\n")
+            write_file(
+                root,
+                "doc/迭代记录/迭代记录_20260408_001.md",
+                """
+                # 迭代记录 2026-04-08 001
+
+                ## 分工状态
+
+                - Agent 1：a
+                - Agent 2：b
+                - Agent 3：c
+                - Agent 4：d
+                - Agent 5：e
+                - Agent 6：f
+                """,
+            )
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=root, check=True, capture_output=True, text=True)
+
+            write_file(root, "tools/doc_maintenance/update_project_docs.py", "print('fast path')\n")
+            write_file(root, "tools/tests/doc_maintenance/test_update_project_docs.py", "def test_fast_path():\n    assert True\n")
+            write_file(root, "doc/长期主文档/协作与执行/Git 提交建议与确认规则.md", "# 规则\n")
+            write_file(root, "doc/迭代记录/迭代记录索引.md", "# 索引\n- 新增\n")
+            write_file(root, "doc/长期主文档/主文档索引.md", "# 主文档索引\n- 新增\n")
+            write_file(
+                root,
+                "doc/迭代记录/迭代记录_20260408_001.md",
+                """
+                # 迭代记录 2026-04-08 001
+
+                ## 分工状态
+
+                - Agent 1：a
+                - Agent 2：b
+                - Agent 3：c
+                - Agent 4：d
+                - Agent 5：e
+                - Agent 6：f
+
+                ## 工作日志
+
+                - 优化快路径
+                """,
+            )
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
+
+            report = update_project_docs.suggest_current_commit(doc_root)
+
+            self.assertTrue(report["suitable"])
+            self.assertTrue(report["title"].startswith("[23000002] 流程：优化 Git 提交建议快路径与校验链路"))
+
+    def test_suggest_current_commit_rejects_partially_staged_same_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            init_git_repo(root)
+            doc_root = create_doc_root(root)
+
+            tracked = write_file(root, "tools/doc_maintenance/update_project_docs.py", "print('seed')\n")
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=root, check=True, capture_output=True, text=True)
+
+            tracked.write_text("print('stage-1')\n", encoding="utf-8")
+            subprocess.run(["git", "add", str(tracked.relative_to(root))], cwd=root, check=True, capture_output=True, text=True)
+            tracked.write_text("print('stage-1')\nprint('unstaged-2')\n", encoding="utf-8")
+
+            report = update_project_docs.suggest_current_commit(doc_root)
+
+            self.assertFalse(report["suitable"])
+            self.assertIn("部分已暂存、部分未暂存", report["reason"])
 
     def test_commit_msg_hook_fetches_remote_and_rejects_stale_sequence(self):
         with tempfile.TemporaryDirectory() as temp_dir:
