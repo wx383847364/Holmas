@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from datetime import datetime
+import os
 from pathlib import Path
 import json
 import re
@@ -64,8 +65,11 @@ COMMIT_TITLE_PREFIX = {
 }
 PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
 LAST_FINALIZE_REPORT_RELATIVE = Path("codex") / "last_finalize_report.json"
+COMMIT_SEQUENCE_REGISTRY_RELATIVE = Path(LONG_DIR_NAME) / "协作与执行" / "commit_module_sequences.json"
 COMMIT_MODULE_SEQUENCE_START = 1
 COMMIT_MODULE_DEFAULT = "610"
+NUMBERED_COMMIT_RE = re.compile(r"^\[(\d{8})\]\s+")
+SKIPPED_COMMIT_MESSAGE_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
 DOC_MODULE_PATTERNS = [
     ("210", r"项目总览|主文档索引|入口页|入口文档|研发入口|当前概览"),
     ("220", r"架构与边界|边界规范|边界文档|热更新边界规范|boundary"),
@@ -85,6 +89,23 @@ def ensure_dirs(doc_root: Path):
     long_dir.mkdir(parents=True, exist_ok=True)
     iter_dir.mkdir(parents=True, exist_ok=True)
     return long_dir, iter_dir
+
+
+def repo_root_for_doc_root(doc_root: Path) -> Path:
+    return doc_root.resolve().parent
+
+
+def run_git(doc_root: Path, args, timeout: int = 20):
+    env = os.environ.copy()
+    env.setdefault("GIT_TERMINAL_PROMPT", "0")
+    return subprocess.run(
+        ["git", "-C", str(repo_root_for_doc_root(doc_root)), *args],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=timeout,
+        env=env,
+    )
 
 
 def markdown_title(path: Path) -> str:
@@ -372,38 +393,181 @@ def simplify_commit_title(text: str) -> str:
     return value or "更新当前任务"
 
 
-def next_commit_sequence(doc_root: Path, module_code: str) -> int:
-    repo_root = doc_root.resolve().parent
+def commit_sequence_registry_path(doc_root: Path) -> Path:
+    return doc_root / COMMIT_SEQUENCE_REGISTRY_RELATIVE
+
+
+def parse_numbered_commit_title(title: str):
+    match = NUMBERED_COMMIT_RE.match((title or "").strip())
+    if not match:
+        return None
+    full_code = match.group(1)
+    return {
+        "full_code": full_code,
+        "module_code": full_code[:3],
+        "sequence": int(full_code[3:]),
+    }
+
+
+def read_commit_sequence_registry(doc_root: Path):
+    path = commit_sequence_registry_path(doc_root)
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    modules = payload.get("modules", payload)
+    normalized = {}
+    for module_code, value in modules.items():
+        if isinstance(value, int):
+            normalized[module_code] = value
+        elif isinstance(value, dict) and isinstance(value.get("latest_sequence"), int):
+            normalized[module_code] = value["latest_sequence"]
+    return normalized
+
+
+def write_commit_sequence_registry(doc_root: Path, modules):
+    path = commit_sequence_registry_path(doc_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "version": 1,
+        "modules": {module_code: modules[module_code] for module_code in sorted(modules)},
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def list_git_remotes(doc_root: Path):
     try:
-        inside_repo = subprocess.run(
-            ["git", "-C", str(repo_root), "rev-parse", "--is-inside-work-tree"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except OSError:
-        return COMMIT_MODULE_SEQUENCE_START
+        result = run_git(doc_root, ["remote"])
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if result.returncode != 0:
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
+
+def branch_upstream(doc_root: Path) -> str:
+    try:
+        result = run_git(doc_root, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"])
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
+def fetch_commit_sequence_baseline(doc_root: Path):
+    upstream = branch_upstream(doc_root)
+    remotes = list_git_remotes(doc_root)
+    if upstream:
+        remote = upstream.split("/", 1)[0]
+        fetch_args = ["fetch", "--quiet", "--prune", remote]
+    elif len(remotes) == 1:
+        fetch_args = ["fetch", "--quiet", "--prune", remotes[0]]
+    elif len(remotes) > 1:
+        fetch_args = ["fetch", "--quiet", "--prune", "--all"]
+    else:
+        return {
+            "attempted": False,
+            "ok": True,
+            "message": "未配置远端，跳过 fetch。",
+        }
+
+    try:
+        result = run_git(doc_root, fetch_args, timeout=30)
+    except OSError as exc:
+        return {
+            "attempted": True,
+            "ok": False,
+            "message": f"fetch 失败：{exc}",
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "attempted": True,
+            "ok": False,
+            "message": "fetch 超时，未使用远端最新基线。",
+        }
+
+    if result.returncode != 0:
+        return {
+            "attempted": True,
+            "ok": False,
+            "message": (result.stderr or result.stdout).strip() or "fetch 失败。",
+        }
+    return {
+        "attempted": True,
+        "ok": True,
+        "message": "已更新远端基线。",
+    }
+
+
+def collect_commit_sequences_from_git_history(doc_root: Path):
+    try:
+        inside_repo = run_git(doc_root, ["rev-parse", "--is-inside-work-tree"])
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
     if inside_repo.returncode != 0:
-        return COMMIT_MODULE_SEQUENCE_START
+        return {}
 
-    log_result = subprocess.run(
-        ["git", "-C", str(repo_root), "log", "--format=%s"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        log_result = run_git(doc_root, ["log", "--format=%s", "--all"], timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
     if log_result.returncode != 0:
-        return COMMIT_MODULE_SEQUENCE_START
+        return {}
 
-    max_sequence = 0
+    modules = {}
     for line in log_result.stdout.splitlines():
-        match = re.match(r"^\[(\d{8})\]\s+", line.strip())
-        if match:
-            full_code = match.group(1)
-            if full_code.startswith(module_code):
-                max_sequence = max(max_sequence, int(full_code[3:]))
-    return max_sequence + 1 if max_sequence else COMMIT_MODULE_SEQUENCE_START
+        parsed = parse_numbered_commit_title(line)
+        if not parsed:
+            continue
+        module_code = parsed["module_code"]
+        modules[module_code] = max(modules.get(module_code, 0), parsed["sequence"])
+    return modules
+
+
+def merged_commit_sequence_modules(doc_root: Path, fetch_latest: bool = False):
+    fetch_info = {
+        "attempted": False,
+        "ok": True,
+        "message": "未执行 fetch。",
+    }
+    if fetch_latest:
+        fetch_info = fetch_commit_sequence_baseline(doc_root)
+
+    registry_modules = read_commit_sequence_registry(doc_root)
+    git_modules = collect_commit_sequences_from_git_history(doc_root)
+    merged = dict(registry_modules)
+    for module_code, sequence in git_modules.items():
+        merged[module_code] = max(merged.get(module_code, 0), sequence)
+    return {
+        "fetch": fetch_info,
+        "registry_modules": registry_modules,
+        "git_modules": git_modules,
+        "modules": merged,
+    }
+
+
+def sync_commit_sequence_registry(doc_root: Path, fetch_latest: bool = False, stage: bool = False):
+    snapshot = merged_commit_sequence_modules(doc_root, fetch_latest=fetch_latest)
+    current = snapshot["registry_modules"]
+    merged = snapshot["modules"]
+    path = commit_sequence_registry_path(doc_root)
+    changed = merged != current or not path.exists()
+    if changed:
+        path = write_commit_sequence_registry(doc_root, merged)
+    if stage and path.exists():
+        stage_repo_file(doc_root, path)
+    return {
+        "path": path,
+        "changed": changed,
+        **snapshot,
+    }
+
+
+def next_commit_sequence(doc_root: Path, module_code: str, fetch_latest: bool = False) -> int:
+    snapshot = merged_commit_sequence_modules(doc_root, fetch_latest=fetch_latest)
+    current = snapshot["modules"].get(module_code, 0)
+    return current + 1 if current else COMMIT_MODULE_SEQUENCE_START
 
 
 def format_commit_sequence(module_code: str, sequence: int) -> str:
@@ -417,7 +581,7 @@ def build_commit_title(doc_root: Path, summary: str, done, topic: str) -> str:
     if not simplified.startswith(prefix):
         simplified = f"{prefix}{simplified}"
     module_code = classify_commit_module(" ".join([summary, *done]), topic)
-    sequence = format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code))
+    sequence = format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))
     if simplified.startswith(f"{sequence} "):
         return simplified
     return f"{sequence} {simplified}"
@@ -432,8 +596,21 @@ def build_commit_content(summary: str, done):
     return items[:4]
 
 
+def stage_repo_file(doc_root: Path, path: Path):
+    repo_root = repo_root_for_doc_root(doc_root)
+    try:
+        result = run_git(doc_root, ["rev-parse", "--is-inside-work-tree"])
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    if result.returncode != 0:
+        return False
+    relative_path = path.resolve().relative_to(repo_root)
+    add_result = run_git(doc_root, ["add", str(relative_path)])
+    return add_result.returncode == 0
+
+
 def git_dir_for_doc_root(doc_root: Path):
-    repo_root = doc_root.resolve().parent
+    repo_root = repo_root_for_doc_root(doc_root)
     try:
         result = subprocess.run(
             ["git", "-C", str(repo_root), "rev-parse", "--git-dir"],
@@ -472,13 +649,23 @@ def last_finalize_report_path(doc_root: Path):
 
 
 def current_head_commit(doc_root: Path) -> str:
-    repo_root = doc_root.resolve().parent
+    repo_root = repo_root_for_doc_root(doc_root)
     result = subprocess.run(
         ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
         capture_output=True,
         text=True,
         check=False,
     )
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
+def current_head_subject(doc_root: Path) -> str:
+    try:
+        result = run_git(doc_root, ["log", "-1", "--format=%s"])
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
     if result.returncode != 0:
         return ""
     return result.stdout.strip()
@@ -495,6 +682,10 @@ def write_pending_commit_suggestion(doc_root: Path, commit):
         "head_commit": current_head_commit(doc_root),
         "created_at": datetime.now().isoformat(timespec="seconds"),
     }
+    parsed = parse_numbered_commit_title(commit["title"])
+    if parsed:
+        payload["module_code"] = parsed["module_code"]
+        payload["sequence"] = parsed["sequence"]
     cache_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
@@ -510,6 +701,76 @@ def read_pending_commit_suggestion(doc_root: Path):
     if cache_path is None or not cache_path.exists():
         return None
     return json.loads(cache_path.read_text(encoding="utf-8"))
+
+
+def validate_commit_message(doc_root: Path, message_file: Path, fetch_latest: bool = True, stage_registry: bool = False):
+    subject = ""
+    for line in message_file.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            subject = line.strip()
+            break
+
+    if not subject:
+        return {
+            "valid": True,
+            "skipped": True,
+            "reason": "提交消息为空，跳过编号校验。",
+        }
+
+    if subject.startswith(SKIPPED_COMMIT_MESSAGE_PREFIXES):
+        return {
+            "valid": True,
+            "skipped": True,
+            "reason": "merge/revert/fixup/squash 提交跳过编号校验。",
+        }
+
+    parsed = parse_numbered_commit_title(subject)
+    if not parsed:
+        return {
+            "valid": True,
+            "skipped": True,
+            "reason": "非八位编号提交标题，跳过编号校验。",
+        }
+
+    snapshot = merged_commit_sequence_modules(doc_root, fetch_latest=fetch_latest)
+    current_modules = snapshot["modules"]
+    current_max = current_modules.get(parsed["module_code"], 0)
+    head_parsed = parse_numbered_commit_title(current_head_subject(doc_root))
+    is_amending_current_head = bool(head_parsed and head_parsed["full_code"] == parsed["full_code"])
+    expected_sequence = head_parsed["sequence"] if is_amending_current_head else current_max + 1 if current_max else COMMIT_MODULE_SEQUENCE_START
+
+    if parsed["sequence"] != expected_sequence:
+        return {
+            "valid": False,
+            "subject": subject,
+            "expected_title": format_commit_sequence(parsed["module_code"], expected_sequence),
+            "current_max": current_max,
+            "fetch": snapshot["fetch"],
+            "reason": (
+                f"模块 {parsed['module_code']} 当前最新编号是 {current_max:05d}，"
+                f"下一次应使用 {format_commit_sequence(parsed['module_code'], expected_sequence)}。"
+            ),
+        }
+
+    updated_modules = dict(current_modules)
+    updated_modules[parsed["module_code"]] = max(updated_modules.get(parsed["module_code"], 0), parsed["sequence"])
+    registry_changed = updated_modules != snapshot["registry_modules"] or not commit_sequence_registry_path(doc_root).exists()
+    registry_path = commit_sequence_registry_path(doc_root)
+    if registry_changed:
+        registry_path = write_commit_sequence_registry(doc_root, updated_modules)
+    if stage_registry and registry_path.exists():
+        stage_repo_file(doc_root, registry_path)
+
+    return {
+        "valid": True,
+        "skipped": False,
+        "subject": subject,
+        "module_code": parsed["module_code"],
+        "sequence": parsed["sequence"],
+        "registry_path": str(registry_path),
+        "registry_changed": registry_changed,
+        "fetch": snapshot["fetch"],
+    }
 
 
 def current_worktree_status(doc_root: Path):
@@ -1638,6 +1899,15 @@ def main():
     )
 
     sub.add_parser("show-pending-commit", help="Show the latest cached suitable commit suggestion")
+    sync_commit_sequences = sub.add_parser("sync-commit-sequences", help="Sync the tracked per-module commit sequence registry")
+    sync_commit_sequences.add_argument("--fetch", action="store_true", help="Fetch remote refs before recalculating sequence registry")
+    sync_commit_sequences.add_argument("--stage", action="store_true", help="Stage the registry file after syncing")
+
+    validate_commit_message_cmd = sub.add_parser("validate-commit-message", help="Validate a commit message against the latest module sequence")
+    validate_commit_message_cmd.add_argument("--message-file", required=True, help="Path to the temporary commit message file")
+    validate_commit_message_cmd.add_argument("--no-fetch", action="store_true", help="Skip fetching remote refs before validation")
+    validate_commit_message_cmd.add_argument("--stage-registry", action="store_true", help="Stage the registry file after successful validation")
+
     sub.add_parser("show-last-finalize", help="Show the latest cached complete finalize report")
     sub.add_parser("check-last-finalize", help="Validate whether the latest complete finalize report still matches the current repo state")
 
@@ -1709,6 +1979,39 @@ def main():
         if not payload:
             raise SystemExit("未找到最近一次可直接复用的提交建议缓存。")
         print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+
+    if args.command == "sync-commit-sequences":
+        result = sync_commit_sequence_registry(doc_root, fetch_latest=args.fetch, stage=args.stage)
+        print(f"[ok] synced commit sequence registry: {result['path']}")
+        print(f"changed: {'yes' if result['changed'] else 'no'}")
+        print(f"modules: {len(result['modules'])}")
+        print(f"fetch: {result['fetch']['message']}")
+        return
+
+    if args.command == "validate-commit-message":
+        result = validate_commit_message(
+            doc_root,
+            Path(args.message_file),
+            fetch_latest=not args.no_fetch,
+            stage_registry=args.stage_registry,
+        )
+        if not result["valid"]:
+            raise SystemExit(
+                "提交标题编号校验失败：\n"
+                f"- 当前标题：{result.get('subject', '')}\n"
+                f"- 原因：{result['reason']}\n"
+                f"- 建议标题：{result.get('expected_title', '')}\n"
+                f"- fetch：{result['fetch']['message']}"
+            )
+        if result["skipped"]:
+            print(f"[skip] {result['reason']}")
+            return
+        print(f"[ok] commit title validated: {result['subject']}")
+        print(f"module: {result['module_code']}")
+        print(f"sequence: {result['sequence']:05d}")
+        print(f"registry_changed: {'yes' if result['registry_changed'] else 'no'}")
+        print(f"fetch: {result['fetch']['message']}")
         return
 
     if args.command == "show-last-finalize":

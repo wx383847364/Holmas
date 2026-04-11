@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -14,6 +15,8 @@ TOOLS_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = TOOLS_ROOT / "doc_maintenance" / "update_project_docs.py"
 FINALIZE_SCRIPT = TOOLS_ROOT / "doc_maintenance" / "finalize_task.sh"
 SYNC_SKILLS_SCRIPT = TOOLS_ROOT / "repo_maintenance" / "sync_codex_skills.sh"
+PRE_COMMIT_HOOK = TOOLS_ROOT.parents[0] / ".githooks" / "pre-commit"
+COMMIT_MSG_HOOK = TOOLS_ROOT.parents[0] / ".githooks" / "commit-msg"
 
 spec = importlib.util.spec_from_file_location("update_project_docs", SCRIPT_PATH)
 update_project_docs = importlib.util.module_from_spec(spec)
@@ -84,6 +87,19 @@ def install_repo_maintenance_tools(root: Path, include_sync: bool = False) -> Pa
     if include_sync:
         copy2(SYNC_SKILLS_SCRIPT, repo_tools_dir / "sync_codex_skills.sh")
     return repo_tools_dir
+
+
+def install_git_hooks(root: Path, include_pre_commit: bool = True, include_commit_msg: bool = False) -> Path:
+    hooks_dir = root / ".githooks"
+    hooks_dir.mkdir(parents=True, exist_ok=True)
+    if include_pre_commit:
+        copy2(PRE_COMMIT_HOOK, hooks_dir / "pre-commit")
+        os.chmod(hooks_dir / "pre-commit", 0o755)
+    if include_commit_msg:
+        copy2(COMMIT_MSG_HOOK, hooks_dir / "commit-msg")
+        os.chmod(hooks_dir / "commit-msg", 0o755)
+    subprocess.run(["git", "config", "core.hooksPath", ".githooks"], cwd=root, check=True, capture_output=True, text=True)
+    return hooks_dir
 
 
 class UpdateProjectDocsTests(unittest.TestCase):
@@ -1480,6 +1496,121 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertEqual(cache["title"], "[23000003] 流程：新会话启动与收尾流程")
             self.assertEqual(cache["content"], ["为收尾流程补固定三段输出", "统一新会话启动与收尾流程"])
             self.assertTrue(cache["head_commit"])
+            self.assertEqual(cache["module_code"], "230")
+            self.assertEqual(cache["sequence"], 3)
+
+    def test_sync_commit_sequence_registry_writes_latest_modules(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+
+            tracked = write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000002] 流程：已有提交流水"], cwd=root, check=True, capture_output=True, text=True)
+
+            tracked.write_text("world\n", encoding="utf-8")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[21000001] 文档：补入口说明"], cwd=root, check=True, capture_output=True, text=True)
+
+            result = update_project_docs.sync_commit_sequence_registry(doc_root)
+
+            self.assertTrue(result["changed"])
+            payload = json.loads((doc_root / "长期主文档/协作与执行/commit_module_sequences.json").read_text(encoding="utf-8"))
+            self.assertEqual(payload["modules"]["230"], 2)
+            self.assertEqual(payload["modules"]["210"], 1)
+
+    def test_validate_commit_message_updates_registry_and_stages_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            install_doc_maintenance_tools(root)
+
+            tracked = write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000002] 流程：已有提交流水"], cwd=root, check=True, capture_output=True, text=True)
+
+            tracked.write_text("next\n", encoding="utf-8")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            message_file = write_file(root, ".git/COMMIT_EDITMSG", "[23000003] 流程：继续补规则\n")
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(root / "tools/doc_maintenance/update_project_docs.py"),
+                    "--doc-root",
+                    str(doc_root),
+                    "validate-commit-message",
+                    "--message-file",
+                    str(message_file),
+                    "--no-fetch",
+                    "--stage-registry",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            registry_path = root / "doc/长期主文档/协作与执行/commit_module_sequences.json"
+            payload = json.loads(registry_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["modules"]["230"], 3)
+            staged_output = subprocess.run(
+                ["git", "diff", "--cached", "--name-only", "-z"],
+                cwd=root,
+                capture_output=True,
+                check=True,
+            ).stdout
+            staged = [chunk.decode("utf-8") for chunk in staged_output.split(b"\0") if chunk]
+            self.assertIn("doc/长期主文档/协作与执行/commit_module_sequences.json", staged)
+
+    def test_commit_msg_hook_fetches_remote_and_rejects_stale_sequence(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            remote = temp / "remote.git"
+            local = temp / "local"
+            other = temp / "other"
+
+            subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True, text=True)
+            subprocess.run(["git", "clone", str(remote), str(local)], check=True, capture_output=True, text=True)
+
+            create_doc_root(local)
+            subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=local, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.email", "codex@example.com"], cwd=local, check=True, capture_output=True, text=True)
+            install_doc_maintenance_tools(local)
+            install_git_hooks(local, include_pre_commit=False, include_commit_msg=True)
+            write_file(local, "README.md", "hello\n")
+
+            subprocess.run(["git", "add", "README.md"], cwd=local, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=local, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "push", "-u", "origin", "HEAD"], cwd=local, check=True, capture_output=True, text=True)
+
+            subprocess.run(["git", "clone", str(remote), str(other)], check=True, capture_output=True, text=True)
+            create_doc_root(other)
+            subprocess.run(["git", "config", "user.name", "Codex Test"], cwd=other, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.email", "codex@example.com"], cwd=other, check=True, capture_output=True, text=True)
+            install_doc_maintenance_tools(other)
+            install_git_hooks(other, include_pre_commit=False, include_commit_msg=True)
+            write_file(other, "README.md", "other\n")
+            subprocess.run(["git", "add", "README.md"], cwd=other, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000002] 流程：远端先占号"], cwd=other, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "push"], cwd=other, check=True, capture_output=True, text=True)
+
+            write_file(local, "README.md", "local\n")
+            subprocess.run(["git", "add", "README.md"], cwd=local, check=True, capture_output=True, text=True)
+            completed = subprocess.run(
+                ["git", "commit", "-m", "[23000002] 流程：本地旧号"],
+                cwd=local,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("提交标题编号校验失败", completed.stderr)
+            self.assertIn("[23000003]", completed.stderr)
 
     def test_unsuitable_handoff_clears_pending_commit_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
