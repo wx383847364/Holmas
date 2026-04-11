@@ -43,6 +43,22 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             StartButton != null &&
             PromotionButton != null;
 
+        public static bool HasCompleteBindings(UiBindingResolver resolver)
+        {
+            if (resolver == null)
+            {
+                return false;
+            }
+
+            return resolver.HasExplicitBinding<RectTransform>(RootPanelKey, nodePath: RootNodePath) &&
+                   resolver.HasExplicitBinding<TextMeshProUGUI>(LevelTextKey, nodePath: LevelTextNodePath) &&
+                   resolver.HasExplicitBinding<TextMeshProUGUI>(GoldTextKey, nodePath: GoldTextNodePath) &&
+                   resolver.HasExplicitBinding<TextMeshProUGUI>(SummaryTextKey, nodePath: SummaryTextNodePath) &&
+                   resolver.HasExplicitBinding<TextMeshProUGUI>(StatusTextKey, nodePath: StatusTextNodePath) &&
+                   resolver.HasExplicitBinding<Button>(StartButtonKey, ButtonClickEvent, StartButtonNodePath) &&
+                   resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath);
+        }
+
         public static MainBindings Resolve(UiBindingResolver resolver)
         {
             var bindings = new MainBindings();
