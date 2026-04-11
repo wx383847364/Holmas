@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from datetime import datetime
+import hashlib
 import os
 from pathlib import Path
 import json
@@ -66,6 +67,7 @@ COMMIT_TITLE_PREFIX = {
 PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
 LAST_FINALIZE_REPORT_RELATIVE = Path("codex") / "last_finalize_report.json"
 COMMIT_SEQUENCE_FETCH_CACHE_RELATIVE = Path("codex") / "commit_sequence_fetch_state.json"
+CURRENT_COMMIT_SUGGESTION_CACHE_RELATIVE = Path("codex") / "current_commit_suggestion.json"
 COMMIT_SEQUENCE_REGISTRY_RELATIVE = Path(LONG_DIR_NAME) / "协作与执行" / "commit_module_sequences.json"
 COMMIT_MODULE_SEQUENCE_START = 1
 COMMIT_MODULE_DEFAULT = "610"
@@ -567,13 +569,6 @@ def fetch_commit_sequence_baseline(
 
 def collect_commit_sequences_from_git_history(doc_root: Path):
     try:
-        inside_repo = run_git(doc_root, ["rev-parse", "--is-inside-work-tree"])
-    except (OSError, subprocess.TimeoutExpired):
-        return {}
-    if inside_repo.returncode != 0:
-        return {}
-
-    try:
         log_result = run_git(doc_root, ["log", "--format=%s", "--all"], timeout=30)
     except (OSError, subprocess.TimeoutExpired):
         return {}
@@ -592,13 +587,6 @@ def collect_commit_sequences_from_git_history(doc_root: Path):
 
 def latest_module_sequence_from_git_history(doc_root: Path, module_code: str) -> int:
     pattern = rf"^\[{module_code}"
-    try:
-        inside_repo = run_git(doc_root, ["rev-parse", "--is-inside-work-tree"])
-    except (OSError, subprocess.TimeoutExpired):
-        return 0
-    if inside_repo.returncode != 0:
-        return 0
-
     try:
         log_result = run_git(
             doc_root,
@@ -697,12 +685,6 @@ def build_commit_content(summary: str, done):
 
 def stage_repo_file(doc_root: Path, path: Path):
     repo_root = repo_root_for_doc_root(doc_root)
-    try:
-        result = run_git(doc_root, ["rev-parse", "--is-inside-work-tree"])
-    except (OSError, subprocess.TimeoutExpired):
-        return False
-    if result.returncode != 0:
-        return False
     relative_path = path.resolve().relative_to(repo_root)
     add_result = run_git(doc_root, ["add", str(relative_path)])
     return add_result.returncode == 0
@@ -740,6 +722,13 @@ def pending_commit_cache_path(doc_root: Path):
     return git_dir / PENDING_COMMIT_CACHE_RELATIVE
 
 
+def current_commit_suggestion_cache_path(doc_root: Path):
+    git_dir = git_dir_for_doc_root(doc_root)
+    if git_dir is None:
+        return None
+    return git_dir / CURRENT_COMMIT_SUGGESTION_CACHE_RELATIVE
+
+
 def last_finalize_report_path(doc_root: Path):
     git_dir = git_dir_for_doc_root(doc_root)
     if git_dir is None:
@@ -770,7 +759,7 @@ def current_head_subject(doc_root: Path) -> str:
     return result.stdout.strip()
 
 
-def parse_worktree_entries(doc_root: Path):
+def current_worktree_status_bytes(doc_root: Path):
     repo_root = repo_root_for_doc_root(doc_root)
     try:
         result = subprocess.run(
@@ -780,12 +769,19 @@ def parse_worktree_entries(doc_root: Path):
             check=False,
         )
     except OSError:
-        return []
+        return b""
     if result.returncode != 0:
-        return []
+        return b""
+    return result.stdout
 
+
+def current_worktree_snapshot_hash(doc_root: Path) -> str:
+    return hashlib.sha256(current_worktree_status_bytes(doc_root)).hexdigest()
+
+
+def parse_worktree_entries(doc_root: Path):
     entries = []
-    parts = result.stdout.split(b"\0")
+    parts = current_worktree_status_bytes(doc_root).split(b"\0")
     index = 0
     while index < len(parts):
         raw = parts[index]
@@ -909,6 +905,7 @@ def current_commit_title_and_content(doc_root: Path, paths):
 def suggest_current_commit(doc_root: Path):
     repo_check = run_git(doc_root, ["rev-parse", "--is-inside-work-tree"])
     if repo_check.returncode != 0:
+        clear_current_commit_suggestion_cache(doc_root)
         clear_pending_commit_suggestion(doc_root)
         return {
             "suitable": False,
@@ -917,15 +914,25 @@ def suggest_current_commit(doc_root: Path):
             "content": [],
         }
 
+    cached = cached_current_commit_suggestion(doc_root)
+    if cached:
+        if cached.get("suitable"):
+            write_pending_commit_suggestion(doc_root, cached)
+        else:
+            clear_pending_commit_suggestion(doc_root)
+        return cached
+
     entries = parse_worktree_entries(doc_root)
     if not entries:
-        clear_pending_commit_suggestion(doc_root)
-        return {
+        commit = {
             "suitable": False,
             "reason": "当前仓库没有待提交改动。",
             "title": "",
             "content": [],
         }
+        write_current_commit_suggestion_cache(doc_root, commit)
+        clear_pending_commit_suggestion(doc_root)
+        return commit
 
     staged_paths = dedupe_preserve_order(entry["path"] for entry in entries if entry["index_status"] not in {" ", "?"})
     unstaged_paths = dedupe_preserve_order(entry["path"] for entry in entries if entry["worktree_status"] not in {" ", "?"})
@@ -934,22 +941,26 @@ def suggest_current_commit(doc_root: Path):
     if staged_paths and unstaged_paths:
         partially_staged = [path for path in staged_paths if path in unstaged_paths]
         if partially_staged:
-            clear_pending_commit_suggestion(doc_root)
-            return {
+            commit = {
                 "suitable": False,
                 "reason": f"当前存在部分已暂存、部分未暂存的同一路径，边界不清晰：{', '.join(partially_staged[:3])}",
                 "title": "",
                 "content": [],
             }
+            write_current_commit_suggestion_cache(doc_root, commit)
+            clear_pending_commit_suggestion(doc_root)
+            return commit
         extra_unstaged = [path for path in unstaged_paths if path not in staged_paths]
         if extra_unstaged:
-            clear_pending_commit_suggestion(doc_root)
-            return {
+            commit = {
                 "suitable": False,
                 "reason": f"当前同时存在已暂存改动和未暂存改动，边界不清晰：{', '.join(extra_unstaged[:3])}",
                 "title": "",
                 "content": [],
             }
+            write_current_commit_suggestion_cache(doc_root, commit)
+            clear_pending_commit_suggestion(doc_root)
+            return commit
 
     all_paths = dedupe_preserve_order(staged_paths + unstaged_paths + untracked_paths)
     module_candidates = {commit_scope_for_path(path) for path in all_paths}
@@ -957,23 +968,27 @@ def suggest_current_commit(doc_root: Path):
     if not effective_modules and "registry" in module_candidates:
         effective_modules = {"230"}
     if len(effective_modules) > 1:
-        clear_pending_commit_suggestion(doc_root)
-        return {
+        commit = {
             "suitable": False,
             "reason": f"当前改动跨了多个模块，暂不建议混提：{', '.join(sorted(effective_modules))}",
             "title": "",
             "content": [],
         }
+        write_current_commit_suggestion_cache(doc_root, commit)
+        clear_pending_commit_suggestion(doc_root)
+        return commit
 
     module_code, title, content = current_commit_title_and_content(doc_root, all_paths)
     if not module_code or not title:
-        clear_pending_commit_suggestion(doc_root)
-        return {
+        commit = {
             "suitable": False,
             "reason": "当前改动边界暂时无法稳定归类，建议先补充上下文后再提交。",
             "title": "",
             "content": [],
         }
+        write_current_commit_suggestion_cache(doc_root, commit)
+        clear_pending_commit_suggestion(doc_root)
+        return commit
 
     commit = {
         "suitable": True,
@@ -981,6 +996,7 @@ def suggest_current_commit(doc_root: Path):
         "title": title,
         "content": content,
     }
+    write_current_commit_suggestion_cache(doc_root, commit)
     write_pending_commit_suggestion(doc_root, commit)
     return commit
 
@@ -1015,6 +1031,55 @@ def read_pending_commit_suggestion(doc_root: Path):
     if cache_path is None or not cache_path.exists():
         return None
     return json.loads(cache_path.read_text(encoding="utf-8"))
+
+
+def write_current_commit_suggestion_cache(doc_root: Path, suggestion):
+    cache_path = current_commit_suggestion_cache_path(doc_root)
+    if cache_path is None:
+        return
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    upstream = branch_upstream(doc_root)
+    payload = {
+        "head_commit": current_head_commit(doc_root),
+        "upstream": upstream,
+        "worktree_status_hash": current_worktree_snapshot_hash(doc_root),
+        "suggestion": suggestion,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+    }
+    cache_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def clear_current_commit_suggestion_cache(doc_root: Path):
+    cache_path = current_commit_suggestion_cache_path(doc_root)
+    if cache_path is None or not cache_path.exists():
+        return
+    cache_path.unlink()
+
+
+def read_current_commit_suggestion_cache(doc_root: Path):
+    cache_path = current_commit_suggestion_cache_path(doc_root)
+    if cache_path is None or not cache_path.exists():
+        return None
+    try:
+        return json.loads(cache_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def cached_current_commit_suggestion(doc_root: Path):
+    payload = read_current_commit_suggestion_cache(doc_root)
+    if not payload:
+        return None
+    if payload.get("head_commit") != current_head_commit(doc_root):
+        return None
+    if payload.get("upstream", "") != branch_upstream(doc_root):
+        return None
+    if payload.get("worktree_status_hash") != current_worktree_snapshot_hash(doc_root):
+        return None
+    suggestion = payload.get("suggestion")
+    if not isinstance(suggestion, dict):
+        return None
+    return suggestion
 
 
 def validate_commit_message(doc_root: Path, message_file: Path, fetch_latest: bool = True, stage_registry: bool = False):
