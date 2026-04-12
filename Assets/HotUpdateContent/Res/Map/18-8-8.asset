@@ -1,0 +1,273 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 266d80815cff8584eb91763b17bddeff, type: 3}
+  m_Name: 18-8-8
+  m_EditorClassIdentifier: 
+  rows: 8
+  cols: 8
+  cells:
+  - isValid: 0
+    blockColor:
+      serializedVersion: 2
+      rgba: 4293125347
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280361001
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280361001
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280361001
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280361001
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280361001
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280361001
+  - isValid: 0
+    blockColor:
+      serializedVersion: 2
+      rgba: 4294440951
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4285238940
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4282305766
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281972446
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281972446
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283620351
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4279243809
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4285238940
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4294967295
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4294967295
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4279243809
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4285238940
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4294967295
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4279243809
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4285238940
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4294967295
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4279243809
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4285238940
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4294967295
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4294967295
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978876
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4279243809
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4285238940
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4281978879
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4282175482
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4283815675
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4279243809
+  - isValid: 0
+    blockColor:
+      serializedVersion: 2
+      rgba: 4288453276
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280375684
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280375684
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280375684
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280375684
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280375684
+  - isValid: 1
+    blockColor:
+      serializedVersion: 2
+      rgba: 4280375684
+  - isValid: 0
+    blockColor:
+      serializedVersion: 2
+      rgba: 4293125347
