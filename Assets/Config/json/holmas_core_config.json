@@ -3,21 +3,147 @@
     "Maps": [
         {
             "MapId": "map_001",
-            "TerrainPath": "Assets/HotUpdateContent/Res/Map/1.asset",
-            "CatCountMin": 12,
-            "CatCountMax": 15
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-8-8.asset",
+            "CatCountMin": 11,
+            "CatCountMax": 14
         },
         {
             "MapId": "map_002",
-            "TerrainPath": "Assets/HotUpdateContent/Res/Map/2.asset",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-8-8.asset",
             "CatCountMin": 14,
-            "CatCountMax": 18
+            "CatCountMax": 16
         },
         {
             "MapId": "map_003",
-            "TerrainPath": "Assets/HotUpdateContent/Res/Map/3.asset",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-8-8.asset",
             "CatCountMin": 16,
+            "CatCountMax": 17
+        },
+        {
+            "MapId": "map_004",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-8-8.asset",
+            "CatCountMin": 17,
+            "CatCountMax": 19
+        },
+        {
+            "MapId": "map_005",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-9-9.asset",
+            "CatCountMin": 14,
+            "CatCountMax": 17
+        },
+        {
+            "MapId": "map_006",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-9-9.asset",
+            "CatCountMin": 17,
             "CatCountMax": 20
+        },
+        {
+            "MapId": "map_007",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-9-9.asset",
+            "CatCountMin": 20,
+            "CatCountMax": 22
+        },
+        {
+            "MapId": "map_008",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-9-9.asset",
+            "CatCountMin": 22,
+            "CatCountMax": 24
+        },
+        {
+            "MapId": "map_009",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-10-10.asset",
+            "CatCountMin": 18,
+            "CatCountMax": 22
+        },
+        {
+            "MapId": "map_010",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-10-10.asset",
+            "CatCountMin": 22,
+            "CatCountMax": 25
+        },
+        {
+            "MapId": "map_011",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-10-10.asset",
+            "CatCountMin": 25,
+            "CatCountMax": 28
+        },
+        {
+            "MapId": "map_012",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-10-10.asset",
+            "CatCountMin": 28,
+            "CatCountMax": 30
+        },
+        {
+            "MapId": "map_013",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-11-11.asset",
+            "CatCountMin": 21,
+            "CatCountMax": 26
+        },
+        {
+            "MapId": "map_014",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-11-11.asset",
+            "CatCountMin": 26,
+            "CatCountMax": 30
+        },
+        {
+            "MapId": "map_015",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-11-11.asset",
+            "CatCountMin": 30,
+            "CatCountMax": 33
+        },
+        {
+            "MapId": "map_016",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-11-11.asset",
+            "CatCountMin": 33,
+            "CatCountMax": 36
+        },
+        {
+            "MapId": "map_017",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-12-12.asset",
+            "CatCountMin": 25,
+            "CatCountMax": 31
+        },
+        {
+            "MapId": "map_018",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-12-12.asset",
+            "CatCountMin": 31,
+            "CatCountMax": 36
+        },
+        {
+            "MapId": "map_019",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-12-12.asset",
+            "CatCountMin": 36,
+            "CatCountMax": 40
+        },
+        {
+            "MapId": "map_020",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-12-12.asset",
+            "CatCountMin": 40,
+            "CatCountMax": 43
+        },
+        {
+            "MapId": "map_021",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-13-13.asset",
+            "CatCountMin": 30,
+            "CatCountMax": 37
+        },
+        {
+            "MapId": "map_022",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-13-13.asset",
+            "CatCountMin": 37,
+            "CatCountMax": 42
+        },
+        {
+            "MapId": "map_023",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-13-13.asset",
+            "CatCountMin": 42,
+            "CatCountMax": 47
+        },
+        {
+            "MapId": "map_024",
+            "TerrainPath": "Assets/HotUpdateContent/Res/Map/11-13-13.asset",
+            "CatCountMin": 47,
+            "CatCountMax": 50
         }
     ],
     "Tasks": [
