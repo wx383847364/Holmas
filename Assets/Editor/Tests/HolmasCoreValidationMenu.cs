@@ -32,6 +32,7 @@ public static class HolmasCoreValidationMenu
         serviceContainer.RegisterSingleton<ITickManager>(new FakeTickManager());
         serviceContainer.RegisterSingleton<IEventBus>(new FakeEventBus());
         serviceContainer.RegisterSingleton<IAssetsRuntime>(assetsRuntime);
+        serviceContainer.RegisterSingleton<IPersistence>(new InMemoryPersistence());
 
         try
         {
@@ -489,6 +490,34 @@ public static class HolmasCoreValidationMenu
 
         public void Shutdown()
         {
+        }
+    }
+
+    private sealed class InMemoryPersistence : IPersistence
+    {
+        private readonly Dictionary<string, byte[]> _store = new Dictionary<string, byte[]>();
+
+        public System.Threading.Tasks.Task<bool> SaveAsync(string key, byte[] data)
+        {
+            _store[key] = data;
+            return System.Threading.Tasks.Task.FromResult(true);
+        }
+
+        public System.Threading.Tasks.Task<byte[]> LoadAsync(string key)
+        {
+            _store.TryGetValue(key, out byte[] value);
+            return System.Threading.Tasks.Task.FromResult(value);
+        }
+
+        public System.Threading.Tasks.Task<bool> DeleteAsync(string key)
+        {
+            _store.Remove(key);
+            return System.Threading.Tasks.Task.FromResult(true);
+        }
+
+        public bool Exists(string key)
+        {
+            return _store.ContainsKey(key);
         }
     }
 
