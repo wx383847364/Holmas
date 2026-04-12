@@ -13,8 +13,14 @@ namespace App.HotUpdate.Holmas.Tasks.Runtime
     public sealed class HolmasTaskRuntimeInstance
     {
         public HolmasTaskRuntimeInstance(TaskInstanceData task)
+            : this(task, false)
+        {
+        }
+
+        public HolmasTaskRuntimeInstance(TaskInstanceData task, bool isRewardClaimed)
         {
             Task = task ?? throw new ArgumentNullException(nameof(task));
+            IsRewardClaimed = isRewardClaimed;
         }
 
         public TaskInstanceData Task { get; private set; }
@@ -215,6 +221,21 @@ namespace App.HotUpdate.Holmas.Tasks.Runtime
         public IReadOnlyList<HolmasTaskRuntimeInstance> GetClaimableTasks()
         {
             return Tasks.Where(item => item != null && item.CanClaimReward).ToList();
+        }
+
+        public int GetUnlockedEmptySlotCount()
+        {
+            int count = 0;
+            for (int i = 0; i < Slots.Count; i++)
+            {
+                TaskSlotState slot = Slots[i];
+                if (slot != null && slot.IsUnlocked && string.IsNullOrEmpty(slot.TaskInstanceId))
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
     }
 }

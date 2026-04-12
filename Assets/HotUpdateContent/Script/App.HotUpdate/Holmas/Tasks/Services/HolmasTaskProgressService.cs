@@ -91,11 +91,12 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             return new HolmasTaskBarState();
         }
 
-        public void RefreshExpiredAdSlots(HolmasTaskBarState taskBarState, long utcNowMilliseconds)
+        public bool RefreshExpiredAdSlots(HolmasTaskBarState taskBarState, long utcNowMilliseconds)
         {
+            bool changed = false;
             if (taskBarState == null)
             {
-                return;
+                return false;
             }
 
             foreach (var slot in taskBarState.Slots)
@@ -109,8 +110,16 @@ namespace App.HotUpdate.Holmas.Tasks.Services
                 {
                     taskBarState.ClearSlot(slot.SlotIndex, true);
                     taskBarState.LockSlot(slot.SlotIndex);
+                    changed = true;
                 }
             }
+
+            return changed;
+        }
+
+        public bool RefreshExpiredAdSlots(HolmasTaskBarState taskBarState)
+        {
+            return RefreshExpiredAdSlots(taskBarState, _clock.UtcNowMilliseconds);
         }
 
         public HolmasTaskRefillResult RefillUnlockedEmptySlots(HolmasTaskBarState taskBarState, int playerLevel)

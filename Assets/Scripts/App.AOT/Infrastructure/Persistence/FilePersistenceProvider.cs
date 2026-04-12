@@ -34,7 +34,7 @@ namespace App.AOT.Infrastructure.Persistence
                     Directory.CreateDirectory(directory);
                 }
 
-                await File.WriteAllBytesAsync(filePath, data);
+                await File.WriteAllBytesAsync(filePath, data).ConfigureAwait(false);
                 return true;
             }
             catch (Exception ex)
@@ -54,7 +54,7 @@ namespace App.AOT.Infrastructure.Persistence
                     return null;
                 }
 
-                return await File.ReadAllBytesAsync(filePath);
+                return await File.ReadAllBytesAsync(filePath).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

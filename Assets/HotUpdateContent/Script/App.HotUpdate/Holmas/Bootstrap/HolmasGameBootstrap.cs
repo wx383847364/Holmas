@@ -4,11 +4,14 @@ using System.Linq;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Meta;
+using App.HotUpdate.Holmas.PlayerData;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Config;
+using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.UI;
 using App.Shared.Contracts;
+using App.Shared.Holmas.PlayerData;
 using IHolmasPromotionCatalog = App.HotUpdate.Holmas.Meta.IHolmasAgencyCatalog;
 using HolmasAgencyPromotionDefinition = App.HotUpdate.Holmas.Meta.HolmasAgencyBuildingDefinition;
 using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgencyUpgradeResult;
@@ -49,8 +52,9 @@ namespace App.HotUpdate.Holmas.Bootstrap
             var tickManager = serviceContainer.Get<ITickManager>();
             var eventBus = serviceContainer.Get<IEventBus>();
             var assetsRuntime = serviceContainer.Get<IAssetsRuntime>();
+            var persistence = serviceContainer.Get<IPersistence>();
 
-            if (logger == null || tickManager == null || eventBus == null || assetsRuntime == null)
+            if (logger == null || tickManager == null || eventBus == null || assetsRuntime == null || persistence == null)
             {
                 throw new InvalidOperationException("HolmasGameBootstrap: 启动失败，AOT 提供的基础设施依赖不完整。");
             }
@@ -65,7 +69,49 @@ namespace App.HotUpdate.Holmas.Bootstrap
             var mapCatalog = configBundle.MapCatalog;
             var metaCatalog = CreateMetaCatalog(configBundle);
             var promotionCatalog = CreatePromotionCatalog(configBundle);
-            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(logger, assetsRuntime, taskCatalog, metaCatalog, promotionCatalog);
+            var clock = new HolmasSystemUtcClock();
+            var archiveMapper = new HolmasPlayerArchiveMapper();
+            var archiveGateway = new HolmasLocalMockServerGateway(persistence, logger, clock);
+            HolmasPlayerArchiveLoadResult archiveLoadResult = archiveGateway.LoadAsync().GetAwaiter().GetResult();
+            bool archiveNeedsSave = false;
+            if (!archiveLoadResult.Success)
+            {
+                logger?.LogWarning(
+                    "HolmasGameBootstrap: 本地模拟服务器档案不可用，已回退默认新号。status={0}, reason={1}",
+                    archiveLoadResult.Status,
+                    archiveLoadResult.FailureReason);
+                archiveLoadResult = new HolmasPlayerArchiveLoadResult
+                {
+                    Status = HolmasPlayerArchiveLoadStatus.Success,
+                    Archive = archiveMapper.CreateDefaultArchive(),
+                };
+                archiveNeedsSave = true;
+            }
+
+            HolmasTaskBarRestoreResult taskBarRestoreResult = archiveMapper.TryRestoreTaskBar(archiveLoadResult.Archive);
+            if (!taskBarRestoreResult.Success)
+            {
+                logger?.LogWarning(
+                    "HolmasGameBootstrap: 本地模拟服务器任务栏档案不一致，已重建任务栏并保留其他进度。reason={0}",
+                    taskBarRestoreResult.FailureReason);
+                archiveLoadResult = new HolmasPlayerArchiveLoadResult
+                {
+                    Status = HolmasPlayerArchiveLoadStatus.Success,
+                    Archive = archiveMapper.CreateArchiveWithResetTaskBar(archiveLoadResult.Archive),
+                };
+                archiveNeedsSave = true;
+                taskBarRestoreResult = archiveMapper.TryRestoreTaskBar(archiveLoadResult.Archive);
+            }
+
+            HolmasGameplayRuntime gameplayRuntime = CreateGameplayRuntime(
+                logger,
+                assetsRuntime,
+                taskCatalog,
+                metaCatalog,
+                promotionCatalog,
+                clock,
+                taskBarRestoreResult.State,
+                archiveMapper.RestoreProgression(archiveLoadResult.Archive));
             serviceContainer.RegisterSingleton(gameplayRuntime);
 
             // 这轮先把已确认的共享依赖收敛到统一上下文，给后续地图线和任务线提供稳定挂接点。
@@ -89,6 +135,43 @@ namespace App.HotUpdate.Holmas.Bootstrap
             serviceContainer.RegisterSingleton<IHolmasAgencyCatalog>(promotionCatalog);
             serviceContainer.RegisterSingleton(levelLaunchGateway);
             serviceContainer.RegisterSingleton<IHolmasLevelLaunchGateway>(levelLaunchGateway);
+            var archiveSyncService = new HolmasPlayerArchiveSyncService(
+                gameplayRuntime,
+                archiveGateway,
+                archiveMapper,
+                clock,
+                logger,
+                archiveLoadResult.Archive != null ? archiveLoadResult.Archive.PlayerId : HolmasLocalMockServerGateway.DefaultPlayerId,
+                archiveLoadResult.Archive != null ? archiveLoadResult.Archive.SchemaVersion : HolmasLocalMockServerGateway.DefaultSchemaVersion,
+                archiveLoadResult.Archive != null ? archiveLoadResult.Archive.Revision : 0L);
+            serviceContainer.RegisterSingleton(archiveGateway);
+            serviceContainer.RegisterSingleton<IHolmasPlayerArchiveGateway>(archiveGateway);
+            serviceContainer.RegisterSingleton(archiveMapper);
+            serviceContainer.RegisterSingleton(archiveSyncService);
+            serviceContainer.RegisterSingleton<IHolmasPlayerArchiveDrain>(archiveSyncService);
+
+            if (archiveLoadResult.Archive != null &&
+                archiveLoadResult.Archive.CurrentLevel != null &&
+                !archiveLoadResult.Archive.CurrentLevel.Completed)
+            {
+                try
+                {
+                    gameplayRuntime.RestoreLevelAsync(archiveLoadResult.Archive.CurrentLevel).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning("HolmasGameBootstrap: 恢复当前关卡失败，已清理损坏的 currentLevel。{0}", ex.Message);
+                    gameplayRuntime.EndCurrentLevelSession();
+                    archiveNeedsSave = true;
+                }
+            }
+
+            if (archiveNeedsSave)
+            {
+                archiveSyncService.MarkDirty("bootstrap_recover_default_archive");
+                archiveSyncService.FlushAsync().GetAwaiter().GetResult();
+            }
+
             HolmasUiBootstrap.EnsureCreated(Context, levelLaunchGateway);
 
             // 这轮已经把地图完成 -> 任务推进 -> 长期进度的运行时编排接入组合层，但仍不提前接 UI。
@@ -129,9 +212,11 @@ namespace App.HotUpdate.Holmas.Bootstrap
             IAssetsRuntime assetsRuntime,
             HolmasTaskCatalog taskCatalog,
             HolmasMetaCatalog metaCatalog,
-            HolmasAgencyCatalog promotionCatalog)
+            HolmasAgencyCatalog promotionCatalog,
+            IHolmasUtcClock clock,
+            HolmasTaskBarState initialTaskBarState,
+            HolmasMetaProgressionState initialMetaProgressionState)
         {
-            var clock = new HolmasSystemUtcClock();
             var randomSource = new HolmasSystemRandomSource();
             var metaSource = new HolmasDefaultMetaExperienceSource(metaCatalog);
             var taskProgressService = new HolmasTaskProgressService(taskCatalog, randomSource, clock);
@@ -145,7 +230,9 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 progressionCoordinator,
                 promotionProgressionService,
                 logger,
-                assetsRuntime);
+                assetsRuntime,
+                initialTaskBarState,
+                initialMetaProgressionState);
         }
 
         private static HolmasMetaCatalog CreateMetaCatalog(HolmasConfigCatalogBundle configBundle)

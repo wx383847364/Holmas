@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using App.Shared.Contracts;
 using App.AOT.Infrastructure.DI;
@@ -9,14 +10,18 @@ using App.AOT.YooRuntimeAssets;
 using App.AOT.HotUpdate;
 using App.AOT.Networking;
 using App.AOT.Platform.WeChat;
+using App.Shared.Holmas.PlayerData;
 
 namespace App.AOT.Bootstrap
 {
     /// <summary>
-    /// 游戏启动器：AOT层入口，挂载在首场景
+    /// 游戏启动器：AOT 层入口，挂在首场景。
+    /// 这一层只负责宿主基础设施初始化，不承载 Holmas 业务规则。
     /// </summary>
     public class GameBootstrap : MonoBehaviour
     {
+        // 下面这些字段都属于“宿主能力”：
+        // HotUpdate 层通过接口拿到它们，而不是直接依赖这些具体实现。
         private ServiceContainer _serviceContainer;
         private UnityLogger _logger;
         private TickManager _tickManager;
@@ -29,6 +34,7 @@ namespace App.AOT.Bootstrap
 
         private async void Start()
         {
+            // 启动器跨场景常驻；真正业务入口会在基础设施准备完后进入 HotUpdate。
             DontDestroyOnLoad(gameObject);
             await InitializeAsync();
         }
@@ -43,21 +49,22 @@ namespace App.AOT.Bootstrap
 
         private async System.Threading.Tasks.Task InitializeAsync()
         {
-            // 1. 初始化基础设施（Logger需要最先初始化）
+            // 初始化顺序很重要：
+            // 1. 先起日志和容器，保证后续任何失败都能输出诊断信息。
             InitializeInfrastructure();
 
             _logger.LogInfo("GameBootstrap: 开始初始化...");
 
-            // 2. 初始化平台桥接（微信）
+            // 2. 宿主平台桥接，例如微信窗口信息、登录、广告等。
             InitializePlatform();
 
-            // 3. 初始化网络底座
+            // 3. 网络底座。
             InitializeNetworking();
 
-            // 4. 初始化YooAssets
+            // 4. 正式运行时资源入口。
             await InitializeYooAssetsAsync();
 
-            // 5. 加载HybridCLR热更代码
+            // 5. 最后才进入 HybridCLR / HotUpdate。
             await InitializeHybridClrAsync();
 
             _logger.LogInfo("GameBootstrap: 初始化完成，进入热更层");
@@ -69,7 +76,7 @@ namespace App.AOT.Bootstrap
 
             _logger = new UnityLogger();
             _logger.Initialize();
-            // 同时注册为接口和具体类型，方便AOT和HotUpdate层都能获取
+            // 同时注册为接口和具体类型，方便 AOT 和 HotUpdate 两边统一取用。
             _serviceContainer.RegisterSingleton<IAppLogger>(_logger);
 
             _tickManager = new TickManager();
@@ -84,7 +91,7 @@ namespace App.AOT.Bootstrap
             _persistence = new FilePersistenceProvider();
             _serviceContainer.RegisterSingleton<IPersistence>(_persistence);
 
-            // 注册服务容器自身（供HotUpdate层使用）
+            // 把容器自己也注册进去，后面 HotUpdate 业务组合层会从这里继续挂服务。
             _serviceContainer.RegisterSingleton<IServiceContainer>(_serviceContainer);
 
             _logger.LogInfo("基础设施初始化完成");
@@ -119,6 +126,7 @@ namespace App.AOT.Bootstrap
 
         private async System.Threading.Tasks.Task InitializeHybridClrAsync()
         {
+            // HotUpdate 入口加载完成后，会在热更新层里继续组装 Holmas 正式业务骨架。
             _hybridClrLoader = new HybridClrLoader(_logger, _yooAssets, _serviceContainer);
             await _hybridClrLoader.LoadAsync();
             _logger.LogInfo("HybridCLR热更代码加载完成");
@@ -126,6 +134,7 @@ namespace App.AOT.Bootstrap
 
         private void Update()
         {
+            // 这里仍然只推进宿主级服务；业务逐帧逻辑若存在，会通过 HotUpdate 自己接入 TickManager。
             var deltaTime = Time.deltaTime;
             _tickManager?.Update(deltaTime);
             _netClient?.Update(deltaTime);
@@ -133,12 +142,48 @@ namespace App.AOT.Bootstrap
 
         private void OnDestroy()
         {
+            FlushPlayerArchive("OnDestroy");
             _hybridClrLoader?.Shutdown();
             _yooAssets?.Shutdown();
             _netClient?.Shutdown();
             _weChatBridge?.Shutdown();
             _tickManager?.Shutdown();
             _logger?.Shutdown();
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                FlushPlayerArchive("OnApplicationPause");
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            FlushPlayerArchive("OnApplicationQuit");
+        }
+
+        private void FlushPlayerArchive(string trigger)
+        {
+            IHolmasPlayerArchiveDrain archiveDrain = _serviceContainer?.Get<IHolmasPlayerArchiveDrain>();
+            if (archiveDrain == null)
+            {
+                return;
+            }
+
+            try
+            {
+                bool flushed = archiveDrain.FlushAsync().GetAwaiter().GetResult();
+                if (!flushed)
+                {
+                    _logger?.LogWarning("GameBootstrap: 关停前冲刷玩家档案未完全成功。trigger={0}", trigger);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError("GameBootstrap: 关停前冲刷玩家档案失败。trigger={0}, error={1}", trigger, ex);
+            }
         }
     }
 }

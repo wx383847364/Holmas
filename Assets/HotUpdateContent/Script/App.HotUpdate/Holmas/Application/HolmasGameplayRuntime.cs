@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
@@ -15,6 +16,21 @@ using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgenc
 
 namespace App.HotUpdate.Holmas.Application
 {
+    public enum HolmasGameplayRuntimeStateChangeReason
+    {
+        TasksRefilled,
+        AdSlotUnlocked,
+        ExpiredAdSlotsRefreshed,
+        LevelStarted,
+        LevelRevealed,
+        LevelFlagToggled,
+        LevelCompleted,
+        OfflineSettlementApplied,
+        TaskRewardClaimed,
+        PromotionUpgraded,
+        CurrentLevelSessionEnded,
+    }
+
     /// <summary>
     /// Holmas 当前阶段的运行时编排入口。
     /// 在不接 UI 的前提下，把关卡、任务栏和长期进度串成一条稳定的应用内调用链。
@@ -34,7 +50,7 @@ namespace App.HotUpdate.Holmas.Application
             HolmasMetaProgressionService metaProgressionService,
             HolmasProgressionCoordinator progressionCoordinator,
             IAppLogger logger)
-            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, null)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, null, null, null)
         {
         }
 
@@ -44,7 +60,7 @@ namespace App.HotUpdate.Holmas.Application
             HolmasProgressionCoordinator progressionCoordinator,
             IAppLogger logger,
             IAssetsRuntime assetsRuntime)
-            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, assetsRuntime)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, assetsRuntime, null, null)
         {
         }
 
@@ -55,6 +71,19 @@ namespace App.HotUpdate.Holmas.Application
             HolmasAgencyProgressionService agencyProgressionService,
             IAppLogger logger,
             IAssetsRuntime assetsRuntime)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, agencyProgressionService, logger, assetsRuntime, null, null)
+        {
+        }
+
+        public HolmasGameplayRuntime(
+            HolmasTaskProgressService taskProgressService,
+            HolmasMetaProgressionService metaProgressionService,
+            HolmasProgressionCoordinator progressionCoordinator,
+            HolmasAgencyProgressionService agencyProgressionService,
+            IAppLogger logger,
+            IAssetsRuntime assetsRuntime,
+            HolmasTaskBarState initialTaskBarState,
+            HolmasMetaProgressionState initialMetaProgressionState)
         {
             _taskProgressService = taskProgressService ?? throw new ArgumentNullException(nameof(taskProgressService));
             _metaProgressionService = metaProgressionService ?? throw new ArgumentNullException(nameof(metaProgressionService));
@@ -63,8 +92,8 @@ namespace App.HotUpdate.Holmas.Application
             _logger = logger;
             _assetsRuntime = assetsRuntime;
 
-            TaskBarState = _taskProgressService.CreateDefaultTaskBarState();
-            MetaProgressionState = _metaProgressionService.CreateState();
+            TaskBarState = initialTaskBarState ?? _taskProgressService.CreateDefaultTaskBarState();
+            MetaProgressionState = initialMetaProgressionState ?? _metaProgressionService.CreateState();
             if (MetaProgressionState.PlayerLevel <= 0)
             {
                 MetaProgressionState.PlayerLevel = 1;
@@ -74,6 +103,8 @@ namespace App.HotUpdate.Holmas.Application
                 MetaProgressionState.AgencyStageId = 1;
             }
         }
+
+        public event Action<HolmasGameplayRuntimeStateChangeReason> StateChanged;
 
         /// <summary>
         /// 当前任务栏运行时状态。
@@ -122,6 +153,10 @@ namespace App.HotUpdate.Holmas.Application
         {
             HolmasTaskRefillResult result = _taskProgressService.RefillUnlockedEmptySlots(TaskBarState, playerLevel);
             _logger?.LogInfo("HolmasGameplayRuntime: 已尝试补齐任务栏，生成 {0} 条任务结果。", result.GeneratedTasks.Count);
+            if (HasSuccessfulTaskGeneration(result))
+            {
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.TasksRefilled);
+            }
             return result;
         }
 
@@ -140,6 +175,10 @@ namespace App.HotUpdate.Holmas.Application
         {
             HolmasTaskSlotUnlockResult result = _taskProgressService.UnlockAdSlot(TaskBarState, slotIndex, playerLevel, unlockExpireAtUtcMilliseconds);
             _logger?.LogInfo("HolmasGameplayRuntime: 尝试解锁任务槽位 {0}，成功={1}。", slotIndex, result.Success);
+            if (result.Success)
+            {
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.AdSlotUnlocked);
+            }
             return result;
         }
 
@@ -167,6 +206,7 @@ namespace App.HotUpdate.Holmas.Application
             CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
             _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已启动地图 {0}，本局猫数量={1}。", CurrentLevelSnapshot.MapId, CurrentBoardRuntime.TotalCatCount);
+            NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.LevelStarted);
             return CurrentBoardRuntime;
         }
 
@@ -180,6 +220,31 @@ namespace App.HotUpdate.Holmas.Application
             CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
             _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已基于现有模板与快照恢复关卡，地图={0}。", CurrentLevelSnapshot.MapId);
+            return CurrentBoardRuntime;
+        }
+
+        /// <summary>
+        /// 按已保存的 LevelSnapshot 恢复当前关卡。
+        /// 本阶段只恢复猫分布和揭示进度，不恢复旗标状态。
+        /// </summary>
+        public async Task<BoardRuntime> RestoreLevelAsync(LevelSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                throw new ArgumentNullException(nameof(snapshot));
+            }
+
+            if (_assetsRuntime == null)
+            {
+                throw new InvalidOperationException("HolmasGameplayRuntime: 当前实例没有接入 IAssetsRuntime，无法恢复已保存关卡。");
+            }
+
+            BoardTemplate template = await HolmasTerrainAssetLoader.LoadBoardTemplateAsync(_assetsRuntime, snapshot.TerrainPath);
+            CurrentBoardTemplate = template ?? throw new InvalidOperationException("HolmasGameplayRuntime: 恢复关卡时未能得到有效 BoardTemplate。");
+            CurrentLevelSnapshot = CloneLevelSnapshot(snapshot);
+            CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
+            _currentLevelCompletionApplied = CurrentBoardRuntime.Completed;
+            _logger?.LogInfo("HolmasGameplayRuntime: 已恢复未完成关卡，地图={0}。", CurrentLevelSnapshot.MapId);
             return CurrentBoardRuntime;
         }
 
@@ -232,11 +297,34 @@ namespace App.HotUpdate.Holmas.Application
         /// </summary>
         public void EndCurrentLevelSession()
         {
+            bool hadSession = CurrentBoardRuntime != null || CurrentBoardTemplate != null || CurrentLevelSnapshot != null;
             CurrentBoardRuntime = null;
             CurrentBoardTemplate = null;
             CurrentLevelSnapshot = null;
             _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已清理当前关卡会话。");
+            if (hadSession)
+            {
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.CurrentLevelSessionEnded);
+            }
+        }
+
+        public bool HasActiveUncompletedLevel =>
+            CurrentLevelSnapshot != null &&
+            CurrentBoardRuntime != null &&
+            !CurrentLevelSnapshot.Completed &&
+            !CurrentBoardRuntime.Completed;
+
+        public bool RefreshExpiredAdSlots()
+        {
+            bool changed = _taskProgressService.RefreshExpiredAdSlots(TaskBarState);
+            if (changed)
+            {
+                _logger?.LogInfo("HolmasGameplayRuntime: 启动或刷新阶段清理了过期广告槽位。");
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.ExpiredAdSlotsRefreshed);
+            }
+
+            return changed;
         }
 
         /// <summary>
@@ -269,6 +357,10 @@ namespace App.HotUpdate.Holmas.Application
             {
                 progressionResult = ApplyCurrentLevelCompletion();
             }
+            else if (revealResult.IsValidAction)
+            {
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.LevelRevealed);
+            }
 
             return revealResult;
         }
@@ -288,7 +380,13 @@ namespace App.HotUpdate.Holmas.Application
                 throw new InvalidOperationException("HolmasGameplayRuntime: 当前关卡已经结算，不能继续插旗。");
             }
 
-            return CurrentBoardRuntime.ToggleFlag(cellIndex);
+            BoardRevealResult result = CurrentBoardRuntime.ToggleFlag(cellIndex);
+            if (result.IsValidAction)
+            {
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.LevelFlagToggled);
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -327,6 +425,7 @@ namespace App.HotUpdate.Holmas.Application
                 "HolmasGameplayRuntime: 已完成地图结算，推进任务 {0} 条，新增完成 {1} 条。",
                 result.ProgressedTaskIds.Count,
                 result.CompletedTaskIds.Count);
+            NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.LevelCompleted);
             return result;
         }
 
@@ -337,6 +436,10 @@ namespace App.HotUpdate.Holmas.Application
         {
             HolmasProgressionAdvanceResult result = _progressionCoordinator.ApplyOfflineSettlement(MetaProgressionState, offlineMilliseconds);
             _logger?.LogInfo("HolmasGameplayRuntime: 已结算离线收益，金币 +{0}。", result.OfflineRewardGained);
+            if (result.OfflineRewardGained > 0)
+            {
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.OfflineSettlementApplied);
+            }
             return result;
         }
 
@@ -353,6 +456,10 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             _logger?.LogInfo("HolmasGameplayRuntime: 尝试领取槽位 {0} 任务奖励，成功={1}，金币 +{2}。", slotIndex, result.Success, result.Reward);
+            if (result.Success)
+            {
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed);
+            }
             return result;
         }
 
@@ -390,7 +497,64 @@ namespace App.HotUpdate.Holmas.Application
                 _logger?.LogWarning("HolmasGameplayRuntime: 宣传 {0} 升级失败，原因={1}", promotionId, result.FailureReason);
             }
 
+            if (result.Success)
+            {
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.PromotionUpgraded);
+            }
+
             return result;
+        }
+
+        private static bool HasSuccessfulTaskGeneration(HolmasTaskRefillResult result)
+        {
+            if (result == null || result.GeneratedTasks == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < result.GeneratedTasks.Count; i++)
+            {
+                if (result.GeneratedTasks[i] != null && result.GeneratedTasks[i].Success)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static LevelSnapshot CloneLevelSnapshot(LevelSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return null;
+            }
+
+            return new LevelSnapshot
+            {
+                MapId = snapshot.MapId ?? string.Empty,
+                TerrainPath = snapshot.TerrainPath ?? string.Empty,
+                Seed = snapshot.Seed,
+                SpawnedCats = snapshot.SpawnedCats != null
+                    ? snapshot.SpawnedCats
+                        .ConvertAll(item => item == null
+                            ? null
+                            : new SpawnedCatData
+                            {
+                                CatId = item.CatId ?? string.Empty,
+                                CellIndex = item.CellIndex,
+                            })
+                    : new List<SpawnedCatData>(),
+                RevealedCells = snapshot.RevealedCells != null
+                    ? (bool[])snapshot.RevealedCells.Clone()
+                    : Array.Empty<bool>(),
+                Completed = snapshot.Completed,
+            };
+        }
+
+        private void NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason reason)
+        {
+            StateChanged?.Invoke(reason);
         }
 
     }
