@@ -5,6 +5,10 @@ using UnityEngine;
 
 namespace App.HotUpdate.Holmas.UI.Core
 {
+    /// <summary>
+    /// UI 运行时调度器。
+    /// 负责三件事：注册界面定义、按需加载 prefab、维护导航状态。
+    /// </summary>
     public sealed class UiScreenService
     {
         private readonly Dictionary<string, UiScreenDefinition> _definitions = new Dictionary<string, UiScreenDefinition>(StringComparer.Ordinal);
@@ -111,6 +115,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private async Task<UiScreenRuntime> OpenScreenInternalAsync(string screenId, UiScreenKind expectedKind, object payload)
         {
+            // 先校验“调用者想怎么打开”和“这个 screen 自己声明成什么类型”是否一致。
             UiScreenDefinition definition = GetDefinition(screenId);
             if (definition.Kind != expectedKind)
             {
@@ -126,6 +131,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
             try
             {
+                // 运行时实例不存在就先加载 prefab 并创建 controller；存在则直接复用。
                 UiScreenRuntime runtime = await GetOrCreateRuntimeAsync(definition);
 
                 switch (expectedKind)
@@ -162,6 +168,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                 return runtime;
             }
 
+            // prefab 实例化后先挂到对应层级，再把 controller 绑定到这个实例上。
             UiLoadedPrefabHandle loadedHandle = await _prefabLoader.LoadAsync(definition.AssetAddress);
             if (loadedHandle == null)
             {
@@ -181,6 +188,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private async Task OpenPageRuntimeAsync(UiScreenRuntime runtime, object payload)
         {
+            // Page 是单栈语义：打开新 page 时，旧 page 进入 Pause。
             UiPageController currentPage = _navigationState.CurrentPage;
             if (currentPage != null && !ReferenceEquals(currentPage, runtime.Controller))
             {
@@ -195,6 +203,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private void OpenPopupRuntime(UiScreenRuntime runtime, object payload)
         {
+            // Popup 允许叠加，所以这里是 push 栈，而不是替换当前 page。
             runtime.BringToFront();
             runtime.Open(payload);
             _navigationState.PushPopup(runtime.Controller as UiPopupController);
@@ -222,6 +231,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private async Task OpenOverlayRuntimeAsync(UiScreenRuntime runtime, object payload)
         {
+            // Overlay 约定同一时刻只保留一个，打开新 overlay 前先关旧的。
             await CloseActiveOverlayIfNeededAsync(runtime);
             runtime.BringToFront();
             runtime.Open(payload);
@@ -235,6 +245,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                 return Task.CompletedTask;
             }
 
+            // 关闭后要同步更新导航状态；若是 page 关闭，则恢复上一个 page。
             bool wasCurrentPage = runtime.Definition.Kind == UiScreenKind.Page
                 && ReferenceEquals(_navigationState.CurrentPage, runtime.Controller);
 
@@ -325,6 +336,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private Transform ResolveLayer(UiScreenKind kind)
         {
+            // ScreenKind 和 UiRoot 的固定层级一一对应。
             switch (kind)
             {
                 case UiScreenKind.Page:
@@ -342,6 +354,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private void AcquireInputLock()
         {
+            // 打开 page / overlay 等切换时短暂锁输入，避免连点造成状态交错。
             _navigationState.AcquireInputLock();
             _root.SetInputBlocked(_navigationState.IsInputLocked);
         }

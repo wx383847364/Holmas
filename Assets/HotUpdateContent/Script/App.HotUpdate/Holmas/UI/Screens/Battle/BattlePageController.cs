@@ -4,6 +4,7 @@ using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.UI.Core;
+using UnityEngine;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Battle
 {
@@ -63,6 +64,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         private void OnCellClicked(int cellIndex, bool isFlagAction)
         {
+            Debug.Log($"BattlePageController: received cell click cell={cellIndex} flag={isFlagAction}", RootObject);
             _ = HandleCellInteractionAsync(cellIndex, isFlagAction);
         }
 
@@ -82,7 +84,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
             catch (Exception ex)
             {
-                Refresh("返回主界面失败：" + ex.Message);
+                Refresh("返回侦探社失败：" + ex.Message);
             }
             finally
             {
@@ -94,39 +96,63 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         {
             if (_isProcessing || _isLeaving)
             {
+                Debug.Log(
+                    $"BattlePageController: ignored cell click cell={cellIndex} flag={isFlagAction} processing={_isProcessing} leaving={_isLeaving}",
+                    RootObject);
                 return;
             }
 
             HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
             if (runtime == null)
             {
+                Debug.LogWarning("BattlePageController: gameplay runtime unavailable while handling cell click.", RootObject);
                 Refresh("玩法运行时不可用。");
                 return;
             }
 
             if (runtime.CurrentBoardRuntime != null && runtime.CurrentBoardRuntime.Completed)
             {
-                Refresh("本局已结算，请返回主界面。");
+                Debug.Log($"BattlePageController: ignored cell click because board already completed. cell={cellIndex}", RootObject);
+                Refresh("本局已结算，请返回侦探社。");
                 return;
             }
 
             _isProcessing = true;
+            Debug.Log(
+                $"BattlePageController: begin handle cell click cell={cellIndex} flag={isFlagAction} boardReady={runtime.CurrentBoardRuntime != null}",
+                RootObject);
             try
             {
                 if (isFlagAction)
                 {
                     BoardRevealResult flagResult = runtime.ToggleFlag(cellIndex);
+                    int changedCount = flagResult != null && flagResult.ChangedCellIndices != null
+                        ? flagResult.ChangedCellIndices.Count
+                        : 0;
+                    Debug.Log(
+                        $"BattlePageController: flag result cell={cellIndex} valid={flagResult != null && flagResult.IsValidAction} changed={changedCount}",
+                        RootObject);
                     Refresh(BuildFlagStatus(flagResult));
                 }
                 else
                 {
                     HolmasProgressionAdvanceResult progressionResult;
                     BoardRevealResult revealResult = runtime.RevealCell(cellIndex, out progressionResult);
+                    int changedCount = revealResult != null && revealResult.ChangedCellIndices != null
+                        ? revealResult.ChangedCellIndices.Count
+                        : 0;
+                    int progressedCount = progressionResult != null
+                        ? progressionResult.ProgressedTaskIds.Count
+                        : 0;
+                    Debug.Log(
+                        $"BattlePageController: reveal result cell={cellIndex} valid={revealResult != null && revealResult.IsValidAction} foundCat={revealResult != null && revealResult.FoundCat} completed={revealResult != null && revealResult.Completed} changed={changedCount} progressed={progressedCount}",
+                        RootObject);
                     Refresh(BuildRevealStatus(revealResult, progressionResult));
                 }
             }
             catch (Exception ex)
             {
+                Debug.LogError($"BattlePageController: cell interaction failed cell={cellIndex} flag={isFlagAction} error={ex}", RootObject);
                 Refresh("棋盘操作失败：" + ex.Message);
             }
             finally

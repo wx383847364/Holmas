@@ -8,11 +8,13 @@ using UnityEngine.UI;
 namespace App.HotUpdate.Holmas.UI.Screens.Battle
 {
     [RequireComponent(typeof(Image))]
+    [RequireComponent(typeof(Button))]
     public sealed class BattleCellView : MonoBehaviour, IPointerClickHandler
     {
         private BoardCellState _state;
         private Action<int, bool> _onInteract;
         private Image _background;
+        private Button _button;
         private TextMeshProUGUI _label;
 
         private void Awake()
@@ -22,6 +24,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             {
                 _background = gameObject.AddComponent<Image>();
             }
+
+            _button = GetComponent<Button>();
+            if (_button == null)
+            {
+                _button = gameObject.AddComponent<Button>();
+            }
+
+            _button.transition = Selectable.Transition.None;
+            _button.targetGraphic = _background;
+            _button.onClick.RemoveListener(HandlePrimaryClick);
+            _button.onClick.AddListener(HandlePrimaryClick);
 
             GameObject labelObject = transform.Find("Label") != null
                 ? transform.Find("Label").gameObject
@@ -52,6 +65,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         {
             _state = state;
             _onInteract = onInteract;
+            gameObject.name = $"Cell_{state.CellIndex}";
             Refresh();
         }
 
@@ -59,16 +73,25 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         {
             if (!_state.IsValid)
             {
+                Debug.Log($"BattleCellView: ignored pointer click on invalid cell object={name}", this);
                 return;
             }
 
             bool isFlagAction = eventData != null && eventData.button == PointerEventData.InputButton.Right;
-            _onInteract?.Invoke(_state.CellIndex, isFlagAction);
+            if (!isFlagAction)
+            {
+                return;
+            }
+
+            Debug.Log(
+                $"BattleCellView: right click cell={_state.CellIndex} revealed={_state.IsRevealed} flagged={_state.IsFlagged} hasCallback={_onInteract != null}",
+                this);
+            _onInteract?.Invoke(_state.CellIndex, true);
         }
 
         private void Refresh()
         {
-            if (_background == null || _label == null)
+            if (_background == null || _label == null || _button == null)
             {
                 return;
             }
@@ -78,10 +101,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 _background.color = new Color(0.18f, 0.18f, 0.2f, 0.45f);
                 _label.text = string.Empty;
                 _background.raycastTarget = false;
+                _button.interactable = false;
                 return;
             }
 
             _background.raycastTarget = true;
+            _button.interactable = true;
 
             if (_state.IsFlagged && !_state.IsRevealed)
             {
@@ -126,6 +151,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 case 8: return Color.gray;
                 default: return new Color(0.24f, 0.24f, 0.24f);
             }
+        }
+
+        private void HandlePrimaryClick()
+        {
+            if (!_state.IsValid)
+            {
+                Debug.Log($"BattleCellView: ignored primary click on invalid cell object={name}", this);
+                return;
+            }
+
+            Debug.Log(
+                $"BattleCellView: left click cell={_state.CellIndex} revealed={_state.IsRevealed} flagged={_state.IsFlagged} hasCallback={_onInteract != null}",
+                this);
+            _onInteract?.Invoke(_state.CellIndex, false);
         }
     }
 }

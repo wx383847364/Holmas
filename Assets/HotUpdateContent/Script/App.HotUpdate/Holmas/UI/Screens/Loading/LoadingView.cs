@@ -1,10 +1,15 @@
 using App.HotUpdate.Holmas.UI.Binding;
+using App.HotUpdate.Holmas.UI.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Loading
 {
+    /// <summary>
+    /// LoadingPage / LoadingOverlay 共用的视图层。
+    /// 它只负责展示状态文字和进度条，不负责真正的异步任务编排。
+    /// </summary>
     public sealed class LoadingView : MonoBehaviour
     {
         private LoadingBindings _bindings;
@@ -13,6 +18,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 
         private void Update()
         {
+            // 当前 loading 动画只是视觉上的 ping-pong，不代表真实加载进度。
             if (!_animate || _bindings?.LoadingBar == null)
             {
                 return;
@@ -24,6 +30,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 
         public void EnsureBindingSurface()
         {
+            // 和 MainView 一样，这里会在 prefab 不完整时自动补齐运行时绑定节点。
             gameObject.name = LoadingBindings.RootNodePath;
 
             UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>();
@@ -62,8 +69,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
                 return;
             }
 
+            // 文字和进度条都完全来自 LoadingVm。
             if (_bindings?.StatusText != null)
             {
+                RuntimeTmpFontResolver.EnsureFontSupportsText(_bindings.StatusText, viewModel.Status);
                 _bindings.StatusText.text = viewModel.Status ?? string.Empty;
             }
 
@@ -103,6 +112,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 
         private Slider ResolveSlider(Transform overlay)
         {
+            // 如果 prefab 已经有正式 Slider，就复用；没有再用代码补一个最小可用版本。
             Slider existing = FindDescendantComponent<Slider>("LoadingBar") ?? FindFirstDescendantByName<Slider>("LoadingBar");
             if (existing != null)
             {
@@ -185,6 +195,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
             text.fontSize = 32f;
             text.color = Color.white;
             text.raycastTarget = false;
+            RuntimeTmpFontResolver.EnsureFontSupportsText(text);
             return text;
         }
 

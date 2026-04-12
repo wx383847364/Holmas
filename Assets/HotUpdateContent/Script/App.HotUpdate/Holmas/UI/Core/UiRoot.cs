@@ -56,6 +56,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         public void Initialize(HolmasApplicationContext context, IHolmasLevelLaunchGateway levelLaunchGateway)
         {
+            // UiRoot 只做一次真实搭建；之后再次初始化只更新上下文引用，不重复造层级。
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _levelLaunchGateway = levelLaunchGateway ?? throw new ArgumentNullException(nameof(levelLaunchGateway));
             ConfigureSafeAreaRuntime();
@@ -86,6 +87,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private void BuildRoot()
         {
+            // UiRoot 自己就是最外层 Canvas。下面再拆 page / popup / overlay 等固定层级。
             Canvas canvas = gameObject.GetComponent<Canvas>();
             if (canvas == null)
             {
@@ -118,6 +120,8 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
 
             Stretch(rootRect);
+            // UnsafeBackgroundLayer 用来放不受安全区约束的全屏背景；
+            // 其余 page / sheet / overlay 默认挂在安全区内部。
             _unsafeBackgroundLayer = CreateLayer("UnsafeBackgroundLayer", rootRect);
             _safeAreaRoot = CreateLayer("SafeAreaRoot", rootRect);
             if (_safeAreaRoot.gameObject.GetComponent<UiSafeAreaFitter>() == null)
@@ -142,6 +146,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private void CreateScreenService()
         {
+            // ScreenService 是“界面定义注册 + 运行时实例缓存 + 导航状态”的统一入口。
             var navigationState = new UiNavigationState();
             var prefabLoader = new UiAssetsPrefabLoader(_context != null ? _context.AssetsRuntime : null);
             _screenService = new UiScreenService(this, prefabLoader, navigationState);
@@ -162,6 +167,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private void RegisterDefaultScreens()
         {
+            // 真正有哪些 page / popup / overlay 可打开，由 catalog 统一注册。
             HolmasUiScreenCatalog.RegisterAll(_screenService);
         }
 
@@ -169,6 +175,7 @@ namespace App.HotUpdate.Holmas.UI.Core
         {
             try
             {
+                // 先预热声明为 PreloadOnBootstrap 的界面，再进入正式启动流程。
                 foreach (UiScreenDefinition definition in _screenService.Definitions)
                 {
                     if (definition != null && definition.PreloadOnBootstrap)
@@ -198,6 +205,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private void ConfigureSafeAreaRuntime()
         {
+            // 安全区信息来自 AOT 的平台桥接；UI Core 本身不直接依赖具体平台实现。
             IWeChatBridge weChatBridge = _context?.ServiceContainer != null
                 ? _context.ServiceContainer.Get<IWeChatBridge>()
                 : null;
@@ -206,6 +214,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private RectTransform CreateLayer(string name, Transform parent)
         {
+            // 每层都是一个全屏 RectTransform，具体布局交给各自页面 prefab / view 处理。
             var layerObject = new GameObject(name);
             layerObject.transform.SetParent(parent, false);
             RectTransform rectTransform = layerObject.AddComponent<RectTransform>();
@@ -229,6 +238,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         public void ConfigurePopupBackdrop(bool isVisible, bool clickOutsideToClose, Action onClick)
         {
+            // Popup 背板是否响应点击关闭，由具体 popup 定义决定。
             _popupBackdropClickAction = clickOutsideToClose ? onClick : null;
             if (_popupBackdropButton != null)
             {

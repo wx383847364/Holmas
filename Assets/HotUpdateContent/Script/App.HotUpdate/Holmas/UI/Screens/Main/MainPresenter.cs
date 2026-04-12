@@ -5,6 +5,10 @@ using App.HotUpdate.Holmas.Tasks.Runtime;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Main
 {
+    /// <summary>
+    /// MainPage 的展示数据组装器。
+    /// 它只把业务运行时状态翻译成 UI 可直接消费的文案和按钮状态。
+    /// </summary>
     public sealed class MainPresenter
     {
         private readonly HolmasApplicationContext _context;
@@ -18,6 +22,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         {
             bool hasRuntime = _context != null && _context.GameplayRuntime != null;
             string promotionId = GetPrimaryPromotionId();
+            // MainVm 是纯展示数据，不直接暴露底层运行时对象给 View。
             return new MainVm
             {
                 LevelLabel = $"Lv {_context?.CurrentPlayerLevel ?? 1}",
@@ -36,6 +41,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         public string GetPrimaryPromotionId()
         {
+            // 主界面只挑一个“当前最值得升级”的宣传项给主按钮展示。
             if (_context == null || _context.GameplayRuntime == null)
             {
                 return string.Empty;
@@ -77,6 +83,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return "当前玩法运行时不可用。";
             }
 
+            // Summary 文案分两段：
+            // 上半段看任务栏状态，下半段看当前是否已经进入棋盘。
             string taskSummary;
             if (_context.GameplayRuntime.TaskBarState == null ||
                 _context.GameplayRuntime.TaskBarState.Tasks == null ||

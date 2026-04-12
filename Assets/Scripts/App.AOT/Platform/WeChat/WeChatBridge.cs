@@ -5,7 +5,8 @@ using UnityEngine;
 namespace App.AOT.Platform.WeChat
 {
     /// <summary>
-    /// 微信平台桥接：JSBridge封装（登录、广告、支付唤起、网络状态）
+    /// 微信平台桥接：JSBridge 封装（登录、广告、支付唤起、网络状态）。
+    /// 当前项目里“窗口尺寸 / 安全区”这条链也经由这里向 UI 层提供。
     /// </summary>
     public class WeChatBridge : IWeChatBridge
     {
@@ -42,6 +43,7 @@ namespace App.AOT.Platform.WeChat
 
         public bool TryGetWindowInfo(out WeChatWindowInfo windowInfo)
         {
+            // 目前真实微信 JSBridge 尚未接入，所以这里先走 Screen.safeArea 的 fallback 路径。
             RefreshWindowInfo();
             if (_windowInfo == null || !_windowInfo.IsAvailable)
             {
@@ -97,6 +99,8 @@ namespace App.AOT.Platform.WeChat
 
         private void RefreshWindowInfo()
         {
+            // 先把 Unity Screen.safeArea 转成项目内部统一的 WeChatWindowInfo 结构，
+            // 后续接真实 JSBridge 时，这层接口可以保持不变。
             Rect safeArea = Screen.safeArea;
             int screenWidth = Mathf.Max(Screen.width, 1);
             int screenHeight = Mathf.Max(Screen.height, 1);
@@ -107,6 +111,12 @@ namespace App.AOT.Platform.WeChat
             int safeHeight = Mathf.RoundToInt(safeArea.height);
             int right = Mathf.Max(0, screenWidth - left - safeWidth);
             int top = Mathf.Max(0, screenHeight - bottom - safeHeight);
+
+            // 只有窗口信息真的变化时才刷新并打印日志，避免 UI 轮询把 Console 刷爆。
+            if (!HasWindowInfoChanged(screenWidth, screenHeight, left, right, top, bottom, safeWidth, safeHeight))
+            {
+                return;
+            }
 
             _windowInfo = new WeChatWindowInfo
             {
@@ -141,6 +151,32 @@ namespace App.AOT.Platform.WeChat
                 bottom,
                 left,
                 right);
+        }
+
+        private bool HasWindowInfoChanged(int screenWidth, int screenHeight, int left, int right, int top, int bottom, int safeWidth, int safeHeight)
+        {
+            // 这里只比较 UI 真正关心的字段：屏幕尺寸和安全区边距。
+            if (_windowInfo == null)
+            {
+                return true;
+            }
+
+            UiSafeAreaInfo safeArea = _windowInfo.SafeArea;
+            if (safeArea == null)
+            {
+                return true;
+            }
+
+            return _windowInfo.ScreenWidth != screenWidth ||
+                   _windowInfo.ScreenHeight != screenHeight ||
+                   _windowInfo.WindowWidth != screenWidth ||
+                   _windowInfo.WindowHeight != screenHeight ||
+                   safeArea.Left != left ||
+                   safeArea.Right != right ||
+                   safeArea.Top != top ||
+                   safeArea.Bottom != bottom ||
+                   safeArea.Width != safeWidth ||
+                   safeArea.Height != safeHeight;
         }
     }
 
