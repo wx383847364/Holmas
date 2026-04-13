@@ -48,9 +48,9 @@ namespace App.HotUpdate.Holmas.PlayerData
             archive.Revision = Math.Max(0L, source?.Revision ?? 0L);
             archive.SavedAtUtcMilliseconds = Math.Max(0L, source?.SavedAtUtcMilliseconds ?? 0L);
             archive.Progression = CloneProgression(source?.Progression);
-            archive.CurrentLevel = source != null && source.CurrentLevel != null && !source.CurrentLevel.Completed
-                ? CloneLevelSnapshot(source.CurrentLevel)
-                : null;
+            // Task bar 已经被判定为损坏并整体重建时，旧棋盘失去与任务上下文的稳定对应关系，
+            // 这里一并清理 currentLevel，避免恢复旧局后又生成一套新的任务栏。
+            archive.CurrentLevel = null;
             return archive;
         }
 

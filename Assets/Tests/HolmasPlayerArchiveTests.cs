@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.PlayerData;
@@ -11,6 +13,7 @@ using App.Shared.Contracts;
 using App.Shared.Holmas.PlayerData;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
+using UnityEngine;
 using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
 namespace Holmas.Tests
@@ -264,7 +267,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasPlayerArchiveMapper_CreateArchiveWithResetTaskBar_PreservesProgressionAndCurrentLevel()
+        public void HolmasPlayerArchiveMapper_CreateArchiveWithResetTaskBar_PreservesProgressionAndClearsCurrentLevel()
         {
             var mapper = new HolmasPlayerArchiveMapper();
             HolmasPlayerArchiveRoot archive = mapper.CreateDefaultArchive();
@@ -307,12 +310,63 @@ namespace Holmas.Tests
             Assert.That(recovered.Progression.PlayerLevel, Is.EqualTo(3));
             Assert.That(recovered.Progression.AgencyStageId, Is.EqualTo(2));
             Assert.That(recovered.Progression.GoldBalance, Is.EqualTo(88));
-            Assert.That(recovered.CurrentLevel, Is.Not.Null);
-            Assert.That(recovered.CurrentLevel.MapId, Is.EqualTo("map-keep"));
-            Assert.That(recovered.CurrentLevel.RevealedCells, Is.EqualTo(new[] { true, false, true }));
+            Assert.That(recovered.CurrentLevel, Is.Null);
             Assert.That(recovered.TaskBar.Tasks, Is.Empty);
             Assert.That(recovered.TaskBar.Slots[0].TaskInstanceId, Is.Empty);
             Assert.That(recovered.TaskBar.Slots[0].IsUnlocked, Is.True);
+        }
+
+        [Test]
+        public void HolmasFlowCoordinator_PrepareStartupHomeStatus_DoesNotRefillTasksWhenLevelIsActive()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 2);
+            var assetsRuntime = new ArchiveFakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            LevelGenerationRequest request = HolmasTestSupport.CreateRequest(
+                "map-startup",
+                TerrainAssetPathUtility.BuildAssetPath("startup"),
+                13,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            runtime.StartLevelAsync(request).GetAwaiter().GetResult();
+            Assert.That(runtime.HasActiveUncompletedLevel, Is.True);
+            Assert.That(runtime.TaskBarState.Tasks, Is.Empty);
+
+            var context = new HolmasApplicationContext(null, new NullLogger(), null, null, assetsRuntime, runtime);
+            var rootObject = new GameObject("UiRootStartupRecoveryTest");
+            try
+            {
+                var uiRoot = rootObject.AddComponent<UiRoot>();
+                typeof(UiRoot)
+                    .GetField("_context", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.SetValue(uiRoot, context);
+                var flowCoordinator = new HolmasFlowCoordinator(uiRoot, new TestBattleWorldHost());
+                MethodInfo method = typeof(HolmasFlowCoordinator).GetMethod(
+                    "PrepareStartupHomeStatus",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+
+                Assert.That(method, Is.Not.Null);
+                string status = method.Invoke(flowCoordinator, null) as string;
+
+                Assert.That(runtime.TaskBarState.Tasks, Is.Empty);
+                StringAssert.Contains("已恢复未完成棋盘", status);
+            }
+            finally
+            {
+                Object.DestroyImmediate(rootObject);
+            }
         }
 
         [Test]
@@ -467,6 +521,26 @@ namespace Holmas.Tests
             }
 
             public UnityEngine.Object AssetObject { get; }
+
+            public void Release()
+            {
+            }
+        }
+
+        private sealed class TestBattleWorldHost : IBattleWorldHost
+        {
+            public Task PrepareAsync(LevelSnapshot snapshot)
+            {
+                return Task.CompletedTask;
+            }
+
+            public void Show()
+            {
+            }
+
+            public void Hide()
+            {
+            }
 
             public void Release()
             {

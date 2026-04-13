@@ -73,6 +73,17 @@ namespace App.HotUpdate.Holmas.UI.Core
 
             context.GameplayRuntime.RefreshExpiredAdSlots();
 
+            if (context.GameplayRuntime.HasActiveUncompletedLevel)
+            {
+                int resumedTaskCount = context.GameplayRuntime.TaskBarState != null &&
+                                       context.GameplayRuntime.TaskBarState.Tasks != null
+                    ? context.GameplayRuntime.TaskBarState.Tasks.Count
+                    : 0;
+                return resumedTaskCount > 0
+                    ? $"侦探社已就绪。已恢复未完成棋盘，任务栏 {resumedTaskCount} 条已准备。"
+                    : "侦探社已就绪。已恢复未完成棋盘。";
+            }
+
             int activeTaskCount = context.GameplayRuntime.TaskBarState != null &&
                                   context.GameplayRuntime.TaskBarState.Tasks != null
                 ? context.GameplayRuntime.TaskBarState.Tasks.Count
@@ -97,13 +108,6 @@ namespace App.HotUpdate.Holmas.UI.Core
                 "HolmasFlowCoordinator: 启动阶段完成任务栏整理，新增 {0} 条任务，当前活跃 {1} 条。",
                 generatedTaskCount,
                 activeTaskCount);
-
-            if (context.GameplayRuntime.HasActiveUncompletedLevel)
-            {
-                return activeTaskCount > 0
-                    ? $"侦探社已就绪。已恢复未完成棋盘，任务栏 {activeTaskCount} 条已准备。"
-                    : "侦探社已就绪。已恢复未完成棋盘。";
-            }
 
             return activeTaskCount > 0
                 ? $"侦探社已就绪。任务栏 {activeTaskCount} 条已准备。"
