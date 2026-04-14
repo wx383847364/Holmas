@@ -8,7 +8,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
     public sealed class LoadingBindings
     {
         public const string RootPanelKey = "loading/root_panel";
-        public const string LoadingBarKey = "loading/loading_bar";
+        public const string LoadingBarKey = "loading/bar";
         public const string StatusTextKey = "loading/status_text";
 
         public const string RootNodePath = "LoadingPanel";
@@ -21,7 +21,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
         public Slider LoadingBar;
         public TextMeshProUGUI StatusText;
 
-        public bool HasRequiredBindings => RootPanel != null && LoadingBar != null && StatusText != null;
+        public bool HasRequiredBindings =>
+            RootPanel != null &&
+            LoadingBar != null &&
+            StatusText != null;
 
         public static LoadingBindings Resolve(UiBindingResolver resolver)
         {

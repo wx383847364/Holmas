@@ -18,7 +18,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             {
                 CachePolicy = UiCachePolicy.KeepInstance,
                 BlockInputDuringTransition = true,
-                PreloadOnBootstrap = false,
+                PreloadOnBootstrap = true,
                 BindingManifest = descriptor.BindingManifest,
             };
         }

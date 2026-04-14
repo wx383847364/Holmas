@@ -1,6 +1,9 @@
+using System;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.UI.Core;
+using App.HotUpdate.Holmas.UI.Screens.Battle;
+using App.HotUpdate.Holmas.UI.Screens.Loading;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Main
 {
@@ -68,23 +71,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return;
             }
 
-            if (context.GameplayRuntime == null)
-            {
-                Refresh("玩法运行时不可用，无法升级宣传。");
-                return;
-            }
-
-            try
-            {
-                var result = context.TryUpgradePromotion(promotionId);
-                Refresh(result != null && result.Success
-                    ? $"宣传 {promotionId} 升到 Lv {result.NewLevel}，金币 -{result.GoldSpent}。"
-                    : $"宣传升级失败：{result?.FailureReason ?? "未知错误"}");
-            }
-            catch (System.Exception ex)
-            {
-                Refresh("宣传升级失败：" + ex.Message);
-            }
+            var result = context.TryUpgradePromotion(promotionId);
+            Refresh(result != null && result.Success
+                ? $"宣传 {promotionId} 升到 Lv {result.NewLevel}，金币 -{result.GoldSpent}。"
+                : $"宣传升级失败：{result?.FailureReason ?? "未知错误"}");
         }
 
         private async Task HandleStartAsync()
@@ -94,34 +84,36 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return;
             }
 
-            HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
-            if (flowCoordinator == null)
+            IHolmasLevelLaunchGateway gateway = Root != null ? Root.LevelLaunchGateway : null;
+            if (gateway == null)
             {
-                Refresh("界面流转协调器不可用。");
+                Refresh("关卡启动网关不可用。");
                 return;
             }
 
             _isBusy = true;
             Refresh("正在准备本局棋盘...");
-            string finalStatus = null;
 
             try
             {
-                await flowCoordinator.StartBattleAsync();
+                await ScreenService.ShowOverlayAsync(LoadingScreenRegistration.ScreenId, "正在准备棋盘...");
+                int seed = Environment.TickCount;
+                await gateway.StartLevelForCurrentPlayerAsync(seed);
+                await ScreenService.OpenPageAsync(BattleScreenRegistration.ScreenId, $"关卡已启动，seed={seed}");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                finalStatus = "进入棋盘失败：" + ex.Message;
-                Refresh(finalStatus);
+                Refresh($"进入棋盘失败：{ex.Message}");
             }
             finally
             {
+                await ScreenService.CloseAsync(LoadingScreenRegistration.ScreenId);
                 _isBusy = false;
 
                 if (ScreenService != null &&
                     ReferenceEquals(ScreenService.NavigationState.CurrentPage, this))
                 {
-                    Refresh(finalStatus ?? "主界面已就绪。");
+                    Refresh("主界面已就绪。");
                 }
             }
         }

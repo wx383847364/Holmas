@@ -1,5 +1,4 @@
 using App.HotUpdate.Holmas.UI.Binding;
-using App.HotUpdate.Holmas.UI.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,10 +6,6 @@ using UnityEngine.UI;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Main
 {
-    /// <summary>
-    /// MainPage 的 Unity 视图层。
-    /// 负责搭建/补齐节点、绑定按钮事件、把 MainVm 渲染到屏幕上。
-    /// </summary>
     public sealed class MainView : MonoBehaviour
     {
         private MainBindings _bindings;
@@ -19,7 +14,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         public void EnsureBindingSurface()
         {
-            // 这一步的目标是“无论 prefab 完整与否，都补齐运行时绑定面”。
             gameObject.name = MainBindings.RootNodePath;
 
             UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>();
@@ -36,13 +30,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             Stretch(rootRect);
             EnsureFallbackBackground();
-            // MainPanel 根节点是全屏的，但真正视觉内容通常挂在 BackgroundImage 下。
-            // 这里把它拉成全屏内容宿主，避免主界面只剩中间一小块。
-            RectTransform contentRoot = ResolveContentRoot(rootRect);
             collector.RegisterOrReplace(MainBindings.RootPanelKey, rootRect, nodePath: MainBindings.RootNodePath);
 
-            // 运行时补的文案和按钮统一挂在 RuntimeOverlay 下，尽量不破坏 prefab 原有层级。
-            RectTransform overlay = GetOrCreateOverlayRoot(contentRoot);
+            RectTransform overlay = GetOrCreateOverlayRoot();
             TextMeshProUGUI levelText = ResolveLevelText(overlay);
             TextMeshProUGUI goldText = ResolveGoldText(overlay);
             TextMeshProUGUI summaryText = GetOrCreateRuntimeText(
@@ -81,8 +71,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             collector.RegisterOrReplace(MainBindings.GoldTextKey, goldText, nodePath: MainBindings.GoldTextNodePath);
             collector.RegisterOrReplace(MainBindings.SummaryTextKey, summaryText, nodePath: MainBindings.SummaryTextNodePath);
             collector.RegisterOrReplace(MainBindings.StatusTextKey, statusText, nodePath: MainBindings.StatusTextNodePath);
-            collector.RegisterOrReplace(MainBindings.StartButtonKey, startButton, MainBindings.ButtonClickEvent, MainBindings.StartButtonNodePath);
-            collector.RegisterOrReplace(MainBindings.PromotionButtonKey, promotionButton, MainBindings.ButtonClickEvent, MainBindings.PromotionButtonNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.StartButtonKey,
+                startButton,
+                MainBindings.ButtonClickEvent,
+                MainBindings.StartButtonNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.PromotionButtonKey,
+                promotionButton,
+                MainBindings.ButtonClickEvent,
+                MainBindings.PromotionButtonNodePath);
         }
 
         public void Bind(MainBindings bindings)
@@ -137,7 +135,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return;
             }
 
-            // View 只做“把 ViewModel 写进控件”，不在这里生成业务状态。
             if (_bindings?.LevelText != null)
             {
                 _bindings.LevelText.text = viewModel.LevelLabel ?? string.Empty;
@@ -150,13 +147,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             if (_bindings?.SummaryText != null)
             {
-                RuntimeTmpFontResolver.EnsureFontSupportsText(_bindings.SummaryText, viewModel.Summary);
                 _bindings.SummaryText.text = viewModel.Summary ?? string.Empty;
             }
 
             if (_bindings?.StatusText != null)
             {
-                RuntimeTmpFontResolver.EnsureFontSupportsText(_bindings.StatusText, viewModel.Status);
                 _bindings.StatusText.text = viewModel.Status ?? string.Empty;
             }
 
@@ -189,30 +184,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             background.color = new Color(0.12f, 0.17f, 0.22f, 0.95f);
         }
 
-        private RectTransform ResolveContentRoot(RectTransform rootRect)
-        {
-            RectTransform contentRoot = transform.Find("BackgroundImage") as RectTransform;
-            if (contentRoot == null)
-            {
-                return rootRect;
-            }
-
-            // 老 prefab 里 BackgroundImage 是固定尺寸面板；这里把它修正成真正的全屏内容根。
-            Stretch(contentRoot);
-            Image background = contentRoot.GetComponent<Image>();
-            if (background != null)
-            {
-                background.preserveAspect = false;
-            }
-
-            return contentRoot;
-        }
-
-        private RectTransform GetOrCreateOverlayRoot(RectTransform parent)
+        private RectTransform GetOrCreateOverlayRoot()
         {
             Transform existing = transform.Find(MainBindings.RuntimeOverlayNodeName);
             GameObject overlayObject = existing != null ? existing.gameObject : new GameObject(MainBindings.RuntimeOverlayNodeName, typeof(RectTransform));
-            overlayObject.transform.SetParent(parent, false);
+            overlayObject.transform.SetParent(transform, false);
 
             RectTransform overlayRect = overlayObject.GetComponent<RectTransform>();
             Stretch(overlayRect);
@@ -244,7 +220,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private TextMeshProUGUI ResolveGoldText(Transform overlay)
         {
-            TextMeshProUGUI existing = FindDescendantComponent<TextMeshProUGUI>("BackgroundImage/Money_btn/Text (TMP)");
+            TextMeshProUGUI existing = FindDescendantComponent<TextMeshProUGUI>("BackgroundImage/Money_btn/Text (TMP)")
+                ?? FindFirstDescendantByName<TextMeshProUGUI>("MoneyCount")
+                ?? FindFirstDescendantByName<TextMeshProUGUI>("Text (TMP)");
             if (existing != null)
             {
                 existing.raycastTarget = false;
@@ -280,8 +258,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new Vector2(1f, 0f),
                 new Vector2(1f, 0f),
                 new Vector2(-60f, 96f),
-                new Vector2(280f, 96f),
-                new Color(0.27f, 0.58f, 0.82f, 0.96f));
+                new Vector2(240f, 96f),
+                new Color(0.28f, 0.63f, 0.89f, 0.96f));
         }
 
         private TextMeshProUGUI GetOrCreateRuntimeText(
@@ -315,15 +293,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             text.alignment = alignment;
             text.enableWordWrapping = true;
             text.raycastTarget = false;
-            // 运行时创建的 TMP 文本默认会走项目默认字体，这里补中文字体兜底。
-            RuntimeTmpFontResolver.EnsureFontSupportsText(text);
             return text;
         }
 
         private Button GetOrCreateRuntimeButton(
             Transform parent,
             string objectName,
-            string labelText,
+            string label,
             Vector2 anchorMin,
             Vector2 anchorMax,
             Vector2 pivot,
@@ -354,9 +330,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 button = buttonObject.AddComponent<Button>();
             }
 
-            TextMeshProUGUI label = GetOrCreateRuntimeText(
+            TextMeshProUGUI labelText = GetOrCreateRuntimeText(
                 buttonObject.transform,
-                "Label",
+                objectName + "_Label",
                 Vector2.zero,
                 Vector2.one,
                 new Vector2(0.5f, 0.5f),
@@ -364,22 +340,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 Vector2.zero,
                 34f,
                 TextAlignmentOptions.Center);
-            label.text = labelText;
+            labelText.text = label;
             return button;
         }
 
-        private static void SetButtonLabel(Button button, string labelText)
+        private void SetButtonLabel(Button button, string label)
         {
             if (button == null)
             {
                 return;
             }
 
-            TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (label != null)
+            TextMeshProUGUI tmp = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (tmp != null)
             {
-                RuntimeTmpFontResolver.EnsureFontSupportsText(label, labelText);
-                label.text = string.IsNullOrWhiteSpace(labelText) ? string.Empty : labelText;
+                tmp.text = string.IsNullOrWhiteSpace(label) ? button.name : label;
+                return;
+            }
+
+            Text legacyText = button.GetComponentInChildren<Text>(true);
+            if (legacyText != null)
+            {
+                legacyText.text = string.IsNullOrWhiteSpace(label) ? button.name : label;
             }
         }
 

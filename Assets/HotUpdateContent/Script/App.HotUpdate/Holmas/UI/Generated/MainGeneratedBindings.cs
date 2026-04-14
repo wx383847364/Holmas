@@ -22,10 +22,22 @@ namespace App.HotUpdate.Holmas.UI.Generated
             manifest.AddEntry(MainBindings.RootPanelKey, "RectTransform", MainBindings.RootNodePath, notes: "main_root");
             manifest.AddEntry(MainBindings.LevelTextKey, "TextMeshProUGUI", MainBindings.LevelTextNodePath, notes: "main_level");
             manifest.AddEntry(MainBindings.GoldTextKey, "TextMeshProUGUI", MainBindings.GoldTextNodePath, notes: "main_gold");
-            manifest.AddEntry(MainBindings.SummaryTextKey, "TextMeshProUGUI", MainBindings.SummaryTextNodePath, notes: "main_summary");
-            manifest.AddEntry(MainBindings.StatusTextKey, "TextMeshProUGUI", MainBindings.StatusTextNodePath, notes: "main_status");
-            manifest.AddEntry(MainBindings.StartButtonKey, "Button", MainBindings.StartButtonNodePath, MainBindings.ButtonClickEvent, requiresManualWiring: true, notes: "controller_wires_start");
-            manifest.AddEntry(MainBindings.PromotionButtonKey, "Button", MainBindings.PromotionButtonNodePath, MainBindings.ButtonClickEvent, requiresManualWiring: true, notes: "controller_wires_promotion");
+            manifest.AddEntry(MainBindings.SummaryTextKey, "TextMeshProUGUI", MainBindings.SummaryTextNodePath, notes: "runtime_summary");
+            manifest.AddEntry(MainBindings.StatusTextKey, "TextMeshProUGUI", MainBindings.StatusTextNodePath, notes: "runtime_status");
+            manifest.AddEntry(
+                MainBindings.StartButtonKey,
+                "Button",
+                MainBindings.StartButtonNodePath,
+                MainBindings.ButtonClickEvent,
+                requiresManualWiring: true,
+                notes: "controller_wires_start");
+            manifest.AddEntry(
+                MainBindings.PromotionButtonKey,
+                "Button",
+                MainBindings.PromotionButtonNodePath,
+                MainBindings.ButtonClickEvent,
+                requiresManualWiring: true,
+                notes: "controller_wires_promotion");
             return manifest;
         }
     }

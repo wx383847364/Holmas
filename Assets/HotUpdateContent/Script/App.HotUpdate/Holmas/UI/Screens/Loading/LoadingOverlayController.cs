@@ -26,7 +26,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 
         protected override void OnOpen(object payload)
         {
-            LoadingVm viewModel = payload as LoadingVm ?? new LoadingVm
+            var viewModel = payload as LoadingVm ?? new LoadingVm
             {
                 Status = payload as string ?? "Loading..."
             };

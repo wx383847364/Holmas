@@ -5,30 +5,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 {
     public static class LoadingScreenRegistration
     {
-        public const string StartupPageScreenId = "loading.startup.page";
-        public const string TransitionOverlayScreenId = "loading.transition.overlay";
+        public const string ScreenId = "loading.overlay";
 
-        public static UiScreenDefinition CreateStartupPageDefinition()
+        public static UiScreenDefinition CreateDefinition()
         {
             UiRuntimeScreenDescriptor descriptor = LoadingGeneratedBindings.Descriptor;
             return new UiScreenDefinition(
-                StartupPageScreenId,
-                descriptor.PrefabAssetPath,
-                UiScreenKind.Page,
-                typeof(LoadingPageController))
-            {
-                CachePolicy = UiCachePolicy.DestroyOnClose,
-                BlockInputDuringTransition = true,
-                PreloadOnBootstrap = true,
-                BindingManifest = descriptor.BindingManifest,
-            };
-        }
-
-        public static UiScreenDefinition CreateTransitionOverlayDefinition()
-        {
-            UiRuntimeScreenDescriptor descriptor = LoadingGeneratedBindings.Descriptor;
-            return new UiScreenDefinition(
-                TransitionOverlayScreenId,
+                ScreenId,
                 descriptor.PrefabAssetPath,
                 UiScreenKind.Overlay,
                 typeof(LoadingOverlayController))
