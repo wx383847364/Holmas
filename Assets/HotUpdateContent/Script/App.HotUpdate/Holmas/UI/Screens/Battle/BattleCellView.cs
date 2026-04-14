@@ -1,5 +1,6 @@
 using System;
 using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -76,7 +77,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             if (!_state.IsValid)
             {
                 _background.color = new Color(0.18f, 0.18f, 0.2f, 0.45f);
-                _label.text = string.Empty;
+                TmpGlyphCoverageReporter.SetText(_label, string.Empty);
                 _background.raycastTarget = false;
                 return;
             }
@@ -86,7 +87,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             if (_state.IsFlagged && !_state.IsRevealed)
             {
                 _background.color = new Color(0.86f, 0.35f, 0.35f, 0.95f);
-                _label.text = "F";
+                TmpGlyphCoverageReporter.SetText(_label, "F");
                 _label.color = Color.white;
                 return;
             }
@@ -95,20 +96,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             {
                 Color32 blockColor = _state.BlockColor;
                 _background.color = new Color(blockColor.r / 255f, blockColor.g / 255f, blockColor.b / 255f, 1f);
-                _label.text = string.Empty;
+                TmpGlyphCoverageReporter.SetText(_label, string.Empty);
                 return;
             }
 
             if (_state.HasCat)
             {
                 _background.color = new Color(0.97f, 0.62f, 0.24f, 1f);
-                _label.text = "猫";
+                TmpGlyphCoverageReporter.SetText(_label, "猫");
                 _label.color = Color.white;
                 return;
             }
 
             _background.color = new Color(0.95f, 0.95f, 0.97f, 1f);
-            _label.text = _state.AdjacentCatCount > 0 ? _state.AdjacentCatCount.ToString() : string.Empty;
+            TmpGlyphCoverageReporter.SetText(_label, _state.AdjacentCatCount > 0 ? _state.AdjacentCatCount.ToString() : string.Empty);
             _label.color = GetNumberColor(_state.AdjacentCatCount);
         }
 

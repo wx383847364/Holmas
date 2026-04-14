@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.UI.Binding;
+using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -113,22 +114,22 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             if (_bindings?.LevelText != null)
             {
-                _bindings.LevelText.text = viewModel.LevelLabel ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.LevelText, viewModel.LevelLabel);
             }
 
             if (_bindings?.GoldText != null)
             {
-                _bindings.GoldText.text = viewModel.GoldLabel ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.GoldText, viewModel.GoldLabel);
             }
 
             if (_bindings?.SummaryText != null)
             {
-                _bindings.SummaryText.text = viewModel.Summary ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.SummaryText, viewModel.Summary);
             }
 
             if (_bindings?.StatusText != null)
             {
-                _bindings.StatusText.text = viewModel.Status ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
             }
 
             RenderBoard(viewModel);
@@ -392,7 +393,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 Vector2.zero,
                 30f,
                 TextAlignmentOptions.Center);
-            labelText.text = label;
+            TmpGlyphCoverageReporter.SetText(labelText, label);
             return button;
         }
 

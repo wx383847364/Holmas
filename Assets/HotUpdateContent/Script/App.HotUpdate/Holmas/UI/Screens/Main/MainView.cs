@@ -1,4 +1,5 @@
 using App.HotUpdate.Holmas.UI.Binding;
+using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -137,22 +138,22 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             if (_bindings?.LevelText != null)
             {
-                _bindings.LevelText.text = viewModel.LevelLabel ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.LevelText, viewModel.LevelLabel);
             }
 
             if (_bindings?.GoldText != null)
             {
-                _bindings.GoldText.text = viewModel.GoldLabel ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.GoldText, viewModel.GoldLabel);
             }
 
             if (_bindings?.SummaryText != null)
             {
-                _bindings.SummaryText.text = viewModel.Summary ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.SummaryText, viewModel.Summary);
             }
 
             if (_bindings?.StatusText != null)
             {
-                _bindings.StatusText.text = viewModel.Status ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
             }
 
             if (_bindings?.StartButton != null)
@@ -340,7 +341,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 Vector2.zero,
                 34f,
                 TextAlignmentOptions.Center);
-            labelText.text = label;
+            TmpGlyphCoverageReporter.SetText(labelText, label);
             return button;
         }
 
@@ -354,7 +355,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             TextMeshProUGUI tmp = button.GetComponentInChildren<TextMeshProUGUI>(true);
             if (tmp != null)
             {
-                tmp.text = string.IsNullOrWhiteSpace(label) ? button.name : label;
+                TmpGlyphCoverageReporter.SetText(tmp, string.IsNullOrWhiteSpace(label) ? button.name : label);
                 return;
             }
 

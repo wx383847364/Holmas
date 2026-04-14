@@ -1,4 +1,5 @@
 using App.HotUpdate.Holmas.UI.Binding;
+using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -64,7 +65,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 
             if (_bindings?.StatusText != null)
             {
-                _bindings.StatusText.text = viewModel.Status ?? string.Empty;
+                TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
             }
 
             if (_bindings?.LoadingBar != null)
