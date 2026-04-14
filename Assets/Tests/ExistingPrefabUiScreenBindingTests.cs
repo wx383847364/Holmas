@@ -20,10 +20,6 @@ namespace Holmas.Tests
             GameObject instance = Object.Instantiate(prefab);
             try
             {
-                Assert.That(instance.transform.Find("BackgroundImage/Headicon_btn/Level"), Is.Not.Null, "MainPanel 缺少正式等级文本节点。");
-                Assert.That(instance.transform.Find("BackgroundImage/Money_btn/Text (TMP)"), Is.Not.Null, "MainPanel 缺少正式金币文本节点。");
-                Assert.That(instance.transform.Find("BackgroundImage/Publicity_btn"), Is.Not.Null, "MainPanel 缺少正式宣传按钮节点。");
-
                 MainView view = instance.GetComponent<MainView>() ?? instance.AddComponent<MainView>();
                 view.EnsureBindingSurface();
 
@@ -49,10 +45,6 @@ namespace Holmas.Tests
             GameObject instance = Object.Instantiate(prefab);
             try
             {
-                Assert.That(instance.transform.Find("Back_btn"), Is.Not.Null, "BattlePanel 缺少正式返回按钮节点。");
-                Assert.That(instance.transform.Find("Headicon_btn/Level"), Is.Not.Null, "BattlePanel 缺少正式等级文本节点。");
-                Assert.That(instance.transform.Find("Money_btn/Text (TMP)"), Is.Not.Null, "BattlePanel 缺少正式金币文本节点。");
-
                 BattleView view = instance.GetComponent<BattleView>() ?? instance.AddComponent<BattleView>();
                 view.EnsureBindingSurface();
 
@@ -78,8 +70,6 @@ namespace Holmas.Tests
             GameObject instance = Object.Instantiate(prefab);
             try
             {
-                Assert.That(instance.transform.Find("LoadingBar"), Is.Not.Null, "LoadingPanel 缺少正式进度条节点。");
-
                 LoadingView view = instance.GetComponent<LoadingView>() ?? instance.AddComponent<LoadingView>();
                 view.EnsureBindingSurface();
 

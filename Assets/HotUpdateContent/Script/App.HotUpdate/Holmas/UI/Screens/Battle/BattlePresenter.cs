@@ -25,7 +25,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                     : status,
                 Rows = board != null ? board.Rows : 0,
                 Cols = board != null ? board.Cols : 0,
-                Cells = board != null ? board.GetAllCellStates() : System.Array.Empty<BoardCellState>(),
+                Cells = board != null ? board.GetAllCellStates() : new BoardCellState[0],
             };
         }
 

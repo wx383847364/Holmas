@@ -20,7 +20,13 @@ namespace App.HotUpdate.Holmas.UI.Generated
         {
             var manifest = new UiBindingManifest(BattleScreenRegistration.ScreenId, PrefabName, PrefabAssetPath);
             manifest.AddEntry(BattleBindings.RootPanelKey, "RectTransform", BattleBindings.RootNodePath, notes: "battle_root");
-            manifest.AddEntry(BattleBindings.BackButtonKey, "Button", BattleBindings.BackButtonNodePath, BattleBindings.ButtonClickEvent, requiresManualWiring: true, notes: "controller_wires_back");
+            manifest.AddEntry(
+                BattleBindings.BackButtonKey,
+                "Button",
+                BattleBindings.BackButtonNodePath,
+                BattleBindings.ButtonClickEvent,
+                requiresManualWiring: true,
+                notes: "controller_wires_back");
             manifest.AddEntry(BattleBindings.LevelTextKey, "TextMeshProUGUI", BattleBindings.LevelTextNodePath, notes: "battle_level");
             manifest.AddEntry(BattleBindings.GoldTextKey, "TextMeshProUGUI", BattleBindings.GoldTextNodePath, notes: "battle_gold");
             manifest.AddEntry(BattleBindings.SummaryTextKey, "TextMeshProUGUI", BattleBindings.SummaryTextNodePath, notes: "battle_summary");

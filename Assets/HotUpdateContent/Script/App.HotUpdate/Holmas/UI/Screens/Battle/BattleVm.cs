@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.Board;
 
@@ -12,6 +11,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public string Status = string.Empty;
         public int Rows;
         public int Cols;
-        public IReadOnlyList<BoardCellState> Cells = Array.Empty<BoardCellState>();
+        public IReadOnlyList<BoardCellState> Cells = new BoardCellState[0];
     }
 }

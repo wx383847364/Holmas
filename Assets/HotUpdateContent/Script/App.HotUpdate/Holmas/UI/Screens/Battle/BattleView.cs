@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.UI.Binding;
-using App.HotUpdate.Holmas.UI.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,10 +9,6 @@ using UnityEngine.UI;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Battle
 {
-    /// <summary>
-    /// BattlePage 的 Unity 视图层。
-    /// 负责把 BattleVm 渲染成棋盘、顶部信息和返回按钮。
-    /// </summary>
     public sealed class BattleView : MonoBehaviour
     {
         private readonly List<BattleCellView> _cells = new List<BattleCellView>();
@@ -23,7 +18,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         public void EnsureBindingSurface()
         {
-            // BattlePage 同样允许 prefab 不完整，运行时动态补齐关键绑定节点。
             gameObject.name = BattleBindings.RootNodePath;
 
             UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>();
@@ -68,7 +62,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 TextAlignmentOptions.Center);
             RectTransform boardContainer = GetOrCreateBoardContainer(overlay);
 
-            collector.RegisterOrReplace(BattleBindings.BackButtonKey, backButton, BattleBindings.ButtonClickEvent, BattleBindings.BackButtonNodePath);
+            collector.RegisterOrReplace(
+                BattleBindings.BackButtonKey,
+                backButton,
+                BattleBindings.ButtonClickEvent,
+                BattleBindings.BackButtonNodePath);
             collector.RegisterOrReplace(BattleBindings.LevelTextKey, levelText, nodePath: BattleBindings.LevelTextNodePath);
             collector.RegisterOrReplace(BattleBindings.GoldTextKey, goldText, nodePath: BattleBindings.GoldTextNodePath);
             collector.RegisterOrReplace(BattleBindings.SummaryTextKey, summaryText, nodePath: BattleBindings.SummaryTextNodePath);
@@ -113,7 +111,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return;
             }
 
-            // 文案来自 BattleVm，棋盘格子在 RenderBoard 里按当前状态重绘。
             if (_bindings?.LevelText != null)
             {
                 _bindings.LevelText.text = viewModel.LevelLabel ?? string.Empty;
@@ -126,13 +123,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             if (_bindings?.SummaryText != null)
             {
-                RuntimeTmpFontResolver.EnsureFontSupportsText(_bindings.SummaryText, viewModel.Summary);
                 _bindings.SummaryText.text = viewModel.Summary ?? string.Empty;
             }
 
             if (_bindings?.StatusText != null)
             {
-                RuntimeTmpFontResolver.EnsureFontSupportsText(_bindings.StatusText, viewModel.Status);
                 _bindings.StatusText.text = viewModel.Status ?? string.Empty;
             }
 
@@ -153,7 +148,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
 
             background.color = new Color(0.11f, 0.15f, 0.19f, 0.96f);
-            background.raycastTarget = false;
         }
 
         private RectTransform GetOrCreateOverlayRoot()
@@ -169,7 +163,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         private RectTransform GetOrCreateBoardContainer(Transform parent)
         {
-            // BoardContainer 是棋盘格子的统一宿主；真正的格子数量和尺寸运行时再算。
             GameObject boardObject = GetOrCreateChild(parent, "BoardContainer");
             RectTransform rectTransform = boardObject.GetComponent<RectTransform>();
             if (rectTransform == null)
@@ -192,7 +185,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
 
             background.color = new Color(0f, 0f, 0f, 0.18f);
-            background.raycastTarget = false;
 
             GridLayoutGroup layout = boardObject.GetComponent<GridLayoutGroup>();
             if (layout == null)
@@ -213,7 +205,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return;
             }
 
-            // 这里按当前 rows / cols / 容器尺寸重新计算格子大小，保证不同棋盘都能放下。
             GridLayoutGroup layout = _bindings.BoardContainer.GetComponent<GridLayoutGroup>();
             int rows = Mathf.Max(0, viewModel.Rows);
             int cols = Mathf.Max(0, viewModel.Cols);
@@ -264,7 +255,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         private void SetCellCount(int requiredCount)
         {
-            // BattleCellView 实例按需扩容，但不会每帧销毁重建。
             while (_cells.Count < requiredCount)
             {
                 GameObject cellObject = new GameObject($"Cell_{_cells.Count}", typeof(RectTransform), typeof(Image), typeof(BattleCellView));
@@ -297,13 +287,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private TextMeshProUGUI ResolveLevelText(Transform overlay)
         {
             TextMeshProUGUI existing = FindDescendantComponent<TextMeshProUGUI>("Headicon_btn/Level") ?? FindFirstDescendantByName<TextMeshProUGUI>("Level");
-            if (existing != null)
-            {
-                existing.raycastTarget = false;
-                return existing;
-            }
-
-            return GetOrCreateRuntimeText(
+            return existing ?? GetOrCreateRuntimeText(
                 overlay,
                 "LevelText",
                 new Vector2(0f, 1f),
@@ -317,14 +301,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         private TextMeshProUGUI ResolveGoldText(Transform overlay)
         {
-            TextMeshProUGUI existing = FindDescendantComponent<TextMeshProUGUI>("Money_btn/Text (TMP)");
-            if (existing != null)
-            {
-                existing.raycastTarget = false;
-                return existing;
-            }
-
-            return GetOrCreateRuntimeText(
+            TextMeshProUGUI existing = FindDescendantComponent<TextMeshProUGUI>("Money_btn/Text (TMP)") ?? FindFirstDescendantByName<TextMeshProUGUI>("Text (TMP)");
+            return existing ?? GetOrCreateRuntimeText(
                 overlay,
                 "GoldText",
                 new Vector2(1f, 1f),
@@ -367,14 +345,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             text.alignment = alignment;
             text.enableWordWrapping = true;
             text.raycastTarget = false;
-            RuntimeTmpFontResolver.EnsureFontSupportsText(text);
             return text;
         }
 
         private Button GetOrCreateRuntimeButton(
             Transform parent,
             string objectName,
-            string labelText,
+            string label,
             Vector2 anchorMin,
             Vector2 anchorMax,
             Vector2 pivot,
@@ -405,9 +382,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 button = buttonObject.AddComponent<Button>();
             }
 
-            TextMeshProUGUI label = GetOrCreateRuntimeText(
+            TextMeshProUGUI labelText = GetOrCreateRuntimeText(
                 buttonObject.transform,
-                "Label",
+                objectName + "_Label",
                 Vector2.zero,
                 Vector2.one,
                 new Vector2(0.5f, 0.5f),
@@ -415,7 +392,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 Vector2.zero,
                 30f,
                 TextAlignmentOptions.Center);
-            label.text = labelText;
+            labelText.text = label;
             return button;
         }
 
