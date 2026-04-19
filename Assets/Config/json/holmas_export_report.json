@@ -1,7 +1,7 @@
 {
-    "ExportedAtUtc": "2026-04-12T13:12:08.1600750Z",
-    "Success": true,
-    "BinaryWrittenCount": 2,
+    "ExportedAtUtc": "2026-04-19T11:12:59.5657690Z",
+    "Success": false,
+    "BinaryWrittenCount": 0,
     "SourceFiles": [
         "Assets/Config/Holmas_MapTable.xlsx",
         "Assets/Config/Holmas_CatTable.xlsx",
@@ -22,9 +22,9 @@
             ],
             "PreviewJsonPath": "Assets/Config/json/holmas_core_config.json",
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_core_config.bytes",
-            "RowCount": 184,
+            "RowCount": 264,
             "WarningCount": 0,
-            "ErrorCount": 0
+            "ErrorCount": 1
         },
         {
             "BundleName": "cat_meta",
@@ -35,9 +35,11 @@
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_cat_meta.bytes",
             "RowCount": 49,
             "WarningCount": 0,
-            "ErrorCount": 0
+            "ErrorCount": 1
         }
     ],
-    "Errors": [],
+    "Errors": [
+        "Holmas_MetaLevelTable 行数必须为 20，当前为 100。"
+    ],
     "Warnings": []
 }

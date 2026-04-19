@@ -823,7 +823,7 @@
         },
         {
             "PlayerLevel": 2,
-            "UpgradeExp": 40,
+            "UpgradeExp": 9,
             "TaskTypeIndices": [
                 0,
                 1,
@@ -845,7 +845,7 @@
         },
         {
             "PlayerLevel": 3,
-            "UpgradeExp": 85,
+            "UpgradeExp": 21,
             "TaskTypeIndices": [
                 0,
                 1,
@@ -869,7 +869,7 @@
         },
         {
             "PlayerLevel": 4,
-            "UpgradeExp": 135,
+            "UpgradeExp": 36,
             "TaskTypeIndices": [
                 0,
                 1,
@@ -893,7 +893,7 @@
         },
         {
             "PlayerLevel": 5,
-            "UpgradeExp": 190,
+            "UpgradeExp": 51,
             "TaskTypeIndices": [
                 1,
                 4,
@@ -921,7 +921,7 @@
         },
         {
             "PlayerLevel": 6,
-            "UpgradeExp": 250,
+            "UpgradeExp": 66,
             "TaskTypeIndices": [
                 4,
                 5,
@@ -949,7 +949,7 @@
         },
         {
             "PlayerLevel": 7,
-            "UpgradeExp": 320,
+            "UpgradeExp": 81,
             "TaskTypeIndices": [
                 4,
                 5,
@@ -977,7 +977,7 @@
         },
         {
             "PlayerLevel": 8,
-            "UpgradeExp": 400,
+            "UpgradeExp": 96,
             "TaskTypeIndices": [
                 4,
                 5,
@@ -1005,7 +1005,7 @@
         },
         {
             "PlayerLevel": 9,
-            "UpgradeExp": 490,
+            "UpgradeExp": 111,
             "TaskTypeIndices": [
                 5,
                 8,
@@ -1033,7 +1033,7 @@
         },
         {
             "PlayerLevel": 10,
-            "UpgradeExp": 590,
+            "UpgradeExp": 126,
             "TaskTypeIndices": [
                 8,
                 9,
@@ -1061,7 +1061,7 @@
         },
         {
             "PlayerLevel": 11,
-            "UpgradeExp": 700,
+            "UpgradeExp": 141,
             "TaskTypeIndices": [
                 8,
                 9,
@@ -1089,7 +1089,7 @@
         },
         {
             "PlayerLevel": 12,
-            "UpgradeExp": 825,
+            "UpgradeExp": 156,
             "TaskTypeIndices": [
                 8,
                 9,
@@ -1117,7 +1117,7 @@
         },
         {
             "PlayerLevel": 13,
-            "UpgradeExp": 965,
+            "UpgradeExp": 171,
             "TaskTypeIndices": [
                 9,
                 12,
@@ -1145,7 +1145,7 @@
         },
         {
             "PlayerLevel": 14,
-            "UpgradeExp": 1120,
+            "UpgradeExp": 186,
             "TaskTypeIndices": [
                 12,
                 13,
@@ -1173,7 +1173,7 @@
         },
         {
             "PlayerLevel": 15,
-            "UpgradeExp": 1290,
+            "UpgradeExp": 201,
             "TaskTypeIndices": [
                 12,
                 13,
@@ -1201,7 +1201,7 @@
         },
         {
             "PlayerLevel": 16,
-            "UpgradeExp": 1475,
+            "UpgradeExp": 216,
             "TaskTypeIndices": [
                 12,
                 13,
@@ -1229,7 +1229,7 @@
         },
         {
             "PlayerLevel": 17,
-            "UpgradeExp": 1675,
+            "UpgradeExp": 231,
             "TaskTypeIndices": [
                 13,
                 16,
@@ -1257,7 +1257,7 @@
         },
         {
             "PlayerLevel": 18,
-            "UpgradeExp": 1840,
+            "UpgradeExp": 246,
             "TaskTypeIndices": [
                 16,
                 17,
@@ -1285,7 +1285,7 @@
         },
         {
             "PlayerLevel": 19,
-            "UpgradeExp": 1930,
+            "UpgradeExp": 261,
             "TaskTypeIndices": [
                 16,
                 17,
@@ -1313,7 +1313,7 @@
         },
         {
             "PlayerLevel": 20,
-            "UpgradeExp": 2000,
+            "UpgradeExp": 276,
             "TaskTypeIndices": [
                 16,
                 17,
@@ -1344,142 +1344,702 @@
         {
             "PlayerLevel": 1,
             "MinExperience": 0,
-            "OfflineRewardPerHour": 6,
+            "OfflineRewardPerHour": 1200,
             "AdUnlockHours": 24,
-            "Notes": "新手"
+            "Notes": ""
         },
         {
             "PlayerLevel": 2,
-            "MinExperience": 40,
-            "OfflineRewardPerHour": 6,
+            "MinExperience": 9,
+            "OfflineRewardPerHour": 1440,
             "AdUnlockHours": 24,
-            "Notes": "新手"
+            "Notes": ""
         },
         {
             "PlayerLevel": 3,
-            "MinExperience": 85,
-            "OfflineRewardPerHour": 7,
+            "MinExperience": 21,
+            "OfflineRewardPerHour": 1680,
             "AdUnlockHours": 24,
-            "Notes": "新手"
+            "Notes": ""
         },
         {
             "PlayerLevel": 4,
-            "MinExperience": 135,
-            "OfflineRewardPerHour": 7,
+            "MinExperience": 36,
+            "OfflineRewardPerHour": 1920,
             "AdUnlockHours": 24,
-            "Notes": "新手"
+            "Notes": ""
         },
         {
             "PlayerLevel": 5,
-            "MinExperience": 190,
-            "OfflineRewardPerHour": 8,
+            "MinExperience": 51,
+            "OfflineRewardPerHour": 2160,
             "AdUnlockHours": 24,
-            "Notes": "新手"
+            "Notes": ""
         },
         {
             "PlayerLevel": 6,
-            "MinExperience": 250,
-            "OfflineRewardPerHour": 9,
+            "MinExperience": 66,
+            "OfflineRewardPerHour": 4200,
             "AdUnlockHours": 24,
-            "Notes": "成长"
+            "Notes": ""
         },
         {
             "PlayerLevel": 7,
-            "MinExperience": 320,
-            "OfflineRewardPerHour": 10,
+            "MinExperience": 81,
+            "OfflineRewardPerHour": 4560,
             "AdUnlockHours": 24,
-            "Notes": "成长"
+            "Notes": ""
         },
         {
             "PlayerLevel": 8,
-            "MinExperience": 400,
-            "OfflineRewardPerHour": 11,
+            "MinExperience": 96,
+            "OfflineRewardPerHour": 4920,
             "AdUnlockHours": 24,
-            "Notes": "成长"
+            "Notes": ""
         },
         {
             "PlayerLevel": 9,
-            "MinExperience": 490,
-            "OfflineRewardPerHour": 12,
+            "MinExperience": 111,
+            "OfflineRewardPerHour": 5280,
             "AdUnlockHours": 24,
-            "Notes": "成长"
+            "Notes": ""
         },
         {
             "PlayerLevel": 10,
-            "MinExperience": 590,
-            "OfflineRewardPerHour": 13,
+            "MinExperience": 126,
+            "OfflineRewardPerHour": 5640,
             "AdUnlockHours": 24,
-            "Notes": "成长"
+            "Notes": ""
         },
         {
             "PlayerLevel": 11,
-            "MinExperience": 700,
-            "OfflineRewardPerHour": 14,
+            "MinExperience": 141,
+            "OfflineRewardPerHour": 6000,
             "AdUnlockHours": 24,
-            "Notes": "中期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 12,
-            "MinExperience": 825,
-            "OfflineRewardPerHour": 16,
+            "MinExperience": 156,
+            "OfflineRewardPerHour": 6360,
             "AdUnlockHours": 24,
-            "Notes": "中期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 13,
-            "MinExperience": 965,
-            "OfflineRewardPerHour": 18,
+            "MinExperience": 171,
+            "OfflineRewardPerHour": 6720,
             "AdUnlockHours": 24,
-            "Notes": "中期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 14,
-            "MinExperience": 1120,
-            "OfflineRewardPerHour": 20,
+            "MinExperience": 186,
+            "OfflineRewardPerHour": 7080,
             "AdUnlockHours": 24,
-            "Notes": "中期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 15,
-            "MinExperience": 1290,
-            "OfflineRewardPerHour": 22,
+            "MinExperience": 201,
+            "OfflineRewardPerHour": 7440,
             "AdUnlockHours": 24,
-            "Notes": "中期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 16,
-            "MinExperience": 1475,
-            "OfflineRewardPerHour": 24,
+            "MinExperience": 216,
+            "OfflineRewardPerHour": 7800,
             "AdUnlockHours": 24,
-            "Notes": "后期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 17,
-            "MinExperience": 1675,
-            "OfflineRewardPerHour": 27,
+            "MinExperience": 231,
+            "OfflineRewardPerHour": 8160,
             "AdUnlockHours": 24,
-            "Notes": "后期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 18,
-            "MinExperience": 1840,
-            "OfflineRewardPerHour": 30,
+            "MinExperience": 246,
+            "OfflineRewardPerHour": 8520,
             "AdUnlockHours": 24,
-            "Notes": "后期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 19,
-            "MinExperience": 1930,
-            "OfflineRewardPerHour": 33,
+            "MinExperience": 261,
+            "OfflineRewardPerHour": 8880,
             "AdUnlockHours": 24,
-            "Notes": "后期"
+            "Notes": ""
         },
         {
             "PlayerLevel": 20,
-            "MinExperience": 2000,
-            "OfflineRewardPerHour": 36,
+            "MinExperience": 276,
+            "OfflineRewardPerHour": 9240,
             "AdUnlockHours": 24,
-            "Notes": "后期"
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 21,
+            "MinExperience": 291,
+            "OfflineRewardPerHour": 15000,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 22,
+            "MinExperience": 306,
+            "OfflineRewardPerHour": 15360,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 23,
+            "MinExperience": 321,
+            "OfflineRewardPerHour": 15720,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 24,
+            "MinExperience": 336,
+            "OfflineRewardPerHour": 16080,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 25,
+            "MinExperience": 351,
+            "OfflineRewardPerHour": 16440,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 26,
+            "MinExperience": 366,
+            "OfflineRewardPerHour": 16800,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 27,
+            "MinExperience": 381,
+            "OfflineRewardPerHour": 17160,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 28,
+            "MinExperience": 396,
+            "OfflineRewardPerHour": 17520,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 29,
+            "MinExperience": 411,
+            "OfflineRewardPerHour": 17880,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 30,
+            "MinExperience": 426,
+            "OfflineRewardPerHour": 18240,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 31,
+            "MinExperience": 441,
+            "OfflineRewardPerHour": 18600,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 32,
+            "MinExperience": 456,
+            "OfflineRewardPerHour": 18960,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 33,
+            "MinExperience": 471,
+            "OfflineRewardPerHour": 19320,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 34,
+            "MinExperience": 486,
+            "OfflineRewardPerHour": 19680,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 35,
+            "MinExperience": 501,
+            "OfflineRewardPerHour": 20040,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 36,
+            "MinExperience": 516,
+            "OfflineRewardPerHour": 20400,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 37,
+            "MinExperience": 531,
+            "OfflineRewardPerHour": 20760,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 38,
+            "MinExperience": 546,
+            "OfflineRewardPerHour": 21120,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 39,
+            "MinExperience": 561,
+            "OfflineRewardPerHour": 21480,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 40,
+            "MinExperience": 576,
+            "OfflineRewardPerHour": 21840,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 41,
+            "MinExperience": 591,
+            "OfflineRewardPerHour": 41400,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 42,
+            "MinExperience": 606,
+            "OfflineRewardPerHour": 42000,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 43,
+            "MinExperience": 621,
+            "OfflineRewardPerHour": 42600,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 44,
+            "MinExperience": 636,
+            "OfflineRewardPerHour": 43200,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 45,
+            "MinExperience": 651,
+            "OfflineRewardPerHour": 43800,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 46,
+            "MinExperience": 666,
+            "OfflineRewardPerHour": 44400,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 47,
+            "MinExperience": 681,
+            "OfflineRewardPerHour": 45000,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 48,
+            "MinExperience": 696,
+            "OfflineRewardPerHour": 45600,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 49,
+            "MinExperience": 711,
+            "OfflineRewardPerHour": 46200,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 50,
+            "MinExperience": 726,
+            "OfflineRewardPerHour": 46800,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 51,
+            "MinExperience": 741,
+            "OfflineRewardPerHour": 47400,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 52,
+            "MinExperience": 756,
+            "OfflineRewardPerHour": 48000,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 53,
+            "MinExperience": 771,
+            "OfflineRewardPerHour": 48600,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 54,
+            "MinExperience": 786,
+            "OfflineRewardPerHour": 49200,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 55,
+            "MinExperience": 801,
+            "OfflineRewardPerHour": 49800,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 56,
+            "MinExperience": 816,
+            "OfflineRewardPerHour": 50400,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 57,
+            "MinExperience": 831,
+            "OfflineRewardPerHour": 51000,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 58,
+            "MinExperience": 846,
+            "OfflineRewardPerHour": 51600,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 59,
+            "MinExperience": 861,
+            "OfflineRewardPerHour": 52200,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 60,
+            "MinExperience": 876,
+            "OfflineRewardPerHour": 52800,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 61,
+            "MinExperience": 891,
+            "OfflineRewardPerHour": 72600,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 62,
+            "MinExperience": 906,
+            "OfflineRewardPerHour": 73320,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 63,
+            "MinExperience": 921,
+            "OfflineRewardPerHour": 74040,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 64,
+            "MinExperience": 936,
+            "OfflineRewardPerHour": 74760,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 65,
+            "MinExperience": 951,
+            "OfflineRewardPerHour": 75480,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 66,
+            "MinExperience": 966,
+            "OfflineRewardPerHour": 76200,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 67,
+            "MinExperience": 981,
+            "OfflineRewardPerHour": 76920,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 68,
+            "MinExperience": 996,
+            "OfflineRewardPerHour": 77640,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 69,
+            "MinExperience": 1011,
+            "OfflineRewardPerHour": 78360,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 70,
+            "MinExperience": 1026,
+            "OfflineRewardPerHour": 79080,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 71,
+            "MinExperience": 1041,
+            "OfflineRewardPerHour": 79800,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 72,
+            "MinExperience": 1056,
+            "OfflineRewardPerHour": 80520,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 73,
+            "MinExperience": 1071,
+            "OfflineRewardPerHour": 81240,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 74,
+            "MinExperience": 1086,
+            "OfflineRewardPerHour": 81960,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 75,
+            "MinExperience": 1101,
+            "OfflineRewardPerHour": 82680,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 76,
+            "MinExperience": 1116,
+            "OfflineRewardPerHour": 83400,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 77,
+            "MinExperience": 1131,
+            "OfflineRewardPerHour": 84120,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 78,
+            "MinExperience": 1146,
+            "OfflineRewardPerHour": 84840,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 79,
+            "MinExperience": 1161,
+            "OfflineRewardPerHour": 85560,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 80,
+            "MinExperience": 1176,
+            "OfflineRewardPerHour": 86280,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 81,
+            "MinExperience": 1191,
+            "OfflineRewardPerHour": 87000,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 82,
+            "MinExperience": 1206,
+            "OfflineRewardPerHour": 87720,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 83,
+            "MinExperience": 1221,
+            "OfflineRewardPerHour": 88440,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 84,
+            "MinExperience": 1236,
+            "OfflineRewardPerHour": 89160,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 85,
+            "MinExperience": 1251,
+            "OfflineRewardPerHour": 89880,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 86,
+            "MinExperience": 1266,
+            "OfflineRewardPerHour": 90600,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 87,
+            "MinExperience": 1281,
+            "OfflineRewardPerHour": 91320,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 88,
+            "MinExperience": 1296,
+            "OfflineRewardPerHour": 92040,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 89,
+            "MinExperience": 1311,
+            "OfflineRewardPerHour": 92760,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 90,
+            "MinExperience": 1326,
+            "OfflineRewardPerHour": 93480,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 91,
+            "MinExperience": 1341,
+            "OfflineRewardPerHour": 94200,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 92,
+            "MinExperience": 1356,
+            "OfflineRewardPerHour": 94920,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 93,
+            "MinExperience": 1371,
+            "OfflineRewardPerHour": 95640,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 94,
+            "MinExperience": 1386,
+            "OfflineRewardPerHour": 96360,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 95,
+            "MinExperience": 1401,
+            "OfflineRewardPerHour": 97080,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 96,
+            "MinExperience": 1416,
+            "OfflineRewardPerHour": 97800,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 97,
+            "MinExperience": 1431,
+            "OfflineRewardPerHour": 98520,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 98,
+            "MinExperience": 1446,
+            "OfflineRewardPerHour": 99240,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 99,
+            "MinExperience": 1461,
+            "OfflineRewardPerHour": 99960,
+            "AdUnlockHours": 24,
+            "Notes": ""
+        },
+        {
+            "PlayerLevel": 100,
+            "MinExperience": 1476,
+            "OfflineRewardPerHour": 100680,
+            "AdUnlockHours": 24,
+            "Notes": ""
         }
     ],
     "AgencyBuildings": [
