@@ -8,4 +8,5 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 
+python3 "${REPO_ROOT}/tools/repo_maintenance/check_unity_guid_integrity.py" --staged
 python3 "${REPO_ROOT}/tools/doc_maintenance/check_doc_maintenance.py"
