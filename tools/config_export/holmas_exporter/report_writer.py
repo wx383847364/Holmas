@@ -114,6 +114,8 @@ def _player_level_row_to_dict(row: PlayerLevelRow) -> dict:
     return {
         "PlayerLevel": row.player_level,
         "UpgradeExp": row.upgrade_exp,
+        "OfflineRewardPerHour": row.offline_reward_per_hour,
+        "AdUnlockHours": row.ad_unlock_hours,
         "TaskTypeIndices": list(row.task_type_indices),
         "TaskTypeWeights": list(row.task_type_weights),
         "MapIndices": list(row.map_indices),

@@ -121,6 +121,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
+                package.CodecVersion = InferCoreJsonCodecVersion(json, package.Version);
                 return true;
             }
             catch (Exception ex)
@@ -169,7 +170,11 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             WriteMapRows(writer, package.Maps);
             WriteTaskRows(writer, package.Tasks);
             WritePlayerLevelRows(writer, package.PlayerLevels);
-            WriteMetaLevelRows(writer, package.MetaLevels);
+            if (HolmasConfigBinaryFormat.CurrentVersion < 6)
+            {
+                WriteMetaLevelRows(writer, package.MetaLevels);
+            }
+
             WriteAgencyBuildingRows(writer, package.AgencyBuildings);
         }
 
@@ -199,10 +204,13 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 Version = packageVersion,
                 Maps = ReadMapRows(reader),
                 Tasks = ReadTaskRows(reader),
-                PlayerLevels = ReadPlayerLevelRows(reader),
-                MetaLevels = ReadMetaLevelRows(reader, codecVersion),
+                PlayerLevels = ReadPlayerLevelRows(reader, codecVersion),
+                MetaLevels = codecVersion >= 6
+                    ? Array.Empty<HolmasMetaLevelRow>()
+                    : ReadMetaLevelRows(reader, codecVersion),
                 AgencyBuildings = ReadAgencyBuildingRows(reader),
             };
+            package.CodecVersion = codecVersion;
 
             return package;
         }
@@ -257,6 +265,40 @@ namespace App.HotUpdate.Holmas.Tasks.Config
 
             packageVersion = reader.ReadInt32();
             return true;
+        }
+
+        private static int InferCoreJsonCodecVersion(string json, int packageVersion)
+        {
+            int fallbackVersion = packageVersion > 0
+                ? packageVersion
+                : HolmasConfigBinaryFormat.CurrentVersion;
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return fallbackVersion;
+            }
+
+            int playerLevelsIndex = json.IndexOf("\"PlayerLevels\"", StringComparison.Ordinal);
+            if (playerLevelsIndex < 0)
+            {
+                return fallbackVersion;
+            }
+
+            int nextSectionIndex = json.IndexOf("\"MetaLevels\"", playerLevelsIndex, StringComparison.Ordinal);
+            if (nextSectionIndex < 0)
+            {
+                nextSectionIndex = json.IndexOf("\"AgencyBuildings\"", playerLevelsIndex, StringComparison.Ordinal);
+            }
+
+            string playerLevelsSection = nextSectionIndex > playerLevelsIndex
+                ? json.Substring(playerLevelsIndex, nextSectionIndex - playerLevelsIndex)
+                : json.Substring(playerLevelsIndex);
+            if (playerLevelsSection.IndexOf("\"OfflineRewardPerHour\"", StringComparison.Ordinal) >= 0 ||
+                playerLevelsSection.IndexOf("\"AdUnlockHours\"", StringComparison.Ordinal) >= 0)
+            {
+                return HolmasConfigBinaryFormat.CurrentVersion;
+            }
+
+            return fallbackVersion;
         }
 
         private static void WriteMapRows(BinaryWriter writer, HolmasMapRow[] rows)
@@ -374,6 +416,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 HolmasPlayerLevelRow row = rows[i] ?? new HolmasPlayerLevelRow();
                 writer.Write(row.PlayerLevel);
                 writer.Write(row.UpgradeExp);
+                writer.Write(row.OfflineRewardPerHour);
+                writer.Write(row.AdUnlockHours);
                 WriteIntArray(writer, row.TaskTypeIndices);
                 WriteIntArray(writer, row.TaskTypeWeights);
                 WriteIntArray(writer, row.MapIndices);
@@ -381,16 +425,22 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             }
         }
 
-        private static HolmasPlayerLevelRow[] ReadPlayerLevelRows(BinaryReader reader)
+        private static HolmasPlayerLevelRow[] ReadPlayerLevelRows(BinaryReader reader, int codecVersion)
         {
             int count = ReadNonNegativeCount(reader);
             var rows = new HolmasPlayerLevelRow[count];
             for (int i = 0; i < count; i++)
             {
+                int playerLevel = reader.ReadInt32();
+                int upgradeExp = reader.ReadInt32();
+                int offlineRewardPerHour = codecVersion >= 5 ? reader.ReadInt32() : 0;
+                int adUnlockHours = codecVersion >= 5 ? reader.ReadInt32() : 24;
                 rows[i] = new HolmasPlayerLevelRow
                 {
-                    PlayerLevel = reader.ReadInt32(),
-                    UpgradeExp = reader.ReadInt32(),
+                    PlayerLevel = playerLevel,
+                    UpgradeExp = upgradeExp,
+                    OfflineRewardPerHour = offlineRewardPerHour,
+                    AdUnlockHours = adUnlockHours,
                     TaskTypeIndices = ReadIntArray(reader),
                     TaskTypeWeights = ReadIntArray(reader),
                     MapIndices = ReadIntArray(reader),

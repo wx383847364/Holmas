@@ -57,6 +57,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public int PlayerLevelIndex;
         public int PlayerLevel;
         public int UpgradeExp;
+        public int OfflineRewardPerHour;
+        public int AdUnlockHours = 24;
         public string[] TaskTypeIds = Array.Empty<string>();
         public int[] TaskTypeWeights = Array.Empty<int>();
         public int[] TaskTypeIndices = Array.Empty<int>();

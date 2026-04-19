@@ -105,7 +105,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasConfigCatalogFactory_RejectsMissingMetaLevels()
+        public void HolmasConfigCatalogFactory_AllowsMissingMetaLevelsWhenPlayerLevelsCarryGrowth()
         {
             ExportConfigTables tables = LoadSampleTables();
             HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
@@ -115,10 +115,11 @@ namespace Holmas.Tests
             byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
             byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
 
-            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out _, out HolmasConfigReport report);
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
 
-            Assert.That(success, Is.False);
-            Assert.That(report.Errors.Any(item => item.Contains("缺少 MetaLevels")), Is.True, string.Join(Environment.NewLine, report.Errors));
+            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle, Is.Not.Null);
+            AssertBundlePlayerLevelsMatchTables(bundle, tables.Levels);
         }
 
         [Test]
@@ -139,7 +140,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasConfigCatalogFactory_RejectsTruncatedMetaLevels()
+        public void HolmasConfigCatalogFactory_AllowsTruncatedMetaLevelsWhenPlayerLevelsCarryGrowth()
         {
             ExportConfigTables tables = LoadSampleTables();
             HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
@@ -149,10 +150,61 @@ namespace Holmas.Tests
             byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
             byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
 
-            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out _, out HolmasConfigReport report);
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
 
-            Assert.That(success, Is.False);
-            Assert.That(report.Errors.Any(item => item.Contains("行数必须为 20")), Is.True, string.Join(Environment.NewLine, report.Errors));
+            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle, Is.Not.Null);
+            AssertBundlePlayerLevelsMatchTables(bundle, tables.Levels);
+            Assert.That(bundle.MetaLevels.Count, Is.EqualTo(bundle.PlayerLevels.Count));
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_CurrentCodecIgnoresConflictingMetaLevelsAndUsesPlayerLevelsAsAuthority()
+        {
+            ExportConfigTables tables = LoadSampleTables();
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+
+            corePackage.MetaLevels = corePackage.MetaLevels
+                .Select(item => new HolmasMetaLevelRow
+                {
+                    PlayerLevel = item.PlayerLevel,
+                    MinExperience = item.MinExperience + 9999,
+                    OfflineRewardPerHour = item.OfflineRewardPerHour + 777,
+                    AdUnlockHours = item.AdUnlockHours + 5,
+                })
+                .ToArray();
+
+            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
+            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
+
+            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle, Is.Not.Null);
+            AssertBundlePlayerLevelsMatchTables(bundle, tables.Levels);
+            Assert.That(bundle.MetaLevels.Select(item => item.MinExperience), Is.EqualTo(bundle.PlayerLevels.Select(item => item.UpgradeExp)));
+            Assert.That(bundle.MetaLevels.Select(item => item.OfflineRewardPerHour), Is.EqualTo(bundle.PlayerLevels.Select(item => item.OfflineRewardPerHour)));
+            Assert.That(bundle.MetaLevels.Select(item => item.AdUnlockHours), Is.EqualTo(bundle.PlayerLevels.Select(item => item.AdUnlockHours)));
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_CurrentCodecUsesCodecVersionInsteadOfPackageVersionForPlayerLevelRecovery()
+        {
+            ExportConfigTables tables = LoadSampleTables();
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+            corePackage.Version = HolmasConfigBinaryFormat.MinSupportedVersion;
+            corePackage.MetaLevels = Array.Empty<HolmasMetaLevelRow>();
+
+            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
+            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
+
+            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle, Is.Not.Null);
+            AssertBundlePlayerLevelsMatchTables(bundle, tables.Levels);
         }
 
         [Test]
@@ -390,7 +442,10 @@ namespace Holmas.Tests
 
             Assert.That(coreOk, Is.True, coreError);
             Assert.That(catOk, Is.True, catError);
-            Dictionary<int, int> minExperienceByLevel = ResolveMinExperienceByLevel(corePackage);
+            Dictionary<int, HolmasMetaLevelRow> metaLevelByPlayerLevel = (corePackage.MetaLevels ?? Array.Empty<HolmasMetaLevelRow>())
+                .Where(item => item != null)
+                .GroupBy(item => item.PlayerLevel)
+                .ToDictionary(group => group.Key, group => group.Last());
 
             return new ExportConfigTables
             {
@@ -412,15 +467,15 @@ namespace Holmas.Tests
                 }).ToList(),
                 Tasks = BuildTaskRows(corePackage, catPackage),
                 Levels = BuildLevelRows(corePackage),
-                MetaLevels = (corePackage.MetaLevels ?? Array.Empty<HolmasMetaLevelRow>()).Select(item => new ExportMetaLevelRow
+                MetaLevels = (corePackage.PlayerLevels ?? Array.Empty<HolmasPlayerLevelRow>()).Select(item => new ExportMetaLevelRow
                 {
                     PlayerLevel = item.PlayerLevel,
-                    MinExperience = minExperienceByLevel.TryGetValue(item.PlayerLevel, out int minExperience)
-                        ? minExperience
-                        : item.MinExperience,
+                    MinExperience = item.UpgradeExp,
                     OfflineRewardPerHour = item.OfflineRewardPerHour,
                     AdUnlockHours = item.AdUnlockHours,
-                    Notes = item.Notes,
+                    Notes = metaLevelByPlayerLevel.TryGetValue(item.PlayerLevel, out HolmasMetaLevelRow metaLevel)
+                        ? metaLevel.Notes
+                        : string.Empty,
                 }).ToList(),
                 AgencyBuildings = (corePackage.AgencyBuildings ?? Array.Empty<HolmasAgencyBuildingRow>()).Select(item => new ExportAgencyBuildingRow
                 {
@@ -452,42 +507,6 @@ namespace Holmas.Tests
             }).ToList();
         }
 
-        private static Dictionary<int, int> ResolveMinExperienceByLevel(HolmasCoreConfigPackage corePackage)
-        {
-            var result = new Dictionary<int, int>();
-            if (corePackage == null)
-            {
-                return result;
-            }
-
-            if (corePackage.Version >= 4)
-            {
-                foreach (HolmasMetaLevelRow metaLevel in corePackage.MetaLevels ?? Array.Empty<HolmasMetaLevelRow>())
-                {
-                    if (metaLevel == null)
-                    {
-                        continue;
-                    }
-
-                    result[metaLevel.PlayerLevel] = metaLevel.MinExperience;
-                }
-
-                return result;
-            }
-
-            foreach (HolmasPlayerLevelRow playerLevel in corePackage.PlayerLevels ?? Array.Empty<HolmasPlayerLevelRow>())
-            {
-                if (playerLevel == null)
-                {
-                    continue;
-                }
-
-                result[playerLevel.PlayerLevel] = playerLevel.UpgradeExp;
-            }
-
-            return result;
-        }
-
         private static List<ExportLevelRow> BuildLevelRows(HolmasCoreConfigPackage corePackage)
         {
             string[] taskIds = (corePackage.Tasks ?? Array.Empty<HolmasTaskRow>()).Select(item => item.TaskTypeId).ToArray();
@@ -496,6 +515,8 @@ namespace Holmas.Tests
             {
                 PlayerLevel = item.PlayerLevel,
                 UpgradeExp = item.UpgradeExp,
+                OfflineRewardPerHour = item.OfflineRewardPerHour,
+                AdUnlockHours = item.AdUnlockHours,
                 TaskTypeIds = (item.TaskTypeIndices ?? Array.Empty<int>())
                     .Where(index => index >= 0 && index < taskIds.Length)
                     .Select(index => taskIds[index])
@@ -530,6 +551,8 @@ namespace Holmas.Tests
                 {
                     PlayerLevel = item.PlayerLevel,
                     UpgradeExp = item.UpgradeExp,
+                    OfflineRewardPerHour = item.OfflineRewardPerHour,
+                    AdUnlockHours = item.AdUnlockHours,
                     TaskTypeIds = item.TaskTypeIds.ToArray(),
                     TaskTypeWeights = item.TaskTypeWeights.ToArray(),
                     MapIds = item.MapIds.ToArray(),
@@ -556,6 +579,27 @@ namespace Holmas.Tests
                 CatId = item.CatId,
                 Weight = item.Weight,
             }).ToArray();
+        }
+
+        private static void AssertBundlePlayerLevelsMatchTables(HolmasConfigCatalogBundle bundle, IReadOnlyList<ExportLevelRow> expectedLevels)
+        {
+            Assert.That(bundle, Is.Not.Null);
+            Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(expectedLevels.Count));
+
+            for (int i = 0; i < expectedLevels.Count; i++)
+            {
+                ExportLevelRow expected = expectedLevels[i];
+                HolmasPlayerLevelDefinition actual = bundle.PlayerLevels[i];
+
+                Assert.That(actual.PlayerLevel, Is.EqualTo(expected.PlayerLevel));
+                Assert.That(actual.UpgradeExp, Is.EqualTo(expected.UpgradeExp));
+                Assert.That(actual.OfflineRewardPerHour, Is.EqualTo(expected.OfflineRewardPerHour));
+                Assert.That(actual.AdUnlockHours, Is.EqualTo(expected.AdUnlockHours));
+                Assert.That(actual.TaskTypeIds, Is.EqualTo(expected.TaskTypeIds), $"等级 {expected.PlayerLevel} 的任务组不一致。");
+                Assert.That(actual.TaskTypeWeights, Is.EqualTo(expected.TaskTypeWeights), $"等级 {expected.PlayerLevel} 的任务权重不一致。");
+                Assert.That(actual.MapIds, Is.EqualTo(expected.MapIds), $"等级 {expected.PlayerLevel} 的地图组不一致。");
+                Assert.That(actual.MapWeights, Is.EqualTo(expected.MapWeights), $"等级 {expected.PlayerLevel} 的地图权重不一致。");
+            }
         }
 
         private static void AssertTaskBarHasUniqueCats(HolmasTaskBarState taskBar, int playerLevel)
@@ -612,6 +656,8 @@ namespace Holmas.Tests
                 {
                     PlayerLevel = item.PlayerLevel,
                     UpgradeExp = item.UpgradeExp,
+                    OfflineRewardPerHour = item.OfflineRewardPerHour,
+                    AdUnlockHours = item.AdUnlockHours,
                     TaskTypeIndices = item.TaskTypeIds.Select(taskId => taskIndexById[taskId]).ToArray(),
                     TaskTypeWeights = item.TaskTypeWeights.ToArray(),
                     MapIndices = item.MapIds.Select(mapId => mapIndexById[mapId]).ToArray(),
@@ -730,6 +776,8 @@ namespace Holmas.Tests
         {
             public int PlayerLevel;
             public int UpgradeExp;
+            public int OfflineRewardPerHour;
+            public int AdUnlockHours;
             public string[] TaskTypeIds = Array.Empty<string>();
             public int[] TaskTypeWeights = Array.Empty<int>();
             public string[] MapIds = Array.Empty<string>();
@@ -963,6 +1011,16 @@ namespace Holmas.Tests
                     if (level.UpgradeExp < 0)
                     {
                         errors.Add($"升级经验非法: {level.PlayerLevel}");
+                    }
+
+                    if (level.OfflineRewardPerHour < 0)
+                    {
+                        errors.Add($"玩家等级离线奖励非法: {level.PlayerLevel}");
+                    }
+
+                    if (level.AdUnlockHours <= 0)
+                    {
+                        errors.Add($"玩家等级广告解锁时长非法: {level.PlayerLevel}");
                     }
 
                     if (previousLevel != null && level.UpgradeExp <= previousLevel.UpgradeExp)

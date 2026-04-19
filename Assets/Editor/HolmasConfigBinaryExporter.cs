@@ -21,7 +21,6 @@ namespace Holmas.EditorTools
         private const string CatTableName = "Holmas_CatTable.xlsx";
         private const string TaskTableName = "Holmas_TaskTable.xlsx";
         private const string PlayerLevelTableName = "Holmas_PlayerLevelTable.xlsx";
-        private const string MetaLevelTableName = "Holmas_MetaLevelTable.xlsx";
         private const string AgencyBuildingTableName = "Holmas_AgencyBuildingTable.xlsx";
 
         private const string CoreBinaryName = "holmas_core_config.bytes";
@@ -79,7 +78,6 @@ namespace Holmas.EditorTools
                     CombineProjectPath(configRoot, CatTableName),
                     CombineProjectPath(configRoot, TaskTableName),
                     CombineProjectPath(configRoot, PlayerLevelTableName),
-                    CombineProjectPath(configRoot, MetaLevelTableName),
                     CombineProjectPath(configRoot, AgencyBuildingTableName),
                 }
             };
@@ -91,7 +89,6 @@ namespace Holmas.EditorTools
             var catTable = LoadCatTable(report, configRoot);
             var taskTable = LoadTaskTable(report, configRoot);
             var playerLevelTable = LoadPlayerLevelTable(report, configRoot);
-            var metaLevelTable = LoadMetaLevelTable(report, configRoot);
             var agencyBuildingTable = LoadAgencyBuildingTable(report, configRoot);
 
             var catLookup = BuildAliasLookup(catTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.CatId, index)));
@@ -102,11 +99,10 @@ namespace Holmas.EditorTools
             NormalizeRows(report, taskTable, catLookup, taskLookup, mapLookup);
             NormalizeRows(report, playerLevelTable, catLookup, taskLookup, mapLookup);
             NormalizeRows(report, mapTable, catLookup, taskLookup, mapLookup);
-            BridgeUpgradeExpFromMetaLevels(report, playerLevelTable, metaLevelTable);
-            ValidateMetaLevelTable(report, playerLevelTable, metaLevelTable);
+            ValidatePlayerLevelTable(report, playerLevelTable);
             ValidateAgencyBuildingTable(report, agencyBuildingTable);
 
-            HolmasCoreConfigPackage corePackage = BuildCorePackage(mapTable, taskTable, playerLevelTable, metaLevelTable, agencyBuildingTable);
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(mapTable, taskTable, playerLevelTable, agencyBuildingTable);
             HolmasCatMetaPackage catPackage = BuildCatMetaPackage(catTable);
 
             report.BundleReports = new[]
@@ -114,10 +110,10 @@ namespace Holmas.EditorTools
                 new HolmasConfigBundleReport
                 {
                     BundleName = "core",
-                    SourceTableNames = new[] { MapTableName, TaskTableName, PlayerLevelTableName, MetaLevelTableName, AgencyBuildingTableName },
+                    SourceTableNames = new[] { MapTableName, TaskTableName, PlayerLevelTableName, AgencyBuildingTableName },
                     PreviewJsonPath = CombineProjectPath(jsonRoot, CorePreviewName),
                     BinaryPath = CombineProjectPath(hotUpdateConfigRoot, CoreBinaryName),
-                    RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count + metaLevelTable.Rows.Count + agencyBuildingTable.Rows.Count,
+                    RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count + agencyBuildingTable.Rows.Count,
                     WarningCount = report.Warnings.Count,
                     ErrorCount = report.Errors.Count,
                 },
@@ -251,27 +247,6 @@ namespace Holmas.EditorTools
 
             var headerMap = BuildHeaderMap(report, path, rows[1]);
             return new SheetTable<HolmasPlayerLevelSheetRow>(tableName, ParsePlayerLevels(report, path, rows, headerMap));
-        }
-
-        private static SheetTable<HolmasMetaLevelSheetRow> LoadMetaLevelTable(HolmasConfigExportReport report, string configRoot)
-        {
-            string tableName = MetaLevelTableName;
-            string path = CombineProjectPath(configRoot, tableName);
-            if (!File.Exists(path))
-            {
-                report.Errors.Add($"找不到 xlsx 文件: {path}");
-                return new SheetTable<HolmasMetaLevelSheetRow>(tableName);
-            }
-
-            List<string[]> rows = ReadWorksheetRows(report, path);
-            if (rows.Count < 2)
-            {
-                report.Errors.Add($"xlsx 结构不完整: {path}");
-                return new SheetTable<HolmasMetaLevelSheetRow>(tableName);
-            }
-
-            var headerMap = BuildHeaderMap(report, path, rows[1]);
-            return new SheetTable<HolmasMetaLevelSheetRow>(tableName, ParseMetaLevels(report, path, rows, headerMap));
         }
 
         private static SheetTable<HolmasAgencyBuildingSheetRow> LoadAgencyBuildingTable(HolmasConfigExportReport report, string configRoot)
@@ -561,10 +536,25 @@ namespace Holmas.EditorTools
         private static List<HolmasPlayerLevelSheetRow> ParsePlayerLevels(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int playerLevelCol = RequireColumn(report, sourcePath, headerMap, "playerLevel");
+            int upgradeExpCol = GetOptionalColumn(headerMap, "upgradeExp");
+            int minExperienceCol = GetOptionalColumn(headerMap, "minExperience");
+            if (upgradeExpCol < 0)
+            {
+                upgradeExpCol = minExperienceCol;
+            }
+            int offlineRewardPerHourCol = RequireColumn(report, sourcePath, headerMap, "offlineRewardPerHour");
+            int adUnlockHoursCol = RequireColumn(report, sourcePath, headerMap, "adUnlockHours");
+            int notesCol = GetOptionalColumn(headerMap, "notes");
             int taskTypeIdsCol = RequireColumn(report, sourcePath, headerMap, "taskTypeIds");
             int taskTypeWeightsCol = RequireColumn(report, sourcePath, headerMap, "taskTypeWeights");
             int mapIdsCol = RequireColumn(report, sourcePath, headerMap, "mapIds");
             int mapWeightsCol = RequireColumn(report, sourcePath, headerMap, "mapWeights");
+
+            if (upgradeExpCol < 0)
+            {
+                report.Errors.Add($"{sourcePath}: 缺少 upgradeExp/minExperience 列。Holmas_PlayerLevelTable 合并成长字段后必须提供升级门槛列。");
+                return new List<HolmasPlayerLevelSheetRow>();
+            }
 
             var list = new List<HolmasPlayerLevelSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
@@ -577,12 +567,23 @@ namespace Holmas.EditorTools
 
                 int playerLevel;
                 bool levelOk = TryParseInt(GetCell(row, playerLevelCol), out playerLevel);
+                int upgradeExp;
+                bool upgradeExpOk = TryParseInt(GetCell(row, upgradeExpCol), out upgradeExp);
+                int minExperience;
+                bool minExperienceOk = TryParseInt(GetCell(row, minExperienceCol), out minExperience);
+                int offlineRewardPerHour;
+                bool offlineOk = TryParseInt(GetCell(row, offlineRewardPerHourCol), out offlineRewardPerHour);
+                int adUnlockHours;
+                bool adOk = TryParseInt(GetCell(row, adUnlockHoursCol), out adUnlockHours);
 
                 var item = new HolmasPlayerLevelSheetRow
                 {
                     RowIndex = list.Count,
                     PlayerLevel = playerLevel,
-                    UpgradeExp = 0,
+                    UpgradeExp = upgradeExp,
+                    OfflineRewardPerHour = offlineRewardPerHour,
+                    AdUnlockHours = adUnlockHours,
+                    Notes = GetCell(row, notesCol),
                     TaskTypeIds = SplitArray(GetCell(row, taskTypeIdsCol)),
                     TaskTypeWeights = ParseIntArrayStrict(GetCell(row, taskTypeWeightsCol), sourcePath, rowIndex + 1, report),
                     MapIds = SplitArray(GetCell(row, mapIdsCol)),
@@ -592,6 +593,39 @@ namespace Holmas.EditorTools
                 if (!levelOk)
                 {
                     report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 playerLevel 无法解析。");
+                    continue;
+                }
+
+                if (!upgradeExpOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 upgradeExp 无法解析。");
+                    continue;
+                }
+
+                if (upgradeExpCol >= 0 && minExperienceCol >= 0)
+                {
+                    if (!minExperienceOk)
+                    {
+                        report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 minExperience 无法解析。");
+                        continue;
+                    }
+
+                    if (upgradeExp != minExperience)
+                    {
+                        report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 upgradeExp 与 minExperience 不一致。");
+                        continue;
+                    }
+                }
+
+                if (!offlineOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 offlineRewardPerHour 无法解析。");
+                    continue;
+                }
+
+                if (!adOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 adUnlockHours 无法解析。");
                     continue;
                 }
 
@@ -623,104 +657,6 @@ namespace Holmas.EditorTools
             }
 
             return list;
-        }
-
-        private static List<HolmasMetaLevelSheetRow> ParseMetaLevels(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
-        {
-            int playerLevelCol = RequireColumn(report, sourcePath, headerMap, "playerLevel");
-            int minExperienceCol = RequireColumn(report, sourcePath, headerMap, "minExperience");
-            int offlineRewardPerHourCol = RequireColumn(report, sourcePath, headerMap, "offlineRewardPerHour");
-            int adUnlockHoursCol = RequireColumn(report, sourcePath, headerMap, "adUnlockHours");
-            int notesCol = GetOptionalColumn(headerMap, "notes");
-
-            var list = new List<HolmasMetaLevelSheetRow>();
-            for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
-            {
-                var row = rows[rowIndex];
-                if (IsBlankRow(row))
-                {
-                    continue;
-                }
-
-                int playerLevel;
-                bool levelOk = TryParseInt(GetCell(row, playerLevelCol), out playerLevel);
-                int minExperience;
-                bool minExperienceOk = TryParseInt(GetCell(row, minExperienceCol), out minExperience);
-                int offlineRewardPerHour;
-                bool offlineOk = TryParseInt(GetCell(row, offlineRewardPerHourCol), out offlineRewardPerHour);
-                int adUnlockHours;
-                bool adOk = TryParseInt(GetCell(row, adUnlockHoursCol), out adUnlockHours);
-
-                var item = new HolmasMetaLevelSheetRow
-                {
-                    RowIndex = list.Count,
-                    PlayerLevel = playerLevel,
-                    MinExperience = minExperience,
-                    OfflineRewardPerHour = offlineRewardPerHour,
-                    AdUnlockHours = adUnlockHours,
-                    Notes = GetCell(row, notesCol),
-                };
-
-                if (!levelOk)
-                {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 playerLevel 无法解析。");
-                    continue;
-                }
-
-                if (!minExperienceOk)
-                {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 minExperience 无法解析。");
-                    continue;
-                }
-
-                if (!offlineOk)
-                {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 offlineRewardPerHour 无法解析。");
-                    continue;
-                }
-
-                if (!adOk)
-                {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 adUnlockHours 无法解析。");
-                    continue;
-                }
-
-                list.Add(item);
-            }
-
-            return list;
-        }
-
-        private static void BridgeUpgradeExpFromMetaLevels(
-            HolmasConfigExportReport report,
-            SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable,
-            SheetTable<HolmasMetaLevelSheetRow> metaLevelTable)
-        {
-            if (playerLevelTable == null || metaLevelTable == null)
-            {
-                return;
-            }
-
-            Dictionary<int, HolmasMetaLevelSheetRow> metaRows = metaLevelTable.Rows
-                .Where(row => row != null && row.PlayerLevel > 0)
-                .GroupBy(row => row.PlayerLevel)
-                .ToDictionary(group => group.Key, group => group.First());
-
-            foreach (HolmasPlayerLevelSheetRow playerRow in playerLevelTable.Rows)
-            {
-                if (playerRow == null)
-                {
-                    continue;
-                }
-
-                if (!metaRows.TryGetValue(playerRow.PlayerLevel, out HolmasMetaLevelSheetRow metaRow) || metaRow == null)
-                {
-                    report.Warnings.Add($"缺少玩家等级 {playerRow.PlayerLevel} 对应的 MetaLevel，无法桥接 upgradeExp。");
-                    continue;
-                }
-
-                playerRow.UpgradeExp = metaRow.MinExperience;
-            }
         }
 
         private static List<HolmasAgencyBuildingSheetRow> ParseAgencyBuildings(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
@@ -802,45 +738,18 @@ namespace Holmas.EditorTools
             return list;
         }
 
-        private static void ValidateMetaLevelTable(
+        private static void ValidatePlayerLevelTable(
             HolmasConfigExportReport report,
-            SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable,
-            SheetTable<HolmasMetaLevelSheetRow> metaLevelTable)
+            SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable)
         {
-            var metaRows = metaLevelTable?.Rows ?? new List<HolmasMetaLevelSheetRow>();
             var playerRows = playerLevelTable?.Rows ?? new List<HolmasPlayerLevelSheetRow>();
-
-            if (metaRows.Count == 0)
-            {
-                report.Errors.Add("缺少 Holmas_MetaLevelTable 数据。");
-                return;
-            }
 
             if (playerRows.Count == 0)
             {
-                report.Errors.Add("缺少 Holmas_PlayerLevelTable 数据，无法校验 meta 表。");
+                report.Errors.Add("缺少 Holmas_PlayerLevelTable 数据。");
                 return;
             }
 
-            if (playerRows.Count != 20)
-            {
-                report.Errors.Add($"Holmas_PlayerLevelTable 行数必须为 20，当前为 {playerRows.Count}。");
-                return;
-            }
-
-            if (metaRows.Count != 20)
-            {
-                report.Errors.Add($"Holmas_MetaLevelTable 行数必须为 20，当前为 {metaRows.Count}。");
-                return;
-            }
-
-            if (playerRows.Count != metaRows.Count)
-            {
-                report.Errors.Add($"Holmas_PlayerLevelTable 与 Holmas_MetaLevelTable 行数必须完全一致，当前为 {playerRows.Count} / {metaRows.Count}。");
-                return;
-            }
-
-            var playerLevelLookup = new Dictionary<int, HolmasPlayerLevelSheetRow>();
             var seenPlayerLevels = new HashSet<int>();
             int expectedPlayerLevel = 1;
             for (int i = 0; i < playerRows.Count; i++)
@@ -878,72 +787,18 @@ namespace Holmas.EditorTools
                     return;
                 }
 
-                playerLevelLookup[playerRow.PlayerLevel] = playerRow;
-            }
-
-            var seenLevels = new HashSet<int>();
-            int expectedLevel = 1;
-
-            for (int i = 0; i < metaRows.Count; i++)
-            {
-                var row = metaRows[i];
-                if (row == null)
+                if (playerRow.OfflineRewardPerHour < 0)
                 {
-                    report.Errors.Add($"Holmas_MetaLevelTable 第 {i + 1} 行为空。");
+                    report.Errors.Add($"Holmas_PlayerLevelTable 的 offlineRewardPerHour 不能为负: level={playerRow.PlayerLevel}。");
                     return;
                 }
 
-                if (row.PlayerLevel != expectedLevel)
+                if (playerRow.AdUnlockHours <= 0)
                 {
-                    report.Errors.Add($"Holmas_MetaLevelTable 的 playerLevel 必须从 1 连续递增，当前第 {i + 1} 行是 {row.PlayerLevel}。");
-                    return;
-                }
-
-                expectedLevel++;
-
-                if (!seenLevels.Add(row.PlayerLevel))
-                {
-                    report.Errors.Add($"Holmas_MetaLevelTable 存在重复 playerLevel: {row.PlayerLevel}。");
-                    return;
-                }
-
-                if (!playerLevelLookup.TryGetValue(row.PlayerLevel, out var playerRow))
-                {
-                    report.Errors.Add($"Holmas_MetaLevelTable 找不到对应的玩家等级配置: {row.PlayerLevel}。");
-                    return;
-                }
-
-                if (row.MinExperience < 0)
-                {
-                    report.Errors.Add($"Holmas_MetaLevelTable 的 minExperience 不能为负: level={row.PlayerLevel}。");
-                    return;
-                }
-
-                if (i > 0 && metaRows[i - 1] != null && row.MinExperience <= metaRows[i - 1].MinExperience)
-                {
-                    report.Errors.Add($"Holmas_MetaLevelTable 的 minExperience 必须严格递增: level={row.PlayerLevel}。");
-                    return;
-                }
-
-                if (row.OfflineRewardPerHour < 0)
-                {
-                    report.Errors.Add($"Holmas_MetaLevelTable 的 offlineRewardPerHour 不能为负: level={row.PlayerLevel}。");
-                    return;
-                }
-
-                if (row.AdUnlockHours <= 0)
-                {
-                    report.Errors.Add($"Holmas_MetaLevelTable 的 adUnlockHours 必须大于 0: level={row.PlayerLevel}。");
-                    return;
-                }
-
-                if (playerRow.UpgradeExp != row.MinExperience)
-                {
-                    report.Errors.Add($"Holmas_PlayerLevelTable 与 Holmas_MetaLevelTable 的升级门槛桥接不一致: level={row.PlayerLevel}。");
+                    report.Errors.Add($"Holmas_PlayerLevelTable 的 adUnlockHours 必须大于 0: level={playerRow.PlayerLevel}。");
                     return;
                 }
             }
-
         }
 
         private static void ValidateAgencyBuildingTable(HolmasConfigExportReport report, SheetTable<HolmasAgencyBuildingSheetRow> agencyBuildingTable)
@@ -1177,7 +1032,6 @@ namespace Holmas.EditorTools
             SheetTable<HolmasMapSheetRow> mapTable,
             SheetTable<HolmasTaskSheetRow> taskTable,
             SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable,
-            SheetTable<HolmasMetaLevelSheetRow> metaLevelTable,
             SheetTable<HolmasAgencyBuildingSheetRow> agencyBuildingTable)
         {
             return new HolmasCoreConfigPackage
@@ -1204,15 +1058,17 @@ namespace Holmas.EditorTools
                 {
                     PlayerLevel = row.PlayerLevel,
                     UpgradeExp = row.UpgradeExp,
+                    OfflineRewardPerHour = row.OfflineRewardPerHour,
+                    AdUnlockHours = row.AdUnlockHours,
                     TaskTypeIndices = row.TaskTypeIndices ?? Array.Empty<int>(),
                     TaskTypeWeights = row.TaskTypeWeights ?? Array.Empty<int>(),
                     MapIndices = row.MapIndices ?? Array.Empty<int>(),
                     MapWeights = row.MapWeights ?? Array.Empty<int>(),
                 }).ToArray(),
-                MetaLevels = (metaLevelTable?.Rows ?? new List<HolmasMetaLevelSheetRow>()).Select(row => new HolmasMetaLevelRow
+                MetaLevels = playerLevelTable.Rows.Select(row => new HolmasMetaLevelRow
                 {
                     PlayerLevel = row.PlayerLevel,
-                    MinExperience = row.MinExperience,
+                    MinExperience = row.UpgradeExp,
                     OfflineRewardPerHour = row.OfflineRewardPerHour,
                     AdUnlockHours = row.AdUnlockHours,
                     Notes = row.Notes ?? string.Empty,
@@ -1731,6 +1587,9 @@ namespace Holmas.EditorTools
         public int RowIndex;
         public int PlayerLevel;
         public int UpgradeExp;
+        public int OfflineRewardPerHour;
+        public int AdUnlockHours;
+        public string Notes;
         public string[] TaskTypeIds;
         public int[] TaskTypeIndices;
         public int[] TaskTypeWeights;

@@ -11,7 +11,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public const int CoreMagic = 0x48434F52; // HCOR
         public const int CatMetaMagic = 0x48434154; // HCAT
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 6;
         public const int MinSupportedVersion = 3;
     }
 
@@ -133,6 +133,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public HolmasPlayerLevelRow[] PlayerLevels = Array.Empty<HolmasPlayerLevelRow>();
         public HolmasMetaLevelRow[] MetaLevels = Array.Empty<HolmasMetaLevelRow>();
         public HolmasAgencyBuildingRow[] AgencyBuildings = Array.Empty<HolmasAgencyBuildingRow>();
+
+        public int CodecVersion { get; internal set; } = HolmasConfigBinaryFormat.CurrentVersion;
     }
 
     /// <summary>
@@ -170,6 +172,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public int PlayerLevel;
         public int UpgradeExp;
+        public int OfflineRewardPerHour;
+        public int AdUnlockHours = 24;
         public int[] TaskTypeIndices = Array.Empty<int>();
         public int[] TaskTypeWeights = Array.Empty<int>();
         public int[] MapIndices = Array.Empty<int>();

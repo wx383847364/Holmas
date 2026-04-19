@@ -237,15 +237,15 @@ namespace App.HotUpdate.Holmas.Bootstrap
 
         private static HolmasMetaCatalog CreateMetaCatalog(HolmasConfigCatalogBundle configBundle)
         {
-            if (configBundle?.MetaLevels == null || configBundle.MetaLevels.Count == 0)
+            if (configBundle?.PlayerLevels == null || configBundle.PlayerLevels.Count == 0)
             {
-                throw new InvalidOperationException("HolmasGameBootstrap: 配置包缺少 MetaLevels，无法组装正式成长服务。");
+                throw new InvalidOperationException("HolmasGameBootstrap: 配置包缺少 PlayerLevels 成长参数，无法组装正式成长服务。");
             }
 
-            return new HolmasMetaCatalog(configBundle.MetaLevels.Select(row => new HolmasMetaProgressionDefinition
+            return new HolmasMetaCatalog(configBundle.PlayerLevels.Select(row => new HolmasMetaProgressionDefinition
             {
                 PlayerLevel = row.PlayerLevel,
-                MinExperience = row.MinExperience,
+                MinExperience = row.UpgradeExp,
                 OfflineRewardPerHour = row.OfflineRewardPerHour,
                 AdUnlockHours = row.AdUnlockHours,
             }));

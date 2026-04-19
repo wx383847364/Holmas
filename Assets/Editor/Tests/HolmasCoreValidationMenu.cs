@@ -310,15 +310,15 @@ public static class HolmasCoreValidationMenu
 
     private static int ResolveOfflineRewardPerHour(HolmasConfigCatalogBundle configBundle, int playerLevel)
     {
-        if (configBundle?.MetaLevels == null)
+        if (configBundle?.PlayerLevels == null)
         {
             return 0;
         }
 
         int effectiveLevel = Math.Max(1, playerLevel);
-        HolmasMetaLevelRow metaLevel = configBundle.MetaLevels.FirstOrDefault(
+        HolmasPlayerLevelDefinition playerLevelDefinition = configBundle.PlayerLevels.FirstOrDefault(
             row => row != null && row.PlayerLevel == effectiveLevel);
-        return metaLevel?.OfflineRewardPerHour ?? 0;
+        return playerLevelDefinition?.OfflineRewardPerHour ?? 0;
     }
 
     private static void UpgradePromotions(HolmasGameplayRuntime runtime, IReadOnlyList<HolmasAgencyBuildingDefinition> promotions)

@@ -13,7 +13,7 @@ namespace App.HotUpdate.Holmas.UI
     /// </summary>
     public static class HolmasUiScreenCatalog
     {
-        public static string DefaultStartupScreenId => LoadingScreenRegistration.StartupPageScreenId;
+        public static string DefaultStartupScreenId => MainScreenRegistration.ScreenId;
 
         public static void RegisterAll(UiScreenService screenService)
         {

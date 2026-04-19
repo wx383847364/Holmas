@@ -1,13 +1,12 @@
 {
-    "ExportedAtUtc": "2026-04-19T11:12:59.5657690Z",
-    "Success": false,
-    "BinaryWrittenCount": 0,
+    "ExportedAtUtc": "2026-04-19T13:06:11.3776160Z",
+    "Success": true,
+    "BinaryWrittenCount": 2,
     "SourceFiles": [
         "Assets/Config/Holmas_MapTable.xlsx",
         "Assets/Config/Holmas_CatTable.xlsx",
         "Assets/Config/Holmas_TaskTable.xlsx",
         "Assets/Config/Holmas_PlayerLevelTable.xlsx",
-        "Assets/Config/Holmas_MetaLevelTable.xlsx",
         "Assets/Config/Holmas_AgencyBuildingTable.xlsx"
     ],
     "BundleReports": [
@@ -17,14 +16,13 @@
                 "Holmas_MapTable.xlsx",
                 "Holmas_TaskTable.xlsx",
                 "Holmas_PlayerLevelTable.xlsx",
-                "Holmas_MetaLevelTable.xlsx",
                 "Holmas_AgencyBuildingTable.xlsx"
             ],
             "PreviewJsonPath": "Assets/Config/json/holmas_core_config.json",
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_core_config.bytes",
-            "RowCount": 264,
+            "RowCount": 244,
             "WarningCount": 0,
-            "ErrorCount": 1
+            "ErrorCount": 0
         },
         {
             "BundleName": "cat_meta",
@@ -35,11 +33,9 @@
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_cat_meta.bytes",
             "RowCount": 49,
             "WarningCount": 0,
-            "ErrorCount": 1
+            "ErrorCount": 0
         }
     ],
-    "Errors": [
-        "Holmas_MetaLevelTable 行数必须为 20，当前为 100。"
-    ],
+    "Errors": [],
     "Warnings": []
 }

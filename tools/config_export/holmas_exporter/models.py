@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 CORE_MAGIC = 0x48434F52
 CAT_META_MAGIC = 0x48434154
-CURRENT_VERSION = 4
+CURRENT_VERSION = 6
 
 
 @dataclass
@@ -53,22 +53,15 @@ class PlayerLevelSheetRow:
     row_index: int = 0
     player_level: int = 0
     upgrade_exp: int = 0
+    offline_reward_per_hour: int = 0
+    ad_unlock_hours: int = 0
+    notes: str = ""
     task_type_ids: list[str] = field(default_factory=list)
     task_type_indices: list[int] = field(default_factory=list)
     task_type_weights: list[int] = field(default_factory=list)
     map_ids: list[str] = field(default_factory=list)
     map_indices: list[int] = field(default_factory=list)
     map_weights: list[int] = field(default_factory=list)
-
-
-@dataclass
-class MetaLevelSheetRow:
-    row_index: int = 0
-    player_level: int = 0
-    min_experience: int = 0
-    offline_reward_per_hour: int = 0
-    ad_unlock_hours: int = 0
-    notes: str = ""
 
 
 @dataclass
@@ -120,6 +113,8 @@ class TaskRow:
 class PlayerLevelRow:
     player_level: int = 0
     upgrade_exp: int = 0
+    offline_reward_per_hour: int = 0
+    ad_unlock_hours: int = 24
     task_type_indices: list[int] = field(default_factory=list)
     task_type_weights: list[int] = field(default_factory=list)
     map_indices: list[int] = field(default_factory=list)

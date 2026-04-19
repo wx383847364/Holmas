@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using App.HotUpdate.Holmas.UI.Binding;
+using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
 using UnityEngine;
@@ -9,9 +12,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 {
     public sealed class MainView : MonoBehaviour
     {
+        private static readonly string[] TaskSlotNodeNames =
+        {
+            "Task1",
+            "Task2",
+            "Task3",
+            "Task5",
+        };
+
+        private readonly List<MainTaskSlotView> _taskSlotViews = new List<MainTaskSlotView>();
+
         private MainBindings _bindings;
         private UnityAction _currentStartAction;
         private UnityAction _currentPromotionAction;
+        private Action<int> _currentTaskSlotAction;
 
         public void EnsureBindingSurface()
         {
@@ -82,6 +96,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 promotionButton,
                 MainBindings.ButtonClickEvent,
                 MainBindings.PromotionButtonNodePath);
+
+            EnsureTaskSlotViews();
         }
 
         public void Bind(MainBindings bindings)
@@ -129,6 +145,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
         }
 
+        public void SetTaskSlotAction(Action<int> action)
+        {
+            _currentTaskSlotAction = action;
+        }
+
         public void Render(MainVm viewModel)
         {
             if (viewModel == null)
@@ -167,6 +188,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 _bindings.PromotionButton.interactable = viewModel.PromotionButtonEnabled;
                 SetButtonLabel(_bindings.PromotionButton, viewModel.PromotionButtonLabel);
             }
+
+            RenderTaskSlots(viewModel.TaskItems ?? Array.Empty<MainTaskItemVm>());
         }
 
         private void EnsureFallbackBackground()
@@ -183,6 +206,173 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             background.color = new Color(0.12f, 0.17f, 0.22f, 0.95f);
+        }
+
+        private void EnsureTaskSlotViews()
+        {
+            if (_taskSlotViews.Count > 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < TaskSlotNodeNames.Length; i++)
+            {
+                Transform slotTransform = transform.Find(TaskSlotNodeNames[i]) ?? FindFirstTransformByName(TaskSlotNodeNames[i]);
+                if (slotTransform == null)
+                {
+                    continue;
+                }
+
+                RectTransform slotRoot = slotTransform as RectTransform;
+                if (slotRoot == null)
+                {
+                    continue;
+                }
+
+                Image background = slotRoot.GetComponent<Image>();
+                if (background == null)
+                {
+                    background = slotRoot.gameObject.AddComponent<Image>();
+                }
+
+                background.enabled = true;
+                Button button = slotRoot.GetComponent<Button>();
+                if (button == null)
+                {
+                    button = slotRoot.gameObject.AddComponent<Button>();
+                }
+
+                int slotIndex = i;
+                button.onClick.AddListener(() => _currentTaskSlotAction?.Invoke(slotIndex));
+
+                var view = new MainTaskSlotView
+                {
+                    SlotIndex = slotIndex,
+                    Root = slotRoot,
+                    Background = background,
+                    Button = button,
+                    ProgressLabel = FindFirstDescendantByName<TextMeshProUGUI>(slotRoot, "Count")
+                                    ?? FindFirstDescendantByName<TMP_Text>(slotRoot, "Count")
+                                    ?? GetOrCreateRuntimeText(
+                                        slotRoot,
+                                        "RuntimeTaskProgress",
+                                        new Vector2(0.18f, 0.5f),
+                                        new Vector2(0.82f, 0.5f),
+                                        new Vector2(0.5f, 0.5f),
+                                        new Vector2(0f, 8f),
+                                        new Vector2(0f, 28f),
+                                        20f,
+                                        TextAlignmentOptions.Center),
+                    ProgressSlider = FindFirstDescendantByName<Slider>(slotRoot, "Slider"),
+                    RewardIcon = FindFirstDescendantByName<Image>(slotRoot, "RewardIcon"),
+                    CatIcon = FindFirstDescendantByName<Image>(slotRoot, "CatIcon"),
+                    TitleLabel = GetOrCreateRuntimeText(
+                        slotRoot,
+                        "RuntimeTaskTitle",
+                        new Vector2(0.08f, 1f),
+                        new Vector2(0.92f, 1f),
+                        new Vector2(0.5f, 1f),
+                        new Vector2(0f, -10f),
+                        new Vector2(0f, 34f),
+                        18f,
+                        TextAlignmentOptions.Center),
+                    RewardLabel = GetOrCreateRuntimeText(
+                        slotRoot,
+                        "RuntimeTaskReward",
+                        new Vector2(0.08f, 0f),
+                        new Vector2(0.92f, 0f),
+                        new Vector2(0.5f, 0f),
+                        new Vector2(0f, 14f),
+                        new Vector2(0f, 34f),
+                        16f,
+                        TextAlignmentOptions.Center),
+                };
+
+                _taskSlotViews.Add(view);
+            }
+        }
+
+        private void RenderTaskSlots(MainTaskItemVm[] items)
+        {
+            EnsureTaskSlotViews();
+            for (int i = 0; i < _taskSlotViews.Count; i++)
+            {
+                MainTaskItemVm item = i < items.Length ? items[i] : null;
+                RenderTaskSlot(_taskSlotViews[i], item);
+            }
+        }
+
+        private void RenderTaskSlot(MainTaskSlotView slotView, MainTaskItemVm item)
+        {
+            if (slotView == null || slotView.Root == null)
+            {
+                return;
+            }
+
+            if (item == null)
+            {
+                ApplyTaskSlotVisual(slotView, "未使用", string.Empty, "空位", 0f, false, false, false);
+                return;
+            }
+
+            ApplyTaskSlotVisual(
+                slotView,
+                item.Title,
+                item.Progress,
+                item.Reward,
+                item.ProgressNormalized,
+                item.IsLocked,
+                item.IsClaimable,
+                item.ButtonEnabled);
+        }
+
+        private static void ApplyTaskSlotVisual(
+            MainTaskSlotView slotView,
+            string title,
+            string progress,
+            string reward,
+            float progressValue,
+            bool isLocked,
+            bool isClaimable,
+            bool buttonEnabled)
+        {
+            if (slotView.Background != null)
+            {
+                slotView.Background.color = isLocked
+                    ? new Color(0.32f, 0.33f, 0.37f, 0.9f)
+                    : (isClaimable
+                        ? new Color(0.93f, 0.58f, 0.22f, 0.95f)
+                        : new Color(0.22f, 0.24f, 0.31f, 0.88f));
+            }
+
+            if (slotView.Button != null)
+            {
+                slotView.Button.interactable = buttonEnabled;
+            }
+
+            SetTmpText(slotView.TitleLabel, title);
+            SetTmpText(slotView.ProgressLabel, progress);
+            SetTmpText(slotView.RewardLabel, reward);
+
+            if (slotView.ProgressSlider != null)
+            {
+                slotView.ProgressSlider.value = Mathf.Clamp01(progressValue);
+                slotView.ProgressSlider.interactable = false;
+            }
+
+            if (slotView.CatIcon != null)
+            {
+                slotView.CatIcon.color = isLocked
+                    ? new Color(1f, 1f, 1f, 0.25f)
+                    : new Color(1f, 1f, 1f, 1f);
+            }
+
+            if (slotView.RewardIcon != null)
+            {
+                slotView.RewardIcon.color = isClaimable
+                    ? new Color(1f, 1f, 1f, 1f)
+                    : new Color(1f, 1f, 1f, 0.72f);
+            }
         }
 
         private RectTransform GetOrCreateOverlayRoot()
@@ -374,7 +564,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private T FindFirstDescendantByName<T>(string objectName) where T : Component
         {
-            Transform[] all = GetComponentsInChildren<Transform>(true);
+            return FindFirstDescendantByName<T>(transform, objectName);
+        }
+
+        private static T FindFirstDescendantByName<T>(Transform root, string objectName) where T : Component
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            Transform[] all = root.GetComponentsInChildren<Transform>(true);
             for (int i = 0; i < all.Length; i++)
             {
                 if (all[i] != null && all[i].name == objectName)
@@ -388,6 +588,31 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             return null;
+        }
+
+        private Transform FindFirstTransformByName(string objectName)
+        {
+            Transform[] all = GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i] != null && all[i].name == objectName)
+                {
+                    return all[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static void SetTmpText(TMP_Text text, string value)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            RuntimeTmpFontResolver.EnsureFontSupportsText(text, value);
+            text.text = value ?? string.Empty;
         }
 
         private static GameObject GetOrCreateChild(Transform parent, string objectName)
@@ -426,6 +651,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             rectTransform.anchoredPosition = anchoredPosition;
             rectTransform.sizeDelta = sizeDelta;
             rectTransform.localScale = Vector3.one;
+        }
+
+        private sealed class MainTaskSlotView
+        {
+            public int SlotIndex;
+            public RectTransform Root;
+            public Image Background;
+            public Button Button;
+            public TMP_Text TitleLabel;
+            public TMP_Text ProgressLabel;
+            public TMP_Text RewardLabel;
+            public Slider ProgressSlider;
+            public Image RewardIcon;
+            public Image CatIcon;
         }
     }
 }

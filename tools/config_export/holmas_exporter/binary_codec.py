@@ -14,7 +14,8 @@ def write_core_package(package: CoreConfigPackage) -> bytes:
     _write_map_rows(stream, package.maps)
     _write_task_rows(stream, package.tasks)
     _write_player_level_rows(stream, package.player_levels)
-    _write_meta_level_rows(stream, package.meta_levels)
+    if CURRENT_VERSION < 6:
+        _write_meta_level_rows(stream, package.meta_levels)
     _write_agency_building_rows(stream, package.agency_buildings)
     return stream.getvalue()
 
@@ -65,6 +66,8 @@ def _write_player_level_rows(stream: BytesIO, rows) -> None:
     for row in rows:
         _write_int32(stream, row.player_level)
         _write_int32(stream, row.upgrade_exp)
+        _write_int32(stream, row.offline_reward_per_hour)
+        _write_int32(stream, row.ad_unlock_hours)
         _write_int_array(stream, row.task_type_indices)
         _write_int_array(stream, row.task_type_weights)
         _write_int_array(stream, row.map_indices)

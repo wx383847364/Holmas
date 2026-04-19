@@ -1,5 +1,5 @@
 {
-    "Version": 4,
+    "Version": 6,
     "Maps": [
         {
             "MapId": "map_001",
@@ -802,6 +802,8 @@
         {
             "PlayerLevel": 1,
             "UpgradeExp": 0,
+            "OfflineRewardPerHour": 1200,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 0,
                 1,
@@ -824,6 +826,8 @@
         {
             "PlayerLevel": 2,
             "UpgradeExp": 9,
+            "OfflineRewardPerHour": 1440,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 0,
                 1,
@@ -846,6 +850,8 @@
         {
             "PlayerLevel": 3,
             "UpgradeExp": 21,
+            "OfflineRewardPerHour": 1680,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 0,
                 1,
@@ -870,6 +876,8 @@
         {
             "PlayerLevel": 4,
             "UpgradeExp": 36,
+            "OfflineRewardPerHour": 1920,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 0,
                 1,
@@ -894,6 +902,8 @@
         {
             "PlayerLevel": 5,
             "UpgradeExp": 51,
+            "OfflineRewardPerHour": 2160,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 1,
                 4,
@@ -922,6 +932,8 @@
         {
             "PlayerLevel": 6,
             "UpgradeExp": 66,
+            "OfflineRewardPerHour": 4200,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 4,
                 5,
@@ -950,6 +962,8 @@
         {
             "PlayerLevel": 7,
             "UpgradeExp": 81,
+            "OfflineRewardPerHour": 4560,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 4,
                 5,
@@ -978,6 +992,8 @@
         {
             "PlayerLevel": 8,
             "UpgradeExp": 96,
+            "OfflineRewardPerHour": 4920,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 4,
                 5,
@@ -1006,6 +1022,8 @@
         {
             "PlayerLevel": 9,
             "UpgradeExp": 111,
+            "OfflineRewardPerHour": 5280,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 5,
                 8,
@@ -1034,6 +1052,8 @@
         {
             "PlayerLevel": 10,
             "UpgradeExp": 126,
+            "OfflineRewardPerHour": 5640,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 8,
                 9,
@@ -1062,6 +1082,8 @@
         {
             "PlayerLevel": 11,
             "UpgradeExp": 141,
+            "OfflineRewardPerHour": 6000,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 8,
                 9,
@@ -1090,6 +1112,8 @@
         {
             "PlayerLevel": 12,
             "UpgradeExp": 156,
+            "OfflineRewardPerHour": 6360,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 8,
                 9,
@@ -1118,6 +1142,8 @@
         {
             "PlayerLevel": 13,
             "UpgradeExp": 171,
+            "OfflineRewardPerHour": 6720,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 9,
                 12,
@@ -1146,6 +1172,8 @@
         {
             "PlayerLevel": 14,
             "UpgradeExp": 186,
+            "OfflineRewardPerHour": 7080,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 12,
                 13,
@@ -1174,6 +1202,8 @@
         {
             "PlayerLevel": 15,
             "UpgradeExp": 201,
+            "OfflineRewardPerHour": 7440,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 12,
                 13,
@@ -1202,6 +1232,8 @@
         {
             "PlayerLevel": 16,
             "UpgradeExp": 216,
+            "OfflineRewardPerHour": 7800,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 12,
                 13,
@@ -1230,6 +1262,8 @@
         {
             "PlayerLevel": 17,
             "UpgradeExp": 231,
+            "OfflineRewardPerHour": 8160,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 13,
                 16,
@@ -1258,6 +1292,8 @@
         {
             "PlayerLevel": 18,
             "UpgradeExp": 246,
+            "OfflineRewardPerHour": 8520,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 16,
                 17,
@@ -1286,6 +1322,8 @@
         {
             "PlayerLevel": 19,
             "UpgradeExp": 261,
+            "OfflineRewardPerHour": 8880,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 16,
                 17,
@@ -1314,6 +1352,2408 @@
         {
             "PlayerLevel": 20,
             "UpgradeExp": 276,
+            "OfflineRewardPerHour": 9240,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 21,
+            "UpgradeExp": 291,
+            "OfflineRewardPerHour": 15000,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 22,
+            "UpgradeExp": 306,
+            "OfflineRewardPerHour": 15360,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 23,
+            "UpgradeExp": 321,
+            "OfflineRewardPerHour": 15720,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 24,
+            "UpgradeExp": 336,
+            "OfflineRewardPerHour": 16080,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 25,
+            "UpgradeExp": 351,
+            "OfflineRewardPerHour": 16440,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 26,
+            "UpgradeExp": 366,
+            "OfflineRewardPerHour": 16800,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 27,
+            "UpgradeExp": 381,
+            "OfflineRewardPerHour": 17160,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 28,
+            "UpgradeExp": 396,
+            "OfflineRewardPerHour": 17520,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 29,
+            "UpgradeExp": 411,
+            "OfflineRewardPerHour": 17880,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 30,
+            "UpgradeExp": 426,
+            "OfflineRewardPerHour": 18240,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 31,
+            "UpgradeExp": 441,
+            "OfflineRewardPerHour": 18600,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 32,
+            "UpgradeExp": 456,
+            "OfflineRewardPerHour": 18960,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 33,
+            "UpgradeExp": 471,
+            "OfflineRewardPerHour": 19320,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 34,
+            "UpgradeExp": 486,
+            "OfflineRewardPerHour": 19680,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 35,
+            "UpgradeExp": 501,
+            "OfflineRewardPerHour": 20040,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 36,
+            "UpgradeExp": 516,
+            "OfflineRewardPerHour": 20400,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 37,
+            "UpgradeExp": 531,
+            "OfflineRewardPerHour": 20760,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 38,
+            "UpgradeExp": 546,
+            "OfflineRewardPerHour": 21120,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 39,
+            "UpgradeExp": 561,
+            "OfflineRewardPerHour": 21480,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 40,
+            "UpgradeExp": 576,
+            "OfflineRewardPerHour": 21840,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 41,
+            "UpgradeExp": 591,
+            "OfflineRewardPerHour": 41400,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 42,
+            "UpgradeExp": 606,
+            "OfflineRewardPerHour": 42000,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 43,
+            "UpgradeExp": 621,
+            "OfflineRewardPerHour": 42600,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 44,
+            "UpgradeExp": 636,
+            "OfflineRewardPerHour": 43200,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 45,
+            "UpgradeExp": 651,
+            "OfflineRewardPerHour": 43800,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 46,
+            "UpgradeExp": 666,
+            "OfflineRewardPerHour": 44400,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 47,
+            "UpgradeExp": 681,
+            "OfflineRewardPerHour": 45000,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 48,
+            "UpgradeExp": 696,
+            "OfflineRewardPerHour": 45600,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 49,
+            "UpgradeExp": 711,
+            "OfflineRewardPerHour": 46200,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 50,
+            "UpgradeExp": 726,
+            "OfflineRewardPerHour": 46800,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 51,
+            "UpgradeExp": 741,
+            "OfflineRewardPerHour": 47400,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 52,
+            "UpgradeExp": 756,
+            "OfflineRewardPerHour": 48000,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 53,
+            "UpgradeExp": 771,
+            "OfflineRewardPerHour": 48600,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 54,
+            "UpgradeExp": 786,
+            "OfflineRewardPerHour": 49200,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 55,
+            "UpgradeExp": 801,
+            "OfflineRewardPerHour": 49800,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 56,
+            "UpgradeExp": 816,
+            "OfflineRewardPerHour": 50400,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 57,
+            "UpgradeExp": 831,
+            "OfflineRewardPerHour": 51000,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 58,
+            "UpgradeExp": 846,
+            "OfflineRewardPerHour": 51600,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 59,
+            "UpgradeExp": 861,
+            "OfflineRewardPerHour": 52200,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 60,
+            "UpgradeExp": 876,
+            "OfflineRewardPerHour": 52800,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 61,
+            "UpgradeExp": 891,
+            "OfflineRewardPerHour": 72600,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 62,
+            "UpgradeExp": 906,
+            "OfflineRewardPerHour": 73320,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 63,
+            "UpgradeExp": 921,
+            "OfflineRewardPerHour": 74040,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 64,
+            "UpgradeExp": 936,
+            "OfflineRewardPerHour": 74760,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 65,
+            "UpgradeExp": 951,
+            "OfflineRewardPerHour": 75480,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 66,
+            "UpgradeExp": 966,
+            "OfflineRewardPerHour": 76200,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 67,
+            "UpgradeExp": 981,
+            "OfflineRewardPerHour": 76920,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 68,
+            "UpgradeExp": 996,
+            "OfflineRewardPerHour": 77640,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 69,
+            "UpgradeExp": 1011,
+            "OfflineRewardPerHour": 78360,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 70,
+            "UpgradeExp": 1026,
+            "OfflineRewardPerHour": 79080,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 71,
+            "UpgradeExp": 1041,
+            "OfflineRewardPerHour": 79800,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 72,
+            "UpgradeExp": 1056,
+            "OfflineRewardPerHour": 80520,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 73,
+            "UpgradeExp": 1071,
+            "OfflineRewardPerHour": 81240,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 74,
+            "UpgradeExp": 1086,
+            "OfflineRewardPerHour": 81960,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 75,
+            "UpgradeExp": 1101,
+            "OfflineRewardPerHour": 82680,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 76,
+            "UpgradeExp": 1116,
+            "OfflineRewardPerHour": 83400,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 77,
+            "UpgradeExp": 1131,
+            "OfflineRewardPerHour": 84120,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 78,
+            "UpgradeExp": 1146,
+            "OfflineRewardPerHour": 84840,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 79,
+            "UpgradeExp": 1161,
+            "OfflineRewardPerHour": 85560,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 80,
+            "UpgradeExp": 1176,
+            "OfflineRewardPerHour": 86280,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 81,
+            "UpgradeExp": 1191,
+            "OfflineRewardPerHour": 87000,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 82,
+            "UpgradeExp": 1206,
+            "OfflineRewardPerHour": 87720,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 83,
+            "UpgradeExp": 1221,
+            "OfflineRewardPerHour": 88440,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 84,
+            "UpgradeExp": 1236,
+            "OfflineRewardPerHour": 89160,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 85,
+            "UpgradeExp": 1251,
+            "OfflineRewardPerHour": 89880,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 86,
+            "UpgradeExp": 1266,
+            "OfflineRewardPerHour": 90600,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 87,
+            "UpgradeExp": 1281,
+            "OfflineRewardPerHour": 91320,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 88,
+            "UpgradeExp": 1296,
+            "OfflineRewardPerHour": 92040,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 89,
+            "UpgradeExp": 1311,
+            "OfflineRewardPerHour": 92760,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 90,
+            "UpgradeExp": 1326,
+            "OfflineRewardPerHour": 93480,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 91,
+            "UpgradeExp": 1341,
+            "OfflineRewardPerHour": 94200,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 92,
+            "UpgradeExp": 1356,
+            "OfflineRewardPerHour": 94920,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 93,
+            "UpgradeExp": 1371,
+            "OfflineRewardPerHour": 95640,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 94,
+            "UpgradeExp": 1386,
+            "OfflineRewardPerHour": 96360,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 95,
+            "UpgradeExp": 1401,
+            "OfflineRewardPerHour": 97080,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 96,
+            "UpgradeExp": 1416,
+            "OfflineRewardPerHour": 97800,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 97,
+            "UpgradeExp": 1431,
+            "OfflineRewardPerHour": 98520,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 98,
+            "UpgradeExp": 1446,
+            "OfflineRewardPerHour": 99240,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 99,
+            "UpgradeExp": 1461,
+            "OfflineRewardPerHour": 99960,
+            "AdUnlockHours": 24,
+            "TaskTypeIndices": [
+                16,
+                17,
+                18,
+                19,
+                14
+            ],
+            "TaskTypeWeights": [
+                10,
+                20,
+                30,
+                30,
+                10
+            ],
+            "MapIndices": [
+                0,
+                1,
+                2
+            ],
+            "MapWeights": [
+                5,
+                20,
+                75
+            ]
+        },
+        {
+            "PlayerLevel": 100,
+            "UpgradeExp": 1476,
+            "OfflineRewardPerHour": 100680,
+            "AdUnlockHours": 24,
             "TaskTypeIndices": [
                 16,
                 17,

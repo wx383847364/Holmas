@@ -2,9 +2,9 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
-using App.HotUpdate.Holmas.UI.Screens.AgencyMain;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
+using App.HotUpdate.Holmas.UI.Screens.Main;
 
 namespace App.HotUpdate.Holmas.UI.Core
 {
@@ -26,7 +26,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         /// <summary>
         /// 启动主链：
-        /// LoadingPage -> AgencyMainPage。
+        /// LoadingPage -> MainPage。
         /// </summary>
         public async Task EnterStartupAsync()
         {
@@ -48,8 +48,8 @@ namespace App.HotUpdate.Holmas.UI.Core
                     string startupStatus = PrepareStartupHomeStatus();
 
                     // 首页显式预加载，避免启动阶段把 loading 直接挤没。
-                    await _root.ScreenService.PreloadAsync(AgencyMainScreenRegistration.ScreenId);
-                    await _root.ScreenService.OpenPageAsync(AgencyMainScreenRegistration.ScreenId, startupStatus);
+                    await _root.ScreenService.PreloadAsync(MainScreenRegistration.ScreenId);
+                    await _root.ScreenService.OpenPageAsync(MainScreenRegistration.ScreenId, startupStatus);
                     await _root.ScreenService.CloseAsync(LoadingScreenRegistration.StartupPageScreenId);
                     _startupCompleted = true;
                 }
@@ -116,7 +116,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         /// <summary>
         /// 从首页进入棋盘：
-        /// AgencyMainPage -> LoadingOverlay -> BattlePage。
+        /// MainPage -> LoadingOverlay -> BattlePage。
         /// </summary>
         public async Task StartBattleAsync()
         {
@@ -177,7 +177,7 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         /// <summary>
         /// 从棋盘返回首页：
-        /// BattlePage -> LoadingOverlay -> AgencyMainPage。
+        /// BattlePage -> LoadingOverlay -> MainPage。
         /// </summary>
         public async Task ExitBattleToMainAsync()
         {
@@ -199,11 +199,11 @@ namespace App.HotUpdate.Holmas.UI.Core
                         await _root.ScreenService.CloseAsync(BattleScreenRegistration.ScreenId);
                     }
 
-                    if (!_root.ScreenService.IsOpen(AgencyMainScreenRegistration.ScreenId) ||
+                    if (!_root.ScreenService.IsOpen(MainScreenRegistration.ScreenId) ||
                         _root.ScreenService.NavigationState.CurrentPage == null)
                     {
                         await _root.ScreenService.OpenPageAsync(
-                            AgencyMainScreenRegistration.ScreenId,
+                            MainScreenRegistration.ScreenId,
                             shouldClearSession ? "已返回侦探社，当前棋盘已结算。" : "已返回侦探社，可继续当前棋盘。");
                     }
 

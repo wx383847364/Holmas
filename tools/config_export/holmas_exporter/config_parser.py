@@ -22,7 +22,6 @@ from .models import (
     MapRow,
     MapSheetRow,
     MetaLevelRow,
-    MetaLevelSheetRow,
     PlayerLevelRow,
     PlayerLevelSheetRow,
     TaskRow,
@@ -36,7 +35,6 @@ MAP_TABLE_NAME = "Holmas_MapTable.xlsx"
 CAT_TABLE_NAME = "Holmas_CatTable.xlsx"
 TASK_TABLE_NAME = "Holmas_TaskTable.xlsx"
 PLAYER_LEVEL_TABLE_NAME = "Holmas_PlayerLevelTable.xlsx"
-META_LEVEL_TABLE_NAME = "Holmas_MetaLevelTable.xlsx"
 AGENCY_BUILDING_TABLE_NAME = "Holmas_AgencyBuildingTable.xlsx"
 
 CORE_BINARY_NAME = "holmas_core_config.bytes"
@@ -74,7 +72,6 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
             _display_path(repo_root, config_root / CAT_TABLE_NAME),
             _display_path(repo_root, config_root / TASK_TABLE_NAME),
             _display_path(repo_root, config_root / PLAYER_LEVEL_TABLE_NAME),
-            _display_path(repo_root, config_root / META_LEVEL_TABLE_NAME),
             _display_path(repo_root, config_root / AGENCY_BUILDING_TABLE_NAME),
         ],
     )
@@ -83,7 +80,6 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
     cat_rows = _load_cat_table(report, repo_root, config_root)
     task_rows = _load_task_table(report, repo_root, config_root)
     player_level_rows = _load_player_level_table(report, repo_root, config_root)
-    meta_level_rows = _load_meta_level_table(report, repo_root, config_root)
     agency_building_rows = _load_agency_building_table(report, repo_root, config_root)
 
     cat_lookup = _build_alias_lookup((row.cat_id, index) for index, row in enumerate(cat_rows))
@@ -94,11 +90,10 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
     _normalize_cat_rows(report, cat_rows, cat_lookup)
     _normalize_task_rows(report, task_rows, cat_lookup, task_lookup)
     _normalize_player_level_rows(report, player_level_rows, task_lookup, map_lookup)
-    _bridge_upgrade_exp_from_meta_levels(report, player_level_rows, meta_level_rows)
-    _validate_meta_level_table(report, player_level_rows, meta_level_rows)
+    _validate_player_level_table(report, player_level_rows)
     _validate_agency_building_table(report, agency_building_rows)
 
-    core_package = _build_core_package(map_rows, task_rows, player_level_rows, meta_level_rows, agency_building_rows)
+    core_package = _build_core_package(map_rows, task_rows, player_level_rows, agency_building_rows)
     cat_package = _build_cat_package(cat_rows)
 
     report.bundle_reports = [
@@ -108,12 +103,11 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
                 MAP_TABLE_NAME,
                 TASK_TABLE_NAME,
                 PLAYER_LEVEL_TABLE_NAME,
-                META_LEVEL_TABLE_NAME,
                 AGENCY_BUILDING_TABLE_NAME,
             ],
             preview_json_path=_display_path(repo_root, json_root / CORE_PREVIEW_NAME),
             binary_path=_display_path(repo_root, binary_root / CORE_BINARY_NAME),
-            row_count=len(map_rows) + len(task_rows) + len(player_level_rows) + len(meta_level_rows) + len(agency_building_rows),
+            row_count=len(map_rows) + len(task_rows) + len(player_level_rows) + len(agency_building_rows),
             warning_count=report.warning_count,
             error_count=report.error_count,
         ),
@@ -178,15 +172,6 @@ def _load_player_level_table(report: ExportReport, repo_root: Path, config_root:
         repo_root,
         config_root / PLAYER_LEVEL_TABLE_NAME,
         _parse_player_levels,
-    )
-
-
-def _load_meta_level_table(report: ExportReport, repo_root: Path, config_root: Path) -> list[MetaLevelSheetRow]:
-    return _load_sheet(
-        report,
-        repo_root,
-        config_root / META_LEVEL_TABLE_NAME,
-        _parse_meta_levels,
     )
 
 
@@ -391,10 +376,21 @@ def _parse_tasks(report: ExportReport, source_path: str, rows: list[list[str]], 
 
 def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list[str]], header_map: dict[str, int]) -> list[PlayerLevelSheetRow]:
     player_level_col = _require_column(report, source_path, header_map, "playerLevel")
+    upgrade_exp_col = _get_optional_column(header_map, "upgradeExp")
+    min_experience_col = _get_optional_column(header_map, "minExperience")
+    if upgrade_exp_col < 0:
+        upgrade_exp_col = min_experience_col
+    offline_reward_per_hour_col = _require_column(report, source_path, header_map, "offlineRewardPerHour")
+    ad_unlock_hours_col = _require_column(report, source_path, header_map, "adUnlockHours")
+    notes_col = _get_optional_column(header_map, "notes")
     task_type_ids_col = _require_column(report, source_path, header_map, "taskTypeIds")
     task_type_weights_col = _require_column(report, source_path, header_map, "taskTypeWeights")
     map_ids_col = _require_column(report, source_path, header_map, "mapIds")
     map_weights_col = _require_column(report, source_path, header_map, "mapWeights")
+
+    if upgrade_exp_col < 0:
+        report.errors.append(f"{source_path}: 缺少 upgradeExp/minExperience 列。Holmas_PlayerLevelTable 合并成长字段后必须提供升级门槛列。")
+        return []
 
     items: list[PlayerLevelSheetRow] = []
     for row_index in range(2, len(rows)):
@@ -403,10 +399,17 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
             continue
 
         player_level, level_ok = _try_parse_int(_get_cell(row, player_level_col))
+        upgrade_exp, upgrade_exp_ok = _try_parse_int(_get_cell(row, upgrade_exp_col))
+        min_experience, min_experience_ok = _try_parse_int(_get_cell(row, min_experience_col))
+        offline_reward_per_hour, offline_ok = _try_parse_int(_get_cell(row, offline_reward_per_hour_col))
+        ad_unlock_hours, ad_ok = _try_parse_int(_get_cell(row, ad_unlock_hours_col))
         item = PlayerLevelSheetRow(
             row_index=len(items),
             player_level=player_level,
-            upgrade_exp=0,
+            upgrade_exp=upgrade_exp,
+            offline_reward_per_hour=offline_reward_per_hour,
+            ad_unlock_hours=ad_unlock_hours,
+            notes=_get_cell(row, notes_col),
             task_type_ids=_split_array(_get_cell(row, task_type_ids_col)),
             task_type_weights=_parse_int_array_strict(_get_cell(row, task_type_weights_col), source_path, row_index + 1, report),
             map_ids=_split_array(_get_cell(row, map_ids_col)),
@@ -415,6 +418,22 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
 
         if not level_ok:
             report.errors.append(f"{source_path} 第 {row_index + 1} 行 playerLevel 无法解析。")
+            continue
+        if not upgrade_exp_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 upgradeExp 无法解析。")
+            continue
+        if upgrade_exp_col >= 0 and min_experience_col >= 0:
+            if not min_experience_ok:
+                report.errors.append(f"{source_path} 第 {row_index + 1} 行 minExperience 无法解析。")
+                continue
+            if upgrade_exp != min_experience:
+                report.errors.append(f"{source_path} 第 {row_index + 1} 行 upgradeExp 与 minExperience 不一致。")
+                continue
+        if not offline_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 offlineRewardPerHour 无法解析。")
+            continue
+        if not ad_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 adUnlockHours 无法解析。")
             continue
         if not item.task_type_ids:
             report.errors.append(f"{source_path} 第 {row_index + 1} 行 taskTypeIds 为空。")
@@ -427,51 +446,6 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
             continue
         if len(item.map_ids) != len(item.map_weights):
             report.errors.append(f"{source_path} 第 {row_index + 1} 行 mapIds 与 mapWeights 长度不一致。")
-            continue
-
-        items.append(item)
-
-    return items
-
-
-def _parse_meta_levels(report: ExportReport, source_path: str, rows: list[list[str]], header_map: dict[str, int]) -> list[MetaLevelSheetRow]:
-    player_level_col = _require_column(report, source_path, header_map, "playerLevel")
-    min_experience_col = _require_column(report, source_path, header_map, "minExperience")
-    offline_reward_per_hour_col = _require_column(report, source_path, header_map, "offlineRewardPerHour")
-    ad_unlock_hours_col = _require_column(report, source_path, header_map, "adUnlockHours")
-    notes_col = _get_optional_column(header_map, "notes")
-
-    items: list[MetaLevelSheetRow] = []
-    for row_index in range(2, len(rows)):
-        row = rows[row_index]
-        if _is_blank_row(row):
-            continue
-
-        player_level, level_ok = _try_parse_int(_get_cell(row, player_level_col))
-        min_experience, min_experience_ok = _try_parse_int(_get_cell(row, min_experience_col))
-        offline_reward_per_hour, offline_ok = _try_parse_int(_get_cell(row, offline_reward_per_hour_col))
-        ad_unlock_hours, ad_ok = _try_parse_int(_get_cell(row, ad_unlock_hours_col))
-
-        item = MetaLevelSheetRow(
-            row_index=len(items),
-            player_level=player_level,
-            min_experience=min_experience,
-            offline_reward_per_hour=offline_reward_per_hour,
-            ad_unlock_hours=ad_unlock_hours,
-            notes=_get_cell(row, notes_col),
-        )
-
-        if not level_ok:
-            report.errors.append(f"{source_path} 第 {row_index + 1} 行 playerLevel 无法解析。")
-            continue
-        if not min_experience_ok:
-            report.errors.append(f"{source_path} 第 {row_index + 1} 行 minExperience 无法解析。")
-            continue
-        if not offline_ok:
-            report.errors.append(f"{source_path} 第 {row_index + 1} 行 offlineRewardPerHour 无法解析。")
-            continue
-        if not ad_ok:
-            report.errors.append(f"{source_path} 第 {row_index + 1} 行 adUnlockHours 无法解析。")
             continue
 
         items.append(item)
@@ -594,34 +568,11 @@ def _normalize_player_level_rows(report: ExportReport, rows: list[PlayerLevelShe
         report.errors.append(f"玩家等级表中存在未解析地图引用: {'; '.join(sorted(unresolved_maps))}。")
 
 
-def _bridge_upgrade_exp_from_meta_levels(report: ExportReport, player_rows: list[PlayerLevelSheetRow], meta_rows: list[MetaLevelSheetRow]) -> None:
-    meta_rows_by_level = {row.player_level: row for row in meta_rows if row.player_level > 0}
-    for player_row in player_rows:
-        meta_row = meta_rows_by_level.get(player_row.player_level)
-        if meta_row is None:
-            report.warnings.append(f"缺少玩家等级 {player_row.player_level} 对应的 MetaLevel，无法桥接 upgradeExp。")
-            continue
-        player_row.upgrade_exp = meta_row.min_experience
-
-
-def _validate_meta_level_table(report: ExportReport, player_rows: list[PlayerLevelSheetRow], meta_rows: list[MetaLevelSheetRow]) -> None:
-    if not meta_rows:
-        report.errors.append("缺少 Holmas_MetaLevelTable 数据。")
-        return
+def _validate_player_level_table(report: ExportReport, player_rows: list[PlayerLevelSheetRow]) -> None:
     if not player_rows:
-        report.errors.append("缺少 Holmas_PlayerLevelTable 数据，无法校验 meta 表。")
-        return
-    if len(player_rows) != 20:
-        report.errors.append(f"Holmas_PlayerLevelTable 行数必须为 20，当前为 {len(player_rows)}。")
-        return
-    if len(meta_rows) != 20:
-        report.errors.append(f"Holmas_MetaLevelTable 行数必须为 20，当前为 {len(meta_rows)}。")
-        return
-    if len(player_rows) != len(meta_rows):
-        report.errors.append(f"Holmas_PlayerLevelTable 与 Holmas_MetaLevelTable 行数必须完全一致，当前为 {len(player_rows)} / {len(meta_rows)}。")
+        report.errors.append("缺少 Holmas_PlayerLevelTable 数据。")
         return
 
-    player_level_lookup: dict[int, PlayerLevelSheetRow] = {}
     seen_player_levels: set[int] = set()
     expected_player_level = 1
 
@@ -640,38 +591,11 @@ def _validate_meta_level_table(report: ExportReport, player_rows: list[PlayerLev
         if index > 0 and player_row.upgrade_exp <= player_rows[index - 1].upgrade_exp:
             report.errors.append(f"Holmas_PlayerLevelTable 的 upgradeExp 必须严格递增: level={player_row.player_level}。")
             return
-        player_level_lookup[player_row.player_level] = player_row
-
-    seen_levels: set[int] = set()
-    expected_level = 1
-    for index, meta_row in enumerate(meta_rows):
-        if meta_row.player_level != expected_level:
-            report.errors.append(f"Holmas_MetaLevelTable 的 playerLevel 必须从 1 连续递增，当前第 {index + 1} 行是 {meta_row.player_level}。")
+        if player_row.offline_reward_per_hour < 0:
+            report.errors.append(f"Holmas_PlayerLevelTable 的 offlineRewardPerHour 不能为负: level={player_row.player_level}。")
             return
-        expected_level += 1
-        if meta_row.player_level in seen_levels:
-            report.errors.append(f"Holmas_MetaLevelTable 存在重复 playerLevel: {meta_row.player_level}。")
-            return
-        seen_levels.add(meta_row.player_level)
-
-        player_row = player_level_lookup.get(meta_row.player_level)
-        if player_row is None:
-            report.errors.append(f"Holmas_MetaLevelTable 找不到对应的玩家等级配置: {meta_row.player_level}。")
-            return
-        if meta_row.min_experience < 0:
-            report.errors.append(f"Holmas_MetaLevelTable 的 minExperience 不能为负: level={meta_row.player_level}。")
-            return
-        if index > 0 and meta_row.min_experience <= meta_rows[index - 1].min_experience:
-            report.errors.append(f"Holmas_MetaLevelTable 的 minExperience 必须严格递增: level={meta_row.player_level}。")
-            return
-        if meta_row.offline_reward_per_hour < 0:
-            report.errors.append(f"Holmas_MetaLevelTable 的 offlineRewardPerHour 不能为负: level={meta_row.player_level}。")
-            return
-        if meta_row.ad_unlock_hours <= 0:
-            report.errors.append(f"Holmas_MetaLevelTable 的 adUnlockHours 必须大于 0: level={meta_row.player_level}。")
-            return
-        if player_row.upgrade_exp != meta_row.min_experience:
-            report.errors.append(f"Holmas_PlayerLevelTable 与 Holmas_MetaLevelTable 的升级门槛桥接不一致: level={meta_row.player_level}。")
+        if player_row.ad_unlock_hours <= 0:
+            report.errors.append(f"Holmas_PlayerLevelTable 的 adUnlockHours 必须大于 0: level={player_row.player_level}。")
             return
 
 
@@ -738,7 +662,6 @@ def _build_core_package(
     map_rows: list[MapSheetRow],
     task_rows: list[TaskSheetRow],
     player_level_rows: list[PlayerLevelSheetRow],
-    meta_level_rows: list[MetaLevelSheetRow],
     agency_building_rows: list[AgencyBuildingSheetRow],
 ) -> CoreConfigPackage:
     return CoreConfigPackage(
@@ -768,6 +691,8 @@ def _build_core_package(
             PlayerLevelRow(
                 player_level=row.player_level,
                 upgrade_exp=row.upgrade_exp,
+                offline_reward_per_hour=row.offline_reward_per_hour,
+                ad_unlock_hours=row.ad_unlock_hours,
                 task_type_indices=list(row.task_type_indices),
                 task_type_weights=list(row.task_type_weights),
                 map_indices=list(row.map_indices),
@@ -778,12 +703,12 @@ def _build_core_package(
         meta_levels=[
             MetaLevelRow(
                 player_level=row.player_level,
-                min_experience=row.min_experience,
+                min_experience=row.upgrade_exp,
                 offline_reward_per_hour=row.offline_reward_per_hour,
                 ad_unlock_hours=row.ad_unlock_hours,
                 notes=row.notes,
             )
-            for row in meta_level_rows
+            for row in player_level_rows
         ],
         agency_buildings=[
             AgencyBuildingRow(

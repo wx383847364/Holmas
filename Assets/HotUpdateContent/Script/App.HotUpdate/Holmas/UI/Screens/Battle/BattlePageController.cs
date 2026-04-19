@@ -52,7 +52,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         private void OnBackClicked()
         {
-            _ = ScreenService.BackAsync();
+            _ = HandleBackAsync();
         }
 
         private void OnCellClicked(int cellIndex, bool isFlagAction)
@@ -97,6 +97,35 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             {
                 _isProcessing = false;
                 await Task.CompletedTask;
+            }
+        }
+
+        private async Task HandleBackAsync()
+        {
+            if (_isProcessing)
+            {
+                return;
+            }
+
+            HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
+            if (flowCoordinator == null)
+            {
+                await ScreenService.BackAsync();
+                return;
+            }
+
+            _isProcessing = true;
+            try
+            {
+                await flowCoordinator.ExitBattleToMainAsync();
+            }
+            catch (Exception ex)
+            {
+                Refresh($"返回侦探社失败：{ex.Message}");
+            }
+            finally
+            {
+                _isProcessing = false;
             }
         }
 

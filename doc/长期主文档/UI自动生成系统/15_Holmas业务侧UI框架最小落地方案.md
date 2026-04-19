@@ -18,7 +18,7 @@
 ## 完成情况
 
 - 当前状态：进行中
-- 进度说明：`App.HotUpdate/Holmas/UI` 已从 v2 第一批最小代码骨架推进到 `AgencyMain` 正式 prefab + 显式 binding 消费链首版可运行状态，默认入口已切到 `Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab`
+- 进度说明：`App.HotUpdate/Holmas/UI` 已从 v2 第一批最小代码骨架推进到两条并行消费链：一条是 `AgencyMain` 正式 prefab + 显式 binding 的 generated 样板链，另一条是 `Main / Loading / Battle` 现有 prefab 的业务 demo 链；当前默认启动首页先收口到 `Assets/Res/Perfabs/UI/MainPanel.prefab`
 - 已完成：
   - `UiRoot / UiScreenService / UiScreenDefinition / UiNavigationState / IUiPrefabLoader / UiLoadedPrefabHandle`
   - `UiScreenController` 及 `Page / Popup / Sheet / Overlay` 语义化派生层
@@ -522,7 +522,7 @@ Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI
 
 ## 首屏模板与迁移路径
 
-首屏固定建议采用 `AgencyMain`，因为它能覆盖小游戏常见的正式 UI 要求：
+正式 generated 样板页建议采用 `AgencyMain`，因为它能覆盖小游戏常见的正式 UI 要求；但当前业务 demo 默认首页已临时切回现有 `MainPanel`，优先验证真实 prefab 接入、任务栏展示和 `Main -> Battle -> Main` 主链：
 
 - 概览文本
 - 任务栏

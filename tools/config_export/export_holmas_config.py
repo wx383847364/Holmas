@@ -13,7 +13,6 @@ XLSX_FILES = (
     "Holmas_CatTable.xlsx",
     "Holmas_TaskTable.xlsx",
     "Holmas_PlayerLevelTable.xlsx",
-    "Holmas_MetaLevelTable.xlsx",
     "Holmas_AgencyBuildingTable.xlsx",
 )
 

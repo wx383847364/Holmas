@@ -61,7 +61,7 @@ class HolmasPythonExporterTests(unittest.TestCase):
             cat_json = json.loads((json_root / "holmas_cat_meta.json").read_text(encoding="utf-8"))
             report_json = json.loads((json_root / "holmas_export_report.json").read_text(encoding="utf-8"))
 
-            self.assertEqual(core_json["Version"], 4)
+            self.assertEqual(core_json["Version"], 6)
             self.assertEqual(core_json["PlayerLevels"][-1]["UpgradeExp"], 2000)
             self.assertEqual(core_json["MetaLevels"][-1]["MinExperience"], 2000)
             self.assertEqual(cat_json["Cats"][0]["CatName"], "布偶猫")
@@ -70,8 +70,46 @@ class HolmasPythonExporterTests(unittest.TestCase):
             self.assertTrue((binary_root / "holmas_core_config.bytes").is_file())
             self.assertTrue((binary_root / "holmas_cat_meta.bytes").is_file())
 
+    def test_validate_all_accepts_matching_upgradeexp_and_minexperience_columns(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="holmas_python_export_dual_match_") as temp_dir:
+            root = Path(temp_dir)
+            repo_root = root / "Holmas"
+            config_root = repo_root / "Assets" / "Config"
+            json_root = config_root / "json"
+            binary_root = repo_root / "Assets" / "HotUpdateContent" / "Config"
+            config_root.mkdir(parents=True, exist_ok=True)
+            json_root.mkdir(parents=True, exist_ok=True)
+            binary_root.mkdir(parents=True, exist_ok=True)
 
-def _write_fixture(config_root: Path) -> None:
+            _write_fixture(config_root, growth_mode="both_match")
+
+            result = validate_all(repo_root, config_root, json_root, binary_root)
+
+            self.assertTrue(result.report.success, "\n".join(result.report.errors))
+
+    def test_validate_all_rejects_conflicting_upgradeexp_and_minexperience_columns(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="holmas_python_export_dual_conflict_") as temp_dir:
+            root = Path(temp_dir)
+            repo_root = root / "Holmas"
+            config_root = repo_root / "Assets" / "Config"
+            json_root = config_root / "json"
+            binary_root = repo_root / "Assets" / "HotUpdateContent" / "Config"
+            config_root.mkdir(parents=True, exist_ok=True)
+            json_root.mkdir(parents=True, exist_ok=True)
+            binary_root.mkdir(parents=True, exist_ok=True)
+
+            _write_fixture(config_root, growth_mode="both_conflict", conflict_level=7)
+
+            result = validate_all(repo_root, config_root, json_root, binary_root)
+
+            self.assertFalse(result.report.success)
+            self.assertTrue(
+                any("upgradeExp 与 minExperience 不一致" in error for error in result.report.errors),
+                "\n".join(result.report.errors),
+            )
+
+
+def _write_fixture(config_root: Path, growth_mode: str = "min_only", conflict_level: int = -1) -> None:
     _write_tabular_workbook(
         config_root / "Holmas_MapTable.xlsx",
         "Sheet1",
@@ -103,16 +141,48 @@ def _write_fixture(config_root: Path) -> None:
         ],
     )
 
-    player_rows = [["玩家等级", "任务id组", "任务id组中任务出现权重", "地图id数组", "地图id权重数组"], ["playerLevel", "taskTypeIds", "taskTypeWeights", "mapIds", "mapWeights"]]
-    for level in range(1, 21):
-        player_rows.append([str(level), "task_001", "100", "map_001", "100"])
-    _write_tabular_workbook(config_root / "Holmas_PlayerLevelTable.xlsx", "Holmas_PlayerLevelTable", player_rows)
-
-    meta_rows = [["玩家等级", "达到该等级所需累计经验", "每小时离线奖励", "广告解锁时长", "备注"], ["playerLevel", "minExperience", "offlineRewardPerHour", "adUnlockHours", "notes"]]
     min_experience = [0, 40, 85, 135, 190, 250, 320, 400, 490, 590, 700, 825, 965, 1120, 1290, 1475, 1675, 1840, 1930, 2000]
-    for level, exp in enumerate(min_experience, start=1):
-        meta_rows.append([str(level), str(exp), str(6000 + (level - 1) * 600), "8", ""])
-    _write_tabular_workbook(config_root / "Holmas_MetaLevelTable.xlsx", "Holmas_MetaLevelTable", meta_rows)
+    if growth_mode == "both_match" or growth_mode == "both_conflict":
+        player_rows = [
+            ["玩家等级", "升级所需经验", "达到该等级所需累计经验", "每小时离线奖励", "广告解锁时长", "备注", "任务id组", "任务id组中任务出现权重", "地图id数组", "地图id权重数组"],
+            ["playerLevel", "upgradeExp", "minExperience", "offlineRewardPerHour", "adUnlockHours", "notes", "taskTypeIds", "taskTypeWeights", "mapIds", "mapWeights"],
+        ]
+        for level, exp in enumerate(min_experience, start=1):
+            upgrade_exp = exp + 1 if growth_mode == "both_conflict" and level == conflict_level else exp
+            player_rows.append(
+                [
+                    str(level),
+                    str(upgrade_exp),
+                    str(exp),
+                    str(6000 + (level - 1) * 600),
+                    "8",
+                    "",
+                    "task_001",
+                    "100",
+                    "map_001",
+                    "100",
+                ]
+            )
+    else:
+        player_rows = [
+            ["玩家等级", "达到该等级所需累计经验", "每小时离线奖励", "广告解锁时长", "备注", "任务id组", "任务id组中任务出现权重", "地图id数组", "地图id权重数组"],
+            ["playerLevel", "minExperience", "offlineRewardPerHour", "adUnlockHours", "notes", "taskTypeIds", "taskTypeWeights", "mapIds", "mapWeights"],
+        ]
+        for level, exp in enumerate(min_experience, start=1):
+            player_rows.append(
+                [
+                    str(level),
+                    str(exp),
+                    str(6000 + (level - 1) * 600),
+                    "8",
+                    "",
+                    "task_001",
+                    "100",
+                    "map_001",
+                    "100",
+                ]
+            )
+    _write_tabular_workbook(config_root / "Holmas_PlayerLevelTable.xlsx", "Holmas_PlayerLevelTable", player_rows)
 
     agency_rows = [["城市阶段id", "城市名", "宣传功能id数组", "宣传升级级数上限数组", "宣传升级费用数组", "备注"], ["agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes"]]
     promotion_ids = "leaflet;radio;online;tv"

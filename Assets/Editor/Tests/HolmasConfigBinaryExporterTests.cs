@@ -14,7 +14,7 @@ namespace Holmas.EditorTests
         [Test]
         public void HolmasConfigBinaryExporter_ExportsReadablePackagesFromXlsx()
         {
-            using (var fixture = CreateFixture(includeExtraMetaLevel: false))
+            using (var fixture = CreateFixture(levelCount: 20, includeMergedGrowthColumns: true))
             {
                 HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
                     fixture.ConfigRoot,
@@ -53,9 +53,36 @@ namespace Holmas.EditorTests
         }
 
         [Test]
-        public void HolmasConfigBinaryExporter_RejectsMetaLevelsBeyondFormalRange()
+        public void HolmasConfigBinaryExporter_AllowsExpandedMetaLevelRange()
         {
-            using (var fixture = CreateFixture(includeExtraMetaLevel: true))
+            using (var fixture = CreateFixture(levelCount: 100, includeMergedGrowthColumns: true))
+            {
+                HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
+                    fixture.ConfigRoot,
+                    fixture.JsonRoot,
+                    fixture.BinaryRoot,
+                    refreshAssetDatabase: false);
+
+                Assert.That(report, Is.Not.Null);
+                Assert.That(report.Success, Is.True, string.Join("\n", report.Errors));
+
+                bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(
+                    File.ReadAllBytes(Path.Combine(fixture.BinaryRoot, "holmas_core_config.bytes")),
+                    File.ReadAllBytes(Path.Combine(fixture.BinaryRoot, "holmas_cat_meta.bytes")),
+                    out HolmasConfigCatalogBundle bundle,
+                    out HolmasConfigReport runtimeReport);
+
+                Assert.That(success, Is.True, runtimeReport == null ? "runtime report missing" : string.Join("\n", runtimeReport.Errors));
+                Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(100));
+                Assert.That(bundle.MetaLevels.Count, Is.EqualTo(100));
+                Assert.That(bundle.PlayerLevels.Last().OfflineRewardPerHour, Is.EqualTo(6000 + (99 * 600)));
+            }
+        }
+
+        [Test]
+        public void HolmasConfigBinaryExporter_RejectsMissingMergedGrowthColumns()
+        {
+            using (var fixture = CreateFixture(levelCount: 20, includeMergedGrowthColumns: false))
             {
                 HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
                     fixture.ConfigRoot,
@@ -65,11 +92,48 @@ namespace Holmas.EditorTests
 
                 Assert.That(report, Is.Not.Null);
                 Assert.That(report.Success, Is.False);
-                Assert.That(report.Errors.Any(item => item.Contains("Holmas_MetaLevelTable 行数必须为 20")), Is.True, string.Join("\n", report.Errors));
+                Assert.That(report.Errors.Any(item => item.Contains("缺少 upgradeExp/minExperience 列")), Is.True, string.Join("\n", report.Errors));
             }
         }
 
-        private static ExportFixture CreateFixture(bool includeExtraMetaLevel)
+        [Test]
+        public void HolmasConfigBinaryExporter_RejectsConflictingUpgradeExpAndMinExperienceColumns()
+        {
+            using (var fixture = CreateFixture(levelCount: 20, includeMergedGrowthColumns: true, includeDuplicateGrowthColumns: true, conflictLevel: 7))
+            {
+                HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
+                    fixture.ConfigRoot,
+                    fixture.JsonRoot,
+                    fixture.BinaryRoot,
+                    refreshAssetDatabase: false);
+
+                Assert.That(report, Is.Not.Null);
+                Assert.That(report.Success, Is.False);
+                Assert.That(report.Errors.Any(item => item.Contains("upgradeExp 与 minExperience 不一致")), Is.True, string.Join("\n", report.Errors));
+            }
+        }
+
+        [Test]
+        public void HolmasConfigBinaryExporter_AllowsMatchingUpgradeExpAndMinExperienceColumns()
+        {
+            using (var fixture = CreateFixture(levelCount: 20, includeMergedGrowthColumns: true, includeDuplicateGrowthColumns: true))
+            {
+                HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
+                    fixture.ConfigRoot,
+                    fixture.JsonRoot,
+                    fixture.BinaryRoot,
+                    refreshAssetDatabase: false);
+
+                Assert.That(report, Is.Not.Null);
+                Assert.That(report.Success, Is.True, string.Join("\n", report.Errors));
+            }
+        }
+
+        private static ExportFixture CreateFixture(
+            int levelCount,
+            bool includeMergedGrowthColumns,
+            bool includeDuplicateGrowthColumns = false,
+            int conflictLevel = -1)
         {
             string root = Path.Combine(Path.GetTempPath(), "holmas_xlsx_export_test_" + Guid.NewGuid().ToString("N"));
             string configRoot = Path.Combine(root, "Config");
@@ -113,12 +177,7 @@ namespace Holmas.EditorTests
             WriteWorkbook(
                 Path.Combine(configRoot, "Holmas_PlayerLevelTable.xlsx"),
                 "Holmas_PlayerLevelTable",
-                BuildPlayerLevelRows());
-
-            WriteWorkbook(
-                Path.Combine(configRoot, "Holmas_MetaLevelTable.xlsx"),
-                "Holmas_MetaLevelTable",
-                BuildMetaLevelRows(includeExtraMetaLevel));
+                BuildPlayerLevelRows(levelCount, includeMergedGrowthColumns, includeDuplicateGrowthColumns, conflictLevel));
 
             WriteWorkbook(
                 Path.Combine(configRoot, "Holmas_AgencyBuildingTable.xlsx"),
@@ -128,58 +187,89 @@ namespace Holmas.EditorTests
             return new ExportFixture(root, configRoot, jsonRoot, binaryRoot);
         }
 
-        private static string[][] BuildPlayerLevelRows()
+        private static string[][] BuildPlayerLevelRows(
+            int levelCount,
+            bool includeMergedGrowthColumns,
+            bool includeDuplicateGrowthColumns,
+            int conflictLevel)
         {
-            var rows = new string[22][];
-            rows[0] = new[] { "玩家等级", "任务id组", "任务id组中任务出现权重", "地图id数组", "地图id权重数组" };
-            rows[1] = new[] { "playerLevel", "taskTypeIds", "taskTypeWeights", "mapIds", "mapWeights" };
-            for (int level = 1; level <= 20; level++)
+            var rows = new string[levelCount + 2][];
+            rows[0] = includeMergedGrowthColumns
+                ? includeDuplicateGrowthColumns
+                    ? new[] { "玩家等级", "升级所需经验", "达到该等级所需累计经验", "每小时离线奖励", "广告解锁时长", "备注", "任务id组", "任务id组中任务出现权重", "地图id数组", "地图id权重数组" }
+                    : new[] { "玩家等级", "达到该等级所需累计经验", "每小时离线奖励", "广告解锁时长", "备注", "任务id组", "任务id组中任务出现权重", "地图id数组", "地图id权重数组" }
+                : new[] { "玩家等级", "任务id组", "任务id组中任务出现权重", "地图id数组", "地图id权重数组" };
+            rows[1] = includeMergedGrowthColumns
+                ? includeDuplicateGrowthColumns
+                    ? new[] { "playerLevel", "upgradeExp", "minExperience", "offlineRewardPerHour", "adUnlockHours", "notes", "taskTypeIds", "taskTypeWeights", "mapIds", "mapWeights" }
+                    : new[] { "playerLevel", "minExperience", "offlineRewardPerHour", "adUnlockHours", "notes", "taskTypeIds", "taskTypeWeights", "mapIds", "mapWeights" }
+                : new[] { "playerLevel", "taskTypeIds", "taskTypeWeights", "mapIds", "mapWeights" };
+            for (int level = 1; level <= levelCount; level++)
             {
-                rows[level + 1] = new[]
-                {
-                    level.ToString(),
-                    "task_001",
-                    "100",
-                    "map_001",
-                    "100",
-                };
+                int minExperience = ComputeMinExperience(level);
+                int upgradeExp = includeDuplicateGrowthColumns && level == conflictLevel
+                    ? minExperience + 1
+                    : minExperience;
+
+                rows[level + 1] = includeMergedGrowthColumns
+                    ? includeDuplicateGrowthColumns
+                        ? new[]
+                        {
+                            level.ToString(),
+                            upgradeExp.ToString(),
+                            minExperience.ToString(),
+                            (6000 + (level - 1) * 600).ToString(),
+                            "8",
+                            string.Empty,
+                            "task_001",
+                            "100",
+                            "map_001",
+                            "100",
+                        }
+                        : new[]
+                        {
+                            level.ToString(),
+                            minExperience.ToString(),
+                            (6000 + (level - 1) * 600).ToString(),
+                            "8",
+                            string.Empty,
+                            "task_001",
+                            "100",
+                            "map_001",
+                            "100",
+                        }
+                    : new[]
+                    {
+                        level.ToString(),
+                        "task_001",
+                        "100",
+                        "map_001",
+                        "100",
+                    };
             }
 
             return rows;
         }
 
-        private static string[][] BuildMetaLevelRows(bool includeExtraMetaLevel)
+        private static int ComputeMinExperience(int level)
         {
-            int rowCount = includeExtraMetaLevel ? 24 : 23;
-            var rows = new string[rowCount][];
-            rows[0] = new[] { "玩家等级", "达到该等级所需累计经验", "每小时离线奖励", "广告解锁时长", "备注" };
-            rows[1] = new[] { "playerLevel", "minExperience", "offlineRewardPerHour", "adUnlockHours", "notes" };
-
-            int[] minExperience =
+            int[] formalRange =
             {
                 0, 40, 85, 135, 190, 250, 320, 400, 490, 590,
                 700, 825, 965, 1120, 1290, 1475, 1675, 1840, 1930, 2000
             };
 
-            for (int level = 1; level <= 20; level++)
+            if (level <= 1)
             {
-                rows[level + 1] = new[]
-                {
-                    level.ToString(),
-                    minExperience[level - 1].ToString(),
-                    (6000 + (level - 1) * 600).ToString(),
-                    "8",
-                    string.Empty,
-                };
+                return 0;
             }
 
-            if (includeExtraMetaLevel)
+            if (level <= formalRange.Length)
             {
-                rows[22] = new[] { "21", "2101", "18000", "8", string.Empty };
-                rows[23] = Array.Empty<string>();
+                return formalRange[level - 1];
             }
 
-            return rows;
+            return formalRange[formalRange.Length - 1] + ((level - formalRange.Length) * 100);
         }
 
         private static string[][] BuildAgencyRows()
