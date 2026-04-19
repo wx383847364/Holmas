@@ -13,7 +13,6 @@ from .models import (
     CoreConfigPackage,
     ExportReport,
     MapRow,
-    MetaLevelRow,
     PlayerLevelRow,
     TaskRow,
 )
@@ -42,7 +41,6 @@ def _core_package_to_dict(package: CoreConfigPackage) -> dict:
         "Maps": [_map_row_to_dict(row) for row in package.maps],
         "Tasks": [_task_row_to_dict(row) for row in package.tasks],
         "PlayerLevels": [_player_level_row_to_dict(row) for row in package.player_levels],
-        "MetaLevels": [_meta_level_row_to_dict(row) for row in package.meta_levels],
         "AgencyBuildings": [_agency_building_row_to_dict(row) for row in package.agency_buildings],
     }
 
@@ -121,17 +119,6 @@ def _player_level_row_to_dict(row: PlayerLevelRow) -> dict:
         "MapIndices": list(row.map_indices),
         "MapWeights": list(row.map_weights),
     }
-
-
-def _meta_level_row_to_dict(row: MetaLevelRow) -> dict:
-    return {
-        "PlayerLevel": row.player_level,
-        "MinExperience": row.min_experience,
-        "OfflineRewardPerHour": row.offline_reward_per_hour,
-        "AdUnlockHours": row.ad_unlock_hours,
-        "Notes": row.notes,
-    }
-
 
 def _agency_building_row_to_dict(row: AgencyBuildingRow) -> dict:
     return {

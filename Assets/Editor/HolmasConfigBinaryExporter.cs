@@ -1065,14 +1065,6 @@ namespace Holmas.EditorTools
                     MapIndices = row.MapIndices ?? Array.Empty<int>(),
                     MapWeights = row.MapWeights ?? Array.Empty<int>(),
                 }).ToArray(),
-                MetaLevels = playerLevelTable.Rows.Select(row => new HolmasMetaLevelRow
-                {
-                    PlayerLevel = row.PlayerLevel,
-                    MinExperience = row.UpgradeExp,
-                    OfflineRewardPerHour = row.OfflineRewardPerHour,
-                    AdUnlockHours = row.AdUnlockHours,
-                    Notes = row.Notes ?? string.Empty,
-                }).ToArray(),
                 AgencyBuildings = (agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingSheetRow>()).Select(row => new HolmasAgencyBuildingRow
                 {
                     AgencyStageId = row.AgencyStageId,
@@ -1526,7 +1518,6 @@ namespace Holmas.EditorTools
         public HolmasMapSheetRow[] Maps;
         public HolmasTaskSheetRow[] Tasks;
         public HolmasPlayerLevelSheetRow[] PlayerLevels;
-        public HolmasMetaLevelSheetRow[] MetaLevels;
         public HolmasAgencyBuildingSheetRow[] AgencyBuildings;
     }
 
@@ -1596,17 +1587,6 @@ namespace Holmas.EditorTools
         public string[] MapIds;
         public int[] MapIndices;
         public int[] MapWeights;
-    }
-
-    [Serializable]
-    public sealed class HolmasMetaLevelSheetRow
-    {
-        public int RowIndex;
-        public int PlayerLevel;
-        public int MinExperience;
-        public int OfflineRewardPerHour;
-        public int AdUnlockHours;
-        public string Notes;
     }
 
     [Serializable]

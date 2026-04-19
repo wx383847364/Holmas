@@ -122,15 +122,6 @@ class PlayerLevelRow:
 
 
 @dataclass
-class MetaLevelRow:
-    player_level: int = 0
-    min_experience: int = 0
-    offline_reward_per_hour: int = 0
-    ad_unlock_hours: int = 0
-    notes: str = ""
-
-
-@dataclass
 class AgencyBuildingCostRow:
     costs: list[int] = field(default_factory=list)
 
@@ -151,7 +142,6 @@ class CoreConfigPackage:
     maps: list[MapRow] = field(default_factory=list)
     tasks: list[TaskRow] = field(default_factory=list)
     player_levels: list[PlayerLevelRow] = field(default_factory=list)
-    meta_levels: list[MetaLevelRow] = field(default_factory=list)
     agency_buildings: list[AgencyBuildingRow] = field(default_factory=list)
 
 

@@ -24,10 +24,9 @@ namespace Holmas.Tests
 
             Assert.That(errors, Is.Empty, string.Join(Environment.NewLine, errors));
             Assert.That(tables.Cats, Has.Count.EqualTo(49));
-            Assert.That(tables.Maps, Has.Count.EqualTo(3));
+            Assert.That(tables.Maps, Has.Count.EqualTo(24));
             Assert.That(tables.Tasks, Has.Count.EqualTo(20));
-            Assert.That(tables.Levels, Has.Count.EqualTo(20));
-            Assert.That(tables.MetaLevels, Has.Count.EqualTo(20));
+            Assert.That(tables.Levels, Has.Count.EqualTo(100));
             Assert.That(tables.AgencyBuildings, Has.Count.EqualTo(100));
             Assert.That(tables.Tasks.All(item => string.Equals(item.TaskKind, "Money", StringComparison.Ordinal)), Is.True);
             Assert.That(tables.Cats.All(item => item.Price > 0 && item.Weight > 0 && item.Rarity > 0), Is.True);
@@ -50,16 +49,17 @@ namespace Holmas.Tests
 
             Assert.That(requestResult.Success, Is.True, requestResult.FailureReason);
             Assert.That(requestResult.SelectedMapId, Is.EqualTo("map_001"));
-            Assert.That(requestResult.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/Map/1.asset"));
-            Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(12));
-            Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(15));
+            ExportMapRow selectedMap = tables.Maps.Single(item => string.Equals(item.MapId, requestResult.SelectedMapId, StringComparison.Ordinal));
+            Assert.That(requestResult.Request.TerrainPath, Is.EqualTo(selectedMap.TerrainPath));
+            Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(selectedMap.CatCountMin));
+            Assert.That(requestResult.Request.CatCountMax, Is.EqualTo(selectedMap.CatCountMax));
 
             var terrain = HolmasTestSupport.CreateTerrain(5, 5, (_, _) => true);
             LevelSnapshot snapshot = LevelSnapshotFactory.CreateFromTerrain(terrain, requestResult.Request);
 
             Assert.That(snapshot.MapId, Is.EqualTo("map_001"));
-            Assert.That(snapshot.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/Map/1.asset"));
-            Assert.That(snapshot.SpawnedCats.Count, Is.InRange(12, 15));
+            Assert.That(snapshot.TerrainPath, Is.EqualTo(selectedMap.TerrainPath));
+            Assert.That(snapshot.SpawnedCats.Count, Is.InRange(selectedMap.CatCountMin, selectedMap.CatCountMax));
             Assert.That(snapshot.SpawnedCats.Select(item => item.CatId).All(catId => catPool.Any(pool => pool.CatId == catId)), Is.True);
 
             var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
@@ -98,28 +98,9 @@ namespace Holmas.Tests
             Assert.That(bundle.TaskTemplates.Count, Is.EqualTo(tables.Tasks.Count));
             Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(tables.Levels.Count));
             Assert.That(bundle.Maps.Count, Is.EqualTo(tables.Maps.Count));
-            Assert.That(bundle.MetaLevels.Count, Is.EqualTo(tables.MetaLevels.Count));
             Assert.That(bundle.AgencyBuildings.Count, Is.EqualTo(tables.AgencyBuildings.Count));
             Assert.That(bundle.Report.Success, Is.True);
             Assert.That(bundle.Report.Errors, Is.Empty);
-        }
-
-        [Test]
-        public void HolmasConfigCatalogFactory_AllowsMissingMetaLevelsWhenPlayerLevelsCarryGrowth()
-        {
-            ExportConfigTables tables = LoadSampleTables();
-            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
-            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
-            corePackage.MetaLevels = Array.Empty<HolmasMetaLevelRow>();
-
-            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
-            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
-
-            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
-
-            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
-            Assert.That(bundle, Is.Not.Null);
-            AssertBundlePlayerLevelsMatchTables(bundle, tables.Levels);
         }
 
         [Test]
@@ -140,71 +121,15 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasConfigCatalogFactory_AllowsTruncatedMetaLevelsWhenPlayerLevelsCarryGrowth()
+        public void HolmasConfigCatalogFactory_RejectsUnsupportedCoreJsonVersion()
         {
-            ExportConfigTables tables = LoadSampleTables();
-            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
-            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
-            corePackage.MetaLevels = corePackage.MetaLevels.Take(corePackage.MetaLevels.Length - 1).ToArray();
+            string json = File.ReadAllText(Path.Combine(Application.dataPath, "Config", "json", "holmas_core_config.json")).TrimStart('\uFEFF');
+            json = json.Replace("\"Version\": 6", "\"Version\": 5");
 
-            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
-            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
+            bool success = HolmasConfigBinaryCodec.TryReadCoreJson(json, out _, out string error);
 
-            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
-
-            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
-            Assert.That(bundle, Is.Not.Null);
-            AssertBundlePlayerLevelsMatchTables(bundle, tables.Levels);
-            Assert.That(bundle.MetaLevels.Count, Is.EqualTo(bundle.PlayerLevels.Count));
-        }
-
-        [Test]
-        public void HolmasConfigCatalogFactory_CurrentCodecIgnoresConflictingMetaLevelsAndUsesPlayerLevelsAsAuthority()
-        {
-            ExportConfigTables tables = LoadSampleTables();
-            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
-            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
-
-            corePackage.MetaLevels = corePackage.MetaLevels
-                .Select(item => new HolmasMetaLevelRow
-                {
-                    PlayerLevel = item.PlayerLevel,
-                    MinExperience = item.MinExperience + 9999,
-                    OfflineRewardPerHour = item.OfflineRewardPerHour + 777,
-                    AdUnlockHours = item.AdUnlockHours + 5,
-                })
-                .ToArray();
-
-            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
-            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
-
-            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
-
-            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
-            Assert.That(bundle, Is.Not.Null);
-            AssertBundlePlayerLevelsMatchTables(bundle, tables.Levels);
-            Assert.That(bundle.MetaLevels.Select(item => item.MinExperience), Is.EqualTo(bundle.PlayerLevels.Select(item => item.UpgradeExp)));
-            Assert.That(bundle.MetaLevels.Select(item => item.OfflineRewardPerHour), Is.EqualTo(bundle.PlayerLevels.Select(item => item.OfflineRewardPerHour)));
-            Assert.That(bundle.MetaLevels.Select(item => item.AdUnlockHours), Is.EqualTo(bundle.PlayerLevels.Select(item => item.AdUnlockHours)));
-        }
-
-        [Test]
-        public void HolmasConfigCatalogFactory_CurrentCodecUsesCodecVersionInsteadOfPackageVersionForPlayerLevelRecovery()
-        {
-            ExportConfigTables tables = LoadSampleTables();
-            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
-            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
-            corePackage.Version = HolmasConfigBinaryFormat.MinSupportedVersion;
-            corePackage.MetaLevels = Array.Empty<HolmasMetaLevelRow>();
-
-            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
-            byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
-
-            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
-
-            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
-            Assert.That(bundle, Is.Not.Null);
-            AssertBundlePlayerLevelsMatchTables(bundle, tables.Levels);
+            Assert.That(success, Is.False);
+            Assert.That(error.Contains("版本不支持"), Is.True, error);
         }
 
         [Test]
@@ -217,13 +142,15 @@ namespace Holmas.Tests
             Assert.That(tables.Cats.Count(item => item.Rarity == 3), Is.EqualTo(10));
             Assert.That(tables.Cats.Count(item => item.Rarity == 4), Is.EqualTo(5));
 
-            int[] expectedUpgradeExp = { 0, 40, 85, 135, 190, 250, 320, 400, 490, 590, 700, 825, 965, 1120, 1290, 1475, 1675, 1840, 1930, 2000 };
-            Assert.That(tables.MetaLevels.Select(item => item.MinExperience), Is.EqualTo(expectedUpgradeExp));
-            Assert.That(tables.Levels.Select(item => item.UpgradeExp), Is.EqualTo(expectedUpgradeExp));
-            Assert.That(tables.MetaLevels.Select(item => item.PlayerLevel).ToArray(), Is.EqualTo(Enumerable.Range(1, 20).ToArray()));
+            Assert.That(tables.Levels, Has.Count.EqualTo(100));
+            Assert.That(tables.Levels.Select(item => item.PlayerLevel).ToArray(), Is.EqualTo(Enumerable.Range(1, 100).ToArray()));
             Assert.That(tables.AgencyBuildings.Select(item => item.AgencyStageId), Is.EqualTo(Enumerable.Range(1, 100).ToArray()));
             Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds.SequenceEqual(new[] { "leaflet", "radio", "online", "tv" })), Is.True);
             Assert.That(tables.AgencyBuildings.All(item => item.PromotionLevelCaps.SequenceEqual(new[] { 5, 5, 5, 5 })), Is.True);
+            Assert.That(tables.Levels.First().UpgradeExp, Is.EqualTo(0));
+            Assert.That(tables.Levels[9].UpgradeExp, Is.EqualTo(126));
+            Assert.That(tables.Levels.Last().UpgradeExp, Is.EqualTo(1476));
+            Assert.That(tables.Levels.Select(item => item.UpgradeExp).Distinct().Count(), Is.EqualTo(tables.Levels.Count));
 
             foreach (ExportLevelRow level in tables.Levels)
             {
@@ -245,20 +172,35 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasConfigCatalogFactory_ReadsLegacyV3MetaThresholdsFromPlayerLevels()
+        public void HolmasConfigCatalogFactory_RejectsLegacyMetaLevelsJson()
+        {
+            string json = File.ReadAllText(Path.Combine(Application.dataPath, "Config", "json", "holmas_core_config.json")).TrimStart('\uFEFF');
+            json = json.Replace(
+                "\"AgencyBuildings\": [",
+                "\"MetaLevels\": [],\n    \"AgencyBuildings\": [",
+                StringComparison.Ordinal);
+
+            bool success = HolmasConfigBinaryCodec.TryReadCoreJson(json, out _, out string error);
+
+            Assert.That(success, Is.False);
+            Assert.That(error.Contains("MetaLevels"), Is.True, error);
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_RejectsUnsupportedCoreBinaryCodecVersion()
         {
             ExportConfigTables tables = LoadSampleTables();
             HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
             HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
 
-            byte[] coreBytes = WriteLegacyV3CorePackage(corePackage);
+            byte[] coreBytes = HolmasConfigBinaryCodec.WriteCorePackage(corePackage);
+            OverwriteInt32(coreBytes, sizeof(int), HolmasConfigBinaryFormat.CurrentVersion - 1);
             byte[] catBytes = HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage);
 
-            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out HolmasConfigCatalogBundle bundle, out HolmasConfigReport report);
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(coreBytes, catBytes, out _, out HolmasConfigReport report);
 
-            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
-            Assert.That(bundle, Is.Not.Null);
-            Assert.That(bundle.MetaLevels.Select(item => item.MinExperience), Is.EqualTo(tables.Levels.Select(item => item.UpgradeExp)));
+            Assert.That(success, Is.False);
+            Assert.That(report.Errors.Any(item => item.Contains("编解码版本不支持")), Is.True, string.Join(Environment.NewLine, report.Errors));
         }
 
         [Test]
@@ -348,7 +290,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasExportValidator_RejectsMetaLevelMismatch()
+        public void HolmasExportValidator_RejectsNonIncreasingUpgradeExp()
         {
             ExportConfigTables tables = LoadSampleTables();
             tables.Levels[1].UpgradeExp = tables.Levels[0].UpgradeExp;
@@ -442,10 +384,6 @@ namespace Holmas.Tests
 
             Assert.That(coreOk, Is.True, coreError);
             Assert.That(catOk, Is.True, catError);
-            Dictionary<int, HolmasMetaLevelRow> metaLevelByPlayerLevel = (corePackage.MetaLevels ?? Array.Empty<HolmasMetaLevelRow>())
-                .Where(item => item != null)
-                .GroupBy(item => item.PlayerLevel)
-                .ToDictionary(group => group.Key, group => group.Last());
 
             return new ExportConfigTables
             {
@@ -467,16 +405,6 @@ namespace Holmas.Tests
                 }).ToList(),
                 Tasks = BuildTaskRows(corePackage, catPackage),
                 Levels = BuildLevelRows(corePackage),
-                MetaLevels = (corePackage.PlayerLevels ?? Array.Empty<HolmasPlayerLevelRow>()).Select(item => new ExportMetaLevelRow
-                {
-                    PlayerLevel = item.PlayerLevel,
-                    MinExperience = item.UpgradeExp,
-                    OfflineRewardPerHour = item.OfflineRewardPerHour,
-                    AdUnlockHours = item.AdUnlockHours,
-                    Notes = metaLevelByPlayerLevel.TryGetValue(item.PlayerLevel, out HolmasMetaLevelRow metaLevel)
-                        ? metaLevel.Notes
-                        : string.Empty,
-                }).ToList(),
                 AgencyBuildings = (corePackage.AgencyBuildings ?? Array.Empty<HolmasAgencyBuildingRow>()).Select(item => new ExportAgencyBuildingRow
                 {
                     AgencyStageId = item.AgencyStageId,
@@ -663,14 +591,6 @@ namespace Holmas.Tests
                     MapIndices = item.MapIds.Select(mapId => mapIndexById[mapId]).ToArray(),
                     MapWeights = item.MapWeights.ToArray(),
                 }).ToArray(),
-                MetaLevels = tables.MetaLevels.Select(item => new HolmasMetaLevelRow
-                {
-                    PlayerLevel = item.PlayerLevel,
-                    MinExperience = item.MinExperience,
-                    OfflineRewardPerHour = item.OfflineRewardPerHour,
-                    AdUnlockHours = item.AdUnlockHours,
-                    Notes = item.Notes,
-                }).ToArray(),
                 AgencyBuildings = tables.AgencyBuildings.Select(item => new HolmasAgencyBuildingRow
                 {
                     AgencyStageId = item.AgencyStageId,
@@ -739,7 +659,6 @@ namespace Holmas.Tests
             public List<ExportMapRow> Maps { get; set; } = new List<ExportMapRow>();
             public List<ExportTaskRow> Tasks { get; set; } = new List<ExportTaskRow>();
             public List<ExportLevelRow> Levels { get; set; } = new List<ExportLevelRow>();
-            public List<ExportMetaLevelRow> MetaLevels { get; set; } = new List<ExportMetaLevelRow>();
             public List<ExportAgencyBuildingRow> AgencyBuildings { get; set; } = new List<ExportAgencyBuildingRow>();
         }
 
@@ -784,15 +703,6 @@ namespace Holmas.Tests
             public int[] MapWeights = Array.Empty<int>();
         }
 
-        private sealed class ExportMetaLevelRow
-        {
-            public int PlayerLevel;
-            public int MinExperience;
-            public int OfflineRewardPerHour;
-            public int AdUnlockHours;
-            public string Notes = string.Empty;
-        }
-
         private sealed class ExportAgencyBuildingRow
         {
             public int AgencyStageId;
@@ -818,7 +728,6 @@ namespace Holmas.Tests
                 ValidateMaps(tables.Maps, errors);
                 ValidateTasks(tables.Tasks, tables.Cats, errors);
                 ValidateLevels(tables.Levels, tables.Tasks, tables.Maps, errors);
-                ValidateMetaLevels(tables.MetaLevels, tables.Levels, errors);
                 ValidateAgencyPromotions(tables.AgencyBuildings, errors);
                 return errors;
             }
@@ -1050,81 +959,6 @@ namespace Holmas.Tests
                 }
             }
 
-            private static void ValidateMetaLevels(IEnumerable<ExportMetaLevelRow> levels, IReadOnlyList<ExportLevelRow> playerLevels, List<string> errors)
-            {
-                var seen = new HashSet<int>();
-                int expectedLevel = 1;
-                int metaLevelCount = 0;
-                ExportMetaLevelRow previousLevel = null;
-
-                foreach (var level in levels ?? Array.Empty<ExportMetaLevelRow>())
-                {
-                    metaLevelCount++;
-                    if (level == null)
-                    {
-                        errors.Add("长期成长表存在空行。");
-                        continue;
-                    }
-
-                    if (level.PlayerLevel <= 0)
-                    {
-                        errors.Add("长期成长表的玩家等级非法。");
-                        continue;
-                    }
-
-                    if (level.PlayerLevel != expectedLevel)
-                    {
-                        errors.Add($"长期成长表的玩家等级不连续: {level.PlayerLevel}。");
-                    }
-
-                    if (!seen.Add(level.PlayerLevel))
-                    {
-                        errors.Add($"长期成长表存在重复玩家等级: {level.PlayerLevel}");
-                    }
-
-                    if (level.OfflineRewardPerHour < 0)
-                    {
-                        errors.Add($"长期成长表的离线奖励非法: {level.PlayerLevel}");
-                    }
-
-                    if (level.MinExperience < 0)
-                    {
-                        errors.Add($"长期成长表的累计经验非法: {level.PlayerLevel}");
-                    }
-
-                    if (playerLevels != null)
-                    {
-                        ExportLevelRow playerLevel = playerLevels.FirstOrDefault(item => item != null && item.PlayerLevel == level.PlayerLevel);
-                        if (playerLevel == null)
-                        {
-                            errors.Add($"长期成长表缺少对应玩家等级: {level.PlayerLevel}");
-                        }
-                        else if (playerLevel.UpgradeExp != level.MinExperience)
-                        {
-                            errors.Add($"长期成长表与玩家等级升级经验不一致: {level.PlayerLevel}");
-                        }
-                    }
-
-                    if (previousLevel != null && level.MinExperience <= previousLevel.MinExperience)
-                    {
-                        errors.Add($"长期成长表的累计经验必须严格递增: {level.PlayerLevel}");
-                    }
-
-                    if (level.AdUnlockHours <= 0)
-                    {
-                        errors.Add($"长期成长表的广告解锁时长非法: {level.PlayerLevel}");
-                    }
-
-                    previousLevel = level;
-                    expectedLevel++;
-                }
-
-                if (playerLevels != null && metaLevelCount != playerLevels.Count)
-                {
-                    errors.Add($"长期成长表与玩家等级表数量不一致: meta={metaLevelCount}, player={playerLevels.Count}");
-                }
-            }
-
             private static void ValidateAgencyPromotions(IEnumerable<ExportAgencyBuildingRow> buildings, List<string> errors)
             {
                 var seenStages = new HashSet<int>();
@@ -1271,119 +1105,10 @@ namespace Holmas.Tests
             }
         }
 
-        private static byte[] WriteLegacyV3CorePackage(HolmasCoreConfigPackage package)
+        private static void OverwriteInt32(byte[] bytes, int offset, int value)
         {
-            package = package ?? new HolmasCoreConfigPackage();
-            using (var stream = new MemoryStream())
-            using (var writer = new BinaryWriter(stream))
-            {
-                writer.Write(HolmasConfigBinaryFormat.CoreMagic);
-                writer.Write(HolmasConfigBinaryFormat.MinSupportedVersion);
-                writer.Write(HolmasConfigBinaryFormat.MinSupportedVersion);
-                WriteLegacyMapRows(writer, package.Maps);
-                WriteLegacyTaskRows(writer, package.Tasks);
-                WriteLegacyPlayerLevelRows(writer, package.PlayerLevels);
-                WriteLegacyMetaLevelRows(writer, package.MetaLevels);
-                WriteLegacyAgencyBuildingRows(writer, package.AgencyBuildings);
-                writer.Flush();
-                return stream.ToArray();
-            }
-        }
-
-        private static void WriteLegacyMapRows(BinaryWriter writer, HolmasMapRow[] rows)
-        {
-            rows = rows ?? Array.Empty<HolmasMapRow>();
-            writer.Write(rows.Length);
-            foreach (HolmasMapRow row in rows)
-            {
-                writer.Write(row?.MapId ?? string.Empty);
-                writer.Write(row?.TerrainPath ?? string.Empty);
-                writer.Write(row?.CatCountMin ?? 0);
-                writer.Write(row?.CatCountMax ?? 0);
-            }
-        }
-
-        private static void WriteLegacyTaskRows(BinaryWriter writer, HolmasTaskRow[] rows)
-        {
-            rows = rows ?? Array.Empty<HolmasTaskRow>();
-            writer.Write(rows.Length);
-            foreach (HolmasTaskRow row in rows)
-            {
-                writer.Write(row?.TaskTypeId ?? string.Empty);
-                writer.Write((byte)(row?.TaskKind ?? HolmasTaskKind.Money));
-                WriteLegacyIntArray(writer, row?.CatIndices);
-                writer.Write(row?.CountMin ?? 0);
-                writer.Write(row?.CountMax ?? 0);
-                WriteLegacyIntArray(writer, row?.RewardValues);
-                writer.Write(row?.LevelRewardFactor ?? 0f);
-            }
-        }
-
-        private static void WriteLegacyPlayerLevelRows(BinaryWriter writer, HolmasPlayerLevelRow[] rows)
-        {
-            rows = rows ?? Array.Empty<HolmasPlayerLevelRow>();
-            writer.Write(rows.Length);
-            foreach (HolmasPlayerLevelRow row in rows)
-            {
-                writer.Write(row?.PlayerLevel ?? 0);
-                writer.Write(row?.UpgradeExp ?? 0);
-                WriteLegacyIntArray(writer, row?.TaskTypeIndices);
-                WriteLegacyIntArray(writer, row?.TaskTypeWeights);
-                WriteLegacyIntArray(writer, row?.MapIndices);
-                WriteLegacyIntArray(writer, row?.MapWeights);
-            }
-        }
-
-        private static void WriteLegacyMetaLevelRows(BinaryWriter writer, HolmasMetaLevelRow[] rows)
-        {
-            rows = rows ?? Array.Empty<HolmasMetaLevelRow>();
-            writer.Write(rows.Length);
-            foreach (HolmasMetaLevelRow row in rows)
-            {
-                writer.Write(row?.PlayerLevel ?? 0);
-                writer.Write(row?.OfflineRewardPerHour ?? 0);
-                writer.Write(row?.AdUnlockHours ?? 0);
-            }
-        }
-
-        private static void WriteLegacyAgencyBuildingRows(BinaryWriter writer, HolmasAgencyBuildingRow[] rows)
-        {
-            rows = rows ?? Array.Empty<HolmasAgencyBuildingRow>();
-            writer.Write(rows.Length);
-            foreach (HolmasAgencyBuildingRow row in rows)
-            {
-                writer.Write(row?.AgencyStageId ?? 0);
-                writer.Write(row?.StageName ?? string.Empty);
-                WriteLegacyStringArray(writer, row?.PromotionIds);
-                WriteLegacyIntArray(writer, row?.PromotionLevelCaps);
-
-                HolmasAgencyBuildingCostRow[] costRows = row?.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostRow>();
-                writer.Write(costRows.Length);
-                foreach (HolmasAgencyBuildingCostRow costRow in costRows)
-                {
-                    WriteLegacyIntArray(writer, costRow?.Costs);
-                }
-            }
-        }
-
-        private static void WriteLegacyStringArray(BinaryWriter writer, string[] values)
-        {
-            values = values ?? Array.Empty<string>();
-            writer.Write(values.Length);
-            foreach (string value in values)
-            {
-                writer.Write(value ?? string.Empty);
-            }
-        }
-
-        private static void WriteLegacyIntArray(BinaryWriter writer, int[] values)
-        {
-            values = values ?? Array.Empty<int>();
-            writer.Write(values.Length);
-            foreach (int value in values)
-            {
-                writer.Write(value);
-            }
+            byte[] valueBytes = BitConverter.GetBytes(value);
+            Buffer.BlockCopy(valueBytes, 0, bytes, offset, sizeof(int));
         }
     }
 }

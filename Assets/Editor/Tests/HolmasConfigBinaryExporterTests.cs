@@ -46,14 +46,14 @@ namespace Holmas.EditorTests
                 Assert.That(bundle.Maps.Count, Is.EqualTo(1));
                 Assert.That(bundle.TaskTemplates.Count, Is.EqualTo(1));
                 Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(20));
-                Assert.That(bundle.MetaLevels.Count, Is.EqualTo(20));
                 Assert.That(bundle.PlayerLevels.Last().UpgradeExp, Is.EqualTo(2000));
-                Assert.That(bundle.MetaLevels.Last().MinExperience, Is.EqualTo(2000));
+                string coreJson = File.ReadAllText(Path.Combine(fixture.JsonRoot, "holmas_core_config.json"));
+                Assert.That(coreJson.Contains("\"MetaLevels\""), Is.False);
             }
         }
 
         [Test]
-        public void HolmasConfigBinaryExporter_AllowsExpandedMetaLevelRange()
+        public void HolmasConfigBinaryExporter_AllowsExpandedPlayerLevelRange()
         {
             using (var fixture = CreateFixture(levelCount: 100, includeMergedGrowthColumns: true))
             {
@@ -74,7 +74,6 @@ namespace Holmas.EditorTests
 
                 Assert.That(success, Is.True, runtimeReport == null ? "runtime report missing" : string.Join("\n", runtimeReport.Errors));
                 Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(100));
-                Assert.That(bundle.MetaLevels.Count, Is.EqualTo(100));
                 Assert.That(bundle.PlayerLevels.Last().OfflineRewardPerHour, Is.EqualTo(6000 + (99 * 600)));
             }
         }

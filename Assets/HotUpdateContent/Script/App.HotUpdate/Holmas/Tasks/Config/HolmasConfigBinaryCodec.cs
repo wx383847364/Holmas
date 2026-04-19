@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -121,7 +120,21 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                package.CodecVersion = InferCoreJsonCodecVersion(json, package.Version);
+                if (json.IndexOf("\"MetaLevels\"", StringComparison.Ordinal) >= 0)
+                {
+                    error = "核心配置 JSON 使用了已移除的 MetaLevels 旧格式，请改用当前 PlayerLevels 结构重新导出。";
+                    package = null;
+                    return false;
+                }
+
+                if (package.Version != HolmasConfigBinaryFormat.CurrentVersion)
+                {
+                    error = $"核心配置 JSON 版本不支持: {package.Version}。当前仅支持版本 {HolmasConfigBinaryFormat.CurrentVersion}。";
+                    package = null;
+                    return false;
+                }
+
+                package.CodecVersion = HolmasConfigBinaryFormat.CurrentVersion;
                 return true;
             }
             catch (Exception ex)
@@ -170,11 +183,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             WriteMapRows(writer, package.Maps);
             WriteTaskRows(writer, package.Tasks);
             WritePlayerLevelRows(writer, package.PlayerLevels);
-            if (HolmasConfigBinaryFormat.CurrentVersion < 6)
-            {
-                WriteMetaLevelRows(writer, package.MetaLevels);
-            }
-
             WriteAgencyBuildingRows(writer, package.AgencyBuildings);
         }
 
@@ -199,16 +207,18 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return null;
             }
 
+            HolmasMapRow[] maps = ReadMapRows(reader);
+            HolmasTaskRow[] tasks = ReadTaskRows(reader);
+            HolmasPlayerLevelRow[] playerLevels = ReadPlayerLevelRows(reader);
+            HolmasAgencyBuildingRow[] agencyBuildings = ReadAgencyBuildingRows(reader);
+
             var package = new HolmasCoreConfigPackage
             {
                 Version = packageVersion,
-                Maps = ReadMapRows(reader),
-                Tasks = ReadTaskRows(reader),
-                PlayerLevels = ReadPlayerLevelRows(reader, codecVersion),
-                MetaLevels = codecVersion >= 6
-                    ? Array.Empty<HolmasMetaLevelRow>()
-                    : ReadMetaLevelRows(reader, codecVersion),
-                AgencyBuildings = ReadAgencyBuildingRows(reader),
+                Maps = maps,
+                Tasks = tasks,
+                PlayerLevels = playerLevels,
+                AgencyBuildings = agencyBuildings,
             };
             package.CodecVersion = codecVersion;
 
@@ -265,40 +275,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
 
             packageVersion = reader.ReadInt32();
             return true;
-        }
-
-        private static int InferCoreJsonCodecVersion(string json, int packageVersion)
-        {
-            int fallbackVersion = packageVersion > 0
-                ? packageVersion
-                : HolmasConfigBinaryFormat.CurrentVersion;
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return fallbackVersion;
-            }
-
-            int playerLevelsIndex = json.IndexOf("\"PlayerLevels\"", StringComparison.Ordinal);
-            if (playerLevelsIndex < 0)
-            {
-                return fallbackVersion;
-            }
-
-            int nextSectionIndex = json.IndexOf("\"MetaLevels\"", playerLevelsIndex, StringComparison.Ordinal);
-            if (nextSectionIndex < 0)
-            {
-                nextSectionIndex = json.IndexOf("\"AgencyBuildings\"", playerLevelsIndex, StringComparison.Ordinal);
-            }
-
-            string playerLevelsSection = nextSectionIndex > playerLevelsIndex
-                ? json.Substring(playerLevelsIndex, nextSectionIndex - playerLevelsIndex)
-                : json.Substring(playerLevelsIndex);
-            if (playerLevelsSection.IndexOf("\"OfflineRewardPerHour\"", StringComparison.Ordinal) >= 0 ||
-                playerLevelsSection.IndexOf("\"AdUnlockHours\"", StringComparison.Ordinal) >= 0)
-            {
-                return HolmasConfigBinaryFormat.CurrentVersion;
-            }
-
-            return fallbackVersion;
         }
 
         private static void WriteMapRows(BinaryWriter writer, HolmasMapRow[] rows)
@@ -425,7 +401,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             }
         }
 
-        private static HolmasPlayerLevelRow[] ReadPlayerLevelRows(BinaryReader reader, int codecVersion)
+        private static HolmasPlayerLevelRow[] ReadPlayerLevelRows(BinaryReader reader)
         {
             int count = ReadNonNegativeCount(reader);
             var rows = new HolmasPlayerLevelRow[count];
@@ -433,52 +409,16 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             {
                 int playerLevel = reader.ReadInt32();
                 int upgradeExp = reader.ReadInt32();
-                int offlineRewardPerHour = codecVersion >= 5 ? reader.ReadInt32() : 0;
-                int adUnlockHours = codecVersion >= 5 ? reader.ReadInt32() : 24;
                 rows[i] = new HolmasPlayerLevelRow
                 {
                     PlayerLevel = playerLevel,
                     UpgradeExp = upgradeExp,
-                    OfflineRewardPerHour = offlineRewardPerHour,
-                    AdUnlockHours = adUnlockHours,
+                    OfflineRewardPerHour = reader.ReadInt32(),
+                    AdUnlockHours = reader.ReadInt32(),
                     TaskTypeIndices = ReadIntArray(reader),
                     TaskTypeWeights = ReadIntArray(reader),
                     MapIndices = ReadIntArray(reader),
                     MapWeights = ReadIntArray(reader),
-                };
-            }
-
-            return rows;
-        }
-
-        private static void WriteMetaLevelRows(BinaryWriter writer, HolmasMetaLevelRow[] rows)
-        {
-            rows = rows ?? Array.Empty<HolmasMetaLevelRow>();
-            writer.Write(rows.Length);
-            for (int i = 0; i < rows.Length; i++)
-            {
-                HolmasMetaLevelRow row = rows[i] ?? new HolmasMetaLevelRow();
-                writer.Write(row.PlayerLevel);
-                writer.Write(row.MinExperience);
-                writer.Write(row.OfflineRewardPerHour);
-                writer.Write(row.AdUnlockHours);
-            }
-        }
-
-        private static HolmasMetaLevelRow[] ReadMetaLevelRows(BinaryReader reader, int codecVersion)
-        {
-            int count = ReadNonNegativeCount(reader);
-            var rows = new HolmasMetaLevelRow[count];
-            for (int i = 0; i < count; i++)
-            {
-                int playerLevel = reader.ReadInt32();
-                int minExperience = codecVersion >= 4 ? reader.ReadInt32() : 0;
-                rows[i] = new HolmasMetaLevelRow
-                {
-                    PlayerLevel = playerLevel,
-                    MinExperience = minExperience,
-                    OfflineRewardPerHour = reader.ReadInt32(),
-                    AdUnlockHours = reader.ReadInt32(),
                 };
             }
 

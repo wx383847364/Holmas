@@ -21,7 +21,6 @@ from .models import (
     ExportReport,
     MapRow,
     MapSheetRow,
-    MetaLevelRow,
     PlayerLevelRow,
     PlayerLevelSheetRow,
     TaskRow,
@@ -697,16 +696,6 @@ def _build_core_package(
                 task_type_weights=list(row.task_type_weights),
                 map_indices=list(row.map_indices),
                 map_weights=list(row.map_weights),
-            )
-            for row in player_level_rows
-        ],
-        meta_levels=[
-            MetaLevelRow(
-                player_level=row.player_level,
-                min_experience=row.upgrade_exp,
-                offline_reward_per_hour=row.offline_reward_per_hour,
-                ad_unlock_hours=row.ad_unlock_hours,
-                notes=row.notes,
             )
             for row in player_level_rows
         ],

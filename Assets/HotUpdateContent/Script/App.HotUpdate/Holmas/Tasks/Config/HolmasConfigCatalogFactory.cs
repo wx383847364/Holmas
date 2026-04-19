@@ -95,9 +95,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             }
 
             if (!TryBuildPlayerLevels(
-                corePackage.CodecVersion,
                 corePackage.PlayerLevels,
-                corePackage.MetaLevels,
                 taskTypeIdByIndex,
                 mapIdByIndex,
                 out var playerLevels,
@@ -106,8 +104,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return false;
             }
 
-            List<HolmasMetaLevelRow> metaLevels = BuildMetaLevelsFromPlayerLevels(playerLevels);
-
             if (!TryBuildAgencyBuildings(corePackage.AgencyBuildings, out var agencyBuildings, report))
             {
                 return false;
@@ -115,7 +111,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
 
             var mapCatalog = new HolmasMapCatalog(maps);
             var taskCatalog = new HolmasTaskCatalog(cats, tasks, playerLevels);
-            bundle = new HolmasConfigCatalogBundle(mapCatalog, taskCatalog, cats, maps, tasks, playerLevels, metaLevels, agencyBuildings, report);
+            bundle = new HolmasConfigCatalogBundle(mapCatalog, taskCatalog, cats, maps, tasks, playerLevels, agencyBuildings, report);
             report.MarkSuccess("配置包已成功恢复为运行时 Catalog。");
             return true;
         }
@@ -364,9 +360,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         }
 
         private static bool TryBuildPlayerLevels(
-            int codecVersion,
             IReadOnlyList<HolmasPlayerLevelRow> rows,
-            IReadOnlyList<HolmasMetaLevelRow> legacyMetaRows,
             IReadOnlyDictionary<int, string> taskTypeIdByIndex,
             IReadOnlyDictionary<int, string> mapIdByIndex,
             out List<HolmasPlayerLevelDefinition> playerLevels,
@@ -382,14 +376,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
 
             var seenLevels = new HashSet<int>();
             int expectedLevel = 1;
-            Dictionary<int, HolmasMetaLevelRow> legacyMetaLookup = null;
-            if (codecVersion < 5)
-            {
-                if (!TryBuildLegacyMetaLookup(legacyMetaRows, out legacyMetaLookup, report))
-                {
-                    return false;
-                }
-            }
 
             for (int i = 0; i < rows.Count; i++)
             {
@@ -432,29 +418,13 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                int offlineRewardPerHour = row.OfflineRewardPerHour;
-                int adUnlockHours = row.AdUnlockHours;
-                if (codecVersion < 5)
-                {
-                    if (legacyMetaLookup == null ||
-                        !legacyMetaLookup.TryGetValue(row.PlayerLevel, out var legacyMeta) ||
-                        legacyMeta == null)
-                    {
-                        report.AddError($"旧版配置缺少玩家等级 {row.PlayerLevel} 的成长参数。");
-                        return false;
-                    }
-
-                    offlineRewardPerHour = legacyMeta.OfflineRewardPerHour;
-                    adUnlockHours = legacyMeta.AdUnlockHours;
-                }
-
-                if (offlineRewardPerHour < 0)
+                if (row.OfflineRewardPerHour < 0)
                 {
                     report.AddError($"玩家等级的 offlineRewardPerHour 不能为负: {row.PlayerLevel}。");
                     return false;
                 }
 
-                if (adUnlockHours <= 0)
+                if (row.AdUnlockHours <= 0)
                 {
                     report.AddError($"玩家等级的 adUnlockHours 必须大于 0: {row.PlayerLevel}。");
                     return false;
@@ -475,8 +445,8 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     PlayerLevelIndex = i,
                     PlayerLevel = row.PlayerLevel,
                     UpgradeExp = row.UpgradeExp,
-                    OfflineRewardPerHour = offlineRewardPerHour,
-                    AdUnlockHours = adUnlockHours,
+                    OfflineRewardPerHour = row.OfflineRewardPerHour,
+                    AdUnlockHours = row.AdUnlockHours,
                     TaskTypeIds = ResolveIds(row.TaskTypeIndices, taskTypeIdByIndex),
                     TaskTypeWeights = row.TaskTypeWeights ?? Array.Empty<int>(),
                     TaskTypeIndices = row.TaskTypeIndices ?? Array.Empty<int>(),
@@ -487,77 +457,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             }
 
             return true;
-        }
-
-        private static bool TryBuildLegacyMetaLookup(
-            IReadOnlyList<HolmasMetaLevelRow> rows,
-            out Dictionary<int, HolmasMetaLevelRow> lookup,
-            HolmasConfigReport report)
-        {
-            lookup = new Dictionary<int, HolmasMetaLevelRow>();
-
-            if (rows == null || rows.Count == 0)
-            {
-                report.AddError("旧版核心配置包缺少 MetaLevels，无法回填 PlayerLevels 成长参数。");
-                return false;
-            }
-
-            var seenLevels = new HashSet<int>();
-            int expectedLevel = 1;
-
-            for (int i = 0; i < rows.Count; i++)
-            {
-                var row = rows[i];
-                if (row == null)
-                {
-                    report.AddError($"MetaLevels 第 {i + 1} 行为空。");
-                    return false;
-                }
-
-                if (row.PlayerLevel != expectedLevel)
-                {
-                    report.AddError($"MetaLevels 的 playerLevel 必须从 1 连续递增，当前第 {i + 1} 行是 {row.PlayerLevel}。");
-                    return false;
-                }
-
-                expectedLevel++;
-
-                if (!seenLevels.Add(row.PlayerLevel))
-                {
-                    report.AddError($"MetaLevels 存在重复 playerLevel: {row.PlayerLevel}。");
-                    return false;
-                }
-
-                if (row.OfflineRewardPerHour < 0)
-                {
-                    report.AddError($"MetaLevels 的 offlineRewardPerHour 不能为负: level={row.PlayerLevel}。");
-                    return false;
-                }
-
-                if (row.AdUnlockHours <= 0)
-                {
-                    report.AddError($"MetaLevels 的 adUnlockHours 必须大于 0: level={row.PlayerLevel}。");
-                    return false;
-                }
-
-                lookup[row.PlayerLevel] = row;
-            }
-
-            return true;
-        }
-
-        private static List<HolmasMetaLevelRow> BuildMetaLevelsFromPlayerLevels(IReadOnlyList<HolmasPlayerLevelDefinition> playerLevels)
-        {
-            return (playerLevels ?? Array.Empty<HolmasPlayerLevelDefinition>())
-                .Where(item => item != null)
-                .Select(item => new HolmasMetaLevelRow
-                {
-                    PlayerLevel = item.PlayerLevel,
-                    MinExperience = item.UpgradeExp,
-                    OfflineRewardPerHour = item.OfflineRewardPerHour,
-                    AdUnlockHours = item.AdUnlockHours,
-                })
-                .ToList();
         }
 
         private static bool TryBuildAgencyBuildings(

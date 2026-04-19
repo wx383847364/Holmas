@@ -63,7 +63,7 @@ class HolmasPythonExporterTests(unittest.TestCase):
 
             self.assertEqual(core_json["Version"], 6)
             self.assertEqual(core_json["PlayerLevels"][-1]["UpgradeExp"], 2000)
-            self.assertEqual(core_json["MetaLevels"][-1]["MinExperience"], 2000)
+            self.assertNotIn("MetaLevels", core_json)
             self.assertEqual(cat_json["Cats"][0]["CatName"], "布偶猫")
             self.assertTrue(report_json["Success"])
             self.assertEqual(report_json["BinaryWrittenCount"], 2)

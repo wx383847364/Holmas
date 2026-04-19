@@ -12,7 +12,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public const int CoreMagic = 0x48434F52; // HCOR
         public const int CatMetaMagic = 0x48434154; // HCAT
         public const int CurrentVersion = 6;
-        public const int MinSupportedVersion = 3;
+        public const int MinSupportedVersion = CurrentVersion;
     }
 
     /// <summary>
@@ -84,19 +84,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     }
 
     /// <summary>
-    /// 侦探社等级配置行。
-    /// </summary>
-    [Serializable]
-    public sealed class HolmasMetaLevelRow
-    {
-        public int PlayerLevel;
-        public int MinExperience;
-        public int OfflineRewardPerHour;
-        public int AdUnlockHours;
-        public string Notes = string.Empty;
-    }
-
-    /// <summary>
     /// 宣传升级费用序列。
     /// 每个实例对应一个宣传功能的一条升级费用曲线。
     /// </summary>
@@ -131,7 +118,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public HolmasMapRow[] Maps = Array.Empty<HolmasMapRow>();
         public HolmasTaskRow[] Tasks = Array.Empty<HolmasTaskRow>();
         public HolmasPlayerLevelRow[] PlayerLevels = Array.Empty<HolmasPlayerLevelRow>();
-        public HolmasMetaLevelRow[] MetaLevels = Array.Empty<HolmasMetaLevelRow>();
         public HolmasAgencyBuildingRow[] AgencyBuildings = Array.Empty<HolmasAgencyBuildingRow>();
 
         public int CodecVersion { get; internal set; } = HolmasConfigBinaryFormat.CurrentVersion;
@@ -193,7 +179,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             IReadOnlyList<HolmasMapDefinition> maps,
             IReadOnlyList<HolmasTaskTemplateDefinition> taskTemplates,
             IReadOnlyList<HolmasPlayerLevelDefinition> playerLevels,
-            IReadOnlyList<HolmasMetaLevelRow> metaLevels,
             IReadOnlyList<HolmasAgencyBuildingRow> agencyBuildings,
             HolmasConfigReport report)
         {
@@ -203,7 +188,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             Maps = maps ?? Array.Empty<HolmasMapDefinition>();
             TaskTemplates = taskTemplates ?? Array.Empty<HolmasTaskTemplateDefinition>();
             PlayerLevels = playerLevels ?? Array.Empty<HolmasPlayerLevelDefinition>();
-            MetaLevels = metaLevels ?? Array.Empty<HolmasMetaLevelRow>();
             AgencyBuildings = agencyBuildings ?? Array.Empty<HolmasAgencyBuildingRow>();
             Report = report ?? new HolmasConfigReport();
         }
@@ -214,7 +198,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public IReadOnlyList<HolmasMapDefinition> Maps { get; }
         public IReadOnlyList<HolmasTaskTemplateDefinition> TaskTemplates { get; }
         public IReadOnlyList<HolmasPlayerLevelDefinition> PlayerLevels { get; }
-        public IReadOnlyList<HolmasMetaLevelRow> MetaLevels { get; }
         public IReadOnlyList<HolmasAgencyBuildingRow> AgencyBuildings { get; }
         public HolmasConfigReport Report { get; }
     }
