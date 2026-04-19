@@ -18,7 +18,7 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static UiBindingManifest BuildManifest()
         {
-            var manifest = new UiBindingManifest(LoadingScreenRegistration.ScreenId, PrefabName, PrefabAssetPath);
+            var manifest = new UiBindingManifest(LoadingScreenRegistration.TransitionOverlayScreenId, PrefabName, PrefabAssetPath);
             manifest.AddEntry(LoadingBindings.RootPanelKey, "RectTransform", LoadingBindings.RootNodePath, notes: "loading_root");
             manifest.AddEntry(LoadingBindings.LoadingBarKey, "Slider", LoadingBindings.LoadingBarNodePath, notes: "loading_bar");
             manifest.AddEntry(LoadingBindings.StatusTextKey, "TextMeshProUGUI", LoadingBindings.StatusTextNodePath, notes: "loading_status");

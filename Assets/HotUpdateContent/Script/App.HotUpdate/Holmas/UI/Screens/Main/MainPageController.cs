@@ -96,7 +96,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             try
             {
-                await ScreenService.ShowOverlayAsync(LoadingScreenRegistration.ScreenId, "正在准备棋盘...");
+                await ScreenService.ShowOverlayAsync(LoadingScreenRegistration.TransitionOverlayScreenId, "正在准备棋盘...");
                 int seed = Environment.TickCount;
                 await gateway.StartLevelForCurrentPlayerAsync(seed);
                 await ScreenService.OpenPageAsync(BattleScreenRegistration.ScreenId, $"关卡已启动，seed={seed}");
@@ -107,7 +107,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
             finally
             {
-                await ScreenService.CloseAsync(LoadingScreenRegistration.ScreenId);
+                await ScreenService.CloseAsync(LoadingScreenRegistration.TransitionOverlayScreenId);
                 _isBusy = false;
 
                 if (ScreenService != null &&

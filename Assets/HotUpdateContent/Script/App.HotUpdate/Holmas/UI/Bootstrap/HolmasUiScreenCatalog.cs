@@ -13,7 +13,7 @@ namespace App.HotUpdate.Holmas.UI
     /// </summary>
     public static class HolmasUiScreenCatalog
     {
-        public static string DefaultStartupScreenId => MainScreenRegistration.ScreenId;
+        public static string DefaultStartupScreenId => LoadingScreenRegistration.StartupPageScreenId;
 
         public static void RegisterAll(UiScreenService screenService)
         {
@@ -22,9 +22,10 @@ namespace App.HotUpdate.Holmas.UI
                 throw new ArgumentNullException(nameof(screenService));
             }
 
+            screenService.RegisterDefinition(LoadingScreenRegistration.CreateStartupPageDefinition());
+            screenService.RegisterDefinition(LoadingScreenRegistration.CreateTransitionOverlayDefinition());
             screenService.RegisterDefinition(MainScreenRegistration.CreateDefinition());
             screenService.RegisterDefinition(BattleScreenRegistration.CreateDefinition());
-            screenService.RegisterDefinition(LoadingScreenRegistration.CreateDefinition());
             screenService.RegisterDefinition(AgencyMainScreenRegistration.CreateDefinition());
         }
     }
