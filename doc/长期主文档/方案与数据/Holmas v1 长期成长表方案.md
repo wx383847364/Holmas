@@ -6,7 +6,7 @@
 
 本方案锁定以下结论：
 
-- `Holmas_MetaLevelTable` 使用 `playerLevel` 承载玩家等级门槛与长期成长参数
+- `Holmas_PlayerLevelTable` 使用 `playerLevel` 承载玩家等级门槛与长期成长参数，旧的独立成长表方案已废弃
 - 宣传升级配置拆到独立表 `Holmas_AgencyBuildingTable`
 - 玩家经验来源统一收口为“宣传升级成功事件”
 - 每次任意宣传升级成功，玩家固定获得 `1` 点经验
@@ -53,16 +53,16 @@
 
 ## 表结构
 
-建议继续使用两张原始 xlsx：
+当前正式方案改为使用一张合并后的成长表和一张宣传表：
 
-- `Assets/Config/Holmas_MetaLevelTable.xlsx`
+- `Assets/Config/Holmas_PlayerLevelTable.xlsx`
 - `Assets/Config/Holmas_AgencyBuildingTable.xlsx`
 
-`Holmas_MetaLevelTable.xlsx` 字段固定为：
+`Holmas_PlayerLevelTable.xlsx` 成长字段固定为：
 
 - `playerLevel`
   - 玩家等级，范围 `1-20`
-- `minExperience`
+- `upgradeExp`
   - 达到该玩家等级所需的累计经验门槛
 - `offlineRewardPerHour`
   - 每小时离线奖励
@@ -97,20 +97,19 @@
 
 ## 等级关系
 
-从 `v1` 长期成长表开始，玩家升级门槛与宣传配置拆分为两套配置来源。
+从当前 `v1` 长期成长表开始，玩家升级门槛与宣传配置分别由 `PlayerLevels` 与宣传表提供。
 
 规则固定为：
 
 - 外层需要任务/地图等级时，统一消费玩家等级语义
-- `Holmas_MetaLevelTable` 负责 `playerLevel -> minExperience / offlineRewardPerHour / adUnlockHours`
+- `Holmas_PlayerLevelTable` 负责 `playerLevel -> upgradeExp / offlineRewardPerHour / adUnlockHours`
 - `Holmas_AgencyBuildingTable` 负责城市阶段下的宣传功能集合、升级级数和费用
-- 本轮不要求运行时字段名立即全部切换，只要方案语义统一
 - 本轮不额外定义“玩家等级必须始终等于城市阶段等级”
 
 这样处理的原因：
 
 - 避免 `agencyLevel` 同时承担等级门槛和宣传配置两种职责
-- 让等级门槛与宣传成长各自独立配置，后续更容易扩展
+- 让玩家等级门槛与宣传成长分别落在 `PlayerLevels` 与宣传表中，后续更容易扩展
 - 保留宣传系统独立推进节奏，不提前锁死双等级完全绑定
 
 ## 分层与数值节奏
@@ -130,7 +129,7 @@
 
 推荐累计经验门槛如下：
 
-- `Lv1-20 minExperience`
+- `Lv1-20 upgradeExp`
 - `0, 40, 85, 135, 190, 250, 320, 400, 490, 590, 700, 825, 965, 1120, 1290, 1475, 1675, 1840, 1930, 2000`
 
 这组门槛的含义是：
@@ -187,7 +186,7 @@
 
 - `HolmasMetaProgressionDefinition`
   - 从仅包含 `AgencyLevel + MinExperience`
-  - 扩展为 `playerLevel + minExperience + offlineRewardPerHour + adUnlockHours`
+  - 扩展为 `playerLevel + upgradeExp + offlineRewardPerHour + adUnlockHours`
 
 - `IHolmasMetaCatalog`
   - 需要改为按 `playerLevel` 取定义
@@ -197,10 +196,10 @@
 
 - `HolmasGameBootstrap`
   - 不再只兜底 `AgencyLevel=1`
-  - 要改为同时加载完整成长表和宣传升级表
+  - 要改为同时加载完整 `PlayerLevels` 成长字段和宣传升级表
 
 - 现有导表链
-  - 在 `Xlsx导出二进制` 流程中加入 meta 表与宣传升级表导出
+  - 在 `Xlsx导出二进制` 流程中消费 `Holmas_PlayerLevelTable` 成长字段与宣传升级表
   - 继续合并进核心配置包，不额外拆第三个 bytes 文件
 
 ## 测试要求
@@ -208,8 +207,8 @@
 落地时必须补并通过这些验证：
 
 - `playerLevel` 唯一且从 `1` 连续到 `20`
-- `minExperience` 严格递增
-- `Lv20.minExperience = 2000`
+- `upgradeExp` 严格递增
+- `Lv20.upgradeExp = 2000`
 - `promotionUpgradeExp = 1`
 - `adUnlockHours > 0`
 - `offlineRewardPerHour >= 0`

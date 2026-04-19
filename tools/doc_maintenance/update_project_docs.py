@@ -287,7 +287,7 @@ def classify_commit_module(text: str, topic: str) -> str:
         return "340"
     if re.search(r"场景|scene|预制体|prefab", compact, re.IGNORECASE):
         return "330"
-    if re.search(r"Holmas_AgencyBuildingTable|Holmas_CatTable|Holmas_MapTable|Holmas_MetaLevelTable|Holmas_PlayerLevelTable|Holmas_TaskTable|\.xlsx|xlsx|配置表", compact, re.IGNORECASE):
+    if re.search(r"Holmas_AgencyBuildingTable|Holmas_CatTable|Holmas_MapTable|Holmas_PlayerLevelTable|Holmas_TaskTable|\.xlsx|xlsx|配置表", compact, re.IGNORECASE):
         return "410"
     if re.search(r"导表|导出|转换脚本|export report|配置转换", compact, re.IGNORECASE):
         return "420"

@@ -114,7 +114,7 @@ v1 规则固定为：
 v1 解释固定为：
 
 - `upgradeExp` 只保留升级门槛定义
-- `upgradeExp` 对应 `Holmas_MetaLevelTable.playerLevel -> minExperience`
+- `upgradeExp` 直接承载玩家等级门槛，不再拆分到独立成长表
 - 玩家经验由侦探社建筑升级提供，每次完成一次单独建筑升级动作固定增加 `1` 点经验
 - 侦探社建筑配置由 `Holmas_AgencyBuildingTable` 定义，按侦探社阶段给出建筑集合、升级级数和每级费用
 - 建筑升级经验与现有玩家升级体系并存，但本阶段不强制定义“玩家等级 = 侦探社等级”
@@ -253,7 +253,7 @@ v1 解释固定为：
 - v1 只做普通任务，赌博任务相关字段先保留不用。
 - `rewardArray` 暂不参与普通任务计算，留给后续扩展。
 - 玩家经验来源固定为侦探社建筑升级事件，每次建筑升级提供 `1` 点经验。
-- `Holmas_MetaLevelTable` 使用 `playerLevel` 承载升级门槛与长期成长参数。
+- `Holmas_PlayerLevelTable` 使用 `playerLevel` 承载升级门槛与长期成长参数，旧的独立成长表方案已废弃。
 - 侦探社建筑配置通过独立的 `Holmas_AgencyBuildingTable` 提供，不再写死每级固定 5 个建筑。
 - 暂不锁定“玩家等级 = 侦探社等级”，只锁定建筑升级会驱动玩家经验增长。
 - 地图中的猫种优先围绕当前任务栏生成，以保证任务推进体验。

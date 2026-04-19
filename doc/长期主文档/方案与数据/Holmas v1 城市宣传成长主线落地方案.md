@@ -33,17 +33,17 @@
 
 ## 配置表方案
 
-继续保留两张原始表：
+当前正式配置只保留一张成长表和一张宣传表：
 
-- `Assets/Config/Holmas_MetaLevelTable.xlsx`
+- `Assets/Config/Holmas_PlayerLevelTable.xlsx`
 - `Assets/Config/Holmas_AgencyBuildingTable.xlsx`
 
-### Holmas_MetaLevelTable.xlsx
+### Holmas_PlayerLevelTable.xlsx
 
-字段保持：
+成长字段保持：
 
 - `playerLevel`
-- `minExperience`
+- `upgradeExp`
 - `offlineRewardPerHour`
 - `adUnlockHours`
 - `notes`
@@ -82,7 +82,6 @@
 `Xlsx导出二进制` 需要扩展以下规则：
 
 - `Holmas_PlayerLevelTable.xlsx` 行数必须锁死为 `20`
-- `Holmas_PlayerLevelTable.xlsx` 必须与 `Holmas_MetaLevelTable.xlsx` 行数完全一致
 - `agencyStageId` 必须连续 `1..100`
 - `stageName` 不允许重复
 - `promotionIds` 长度固定为 `4`
@@ -90,7 +89,7 @@
 - `promotionUpgradeCosts` 外层长度固定为 `4`
 - 每组 `promotionUpgradeCosts` 内层长度固定为 `5`
 - 所有升级费用必须 `> 0`
-- `Lv20.minExperience` 必须等于 `2000`
+- `Lv20.upgradeExp` 必须等于 `2000`
 
 核心配置导出包继续保持两份正式产物：
 
@@ -147,7 +146,7 @@
 
 `Bootstrap` 与组合层需要同步切换：
 
-- 从导出配置恢复 `MetaLevels` 与宣传配置
+- 从导出配置恢复 `PlayerLevels`（合并后的成长字段）与宣传配置
 - 不再组装“建筑成长”服务
 - 对外暴露宣传升级入口
 - 当前无 UI 主链依然能：
@@ -173,8 +172,8 @@
 ### 等级校验
 
 - `playerLevel` 连续 `1..20`
-- `minExperience` 严格递增
-- `Lv20.minExperience == 2000`
+- `upgradeExp` 严格递增
+- `Lv20.upgradeExp == 2000`
 
 ### 宣传升级逻辑
 
