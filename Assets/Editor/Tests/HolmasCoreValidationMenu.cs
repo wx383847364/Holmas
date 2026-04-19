@@ -112,6 +112,10 @@ public static class HolmasCoreValidationMenu
             }
 
             long goldBeforePromotionUpgrades = context.CurrentGoldBalance;
+            long experienceBeforePromotionUpgrades = context.GameplayRuntime.MetaProgressionState.Experience;
+            int expectedPromotionUpgradeCount = CalculatePromotionUpgradeCount(smokeStagePromotions);
+            long expectedExperience = experienceBeforePromotionUpgrades + expectedPromotionUpgradeCount;
+            int expectedPlayerLevel = ResolvePlayerLevel(configBundle, expectedExperience);
             context.GameplayRuntime.MetaProgressionState.AgencyStageId = smokeStageId;
             UpgradePromotions(context.GameplayRuntime, smokeStagePromotions);
 
@@ -120,20 +124,23 @@ public static class HolmasCoreValidationMenu
                 throw new InvalidOperationException($"Holmas smoke test unexpectedly changed stage after fully upgrading the exported stage. currentStage={context.CurrentAgencyStageId}, expectedStage={smokeStageId}");
             }
 
-            if (context.CurrentPlayerLevel != 1)
+            if (context.CurrentPlayerLevel != expectedPlayerLevel)
             {
                 throw new InvalidOperationException($"Holmas smoke test reached unexpected player level after growth chain: {context.CurrentPlayerLevel}.");
             }
 
-            if (context.GameplayRuntime.MetaProgressionState.Experience != 20)
+            if (context.GameplayRuntime.MetaProgressionState.Experience != expectedExperience)
             {
                 throw new InvalidOperationException($"Holmas smoke test reached unexpected experience after growth chain: {context.GameplayRuntime.MetaProgressionState.Experience}.");
             }
 
-            if (context.GameplayRuntime.MetaProgressionState.PromotionLevels.Count != smokeStagePromotions.Count)
+            int expectedPromotionStateCount = CountTrackedPromotions(smokeStagePromotions);
+            if (context.GameplayRuntime.MetaProgressionState.PromotionLevels.Count != expectedPromotionStateCount)
             {
                 throw new InvalidOperationException($"Holmas smoke test did not record all upgraded promotions: {context.GameplayRuntime.MetaProgressionState.PromotionLevels.Count}.");
             }
+
+            ValidatePromotionUpgradeState(context.GameplayRuntime.MetaProgressionState, smokeStagePromotions);
 
             long expectedGoldBalance = goldBeforePromotionUpgrades - requiredGold;
             if (context.CurrentGoldBalance != expectedGoldBalance)
@@ -183,6 +190,86 @@ public static class HolmasCoreValidationMenu
         }
 
         return totalCost;
+    }
+
+    private static int CalculatePromotionUpgradeCount(IReadOnlyList<HolmasAgencyBuildingDefinition> promotions)
+    {
+        if (promotions == null)
+        {
+            return 0;
+        }
+
+        int totalCount = 0;
+        foreach (HolmasAgencyBuildingDefinition promotion in promotions)
+        {
+            if (promotion == null)
+            {
+                continue;
+            }
+
+            int costCount = promotion.PromotionUpgradeCosts != null ? promotion.PromotionUpgradeCosts.Length : 0;
+            totalCount += Math.Min(Math.Max(0, promotion.PromotionLevelCap), costCount);
+        }
+
+        return totalCount;
+    }
+
+    private static int CountTrackedPromotions(IReadOnlyList<HolmasAgencyBuildingDefinition> promotions)
+    {
+        if (promotions == null)
+        {
+            return 0;
+        }
+
+        return promotions.Count(item => item != null && !string.IsNullOrWhiteSpace(item.PromotionId));
+    }
+
+    private static int ResolvePlayerLevel(HolmasConfigCatalogBundle configBundle, long experience)
+    {
+        if (configBundle?.PlayerLevels == null || configBundle.PlayerLevels.Count == 0)
+        {
+            return 1;
+        }
+
+        int resolvedLevel = 1;
+        foreach (HolmasPlayerLevelDefinition definition in configBundle.PlayerLevels
+                     .Where(item => item != null)
+                     .OrderBy(item => item.PlayerLevel))
+        {
+            if (experience < Math.Max(0, definition.UpgradeExp))
+            {
+                break;
+            }
+
+            resolvedLevel = Math.Max(resolvedLevel, definition.PlayerLevel);
+        }
+
+        return resolvedLevel;
+    }
+
+    private static void ValidatePromotionUpgradeState(
+        HolmasMetaProgressionState state,
+        IReadOnlyList<HolmasAgencyBuildingDefinition> promotions)
+    {
+        if (state == null || promotions == null)
+        {
+            return;
+        }
+
+        foreach (HolmasAgencyBuildingDefinition promotion in promotions)
+        {
+            if (promotion == null || string.IsNullOrWhiteSpace(promotion.PromotionId))
+            {
+                continue;
+            }
+
+            int scopedLevel = HolmasAgencyPromotionStateKey.GetLevel(state, promotion.AgencyStageId, promotion.PromotionId);
+            if (scopedLevel != promotion.PromotionLevelCap)
+            {
+                throw new InvalidOperationException(
+                    $"Holmas smoke test did not fully upgrade promotion {promotion.AgencyStageId}::{promotion.PromotionId}. current={scopedLevel}, expected={promotion.PromotionLevelCap}.");
+            }
+        }
     }
 
     private static BoardRevealResult CompleteTaskThroughFormalMapProgression(
@@ -348,7 +435,7 @@ public static class HolmasCoreValidationMenu
                 throw new InvalidOperationException($"Holmas smoke test recovered invalid promotion cap for promotion {promotionId}.");
             }
 
-            while (runtime.MetaProgressionState.GetPromotionLevel(promotionId) < levelCap)
+            while (HolmasAgencyPromotionStateKey.GetLevel(runtime.MetaProgressionState, promotion.AgencyStageId, promotionId) < levelCap)
             {
                 HolmasAgencyUpgradeResult result = runtime.TryUpgradePromotion(promotionId);
                 if (!result.Success)

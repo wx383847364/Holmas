@@ -148,7 +148,7 @@ namespace Holmas.Tests
             Assert.That(first.GoldSpent, Is.EqualTo(10));
             Assert.That(first.PreviousLevel, Is.EqualTo(0));
             Assert.That(first.NewLevel, Is.EqualTo(1));
-            Assert.That(state.GetPromotionLevel("lobby"), Is.EqualTo(1));
+            Assert.That(HolmasAgencyPromotionStateKey.GetLevel(state, 1, "lobby"), Is.EqualTo(1));
             Assert.That(state.GoldBalance, Is.EqualTo(20));
             Assert.That(state.Experience, Is.EqualTo(1));
             Assert.That(state.PlayerLevel, Is.EqualTo(2));
@@ -159,7 +159,7 @@ namespace Holmas.Tests
             Assert.That(second.Success, Is.True, second.FailureReason);
             Assert.That(second.GoldSpent, Is.EqualTo(20));
             Assert.That(second.StageAdvanced, Is.True);
-            Assert.That(state.GetPromotionLevel("desk"), Is.EqualTo(1));
+            Assert.That(HolmasAgencyPromotionStateKey.GetLevel(state, 1, "desk"), Is.EqualTo(1));
             Assert.That(state.GoldBalance, Is.EqualTo(0));
             Assert.That(state.Experience, Is.EqualTo(2));
             Assert.That(state.PlayerLevel, Is.EqualTo(3));
@@ -188,7 +188,7 @@ namespace Holmas.Tests
 
             Assert.That(result.Success, Is.False);
             Assert.That(result.FailureReason, Does.Contain("金币不足"));
-            Assert.That(state.GetPromotionLevel("lobby"), Is.EqualTo(0));
+            Assert.That(HolmasAgencyPromotionStateKey.GetLevel(state, 1, "lobby"), Is.EqualTo(0));
             Assert.That(state.GoldBalance, Is.EqualTo(5));
             Assert.That(state.Experience, Is.EqualTo(0));
         }
@@ -218,7 +218,7 @@ namespace Holmas.Tests
 
             Assert.That(second.Success, Is.False);
             Assert.That(second.FailureReason, Does.Contain("等级上限"));
-            Assert.That(state.GetPromotionLevel("lobby"), Is.EqualTo(1));
+            Assert.That(HolmasAgencyPromotionStateKey.GetLevel(state, 1, "lobby"), Is.EqualTo(1));
             Assert.That(state.AgencyStageId, Is.EqualTo(1));
         }
 
@@ -244,7 +244,34 @@ namespace Holmas.Tests
             Assert.That(result.Success, Is.True, result.FailureReason);
             Assert.That(result.StageAdvanced, Is.False);
             Assert.That(state.AgencyStageId, Is.EqualTo(1));
-            Assert.That(state.GetPromotionLevel("lobby"), Is.EqualTo(1));
+            Assert.That(HolmasAgencyPromotionStateKey.GetLevel(state, 1, "lobby"), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void HolmasAgencyProgressionService_TryUpgradePromotion_PrefersCurrentStageWhenPromotionIdsRepeatAcrossStages()
+        {
+            var metaCatalog = CreateMetaCatalog();
+            var sharedPolicy = new HolmasDefaultMetaExperienceSource(metaCatalog);
+            var metaService = new HolmasMetaProgressionService(
+                metaCatalog,
+                CreatePlayerLevelCatalog(),
+                sharedPolicy,
+                sharedPolicy,
+                new FixedUtcClock { UtcNowMilliseconds = 123456 });
+            var agencyService = new HolmasAgencyProgressionService(CreateDuplicatePromotionIdCatalog(), metaService);
+            HolmasMetaProgressionState state = metaService.CreateState();
+            state.PlayerLevel = 1;
+            state.AgencyStageId = 1;
+            state.GoldBalance = 50;
+
+            HolmasAgencyUpgradeResult result = agencyService.TryUpgradePromotion(state, "leaflet");
+
+            Assert.That(result.Success, Is.True, result.FailureReason);
+            Assert.That(result.GoldSpent, Is.EqualTo(10));
+            Assert.That(result.AgencyStageId, Is.EqualTo(1));
+            Assert.That(HolmasAgencyPromotionStateKey.GetLevel(state, 1, "leaflet"), Is.EqualTo(1));
+            Assert.That(state.GoldBalance, Is.EqualTo(40));
+            Assert.That(state.AgencyStageId, Is.EqualTo(1));
         }
 
         private static HolmasMetaCatalog CreateMetaCatalog()
@@ -330,6 +357,29 @@ namespace Holmas.Tests
                     PromotionId = "lobby",
                     PromotionLevelCap = 1,
                     PromotionUpgradeCosts = new[] { 10 },
+                },
+            });
+        }
+
+        private static HolmasAgencyCatalog CreateDuplicatePromotionIdCatalog()
+        {
+            return new HolmasAgencyCatalog(new[]
+            {
+                new HolmasAgencyBuildingDefinition
+                {
+                    AgencyStageId = 1,
+                    StageName = "stage-1",
+                    PromotionId = "leaflet",
+                    PromotionLevelCap = 2,
+                    PromotionUpgradeCosts = new[] { 10, 20 },
+                },
+                new HolmasAgencyBuildingDefinition
+                {
+                    AgencyStageId = 2,
+                    StageName = "stage-2",
+                    PromotionId = "leaflet",
+                    PromotionLevelCap = 3,
+                    PromotionUpgradeCosts = new[] { 30, 40, 50 },
                 },
             });
         }

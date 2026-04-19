@@ -144,14 +144,15 @@ namespace App.HotUpdate.Holmas.Meta
                 return result;
             }
 
-            if (!_catalog.TryGetPromotion(promotionId, out HolmasAgencyBuildingDefinition definition) || definition == null)
-            {
-                result.FailureReason = $"找不到宣传配置: {promotionId}。";
-                return result;
-            }
-
             int currentStageId = Math.Max(1, state.AgencyStageId);
             result.AgencyStageId = currentStageId;
+
+            HolmasAgencyBuildingDefinition definition = ResolvePromotionDefinition(currentStageId, promotionId);
+            if (definition == null)
+            {
+                result.FailureReason = $"找不到当前城市阶段 {currentStageId} 的宣传配置: {promotionId}。";
+                return result;
+            }
 
             if (definition.AgencyStageId != currentStageId)
             {
@@ -165,7 +166,7 @@ namespace App.HotUpdate.Holmas.Meta
                 return result;
             }
 
-            int currentLevel = state.GetPromotionLevel(promotionId);
+            int currentLevel = HolmasAgencyPromotionStateKey.GetLevel(state, currentStageId, promotionId);
             result.PreviousLevel = currentLevel;
 
             if (currentLevel >= definition.PromotionLevelCap)
@@ -200,7 +201,7 @@ namespace App.HotUpdate.Holmas.Meta
             }
 
             state.GoldBalance -= goldCost;
-            state.SetPromotionLevel(promotionId, currentLevel + 1);
+            HolmasAgencyPromotionStateKey.SetLevel(state, currentStageId, promotionId, currentLevel + 1);
             _metaProgressionService.ApplyExperience(state, 1L);
 
             result.Success = true;
@@ -241,7 +242,7 @@ namespace App.HotUpdate.Holmas.Meta
                     return false;
                 }
 
-                if (state.GetPromotionLevel(definition.PromotionId) < definition.PromotionLevelCap)
+                if (HolmasAgencyPromotionStateKey.GetLevel(state, agencyStageId, definition.PromotionId) < definition.PromotionLevelCap)
                 {
                     return false;
                 }
@@ -254,6 +255,31 @@ namespace App.HotUpdate.Holmas.Meta
         {
             IReadOnlyList<HolmasAgencyBuildingDefinition> promotions = _catalog.GetPromotionsForStage(agencyStageId);
             return promotions != null && promotions.Count > 0;
+        }
+
+        private HolmasAgencyBuildingDefinition ResolvePromotionDefinition(int agencyStageId, string promotionId)
+        {
+            if (string.IsNullOrWhiteSpace(promotionId))
+            {
+                return null;
+            }
+
+            IReadOnlyList<HolmasAgencyBuildingDefinition> promotions = _catalog.GetPromotionsForStage(agencyStageId);
+            if (promotions == null || promotions.Count == 0)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < promotions.Count; i++)
+            {
+                HolmasAgencyBuildingDefinition definition = promotions[i];
+                if (definition != null && string.Equals(definition.PromotionId, promotionId, StringComparison.Ordinal))
+                {
+                    return definition;
+                }
+            }
+
+            return null;
         }
     }
 }

@@ -58,6 +58,48 @@ namespace App.HotUpdate.Holmas.Meta
         }
     }
 
+    public static class HolmasAgencyPromotionStateKey
+    {
+        private const string Separator = "::";
+
+        public static string Build(int agencyStageId, string promotionId)
+        {
+            return Math.Max(1, agencyStageId) + Separator + (promotionId ?? string.Empty);
+        }
+
+        public static int GetLevel(HolmasMetaProgressionState state, int agencyStageId, string promotionId)
+        {
+            if (state == null)
+            {
+                return 0;
+            }
+
+            int scopedLevel = state.GetPromotionLevel(Build(agencyStageId, promotionId));
+            if (scopedLevel > 0)
+            {
+                return scopedLevel;
+            }
+
+            return Math.Max(1, agencyStageId) == 1
+                ? state.GetPromotionLevel(promotionId)
+                : 0;
+        }
+
+        public static void SetLevel(HolmasMetaProgressionState state, int agencyStageId, string promotionId, int level)
+        {
+            if (state == null)
+            {
+                return;
+            }
+
+            state.SetPromotionLevel(Build(agencyStageId, promotionId), level);
+            if (Math.Max(1, agencyStageId) == 1)
+            {
+                state.SetPromotionLevel(promotionId, 0);
+            }
+        }
+    }
+
     /// <summary>
     /// 玩家等级长期成长配置。
     /// </summary>

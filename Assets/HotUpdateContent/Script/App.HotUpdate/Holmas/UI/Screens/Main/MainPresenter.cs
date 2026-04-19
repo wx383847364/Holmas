@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Meta;
+using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.Shared.Holmas.RuntimeData;
 
@@ -18,7 +19,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         public MainVm Build(string status = null)
         {
-            string promotionId = GetPrimaryPromotionId();
+            HolmasAgencyBuildingDefinition promotion = GetPrimaryPromotionDefinition();
+            string promotionId = promotion != null ? promotion.PromotionId : string.Empty;
+            bool hasConfiguredPromotions = HasConfiguredPromotionsForCurrentStage();
             bool hasUncompletedLevel = _context != null &&
                                        _context.GameplayRuntime != null &&
                                        _context.GameplayRuntime.HasActiveUncompletedLevel;
@@ -31,8 +34,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 StartButtonLabel = hasUncompletedLevel ? "继续找猫" : "开始找猫",
                 StartButtonEnabled = _context != null && _context.GameplayRuntime != null,
                 PromotionButtonLabel = string.IsNullOrWhiteSpace(promotionId)
-                    ? "宣传待开放"
-                    : $"升级 {promotionId}",
+                    ? (hasConfiguredPromotions ? "宣传已满级" : "宣传待开放")
+                    : BuildPromotionButtonLabel(promotion),
                 PromotionButtonEnabled = !string.IsNullOrWhiteSpace(promotionId),
                 PromotionId = promotionId ?? string.Empty,
                 TaskItems = BuildTaskItems(),
@@ -41,18 +44,23 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         public string GetPrimaryPromotionId()
         {
+            return GetPrimaryPromotionDefinition()?.PromotionId ?? string.Empty;
+        }
+
+        private HolmasAgencyBuildingDefinition GetPrimaryPromotionDefinition()
+        {
             IHolmasAgencyCatalog catalog = _context?.ServiceContainer != null
                 ? _context.ServiceContainer.Get<IHolmasAgencyCatalog>()
                 : null;
             if (catalog == null)
             {
-                return string.Empty;
+                return null;
             }
 
             var definitions = catalog.GetPromotionsForStage(_context.CurrentAgencyStageId);
             if (definitions == null || definitions.Count == 0)
             {
-                return string.Empty;
+                return null;
             }
 
             var currentState = _context.GameplayRuntime?.MetaProgressionState;
@@ -60,14 +68,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 .FirstOrDefault(item => item != null &&
                                         !string.IsNullOrWhiteSpace(item.PromotionId) &&
                                         currentState != null &&
-                                        currentState.GetPromotionLevel(item.PromotionId) < item.PromotionLevelCap);
+                                        HolmasAgencyPromotionStateKey.GetLevel(currentState, item.AgencyStageId, item.PromotionId) < item.PromotionLevelCap);
 
             if (preferred != null)
             {
-                return preferred.PromotionId;
+                return preferred;
             }
 
-            return definitions[0] != null ? definitions[0].PromotionId ?? string.Empty : string.Empty;
+            return currentState == null ? definitions[0] : null;
+        }
+
+        private bool HasConfiguredPromotionsForCurrentStage()
+        {
+            IHolmasAgencyCatalog catalog = _context?.ServiceContainer != null
+                ? _context.ServiceContainer.Get<IHolmasAgencyCatalog>()
+                : null;
+            if (catalog == null)
+            {
+                return false;
+            }
+
+            var definitions = catalog.GetPromotionsForStage(_context.CurrentAgencyStageId);
+            return definitions != null && definitions.Any(item => item != null && !string.IsNullOrWhiteSpace(item.PromotionId));
         }
 
         private string BuildSummary()
@@ -89,7 +111,79 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 ? "未进入棋盘"
                 : $"棋盘 {_context.GameplayRuntime.CurrentBoardRuntime.Rows}x{_context.GameplayRuntime.CurrentBoardRuntime.Cols}";
 
-            return $"Stage {_context.CurrentAgencyStageId} | 任务 {activeTaskCount}/{unlockedCount} | 可领奖 {claimableCount}\n{boardSummary}";
+            return $"{BuildProgressionSummary()} | 任务 {activeTaskCount}/{unlockedCount} | 可领奖 {claimableCount}\n{BuildPromotionSummary()} | {boardSummary}";
+        }
+
+        private string BuildProgressionSummary()
+        {
+            if (_context == null || _context.GameplayRuntime == null)
+            {
+                return "Lv 1 | Exp 0/0 | Gold 0 | Stage 1";
+            }
+
+            long experience = _context.GameplayRuntime.MetaProgressionState != null
+                ? _context.GameplayRuntime.MetaProgressionState.Experience
+                : 0L;
+            int nextLevel = _context.CurrentPlayerLevel + 1;
+            string nextLevelExp = "MAX";
+
+            IHolmasTaskCatalog taskCatalog = _context.ServiceContainer != null
+                ? _context.ServiceContainer.Get<IHolmasTaskCatalog>()
+                : null;
+            if (taskCatalog != null &&
+                taskCatalog.TryGetPlayerLevel(nextLevel, out HolmasPlayerLevelDefinition nextDefinition) &&
+                nextDefinition != null)
+            {
+                nextLevelExp = nextDefinition.UpgradeExp.ToString();
+            }
+
+            return $"Lv {_context.CurrentPlayerLevel} | Exp {experience}/{nextLevelExp} | Gold {_context.CurrentGoldBalance} | Stage {_context.CurrentAgencyStageId}";
+        }
+
+        private string BuildPromotionSummary()
+        {
+            HolmasAgencyBuildingDefinition promotion = GetPrimaryPromotionDefinition();
+            if (promotion == null || string.IsNullOrWhiteSpace(promotion.PromotionId))
+            {
+                return "宣传 暂无可升级项";
+            }
+
+            int currentLevel = _context?.GameplayRuntime?.MetaProgressionState != null
+                ? HolmasAgencyPromotionStateKey.GetLevel(_context.GameplayRuntime.MetaProgressionState, promotion.AgencyStageId, promotion.PromotionId)
+                : 0;
+            int nextCost = GetPromotionUpgradeCost(promotion, currentLevel);
+            return nextCost > 0
+                ? $"宣传 {promotion.PromotionId} Lv {currentLevel}/{promotion.PromotionLevelCap} | Next Cost {nextCost} | +1 Exp"
+                : $"宣传 {promotion.PromotionId} Lv {currentLevel}/{promotion.PromotionLevelCap} | 已满级";
+        }
+
+        private string BuildPromotionButtonLabel(HolmasAgencyBuildingDefinition promotion)
+        {
+            if (promotion == null || string.IsNullOrWhiteSpace(promotion.PromotionId))
+            {
+                return "宣传待开放";
+            }
+
+            int currentLevel = _context?.GameplayRuntime?.MetaProgressionState != null
+                ? HolmasAgencyPromotionStateKey.GetLevel(_context.GameplayRuntime.MetaProgressionState, promotion.AgencyStageId, promotion.PromotionId)
+                : 0;
+            int nextCost = GetPromotionUpgradeCost(promotion, currentLevel);
+            return nextCost > 0
+                ? $"升级 {promotion.PromotionId} Lv {currentLevel}->{currentLevel + 1} ({nextCost} Gold)"
+                : $"{promotion.PromotionId} 已满级";
+        }
+
+        private static int GetPromotionUpgradeCost(HolmasAgencyBuildingDefinition promotion, int currentLevel)
+        {
+            if (promotion == null ||
+                promotion.PromotionUpgradeCosts == null ||
+                currentLevel < 0 ||
+                currentLevel >= promotion.PromotionUpgradeCosts.Length)
+            {
+                return 0;
+            }
+
+            return System.Math.Max(0, promotion.PromotionUpgradeCosts[currentLevel]);
         }
 
         private MainTaskItemVm[] BuildTaskItems()

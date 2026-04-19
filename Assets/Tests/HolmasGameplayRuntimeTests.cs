@@ -11,6 +11,7 @@ using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Terrain;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
+using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
@@ -240,6 +241,8 @@ namespace Holmas.Tests
             Assert.That(first.Success, Is.True, first.FailureReason);
             Assert.That(first.GoldSpent, Is.EqualTo(10));
             Assert.That(first.PlayerLevelAfter, Is.EqualTo(2));
+            Assert.That(first.ExperienceGained, Is.EqualTo(1));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(1));
             Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(20));
             Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(2));
             Assert.That(runtime.CurrentAgencyStageId, Is.EqualTo(1));
@@ -253,6 +256,136 @@ namespace Holmas.Tests
             Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(0));
             Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(3));
             Assert.That(runtime.CurrentAgencyStageId, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_PromotionLevelUpChangesCurrentMapPool()
+        {
+            var catalog = CreateDifficultyFlowTaskCatalog();
+            var metaCatalog = CreateGrowthMetaCatalog();
+            var metaService = new HolmasMetaProgressionService(
+                metaCatalog,
+                catalog,
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new FixedUtcClock { UtcNowMilliseconds = 777_000 });
+            var agencyService = new HolmasAgencyProgressionService(CreatePromotionCatalog(), metaService);
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 2);
+            var assetsRuntime = new FakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), assetsRuntime);
+            var context = new HolmasApplicationContext(
+                new FakeServiceContainer(),
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                assetsRuntime,
+                runtime);
+            var mapCatalog = new HolmasMapCatalog(new[]
+            {
+                new HolmasMapDefinition
+                {
+                    MapId = "map-lv1",
+                    TerrainPath = "1",
+                    CatCountMin = 1,
+                    CatCountMax = 1,
+                },
+                new HolmasMapDefinition
+                {
+                    MapId = "map-lv2",
+                    TerrainPath = "2",
+                    CatCountMin = 1,
+                    CatCountMax = 1,
+                },
+            });
+            var requestGenerator = new HolmasLevelRequestGenerator(catalog, mapCatalog, new ScriptedRandomSource(0));
+            var gateway = new HolmasLevelLaunchGateway(context, requestGenerator);
+
+            runtime.MetaProgressionState.GoldBalance = 10;
+            HolmasAgencyUpgradeResult upgrade = runtime.TryUpgradePromotion("lobby");
+            BoardRuntime board = gateway.StartLevelForCurrentPlayerAsync(
+                202,
+                new[] { new BoardSpawnEntry { CatId = "cat-a", Weight = 1 } }).GetAwaiter().GetResult();
+
+            Assert.That(upgrade.Success, Is.True, upgrade.FailureReason);
+            Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(2));
+            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo("map-lv2"));
+            Assert.That(runtime.CurrentLevelSnapshot.TerrainPath, Is.EqualTo(TerrainAssetPathUtility.BuildAssetPath("2")));
+            Assert.That(board.TotalCatCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void MainPresenter_ShowsProgressionAndPromotionUpgradeCost()
+        {
+            var catalog = CreateDifficultyFlowTaskCatalog();
+            var metaCatalog = CreateGrowthMetaCatalog();
+            var metaService = new HolmasMetaProgressionService(
+                metaCatalog,
+                catalog,
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new FixedUtcClock { UtcNowMilliseconds = 777_000 });
+            var agencyCatalog = CreatePromotionCatalog();
+            var agencyService = new HolmasAgencyProgressionService(agencyCatalog, metaService);
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), null);
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            serviceContainer.RegisterSingleton<IHolmasAgencyCatalog>(agencyCatalog);
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            runtime.MetaProgressionState.GoldBalance = 25;
+            MainVm viewModel = new MainPresenter(context).Build();
+
+            Assert.That(viewModel.Summary, Does.Contain("Lv 1 | Exp 0/1 | Gold 25 | Stage 1"));
+            Assert.That(viewModel.Summary, Does.Contain("宣传 lobby Lv 0/1 | Next Cost 10 | +1 Exp"));
+            Assert.That(viewModel.PromotionButtonLabel, Is.EqualTo("升级 lobby Lv 0->1 (10 Gold)"));
+        }
+
+        [Test]
+        public void MainPresenter_DisablesPromotionButtonWhenCurrentStageIsFullyUpgraded()
+        {
+            var catalog = CreateDifficultyFlowTaskCatalog();
+            var metaCatalog = CreateGrowthMetaCatalog();
+            var metaService = new HolmasMetaProgressionService(
+                metaCatalog,
+                catalog,
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new FixedUtcClock { UtcNowMilliseconds = 777_000 });
+            var agencyCatalog = CreatePromotionCatalog();
+            var agencyService = new HolmasAgencyProgressionService(agencyCatalog, metaService);
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), null);
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            serviceContainer.RegisterSingleton<IHolmasAgencyCatalog>(agencyCatalog);
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            runtime.MetaProgressionState.AgencyStageId = 2;
+            HolmasAgencyPromotionStateKey.SetLevel(runtime.MetaProgressionState, 2, "archive", 2);
+
+            MainVm viewModel = new MainPresenter(context).Build();
+
+            Assert.That(viewModel.Summary, Does.Contain("宣传 暂无可升级项"));
+            Assert.That(viewModel.PromotionButtonEnabled, Is.False);
+            Assert.That(viewModel.PromotionButtonLabel, Is.EqualTo("宣传已满级"));
+            Assert.That(viewModel.PromotionId, Is.Empty);
         }
 
         [Test]
@@ -413,136 +546,6 @@ namespace Holmas.Tests
             Assert.That(boardRuntime.TotalCatCount, Is.EqualTo(1));
         }
 
-        [Test]
-        public void HolmasGameplayRuntime_StartLevelAsync_RequiresAssetsRuntime()
-        {
-            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
-            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
-            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
-            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
-            var metaService = new HolmasMetaProgressionService(
-                HolmasTestSupport.CreateMetaCatalog(),
-                catalog,
-                new HolmasDefaultMetaExperienceSource(),
-                new HolmasDefaultMetaExperienceSource());
-            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
-            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger());
-            var request = HolmasTestSupport.CreateRequest(
-                "map-missing-loader",
-                TerrainAssetPathUtility.BuildAssetPath("1"),
-                1,
-                1,
-                1,
-                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
-
-            var ex = Assert.Throws<System.InvalidOperationException>(() => runtime.StartLevelAsync(request).GetAwaiter().GetResult());
-            Assert.That(ex.Message, Does.Contain("IAssetsRuntime"));
-        }
-
-        [Test]
-        public void HolmasGameplayRuntime_StartLevelAsync_RejectsEmptyTerrainPath()
-        {
-            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
-            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
-            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
-            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
-            var metaService = new HolmasMetaProgressionService(
-                HolmasTestSupport.CreateMetaCatalog(),
-                catalog,
-                new HolmasDefaultMetaExperienceSource(),
-                new HolmasDefaultMetaExperienceSource());
-            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
-            var terrain = HolmasTestSupport.CreateTerrain(1, 1);
-            var assetsRuntime = new FakeAssetsRuntime(terrain);
-            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
-            var request = HolmasTestSupport.CreateRequest(
-                "map-empty-path",
-                string.Empty,
-                1,
-                1,
-                1,
-                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
-
-            var ex = Assert.Throws<System.InvalidOperationException>(() => runtime.StartLevelAsync(request).GetAwaiter().GetResult());
-
-            Assert.That(ex.Message, Does.Contain("TerrainPath"));
-        }
-
-        [Test]
-        public void HolmasGameplayRuntime_StartLevelAsync_FailsWhenTerrainAssetCannotBeLoaded()
-        {
-            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
-            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
-            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
-            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
-            var metaService = new HolmasMetaProgressionService(
-                HolmasTestSupport.CreateMetaCatalog(),
-                catalog,
-                new HolmasDefaultMetaExperienceSource(),
-                new HolmasDefaultMetaExperienceSource());
-            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
-            var assetsRuntime = new FakeAssetsRuntime(asset: null, returnNullHandle: true);
-            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
-            var request = HolmasTestSupport.CreateRequest(
-                "map-missing-asset",
-                TerrainAssetPathUtility.BuildAssetPath("missing"),
-                1,
-                1,
-                1,
-                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
-
-            var ex = Assert.Throws<System.InvalidOperationException>(() => runtime.StartLevelAsync(request).GetAwaiter().GetResult());
-
-            Assert.That(ex.Message, Does.Contain("无法从资源入口加载地形"));
-        }
-
-        [Test]
-        public void HolmasGameplayRuntime_StartLevelAsync_RejectsInvalidTerrainAssetType()
-        {
-            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
-            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
-            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
-            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
-            var metaService = new HolmasMetaProgressionService(
-                HolmasTestSupport.CreateMetaCatalog(),
-                catalog,
-                new HolmasDefaultMetaExperienceSource(),
-                new HolmasDefaultMetaExperienceSource());
-            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
-            var invalidTerrain = ScriptableObject.CreateInstance<InvalidTerrainAsset>();
-            var assetsRuntime = new FakeAssetsRuntime(invalidTerrain);
-            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
-            var request = HolmasTestSupport.CreateRequest(
-                "map-invalid-type",
-                TerrainAssetPathUtility.BuildAssetPath("invalid"),
-                1,
-                1,
-                1,
-                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
-
-            var ex = Assert.Throws<System.InvalidOperationException>(() => runtime.StartLevelAsync(request).GetAwaiter().GetResult());
-
-            Assert.That(ex.Message, Does.Contain("does not expose the expected board template API"));
-        }
-
-        private sealed class FakeAssetsRuntime : IAssetsRuntime
-        {
-            private readonly UnityEngine.Object _asset;
-            private readonly bool _returnNullHandle;
-
-            public FakeAssetsRuntime(UnityEngine.Object asset, bool returnNullHandle = false)
-            {
-                _asset = asset;
-                _returnNullHandle = returnNullHandle;
-            }
-
-            public string LastRequestedLocation { get; private set; }
-
-            public FakeAssetHandle LastHandle { get; private set; }
-
-            public Task InitializeAsync()
-            {
-                return Task.CompletedTask;
         [Test]
         public void HolmasLevelLaunchGateway_CanLoadNextLevelImmediatelyAfterAllCatsFound()
         {
@@ -712,6 +715,136 @@ namespace Holmas.Tests
             }
         }
 
+        [Test]
+        public void HolmasGameplayRuntime_StartLevelAsync_RequiresAssetsRuntime()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger());
+            var request = HolmasTestSupport.CreateRequest(
+                "map-missing-loader",
+                TerrainAssetPathUtility.BuildAssetPath("1"),
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            var ex = Assert.Throws<System.InvalidOperationException>(() => runtime.StartLevelAsync(request).GetAwaiter().GetResult());
+            Assert.That(ex.Message, Does.Contain("IAssetsRuntime"));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_StartLevelAsync_RejectsEmptyTerrainPath()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 1);
+            var assetsRuntime = new FakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-empty-path",
+                string.Empty,
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            var ex = Assert.Throws<System.InvalidOperationException>(() => runtime.StartLevelAsync(request).GetAwaiter().GetResult());
+
+            Assert.That(ex.Message, Does.Contain("TerrainPath"));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_StartLevelAsync_FailsWhenTerrainAssetCannotBeLoaded()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var assetsRuntime = new FakeAssetsRuntime(asset: null, returnNullHandle: true);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-missing-asset",
+                TerrainAssetPathUtility.BuildAssetPath("missing"),
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            var ex = Assert.Throws<System.InvalidOperationException>(() => runtime.StartLevelAsync(request).GetAwaiter().GetResult());
+
+            Assert.That(ex.Message, Does.Contain("无法从资源入口加载地形"));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_StartLevelAsync_RejectsInvalidTerrainAssetType()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var invalidTerrain = ScriptableObject.CreateInstance<InvalidTerrainAsset>();
+            var assetsRuntime = new FakeAssetsRuntime(invalidTerrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-invalid-type",
+                TerrainAssetPathUtility.BuildAssetPath("invalid"),
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            var ex = Assert.Throws<System.InvalidOperationException>(() => runtime.StartLevelAsync(request).GetAwaiter().GetResult());
+
+            Assert.That(ex.Message, Does.Contain("does not expose the expected board template API"));
+        }
+
+        private sealed class FakeAssetsRuntime : IAssetsRuntime
+        {
+            private readonly UnityEngine.Object _asset;
+            private readonly bool _returnNullHandle;
+
+            public FakeAssetsRuntime(UnityEngine.Object asset, bool returnNullHandle = false)
+            {
+                _asset = asset;
+                _returnNullHandle = returnNullHandle;
+            }
+
+            public string LastRequestedLocation { get; private set; }
+
+            public FakeAssetHandle LastHandle { get; private set; }
+
+            public Task InitializeAsync()
+            {
+                return Task.CompletedTask;
             }
 
             public Task<bool> RunPatchFlowAsync(string packageVersion = null)
@@ -756,18 +889,26 @@ namespace Holmas.Tests
 
         private sealed class FakeServiceContainer : IServiceContainer
         {
+            private readonly Dictionary<System.Type, object> _instances = new Dictionary<System.Type, object>();
+
             public void RegisterSingleton<T>(T instance) where T : class
             {
+                if (instance != null)
+                {
+                    _instances[typeof(T)] = instance;
+                }
             }
 
             public T Get<T>() where T : class
             {
-                return null;
+                return _instances.TryGetValue(typeof(T), out object instance)
+                    ? instance as T
+                    : null;
             }
 
             public bool IsRegistered<T>()
             {
-                return false;
+                return _instances.ContainsKey(typeof(T));
             }
         }
 
@@ -799,6 +940,39 @@ namespace Holmas.Tests
 
         private sealed class InvalidTerrainAsset : ScriptableObject
         {
+        }
+
+        private static HolmasTaskCatalog CreateSingleCatTaskCatalog(int targetCount)
+        {
+            return new HolmasTaskCatalog(
+                new[]
+                {
+                    new HolmasCatDefinition { CatId = "cat-a", Price = 10, Weight = 1 },
+                },
+                new[]
+                {
+                    new HolmasTaskTemplateDefinition
+                    {
+                        TaskTypeId = "task-normal",
+                        CatIdList = new[] { "cat-a" },
+                        CountMin = targetCount,
+                        CountMax = targetCount,
+                        RewardArray = System.Array.Empty<string>(),
+                        LevelRewardFactor = 2f,
+                    }
+                },
+                new[]
+                {
+                    new HolmasPlayerLevelDefinition
+                    {
+                        PlayerLevel = 1,
+                        UpgradeExp = 0,
+                        TaskTypeIds = new[] { "task-normal" },
+                        TaskTypeWeights = new[] { 1 },
+                        MapIds = new[] { "map-partial-task" },
+                        MapWeights = new[] { 1 },
+                    }
+                });
         }
 
         private static HolmasMetaCatalog CreateGrowthMetaCatalog()
@@ -842,6 +1016,48 @@ namespace Holmas.Tests
                 });
         }
 
+        private static HolmasTaskCatalog CreateDifficultyFlowTaskCatalog()
+        {
+            return new HolmasTaskCatalog(
+                new[]
+                {
+                    new HolmasCatDefinition { CatId = "cat-a", Price = 10, Weight = 1 },
+                },
+                new[]
+                {
+                    new HolmasTaskTemplateDefinition
+                    {
+                        TaskTypeId = "task-normal",
+                        CatIdList = new[] { "cat-a" },
+                        CountMin = 1,
+                        CountMax = 1,
+                        RewardArray = System.Array.Empty<string>(),
+                        LevelRewardFactor = 1f,
+                    }
+                },
+                new[]
+                {
+                    new HolmasPlayerLevelDefinition
+                    {
+                        PlayerLevel = 1,
+                        UpgradeExp = 0,
+                        TaskTypeIds = new[] { "task-normal" },
+                        TaskTypeWeights = new[] { 1 },
+                        MapIds = new[] { "map-lv1" },
+                        MapWeights = new[] { 1 },
+                    },
+                    new HolmasPlayerLevelDefinition
+                    {
+                        PlayerLevel = 2,
+                        UpgradeExp = 1,
+                        TaskTypeIds = new[] { "task-normal" },
+                        TaskTypeWeights = new[] { 1 },
+                        MapIds = new[] { "map-lv2" },
+                        MapWeights = new[] { 1 },
+                    },
+                });
+        }
+
         private static HolmasAgencyCatalog CreatePromotionCatalog()
         {
             return new HolmasAgencyCatalog(new[]
@@ -874,36 +1090,3 @@ namespace Holmas.Tests
         }
     }
 }
-        private static HolmasTaskCatalog CreateSingleCatTaskCatalog(int targetCount)
-        {
-            return new HolmasTaskCatalog(
-                new[]
-                {
-                    new HolmasCatDefinition { CatId = "cat-a", Price = 10, Weight = 1 },
-                },
-                new[]
-                {
-                    new HolmasTaskTemplateDefinition
-                    {
-                        TaskTypeId = "task-normal",
-                        CatIdList = new[] { "cat-a" },
-                        CountMin = targetCount,
-                        CountMax = targetCount,
-                        RewardArray = System.Array.Empty<string>(),
-                        LevelRewardFactor = 2f,
-                    }
-                },
-                new[]
-                {
-                    new HolmasPlayerLevelDefinition
-                    {
-                        PlayerLevel = 1,
-                        UpgradeExp = 0,
-                        TaskTypeIds = new[] { "task-normal" },
-                        TaskTypeWeights = new[] { 1 },
-                        MapIds = new[] { "map-partial-task" },
-                        MapWeights = new[] { 1 },
-                    }
-                });
-        }
-
