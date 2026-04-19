@@ -108,6 +108,37 @@ class HolmasPythonExporterTests(unittest.TestCase):
                 "\n".join(result.report.errors),
             )
 
+    def test_validate_all_warns_about_unreferenced_maps(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="holmas_python_export_unused_map_") as temp_dir:
+            root = Path(temp_dir)
+            repo_root = root / "Holmas"
+            config_root = repo_root / "Assets" / "Config"
+            json_root = config_root / "json"
+            binary_root = repo_root / "Assets" / "HotUpdateContent" / "Config"
+            config_root.mkdir(parents=True, exist_ok=True)
+            json_root.mkdir(parents=True, exist_ok=True)
+            binary_root.mkdir(parents=True, exist_ok=True)
+
+            _write_fixture(config_root)
+            _write_tabular_workbook(
+                config_root / "Holmas_MapTable.xlsx",
+                "Sheet1",
+                [
+                    ["地图id", "地图对应的数据地址Path", "猫的最大数量max", "猫的最小数量mini"],
+                    ["mapId", "terrainPath", "catCountMax", "catCountMin"],
+                    ["map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12"],
+                    ["map_002", "Assets/HotUpdateContent/Res/Map/2.asset", "16", "13"],
+                ],
+            )
+
+            result = validate_all(repo_root, config_root, json_root, binary_root)
+
+            self.assertTrue(result.report.success, "\n".join(result.report.errors))
+            self.assertTrue(
+                any("未被任何 PlayerLevel 引用" in warning and "map_002" in warning for warning in result.report.warnings),
+                "\n".join(result.report.warnings),
+            )
+
 
 def _write_fixture(config_root: Path, growth_mode: str = "min_only", conflict_level: int = -1) -> None:
     _write_tabular_workbook(

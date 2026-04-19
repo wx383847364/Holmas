@@ -128,11 +128,32 @@ namespace Holmas.EditorTests
             }
         }
 
+        [Test]
+        public void HolmasConfigBinaryExporter_WarnsAboutUnreferencedMaps()
+        {
+            using (var fixture = CreateFixture(levelCount: 20, includeMergedGrowthColumns: true, includeUnusedMap: true))
+            {
+                HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
+                    fixture.ConfigRoot,
+                    fixture.JsonRoot,
+                    fixture.BinaryRoot,
+                    refreshAssetDatabase: false);
+
+                Assert.That(report, Is.Not.Null);
+                Assert.That(report.Success, Is.True, string.Join("\n", report.Errors));
+                Assert.That(
+                    report.Warnings.Any(item => item.Contains("未被任何 PlayerLevel 引用") && item.Contains("map_002")),
+                    Is.True,
+                    string.Join("\n", report.Warnings));
+            }
+        }
+
         private static ExportFixture CreateFixture(
             int levelCount,
             bool includeMergedGrowthColumns,
             bool includeDuplicateGrowthColumns = false,
-            int conflictLevel = -1)
+            int conflictLevel = -1,
+            bool includeUnusedMap = false)
         {
             string root = Path.Combine(Path.GetTempPath(), "holmas_xlsx_export_test_" + Guid.NewGuid().ToString("N"));
             string configRoot = Path.Combine(root, "Config");
@@ -145,12 +166,7 @@ namespace Holmas.EditorTests
             WriteWorkbook(
                 Path.Combine(configRoot, "Holmas_MapTable.xlsx"),
                 "Sheet1",
-                new[]
-                {
-                    new[] { "地图id", "地图对应的数据地址Path", "猫的最大数量max", "猫的最小数量mini" },
-                    new[] { "mapId", "terrainPath", "catCountMax", "catCountMin" },
-                    new[] { "map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12" },
-                });
+                BuildMapRows(includeUnusedMap));
 
             WriteWorkbook(
                 Path.Combine(configRoot, "Holmas_CatTable.xlsx"),
@@ -184,6 +200,24 @@ namespace Holmas.EditorTests
                 BuildAgencyRows());
 
             return new ExportFixture(root, configRoot, jsonRoot, binaryRoot);
+        }
+
+        private static string[][] BuildMapRows(bool includeUnusedMap)
+        {
+            return includeUnusedMap
+                ? new[]
+                {
+                    new[] { "地图id", "地图对应的数据地址Path", "猫的最大数量max", "猫的最小数量mini" },
+                    new[] { "mapId", "terrainPath", "catCountMax", "catCountMin" },
+                    new[] { "map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12" },
+                    new[] { "map_002", "Assets/HotUpdateContent/Res/Map/2.asset", "16", "13" },
+                }
+                : new[]
+                {
+                    new[] { "地图id", "地图对应的数据地址Path", "猫的最大数量max", "猫的最小数量mini" },
+                    new[] { "mapId", "terrainPath", "catCountMax", "catCountMin" },
+                    new[] { "map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12" },
+                };
         }
 
         private static string[][] BuildPlayerLevelRows(

@@ -156,19 +156,36 @@ namespace Holmas.Tests
             {
                 Assert.That(level.MapWeights.Sum(), Is.EqualTo(100), $"等级 {level.PlayerLevel} 的地图权重和应为 100。");
 
-                if (level.PlayerLevel <= 2)
+                if (level.PlayerLevel == 1)
                 {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_001" }), $"等级 {level.PlayerLevel} 只应开放 map_001。");
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_001", "map_002" }), "等级 1 应开放 8x8 低密度地图池。");
                 }
-                else if (level.PlayerLevel <= 4)
+                else if (level.PlayerLevel == 2)
                 {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_001", "map_002" }), $"等级 {level.PlayerLevel} 应开放 map_001/map_002。");
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_003", "map_004", "map_005" }), "等级 2 应接入 8x8 高密度和 9x9 入门地图。");
                 }
-                else
+                else if (level.PlayerLevel == 3)
                 {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_001", "map_002", "map_003" }), $"等级 {level.PlayerLevel} 应开放全部 3 张地图。");
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_005", "map_006", "map_009" }), "等级 3 应接入 9x9 和 10x10 入门地图。");
+                }
+                else if (level.PlayerLevel == 4)
+                {
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_009", "map_010", "map_013" }), "等级 4 应接入 10x10 和 11x11 入门地图。");
+                }
+                else if (level.PlayerLevel == 5)
+                {
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_013", "map_014", "map_017" }), "等级 5 应接入 11x11 和 12x12 入门地图。");
+                }
+                else if (level.PlayerLevel == 6)
+                {
+                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_017", "map_018", "map_021" }), "等级 6 应接入 12x12 和 13x13 入门地图。");
                 }
             }
+
+            var referencedMapIds = new HashSet<string>(tables.Levels.SelectMany(item => item.MapIds), StringComparer.Ordinal);
+            Assert.That(referencedMapIds, Is.SupersetOf(tables.Maps.Select(item => item.MapId)), "所有 MapTable 地图都应至少在一个玩家等级池中可达。");
+            Assert.That(tables.Levels[6].MapIds, Does.Contain("map_021"), "Lv7 起应开始压力验证 13x13 地图。");
+            Assert.That(tables.Levels.Skip(8).Any(item => item.MapIds.Contains("map_024")), Is.True, "Lv9+ 应能抽到 13x13 高猫数地图。");
         }
 
         [Test]
@@ -240,6 +257,31 @@ namespace Holmas.Tests
                 AssertTaskBarHasUniqueCats(taskBar, levelRow.PlayerLevel);
                 AssertTaskRewardsMatchConfig(tables, taskBar.Tasks.Select(item => item.Task));
             }
+        }
+
+        [Test]
+        public void HolmasExportedTables_DifficultyFlowMakesNewTerrainsReachable()
+        {
+            ExportConfigTables tables = LoadSampleTables();
+            HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
+            HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
+            var requestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource(0));
+
+            HolmasLevelRequestGenerationResult levelThreeRequest = requestGenerator.TryGenerateForPlayerLevel(3, 300);
+            HolmasLevelRequestGenerationResult levelSixRequest = requestGenerator.TryGenerateForPlayerLevel(6, 600);
+            HolmasLevelRequestGenerationResult levelNineRequest = requestGenerator.TryGenerateForPlayerLevel(9, 900);
+
+            Assert.That(levelThreeRequest.Success, Is.True, levelThreeRequest.FailureReason);
+            Assert.That(levelThreeRequest.SelectedMapId, Is.EqualTo("map_005"));
+            Assert.That(levelThreeRequest.Request.TerrainPath, Does.Contain("11-9-9.asset"));
+
+            Assert.That(levelSixRequest.Success, Is.True, levelSixRequest.FailureReason);
+            Assert.That(levelSixRequest.SelectedMapId, Is.EqualTo("map_017"));
+            Assert.That(levelSixRequest.Request.TerrainPath, Does.Contain("11-12-12.asset"));
+
+            Assert.That(levelNineRequest.Success, Is.True, levelNineRequest.FailureReason);
+            Assert.That(levelNineRequest.SelectedMapId, Is.EqualTo("map_021"));
+            Assert.That(levelNineRequest.Request.TerrainPath, Does.Contain("11-13-13.asset"));
         }
 
         [Test]

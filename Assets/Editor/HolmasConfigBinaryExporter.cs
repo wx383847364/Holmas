@@ -99,6 +99,7 @@ namespace Holmas.EditorTools
             NormalizeRows(report, taskTable, catLookup, taskLookup, mapLookup);
             NormalizeRows(report, playerLevelTable, catLookup, taskLookup, mapLookup);
             NormalizeRows(report, mapTable, catLookup, taskLookup, mapLookup);
+            WarnUnreferencedMaps(report, mapTable, playerLevelTable);
             ValidatePlayerLevelTable(report, playerLevelTable);
             ValidateAgencyBuildingTable(report, agencyBuildingTable);
 
@@ -1009,7 +1010,7 @@ namespace Holmas.EditorTools
                 for (int i = 0; i < row.MapIds.Length; i++)
                 {
                     int mapIndex = ResolveIndex(row.MapIds[i], mapLookup, out bool mapResolved);
-                row.MapIndices[i] = mapIndex;
+                    row.MapIndices[i] = mapIndex;
                     if (!mapResolved)
                     {
                         unresolvedMaps.Add(row.MapIds[i]);
@@ -1025,6 +1026,55 @@ namespace Holmas.EditorTools
             if (unresolvedMaps.Count > 0)
             {
                 report.Errors.Add($"玩家等级表中存在未解析地图引用: {string.Join("; ", unresolvedMaps.OrderBy(item => item))}。");
+            }
+        }
+
+        private static void WarnUnreferencedMaps(
+            HolmasConfigExportReport report,
+            SheetTable<HolmasMapSheetRow> mapTable,
+            SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable)
+        {
+            var mapRows = mapTable?.Rows ?? new List<HolmasMapSheetRow>();
+            if (mapRows.Count == 0)
+            {
+                return;
+            }
+
+            var referencedMapIndices = new HashSet<int>();
+            foreach (HolmasPlayerLevelSheetRow levelRow in playerLevelTable?.Rows ?? new List<HolmasPlayerLevelSheetRow>())
+            {
+                if (levelRow?.MapIndices == null)
+                {
+                    continue;
+                }
+
+                foreach (int mapIndex in levelRow.MapIndices)
+                {
+                    if (mapIndex >= 0)
+                    {
+                        referencedMapIndices.Add(mapIndex);
+                    }
+                }
+            }
+
+            var unreferencedMapIds = new List<string>();
+            for (int i = 0; i < mapRows.Count; i++)
+            {
+                HolmasMapSheetRow mapRow = mapRows[i];
+                if (mapRow == null || string.IsNullOrWhiteSpace(mapRow.MapId) || referencedMapIndices.Contains(i))
+                {
+                    continue;
+                }
+
+                unreferencedMapIds.Add(mapRow.MapId);
+            }
+
+            if (unreferencedMapIds.Count > 0)
+            {
+                report.Warnings.Add(
+                    "MapTable 中存在未被任何 PlayerLevel 引用的地图: "
+                    + string.Join("; ", unreferencedMapIds)
+                    + "。");
             }
         }
 

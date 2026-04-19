@@ -89,6 +89,7 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
     _normalize_cat_rows(report, cat_rows, cat_lookup)
     _normalize_task_rows(report, task_rows, cat_lookup, task_lookup)
     _normalize_player_level_rows(report, player_level_rows, task_lookup, map_lookup)
+    _warn_unreferenced_map_rows(report, map_rows, player_level_rows)
     _validate_player_level_table(report, player_level_rows)
     _validate_agency_building_table(report, agency_building_rows)
 
@@ -565,6 +566,31 @@ def _normalize_player_level_rows(report: ExportReport, rows: list[PlayerLevelShe
         report.errors.append(f"玩家等级表中存在未解析任务引用: {'; '.join(sorted(unresolved_tasks))}。")
     if unresolved_maps:
         report.errors.append(f"玩家等级表中存在未解析地图引用: {'; '.join(sorted(unresolved_maps))}。")
+
+
+def _warn_unreferenced_map_rows(report: ExportReport, map_rows: list[MapSheetRow], player_level_rows: list[PlayerLevelSheetRow]) -> None:
+    if not map_rows:
+        return
+
+    referenced_indices = {
+        map_index
+        for row in player_level_rows
+        for map_index in getattr(row, "map_indices", [])
+        if map_index >= 0
+    }
+    unreferenced_map_ids = [
+        row.map_id
+        for index, row in enumerate(map_rows)
+        if index not in referenced_indices and row.map_id
+    ]
+    if not unreferenced_map_ids:
+        return
+
+    report.warnings.append(
+        "MapTable 中存在未被任何 PlayerLevel 引用的地图: "
+        + "; ".join(unreferenced_map_ids)
+        + "。"
+    )
 
 
 def _validate_player_level_table(report: ExportReport, player_rows: list[PlayerLevelSheetRow]) -> None:
