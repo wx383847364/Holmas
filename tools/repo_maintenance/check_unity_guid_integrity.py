@@ -49,13 +49,26 @@ def iter_staged_paths(repo_root: Path) -> list[Path]:
             "diff",
             "--cached",
             "--name-only",
+            "-z",
             "--diff-filter=ACMR",
         ],
         check=True,
         stdout=subprocess.PIPE,
-        text=True,
     )
-    return [repo_root / line for line in result.stdout.splitlines() if line.strip()]
+    return [
+        Path(item.decode("utf-8"))
+        for item in result.stdout.split(b"\0")
+        if item
+    ]
+
+
+def read_staged_text(repo_root: Path, path: Path) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "show", f":{path.as_posix()}"],
+        check=True,
+        stdout=subprocess.PIPE,
+    )
+    return result.stdout.decode("utf-8", errors="replace")
 
 
 def iter_meta_files(repo_root: Path, paths: list[Path] | None = None):
@@ -75,7 +88,7 @@ def iter_meta_files(repo_root: Path, paths: list[Path] | None = None):
 def iter_unity_text_files(repo_root: Path, paths: list[Path] | None = None):
     if paths is not None:
         for path in paths:
-            if path.is_file() and path.suffix in UNITY_TEXT_EXTENSIONS:
+            if path.suffix in UNITY_TEXT_EXTENSIONS:
                 yield path
         return
 
@@ -94,8 +107,12 @@ def validate_meta_files(repo_root: Path, paths: list[Path] | None = None) -> lis
         if should_skip(path):
             continue
         try:
-            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError as exc:
+            if paths is None:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            else:
+                text = read_staged_text(repo_root, path)
+            lines = text.splitlines()
+        except (OSError, subprocess.CalledProcessError) as exc:
             errors.append(f"{path}: failed to read meta file: {exc}")
             continue
 
@@ -116,8 +133,12 @@ def validate_serialized_guid_tokens(repo_root: Path, paths: list[Path] | None = 
         if should_skip(path):
             continue
         try:
-            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-        except OSError as exc:
+            if paths is None:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            else:
+                text = read_staged_text(repo_root, path)
+            lines = text.splitlines()
+        except (OSError, subprocess.CalledProcessError) as exc:
             errors.append(f"{path}: failed to read Unity text asset: {exc}")
             continue
 
@@ -143,7 +164,7 @@ def main() -> int:
     errors.extend(validate_serialized_guid_tokens(repo_root, paths))
 
     if not errors:
-        scope = "staged Unity files" if staged_only else "Unity files"
+        scope = "current commit Unity files" if staged_only else "Unity files"
         print(f"[ok] Unity GUID integrity check passed for {scope}.")
         return 0
 

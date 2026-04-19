@@ -20,4 +20,4 @@ chmod +x \
 git -C "${REPO_ROOT}" config core.hooksPath .githooks
 
 echo "[ok] 已将当前仓库的 core.hooksPath 设置为 .githooks"
-echo "[ok] 以后提交前会自动检查暂存 Unity GUID 完整性，并继续执行文档维护检查。"
+echo "[ok] 以后提交前会自动检查当前提交内容的 Unity GUID 完整性，并继续执行文档维护检查。"
