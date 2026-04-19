@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using App.HotUpdate.Holmas.UI.Core;
 using TMPro;
 using UnityEngine;
 
@@ -26,6 +27,7 @@ namespace App.HotUpdate.Holmas.UI.Tool
             DisableTmpDefaultWarnings();
 
             string safeValue = value ?? string.Empty;
+            RuntimeTmpFontResolver.EnsureFontSupportsText(textComponent, safeValue);
             if (textComponent.text == safeValue)
             {
                 return;

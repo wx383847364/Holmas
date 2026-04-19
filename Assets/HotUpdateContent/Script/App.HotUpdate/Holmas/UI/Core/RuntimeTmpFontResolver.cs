@@ -40,7 +40,7 @@ namespace App.HotUpdate.Holmas.UI.Core
         private static TMP_FontAsset _projectChineseTmpFontAsset;
         private static TMP_FontAsset _systemFallbackTmpFontAsset;
 
-        public static void EnsureFontSupportsText(TextMeshProUGUI text, string contentSample = null)
+        public static void EnsureFontSupportsText(TMP_Text text, string contentSample = null)
         {
             if (text == null)
             {
