@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
@@ -9,10 +10,13 @@ using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Terrain;
+using App.HotUpdate.Holmas.UI.Screens.Battle;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
 namespace Holmas.Tests
@@ -539,6 +543,175 @@ namespace Holmas.Tests
             public Task InitializeAsync()
             {
                 return Task.CompletedTask;
+        [Test]
+        public void HolmasLevelLaunchGateway_CanLoadNextLevelImmediatelyAfterAllCatsFound()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var mapCatalog = new HolmasMapCatalog(
+                new[]
+                {
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-1",
+                        TerrainPath = "2",
+                        CatCountMin = 1,
+                        CatCountMax = 1,
+                    }
+                });
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 2);
+            var assetsRuntime = new FakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            var context = new HolmasApplicationContext(
+                new FakeServiceContainer(),
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                assetsRuntime,
+                runtime);
+            var requestGenerator = new HolmasLevelRequestGenerator(catalog, mapCatalog, new ScriptedRandomSource(0, 0));
+            var gateway = new HolmasLevelLaunchGateway(context, requestGenerator);
+
+            BoardRuntime firstBoard = gateway.StartLevelForCurrentPlayerAsync(101).GetAwaiter().GetResult();
+            int firstCatCellIndex = runtime.CurrentLevelSnapshot.SpawnedCats[0].CellIndex;
+            BoardRevealResult reveal = runtime.RevealCell(firstCatCellIndex, out HolmasProgressionAdvanceResult progressionResult);
+
+            Assert.That(firstBoard.TotalCatCount, Is.EqualTo(1));
+            Assert.That(reveal.Completed, Is.True);
+            Assert.That(progressionResult, Is.Not.Null);
+            Assert.That(runtime.CurrentLevelSnapshot.Completed, Is.True);
+
+            BoardRuntime nextBoard = gateway.StartLevelForCurrentPlayerAsync(202).GetAwaiter().GetResult();
+
+            Assert.That(nextBoard, Is.Not.SameAs(firstBoard));
+            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo("map-1"));
+            Assert.That(runtime.CurrentLevelSnapshot.Seed, Is.EqualTo(202));
+            Assert.That(runtime.CurrentLevelSnapshot.Completed, Is.False);
+            Assert.That(nextBoard.TotalCatCount, Is.EqualTo(1));
+            Assert.That(nextBoard.FoundCatCount, Is.EqualTo(0));
+            Assert.That(assetsRuntime.LastRequestedLocation, Is.EqualTo(TerrainAssetPathUtility.BuildAssetPath("2")));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_MapCompletionAdvancesTaskPartiallyAndAllowsNextBoard()
+        {
+            var catalog = CreateSingleCatTaskCatalog(targetCount: 13);
+            var mapCatalog = new HolmasMapCatalog(
+                new[]
+                {
+                    new HolmasMapDefinition
+                    {
+                        MapId = "map-partial-task",
+                        TerrainPath = "2",
+                        CatCountMin = 11,
+                        CatCountMax = 11,
+                    }
+                });
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 11);
+            var assetsRuntime = new FakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            var context = new HolmasApplicationContext(
+                new FakeServiceContainer(),
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                assetsRuntime,
+                runtime);
+            var requestGenerator = new HolmasLevelRequestGenerator(catalog, mapCatalog, new ScriptedRandomSource(0, 0));
+            var gateway = new HolmasLevelLaunchGateway(context, requestGenerator);
+
+            runtime.RefillAvailableTasks(1);
+            BoardRuntime firstBoard = gateway.StartLevelForCurrentPlayerAsync(101).GetAwaiter().GetResult();
+            BattleVm initialViewModel = new BattlePresenter(context).Build();
+
+            Assert.That(firstBoard.TotalCatCount, Is.EqualTo(11));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.TargetCount, Is.EqualTo(13));
+            Assert.That(initialViewModel.Summary, Does.Contain("Map map-partial-task | Terrain 2.asset"));
+            Assert.That(initialViewModel.Summary, Does.Contain("Board Cats 0/11"));
+            Assert.That(initialViewModel.Summary, Does.Contain("Hidden 11"));
+            Assert.That(initialViewModel.Summary, Does.Contain("Task 0/13"));
+
+            BoardRevealResult finalReveal = null;
+            HolmasProgressionAdvanceResult finalProgression = null;
+            foreach (SpawnedCatData spawnedCat in runtime.CurrentLevelSnapshot.SpawnedCats)
+            {
+                finalReveal = runtime.RevealCell(spawnedCat.CellIndex, out finalProgression);
+            }
+
+            BattleVm completedViewModel = new BattlePresenter(context).Build();
+            HolmasTaskRuntimeInstance task = runtime.TaskBarState.GetTaskBySlot(0);
+
+            Assert.That(finalReveal, Is.Not.Null);
+            Assert.That(finalReveal.Completed, Is.True);
+            Assert.That(finalProgression, Is.Not.Null);
+            Assert.That(firstBoard.Completed, Is.True);
+            Assert.That(task.Task.CurrentCount, Is.EqualTo(11));
+            Assert.That(task.Task.TargetCount, Is.EqualTo(13));
+            Assert.That(task.IsCompleted, Is.False);
+            Assert.That(completedViewModel.Summary, Does.Contain("Board Cats 11/11"));
+            Assert.That(completedViewModel.Summary, Does.Contain("Hidden 0"));
+            Assert.That(completedViewModel.Summary, Does.Contain("Task 11/13"));
+
+            BoardRuntime nextBoard = gateway.StartLevelForCurrentPlayerAsync(202).GetAwaiter().GetResult();
+
+            Assert.That(nextBoard, Is.Not.SameAs(firstBoard));
+            Assert.That(runtime.CurrentLevelSnapshot.Completed, Is.False);
+            Assert.That(nextBoard.TotalCatCount, Is.EqualTo(11));
+            Assert.That(task.Task.CurrentCount, Is.EqualTo(11));
+        }
+
+        [Test]
+        public void BattleCellView_UnrevealedValidCellIsVisiblyClickable()
+        {
+            var cellObject = new GameObject("cell", typeof(RectTransform), typeof(Image), typeof(BattleCellView));
+            try
+            {
+                BattleCellView view = cellObject.GetComponent<BattleCellView>();
+                typeof(BattleCellView)
+                    .GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.Invoke(view, null);
+                var state = new BoardCellState(
+                    3,
+                    true,
+                    false,
+                    false,
+                    true,
+                    0,
+                    new Color32(30, 60, 100, 255));
+
+                view.Bind(state, null);
+
+                Image background = cellObject.GetComponent<Image>();
+                Outline outline = cellObject.GetComponent<Outline>();
+                TextMeshProUGUI label = cellObject.GetComponentInChildren<TextMeshProUGUI>();
+
+                Assert.That(background.raycastTarget, Is.True);
+                Assert.That(outline.enabled, Is.True);
+                Assert.That(label.text, Is.EqualTo("?"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(cellObject);
+            }
+        }
+
             }
 
             public Task<bool> RunPatchFlowAsync(string packageVersion = null)
@@ -701,3 +874,36 @@ namespace Holmas.Tests
         }
     }
 }
+        private static HolmasTaskCatalog CreateSingleCatTaskCatalog(int targetCount)
+        {
+            return new HolmasTaskCatalog(
+                new[]
+                {
+                    new HolmasCatDefinition { CatId = "cat-a", Price = 10, Weight = 1 },
+                },
+                new[]
+                {
+                    new HolmasTaskTemplateDefinition
+                    {
+                        TaskTypeId = "task-normal",
+                        CatIdList = new[] { "cat-a" },
+                        CountMin = targetCount,
+                        CountMax = targetCount,
+                        RewardArray = System.Array.Empty<string>(),
+                        LevelRewardFactor = 2f,
+                    }
+                },
+                new[]
+                {
+                    new HolmasPlayerLevelDefinition
+                    {
+                        PlayerLevel = 1,
+                        UpgradeExp = 0,
+                        TaskTypeIds = new[] { "task-normal" },
+                        TaskTypeWeights = new[] { 1 },
+                        MapIds = new[] { "map-partial-task" },
+                        MapWeights = new[] { 1 },
+                    }
+                });
+        }
+

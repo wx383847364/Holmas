@@ -2,9 +2,11 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
 using App.HotUpdate.Holmas.UI.Screens.Main;
+using App.Shared.Holmas.RuntimeData;
 
 namespace App.HotUpdate.Holmas.UI.Core
 {
@@ -176,6 +178,62 @@ namespace App.HotUpdate.Holmas.UI.Core
         }
 
         /// <summary>
+        /// 当前棋盘完成后立即进入下一局。
+        /// 任务推进和结算已经由 HolmasGameplayRuntime 完成，这里只负责新关卡加载与页面刷新。
+        /// </summary>
+        public async Task AdvanceToNextBattleAsync(HolmasProgressionAdvanceResult progressionResult)
+        {
+            await RunExclusiveAsync(async () =>
+            {
+                if (_root.LevelLaunchGateway == null)
+                {
+                    throw new InvalidOperationException("关卡启动网关不可用。");
+                }
+
+                HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
+                if (runtime == null || runtime.CurrentLevelSnapshot == null || !runtime.CurrentLevelSnapshot.Completed)
+                {
+                    throw new InvalidOperationException("当前棋盘尚未完成，不能进入下一关。");
+                }
+
+                string completedMapId = runtime.CurrentLevelSnapshot.MapId ?? "unknown";
+                bool sessionStarted = false;
+                await _root.ScreenService.ShowOverlayAsync(
+                    LoadingScreenRegistration.TransitionOverlayScreenId,
+                    CreateLoadingVm("正在进入下一关...", 0.2f, true));
+
+                try
+                {
+                    int seed = Environment.TickCount;
+                    await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
+                    sessionStarted = true;
+
+                    LevelSnapshot nextSnapshot = runtime.CurrentLevelSnapshot;
+                    await _battleWorldHost.PrepareAsync(nextSnapshot);
+                    _battleWorldHost.Show();
+
+                    await _root.ScreenService.OpenPageAsync(
+                        BattleScreenRegistration.ScreenId,
+                        BuildNextBattleStatus(completedMapId, nextSnapshot, seed, progressionResult));
+                }
+                catch
+                {
+                    if (sessionStarted && runtime != null)
+                    {
+                        runtime.EndCurrentLevelSession();
+                    }
+
+                    _battleWorldHost.Release();
+                    throw;
+                }
+                finally
+                {
+                    await _root.ScreenService.CloseAsync(LoadingScreenRegistration.TransitionOverlayScreenId);
+                }
+            });
+        }
+
+        /// <summary>
         /// 从棋盘返回首页：
         /// BattlePage -> LoadingOverlay -> MainPage。
         /// </summary>
@@ -249,6 +307,23 @@ namespace App.HotUpdate.Holmas.UI.Core
                 Progress = progress,
                 Animate = animate,
             };
+        }
+
+        private static string BuildNextBattleStatus(
+            string completedMapId,
+            LevelSnapshot nextSnapshot,
+            int seed,
+            HolmasProgressionAdvanceResult progressionResult)
+        {
+            int progressed = progressionResult != null ? progressionResult.ProgressedTaskIds.Count : 0;
+            int completed = progressionResult != null ? progressionResult.CompletedTaskIds.Count : 0;
+            string nextMapId = nextSnapshot != null && !string.IsNullOrWhiteSpace(nextSnapshot.MapId)
+                ? nextSnapshot.MapId
+                : "unknown";
+            int nextCatCount = nextSnapshot != null && nextSnapshot.SpawnedCats != null
+                ? nextSnapshot.SpawnedCats.Count
+                : 0;
+            return $"已完成 {completedMapId}，推进任务 {progressed} 条，新完成 {completed} 条。已进入下一关 {nextMapId}，猫 {nextCatCount} 只，seed={seed}";
         }
     }
 }

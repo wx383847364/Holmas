@@ -14,6 +14,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private BoardCellState _state;
         private Action<int, bool> _onInteract;
         private Image _background;
+        private Outline _outline;
         private TextMeshProUGUI _label;
 
         private void Awake()
@@ -23,6 +24,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             {
                 _background = gameObject.AddComponent<Image>();
             }
+
+            _outline = GetComponent<Outline>();
+            if (_outline == null)
+            {
+                _outline = gameObject.AddComponent<Outline>();
+            }
+
+            _outline.effectDistance = new Vector2(2f, -2f);
+            _outline.useGraphicAlpha = false;
 
             GameObject labelObject = transform.Find("Label") != null
                 ? transform.Find("Label").gameObject
@@ -76,9 +86,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             if (!_state.IsValid)
             {
-                _background.color = new Color(0.18f, 0.18f, 0.2f, 0.45f);
+                _background.color = new Color(0.11f, 0.13f, 0.16f, 0.32f);
                 TmpGlyphCoverageReporter.SetText(_label, string.Empty);
                 _background.raycastTarget = false;
+                SetOutline(false, Color.clear);
                 return;
             }
 
@@ -89,14 +100,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 _background.color = new Color(0.86f, 0.35f, 0.35f, 0.95f);
                 TmpGlyphCoverageReporter.SetText(_label, "F");
                 _label.color = Color.white;
+                SetOutline(true, new Color(1f, 0.86f, 0.38f, 1f));
                 return;
             }
 
             if (!_state.IsRevealed)
             {
                 Color32 blockColor = _state.BlockColor;
-                _background.color = new Color(blockColor.r / 255f, blockColor.g / 255f, blockColor.b / 255f, 1f);
-                TmpGlyphCoverageReporter.SetText(_label, string.Empty);
+                _background.color = Color.Lerp(
+                    new Color(blockColor.r / 255f, blockColor.g / 255f, blockColor.b / 255f, 1f),
+                    new Color(0.18f, 0.42f, 0.74f, 1f),
+                    0.32f);
+                TmpGlyphCoverageReporter.SetText(_label, "?");
+                _label.color = new Color(0.9f, 0.96f, 1f, 1f);
+                SetOutline(true, new Color(0.67f, 0.86f, 1f, 1f));
                 return;
             }
 
@@ -105,12 +122,25 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 _background.color = new Color(0.97f, 0.62f, 0.24f, 1f);
                 TmpGlyphCoverageReporter.SetText(_label, "猫");
                 _label.color = Color.white;
+                SetOutline(true, new Color(1f, 0.8f, 0.38f, 1f));
                 return;
             }
 
             _background.color = new Color(0.95f, 0.95f, 0.97f, 1f);
             TmpGlyphCoverageReporter.SetText(_label, _state.AdjacentCatCount > 0 ? _state.AdjacentCatCount.ToString() : string.Empty);
             _label.color = GetNumberColor(_state.AdjacentCatCount);
+            SetOutline(false, Color.clear);
+        }
+
+        private void SetOutline(bool enabled, Color effectColor)
+        {
+            if (_outline == null)
+            {
+                return;
+            }
+
+            _outline.enabled = enabled;
+            _outline.effectColor = effectColor;
         }
 
         private static Color GetNumberColor(int count)

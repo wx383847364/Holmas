@@ -545,13 +545,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             TextMeshProUGUI tmp = button.GetComponentInChildren<TextMeshProUGUI>(true);
             if (tmp != null)
             {
-                TmpGlyphCoverageReporter.SetText(tmp, string.IsNullOrWhiteSpace(label) ? button.name : label);
+                string effectiveLabel = string.IsNullOrWhiteSpace(label) ? button.name : label;
+                tmp.enableWordWrapping = true;
+                tmp.overflowMode = TextOverflowModes.Ellipsis;
+                tmp.fontSize = effectiveLabel.Length > 16 ? 24f : 34f;
+                TmpGlyphCoverageReporter.SetText(tmp, effectiveLabel);
                 return;
             }
 
             Text legacyText = button.GetComponentInChildren<Text>(true);
             if (legacyText != null)
             {
+                legacyText.horizontalOverflow = HorizontalWrapMode.Wrap;
+                legacyText.verticalOverflow = VerticalWrapMode.Truncate;
                 legacyText.text = string.IsNullOrWhiteSpace(label) ? button.name : label;
             }
         }

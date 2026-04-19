@@ -47,9 +47,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 new Vector2(0f, 1f),
                 new Vector2(1f, 1f),
                 new Vector2(0.5f, 1f),
-                new Vector2(0f, -80f),
-                new Vector2(-220f, 84f),
-                30f,
+                new Vector2(0f, -112f),
+                new Vector2(-260f, 112f),
+                24f,
                 TextAlignmentOptions.Center);
             TextMeshProUGUI statusText = GetOrCreateRuntimeText(
                 overlay,

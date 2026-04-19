@@ -36,12 +36,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         protected override void OnOpen(object payload)
         {
-            Refresh(payload as string);
+            string status = payload as string;
+            Refresh(status);
+            _ = AdvanceAlreadyCompletedBoardAsync(status);
         }
 
         protected override void OnResume()
         {
-            Refresh("已回到当前棋盘。");
+            const string status = "已回到当前棋盘。";
+            Refresh(status);
+            _ = AdvanceAlreadyCompletedBoardAsync(status);
         }
 
         protected override void OnDestroy()
@@ -86,7 +90,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 {
                     HolmasProgressionAdvanceResult progressionResult;
                     BoardRevealResult revealResult = runtime.RevealCell(cellIndex, out progressionResult);
-                    Refresh(BuildRevealStatus(revealResult, progressionResult));
+                    string revealStatus = BuildRevealStatus(revealResult, progressionResult);
+                    Refresh(revealStatus);
+                    if (revealResult != null && revealResult.IsValidAction && revealResult.Completed)
+                    {
+                        await AdvanceToNextLevelAsync(progressionResult, revealStatus);
+                    }
                 }
             }
             catch (Exception ex)
@@ -97,6 +106,54 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             {
                 _isProcessing = false;
                 await Task.CompletedTask;
+            }
+        }
+
+        private async Task AdvanceToNextLevelAsync(HolmasProgressionAdvanceResult progressionResult, string fallbackStatus)
+        {
+            HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
+            if (flowCoordinator == null)
+            {
+                Refresh(fallbackStatus);
+                return;
+            }
+
+            try
+            {
+                await flowCoordinator.AdvanceToNextBattleAsync(progressionResult);
+            }
+            catch (Exception ex)
+            {
+                Refresh($"本局完成，但进入下一关失败：{ex.Message}");
+            }
+        }
+
+        private async Task AdvanceAlreadyCompletedBoardAsync(string fallbackStatus)
+        {
+            if (_isProcessing)
+            {
+                return;
+            }
+
+            HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
+            if (runtime == null || runtime.CurrentBoardRuntime == null || !runtime.CurrentBoardRuntime.Completed)
+            {
+                return;
+            }
+
+            _isProcessing = true;
+            try
+            {
+                HolmasProgressionAdvanceResult progressionResult = runtime.ApplyCurrentLevelCompletion();
+                await AdvanceToNextLevelAsync(progressionResult, fallbackStatus);
+            }
+            catch (Exception ex)
+            {
+                Refresh($"本局完成，但进入下一关失败：{ex.Message}");
+            }
+            finally
+            {
+                _isProcessing = false;
             }
         }
 
