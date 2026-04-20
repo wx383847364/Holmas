@@ -88,6 +88,21 @@ namespace App.HotUpdate.Holmas.Application
         public long CurrentGoldBalance => GameplayRuntime?.CurrentGoldBalance ?? 0L;
 
         /// <summary>
+        /// 当前体力。
+        /// </summary>
+        public int CurrentEnergy => GameplayRuntime?.CurrentEnergy ?? HolmasGameplayRuntime.DefaultEnergyRecoveryLimit;
+
+        /// <summary>
+        /// 当前体力自然恢复上限。
+        /// </summary>
+        public int EnergyRecoveryLimit => GameplayRuntime?.EnergyRecoveryLimit ?? HolmasGameplayRuntime.DefaultEnergyRecoveryLimit;
+
+        /// <summary>
+        /// 体力显示文本。
+        /// </summary>
+        public string EnergyLabel => GameplayRuntime?.EnergyLabel ?? $"{HolmasGameplayRuntime.DefaultEnergyRecoveryLimit}/{HolmasGameplayRuntime.DefaultEnergyRecoveryLimit}";
+
+        /// <summary>
         /// 按 TerrainPath 启动一局地图。
         /// 组合层先通过正式资源入口加载地形，再交给 HotUpdate 业务逻辑生成运行时棋盘。
         /// </summary>
@@ -143,6 +158,32 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             return GameplayRuntime.ClaimTaskReward(slotIndex);
+        }
+
+        /// <summary>
+        /// 按 UTC 时间刷新自然恢复体力。
+        /// </summary>
+        public bool RefreshEnergyRecovery()
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.RefreshEnergyRecovery();
+        }
+
+        /// <summary>
+        /// 当前验证阶段的体力补给入口。
+        /// </summary>
+        public void AddEnergy(int amount = HolmasGameplayRuntime.DebugEnergyGrantAmount)
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            GameplayRuntime.AddEnergy(amount);
         }
 
         /// <summary>

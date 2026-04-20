@@ -28,6 +28,7 @@ namespace App.HotUpdate.Holmas.Application
         OfflineSettlementApplied,
         TaskRewardClaimed,
         PromotionUpgraded,
+        EnergyChanged,
         CurrentLevelSessionEnded,
     }
 
@@ -35,22 +36,28 @@ namespace App.HotUpdate.Holmas.Application
     /// Holmas 当前阶段的运行时编排入口。
     /// 在不接 UI 的前提下，把关卡、任务栏和长期进度串成一条稳定的应用内调用链。
     /// </summary>
-    public sealed class HolmasGameplayRuntime
+    public sealed class HolmasGameplayRuntime : ITickable
     {
+        public const int DefaultEnergyRecoveryLimit = 50;
+        public const int DebugEnergyGrantAmount = 5;
+        public const long EnergyRecoveryIntervalMilliseconds = 12L * 60L * 1000L;
+
         private readonly HolmasTaskProgressService _taskProgressService;
         private readonly HolmasMetaProgressionService _metaProgressionService;
         private readonly HolmasProgressionCoordinator _progressionCoordinator;
         private readonly HolmasAgencyProgressionService _promotionProgressionService;
+        private readonly IHolmasUtcClock _clock;
         private readonly IAppLogger _logger;
         private readonly IAssetsRuntime _assetsRuntime;
         private bool _currentLevelCompletionApplied;
+        private float _energyRefreshAccumulator;
 
         public HolmasGameplayRuntime(
             HolmasTaskProgressService taskProgressService,
             HolmasMetaProgressionService metaProgressionService,
             HolmasProgressionCoordinator progressionCoordinator,
             IAppLogger logger)
-            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, null, null, null)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, null, null, null, null)
         {
         }
 
@@ -60,7 +67,7 @@ namespace App.HotUpdate.Holmas.Application
             HolmasProgressionCoordinator progressionCoordinator,
             IAppLogger logger,
             IAssetsRuntime assetsRuntime)
-            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, assetsRuntime, null, null)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, null, logger, assetsRuntime, null, null, null)
         {
         }
 
@@ -71,7 +78,7 @@ namespace App.HotUpdate.Holmas.Application
             HolmasAgencyProgressionService agencyProgressionService,
             IAppLogger logger,
             IAssetsRuntime assetsRuntime)
-            : this(taskProgressService, metaProgressionService, progressionCoordinator, agencyProgressionService, logger, assetsRuntime, null, null)
+            : this(taskProgressService, metaProgressionService, progressionCoordinator, agencyProgressionService, logger, assetsRuntime, null, null, null)
         {
         }
 
@@ -83,12 +90,14 @@ namespace App.HotUpdate.Holmas.Application
             IAppLogger logger,
             IAssetsRuntime assetsRuntime,
             HolmasTaskBarState initialTaskBarState,
-            HolmasMetaProgressionState initialMetaProgressionState)
+            HolmasMetaProgressionState initialMetaProgressionState,
+            IHolmasUtcClock clock = null)
         {
             _taskProgressService = taskProgressService ?? throw new ArgumentNullException(nameof(taskProgressService));
             _metaProgressionService = metaProgressionService ?? throw new ArgumentNullException(nameof(metaProgressionService));
             _progressionCoordinator = progressionCoordinator ?? throw new ArgumentNullException(nameof(progressionCoordinator));
             _promotionProgressionService = agencyProgressionService ?? new HolmasAgencyProgressionService(new HolmasAgencyCatalog(), _metaProgressionService);
+            _clock = clock ?? new HolmasSystemUtcClock();
             _logger = logger;
             _assetsRuntime = assetsRuntime;
 
@@ -102,6 +111,8 @@ namespace App.HotUpdate.Holmas.Application
             {
                 MetaProgressionState.AgencyStageId = 1;
             }
+            EnsureEnergyState(_clock.UtcNowMilliseconds);
+            RefreshEnergyRecovery();
         }
 
         public event Action<HolmasGameplayRuntimeStateChangeReason> StateChanged;
@@ -130,6 +141,14 @@ namespace App.HotUpdate.Holmas.Application
         /// 当前金币余额。
         /// </summary>
         public long CurrentGoldBalance => MetaProgressionState?.GoldBalance ?? 0L;
+
+        public int CurrentEnergy => MetaProgressionState?.EnergyCurrent ?? DefaultEnergyRecoveryLimit;
+
+        public int EnergyRecoveryLimit => MetaProgressionState != null && MetaProgressionState.EnergyRecoveryLimit > 0
+            ? MetaProgressionState.EnergyRecoveryLimit
+            : DefaultEnergyRecoveryLimit;
+
+        public string EnergyLabel => $"{CurrentEnergy}/{EnergyRecoveryLimit}";
 
         /// <summary>
         /// 当前关卡模板。
@@ -347,6 +366,17 @@ namespace App.HotUpdate.Holmas.Application
                 throw new InvalidOperationException("HolmasGameplayRuntime: 当前还没有启动中的关卡。");
             }
 
+            RefreshEnergyRecovery();
+            if (ShouldConsumeEnergyForReveal(cellIndex) && !TryConsumeRevealEnergy())
+            {
+                return new BoardRevealResult(cellIndex)
+                {
+                    IsValidAction = false,
+                    IsIgnored = true,
+                    FailureReason = "体力不足。",
+                };
+            }
+
             BoardRevealResult revealResult = CurrentBoardRuntime.Reveal(cellIndex);
             if (revealResult.IsValidAction && revealResult.Completed)
             {
@@ -358,6 +388,75 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             return revealResult;
+        }
+
+        public bool RefreshEnergyRecovery()
+        {
+            long nowUtcMilliseconds = _clock.UtcNowMilliseconds;
+            EnsureEnergyState(nowUtcMilliseconds);
+
+            if (MetaProgressionState.EnergyCurrent >= MetaProgressionState.EnergyRecoveryLimit)
+            {
+                return false;
+            }
+
+            long lastRecoveryAt = MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds;
+            if (lastRecoveryAt <= 0L || nowUtcMilliseconds <= lastRecoveryAt)
+            {
+                MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds = nowUtcMilliseconds;
+                return false;
+            }
+
+            long elapsed = nowUtcMilliseconds - lastRecoveryAt;
+            int recovered = (int)(elapsed / EnergyRecoveryIntervalMilliseconds);
+            if (recovered <= 0)
+            {
+                return false;
+            }
+
+            int missing = MetaProgressionState.EnergyRecoveryLimit - MetaProgressionState.EnergyCurrent;
+            int applied = Math.Min(missing, recovered);
+            MetaProgressionState.EnergyCurrent += applied;
+            MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds =
+                MetaProgressionState.EnergyCurrent >= MetaProgressionState.EnergyRecoveryLimit
+                    ? nowUtcMilliseconds
+                    : lastRecoveryAt + recovered * EnergyRecoveryIntervalMilliseconds;
+
+            _logger?.LogInfo("HolmasGameplayRuntime: 体力自然恢复 +{0}，当前={1}/{2}。", applied, CurrentEnergy, EnergyRecoveryLimit);
+            NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.EnergyChanged);
+            return true;
+        }
+
+        public void AddEnergy(int amount = DebugEnergyGrantAmount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            RefreshEnergyRecovery();
+            long nowUtcMilliseconds = _clock.UtcNowMilliseconds;
+            EnsureEnergyState(nowUtcMilliseconds);
+            MetaProgressionState.EnergyCurrent = Math.Max(0, MetaProgressionState.EnergyCurrent) + amount;
+            if (MetaProgressionState.EnergyCurrent >= MetaProgressionState.EnergyRecoveryLimit)
+            {
+                MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds = nowUtcMilliseconds;
+            }
+
+            _logger?.LogInfo("HolmasGameplayRuntime: 体力增加 +{0}，当前={1}/{2}。", amount, CurrentEnergy, EnergyRecoveryLimit);
+            NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.EnergyChanged);
+        }
+
+        public void Tick(float deltaTime)
+        {
+            _energyRefreshAccumulator += Math.Max(0f, deltaTime);
+            if (_energyRefreshAccumulator < 1f)
+            {
+                return;
+            }
+
+            _energyRefreshAccumulator = 0f;
+            RefreshEnergyRecovery();
         }
 
         /// <summary>
@@ -546,6 +645,63 @@ namespace App.HotUpdate.Holmas.Application
         private void NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason reason)
         {
             StateChanged?.Invoke(reason);
+        }
+
+        private void EnsureEnergyState(long nowUtcMilliseconds)
+        {
+            if (MetaProgressionState == null)
+            {
+                return;
+            }
+
+            if (!MetaProgressionState.EnergyInitialized || MetaProgressionState.EnergyRecoveryLimit <= 0)
+            {
+                MetaProgressionState.EnergyInitialized = true;
+                MetaProgressionState.EnergyRecoveryLimit = DefaultEnergyRecoveryLimit;
+                MetaProgressionState.EnergyCurrent = DefaultEnergyRecoveryLimit;
+                MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds = nowUtcMilliseconds;
+                return;
+            }
+
+            MetaProgressionState.EnergyCurrent = Math.Max(0, MetaProgressionState.EnergyCurrent);
+            MetaProgressionState.EnergyRecoveryLimit = Math.Max(1, MetaProgressionState.EnergyRecoveryLimit);
+            if (MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds <= 0L)
+            {
+                MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds = nowUtcMilliseconds;
+            }
+        }
+
+        private bool ShouldConsumeEnergyForReveal(int cellIndex)
+        {
+            if (CurrentBoardRuntime == null || CurrentBoardRuntime.Completed)
+            {
+                return false;
+            }
+
+            BoardCellState state = CurrentBoardRuntime.GetCellState(cellIndex);
+            return state.IsValid && !state.IsRevealed && !state.IsFlagged;
+        }
+
+        private bool TryConsumeRevealEnergy()
+        {
+            long nowUtcMilliseconds = _clock.UtcNowMilliseconds;
+            EnsureEnergyState(nowUtcMilliseconds);
+            if (MetaProgressionState.EnergyCurrent <= 0)
+            {
+                return false;
+            }
+
+            int previousEnergy = MetaProgressionState.EnergyCurrent;
+            MetaProgressionState.EnergyCurrent = Math.Max(0, MetaProgressionState.EnergyCurrent - 1);
+            if (previousEnergy >= MetaProgressionState.EnergyRecoveryLimit ||
+                MetaProgressionState.EnergyCurrent < MetaProgressionState.EnergyRecoveryLimit)
+            {
+                MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds = nowUtcMilliseconds;
+            }
+
+            _logger?.LogInfo("HolmasGameplayRuntime: 翻格消耗体力 1，当前={0}/{1}。", CurrentEnergy, EnergyRecoveryLimit);
+            NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.EnergyChanged);
+            return true;
         }
 
     }

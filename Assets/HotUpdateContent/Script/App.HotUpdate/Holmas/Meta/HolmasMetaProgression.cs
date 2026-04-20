@@ -28,6 +28,10 @@ namespace App.HotUpdate.Holmas.Meta
         public int ClaimedTaskCount;
         public long OfflineRewardTotal;
         public long LastOfflineSettlementAtUtcMilliseconds;
+        public bool EnergyInitialized;
+        public int EnergyCurrent;
+        public int EnergyRecoveryLimit;
+        public long EnergyLastRecoveryAtUtcMilliseconds;
         public readonly Dictionary<string, int> CatDiscoveryCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         public readonly Dictionary<string, int> PromotionLevels = new Dictionary<string, int>(StringComparer.Ordinal);
 

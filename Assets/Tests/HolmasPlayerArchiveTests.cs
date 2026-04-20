@@ -58,6 +58,66 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasPlayerArchiveMapper_CreateDefaultArchive_InitializesEnergy()
+        {
+            HolmasPlayerArchiveRoot archive = new HolmasPlayerArchiveMapper().CreateDefaultArchive();
+
+            Assert.That(archive.Progression.EnergyInitialized, Is.True);
+            Assert.That(archive.Progression.EnergyCurrent, Is.EqualTo(50));
+            Assert.That(archive.Progression.EnergyRecoveryLimit, Is.EqualTo(50));
+        }
+
+        [Test]
+        public void HolmasPlayerArchiveMapper_RoundTripsEnergyFields()
+        {
+            var mapper = new HolmasPlayerArchiveMapper();
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            HolmasGameplayRuntime runtime = CreateArchiveEnergyRuntime(
+                clock,
+                new HolmasMetaProgressionState
+                {
+                    EnergyInitialized = true,
+                    EnergyCurrent = 55,
+                    EnergyRecoveryLimit = 50,
+                    EnergyLastRecoveryAtUtcMilliseconds = 1000,
+                });
+
+            HolmasPlayerArchiveRoot archive = mapper.ExportArchive(
+                runtime,
+                HolmasLocalMockServerGateway.DefaultPlayerId,
+                HolmasLocalMockServerGateway.DefaultSchemaVersion,
+                1L,
+                clock.UtcNowMilliseconds);
+            HolmasMetaProgressionState restored = mapper.RestoreProgression(archive);
+
+            Assert.That(archive.Progression.EnergyCurrent, Is.EqualTo(55));
+            Assert.That(archive.Progression.EnergyRecoveryLimit, Is.EqualTo(50));
+            Assert.That(restored.EnergyInitialized, Is.True);
+            Assert.That(restored.EnergyCurrent, Is.EqualTo(55));
+            Assert.That(restored.EnergyRecoveryLimit, Is.EqualTo(50));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RestoreOldArchiveProgression_MigratesEnergyToFull()
+        {
+            var mapper = new HolmasPlayerArchiveMapper();
+            var archive = mapper.CreateDefaultArchive();
+            archive.Progression.EnergyInitialized = false;
+            archive.Progression.EnergyCurrent = 0;
+            archive.Progression.EnergyRecoveryLimit = 0;
+            archive.Progression.EnergyLastRecoveryAtUtcMilliseconds = 0;
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1234 };
+
+            HolmasMetaProgressionState restored = mapper.RestoreProgression(archive);
+            HolmasGameplayRuntime runtime = CreateArchiveEnergyRuntime(clock, restored);
+
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+            Assert.That(runtime.EnergyRecoveryLimit, Is.EqualTo(50));
+            Assert.That(runtime.MetaProgressionState.EnergyInitialized, Is.True);
+            Assert.That(runtime.MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds, Is.EqualTo(1234));
+        }
+
+        [Test]
         public void HolmasLocalMockServerGateway_LoadAsync_UsesBackupWhenPrimaryIsInvalid()
         {
             var persistence = new InMemoryPersistence();
@@ -404,6 +464,31 @@ namespace Holmas.Tests
             Assert.That(restoredRuntime.CurrentBoardRuntime.IsRevealed(1), Is.True);
             Assert.That(restoredRuntime.CurrentBoardRuntime.IsFlagged(0), Is.False);
             Assert.That(restoredRuntime.CurrentLevelSnapshot.RevealedCells[1], Is.True);
+        }
+
+        private static HolmasGameplayRuntime CreateArchiveEnergyRuntime(
+            FixedUtcClock clock,
+            HolmasMetaProgressionState state)
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            return new HolmasGameplayRuntime(
+                taskService,
+                metaService,
+                coordinator,
+                null,
+                new NullLogger(),
+                null,
+                null,
+                state,
+                clock);
         }
 
         private class InMemoryPersistence : IPersistence

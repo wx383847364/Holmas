@@ -34,6 +34,10 @@ namespace App.Shared.Holmas.PlayerData
         public int ClaimedTaskCount;
         public long OfflineRewardTotal;
         public long LastOfflineSettlementAtUtcMilliseconds;
+        public bool EnergyInitialized = true;
+        public int EnergyCurrent = 50;
+        public int EnergyRecoveryLimit = 50;
+        public long EnergyLastRecoveryAtUtcMilliseconds;
         public HolmasArchiveCounterEntry[] CatDiscoveryCounts = Array.Empty<HolmasArchiveCounterEntry>();
         public HolmasPromotionLevelEntry[] PromotionLevels = Array.Empty<HolmasPromotionLevelEntry>();
     }

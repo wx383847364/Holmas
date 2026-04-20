@@ -70,6 +70,10 @@ namespace App.HotUpdate.Holmas.PlayerData
                 ClaimedTaskCount = source.ClaimedTaskCount,
                 OfflineRewardTotal = source.OfflineRewardTotal,
                 LastOfflineSettlementAtUtcMilliseconds = source.LastOfflineSettlementAtUtcMilliseconds,
+                EnergyInitialized = source.EnergyInitialized,
+                EnergyCurrent = Math.Max(0, source.EnergyCurrent),
+                EnergyRecoveryLimit = source.EnergyRecoveryLimit > 0 ? source.EnergyRecoveryLimit : 50,
+                EnergyLastRecoveryAtUtcMilliseconds = Math.Max(0L, source.EnergyLastRecoveryAtUtcMilliseconds),
             };
 
             if (source.CatDiscoveryCounts != null)
@@ -286,6 +290,10 @@ namespace App.HotUpdate.Holmas.PlayerData
                 ClaimedTaskCount = state.ClaimedTaskCount,
                 OfflineRewardTotal = state.OfflineRewardTotal,
                 LastOfflineSettlementAtUtcMilliseconds = state.LastOfflineSettlementAtUtcMilliseconds,
+                EnergyInitialized = state.EnergyInitialized,
+                EnergyCurrent = Math.Max(0, state.EnergyCurrent),
+                EnergyRecoveryLimit = state.EnergyRecoveryLimit > 0 ? state.EnergyRecoveryLimit : 50,
+                EnergyLastRecoveryAtUtcMilliseconds = Math.Max(0L, state.EnergyLastRecoveryAtUtcMilliseconds),
                 CatDiscoveryCounts = state.CatDiscoveryCounts
                     .OrderBy(item => item.Key, StringComparer.Ordinal)
                     .Select(item => new HolmasArchiveCounterEntry
@@ -318,6 +326,10 @@ namespace App.HotUpdate.Holmas.PlayerData
                 ClaimedTaskCount = source.ClaimedTaskCount,
                 OfflineRewardTotal = source.OfflineRewardTotal,
                 LastOfflineSettlementAtUtcMilliseconds = source.LastOfflineSettlementAtUtcMilliseconds,
+                EnergyInitialized = source.EnergyInitialized,
+                EnergyCurrent = Math.Max(0, source.EnergyCurrent),
+                EnergyRecoveryLimit = source.EnergyRecoveryLimit > 0 ? source.EnergyRecoveryLimit : 50,
+                EnergyLastRecoveryAtUtcMilliseconds = Math.Max(0L, source.EnergyLastRecoveryAtUtcMilliseconds),
                 CatDiscoveryCounts = source.CatDiscoveryCounts != null
                     ? source.CatDiscoveryCounts
                         .Where(item => item != null && !string.IsNullOrWhiteSpace(item.Key))

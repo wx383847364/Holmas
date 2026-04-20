@@ -113,6 +113,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 taskBarRestoreResult.State,
                 archiveMapper.RestoreProgression(archiveLoadResult.Archive));
             serviceContainer.RegisterSingleton(gameplayRuntime);
+            tickManager.Register(gameplayRuntime);
 
             // 这轮先把已确认的共享依赖收敛到统一上下文，给后续地图线和任务线提供稳定挂接点。
             Context = new HolmasApplicationContext(
@@ -232,7 +233,8 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 logger,
                 assetsRuntime,
                 initialTaskBarState,
-                initialMetaProgressionState);
+                initialMetaProgressionState,
+                clock);
         }
 
         private static HolmasMetaCatalog CreateMetaCatalog(HolmasConfigCatalogBundle configBundle)

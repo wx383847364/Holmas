@@ -26,6 +26,8 @@ namespace App.HotUpdate.Holmas.Board
 
         public bool Completed { get; set; }
 
+        public string FailureReason { get; set; } = string.Empty;
+
         public readonly List<int> ChangedCellIndices = new List<int>();
 
         public readonly List<int> FoundCatCellIndices = new List<int>();

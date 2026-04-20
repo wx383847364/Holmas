@@ -79,6 +79,175 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasGameplayRuntime_EnergyDefaultsToFullRecoveryLimit()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock);
+
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+            Assert.That(runtime.EnergyRecoveryLimit, Is.EqualTo(50));
+            Assert.That(runtime.EnergyLabel, Is.EqualTo("50/50"));
+            Assert.That(runtime.MetaProgressionState.EnergyInitialized, Is.True);
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RefreshEnergyRecovery_RestoresFivePerHourAndStopsAtLimit()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var state = new HolmasMetaProgressionState
+            {
+                EnergyInitialized = true,
+                EnergyCurrent = 45,
+                EnergyRecoveryLimit = 50,
+                EnergyLastRecoveryAtUtcMilliseconds = 1000,
+            };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock, state);
+
+            clock.UtcNowMilliseconds += 60L * 60L * 1000L;
+            bool changed = runtime.RefreshEnergyRecovery();
+
+            Assert.That(changed, Is.True);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+            Assert.That(runtime.EnergyRecoveryLimit, Is.EqualTo(50));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_EnergyAboveLimitPausesRecoveryUntilConsumedBelowLimit()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var state = new HolmasMetaProgressionState
+            {
+                EnergyInitialized = true,
+                EnergyCurrent = 55,
+                EnergyRecoveryLimit = 50,
+                EnergyLastRecoveryAtUtcMilliseconds = 1000,
+            };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock, state);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateBoardTemplate(1, 12),
+                new LevelSnapshot
+                {
+                    MapId = "energy",
+                    TerrainPath = "energy",
+                    RevealedCells = new bool[12],
+                    SpawnedCats = new List<SpawnedCatData>
+                    {
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 1 },
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 3 },
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 5 },
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 7 },
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 9 },
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 11 },
+                    },
+                });
+
+            clock.UtcNowMilliseconds += 60L * 60L * 1000L;
+            Assert.That(runtime.RefreshEnergyRecovery(), Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(55));
+
+            for (int i = 0; i < 6; i++)
+            {
+                runtime.RevealCell(i * 2, out _);
+            }
+
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
+
+            clock.UtcNowMilliseconds += 11L * 60L * 1000L;
+            Assert.That(runtime.RefreshEnergyRecovery(), Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
+
+            clock.UtcNowMilliseconds += 60L * 1000L;
+            Assert.That(runtime.RefreshEnergyRecovery(), Is.True);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_AddEnergy_IncreasesCurrentValueWithoutRaisingLimit()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock);
+
+            runtime.AddEnergy();
+
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(55));
+            Assert.That(runtime.EnergyRecoveryLimit, Is.EqualTo(50));
+            Assert.That(runtime.EnergyLabel, Is.EqualTo("55/50"));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RevealCell_ConsumesEnergyOnlyForValidReveal()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateBoardTemplate(1, 2),
+                new LevelSnapshot
+                {
+                    MapId = "energy",
+                    TerrainPath = "energy",
+                    RevealedCells = new bool[2],
+                    SpawnedCats = new List<SpawnedCatData>
+                    {
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 1 },
+                    },
+                });
+
+            BoardRevealResult flag = runtime.ToggleFlag(0);
+            Assert.That(flag.IsValidAction, Is.True);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+
+            BoardRevealResult flaggedReveal = runtime.RevealCell(0, out _);
+            Assert.That(flaggedReveal.IsValidAction, Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+
+            runtime.ToggleFlag(0);
+            BoardRevealResult reveal = runtime.RevealCell(0, out _);
+            Assert.That(reveal.IsValidAction, Is.True);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
+
+            BoardRevealResult duplicateReveal = runtime.RevealCell(0, out _);
+            Assert.That(duplicateReveal.IsValidAction, Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
+
+            BoardRevealResult invalidReveal = runtime.RevealCell(-1, out _);
+            Assert.That(invalidReveal.IsValidAction, Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RevealCell_RejectsWhenEnergyEmpty()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var state = new HolmasMetaProgressionState
+            {
+                EnergyInitialized = true,
+                EnergyCurrent = 0,
+                EnergyRecoveryLimit = 50,
+                EnergyLastRecoveryAtUtcMilliseconds = 1000,
+            };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock, state);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateBoardTemplate(1, 2),
+                new LevelSnapshot
+                {
+                    MapId = "energy",
+                    TerrainPath = "energy",
+                    RevealedCells = new bool[2],
+                    SpawnedCats = new List<SpawnedCatData>
+                    {
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 1 },
+                    },
+                });
+
+            BoardRevealResult reveal = runtime.RevealCell(0, out _);
+
+            Assert.That(reveal.IsValidAction, Is.False);
+            Assert.That(reveal.FailureReason, Is.EqualTo("体力不足。"));
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(0));
+            Assert.That(runtime.CurrentBoardRuntime.IsRevealed(0), Is.False);
+        }
+
+        [Test]
         public void HolmasGameplayRuntime_RejectsSettlementBeforeLevelCompleted()
         {
             var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
@@ -1087,6 +1256,31 @@ namespace Holmas.Tests
                     PromotionUpgradeCosts = new[] { 30, 40 },
                 },
             });
+        }
+
+        private static HolmasGameplayRuntime CreateEnergyRuntime(
+            FixedUtcClock clock,
+            HolmasMetaProgressionState state = null)
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            return new HolmasGameplayRuntime(
+                taskService,
+                metaService,
+                coordinator,
+                null,
+                new NullLogger(),
+                null,
+                null,
+                state,
+                clock);
         }
     }
 }
