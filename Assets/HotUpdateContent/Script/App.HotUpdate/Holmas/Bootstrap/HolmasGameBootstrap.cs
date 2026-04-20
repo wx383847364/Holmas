@@ -12,6 +12,7 @@ using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.UI;
 using App.Shared.Contracts;
 using App.Shared.Holmas.PlayerData;
+using App.Shared.Holmas.RuntimeData;
 using IHolmasPromotionCatalog = App.HotUpdate.Holmas.Meta.IHolmasAgencyCatalog;
 using HolmasAgencyPromotionDefinition = App.HotUpdate.Holmas.Meta.HolmasAgencyBuildingDefinition;
 using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgencyUpgradeResult;
@@ -157,7 +158,16 @@ namespace App.HotUpdate.Holmas.Bootstrap
             {
                 try
                 {
-                    gameplayRuntime.RestoreLevelAsync(archiveLoadResult.Archive.CurrentLevel).GetAwaiter().GetResult();
+                    if (ShouldDiscardRestoredCurrentLevel(taskBarRestoreResult.State, archiveLoadResult.Archive.CurrentLevel))
+                    {
+                        logger?.LogWarning("HolmasGameBootstrap: 恢复 currentLevel 时发现关卡快照本体无效，已丢弃旧棋盘。");
+                        gameplayRuntime.EndCurrentLevelSession();
+                        archiveNeedsSave = true;
+                    }
+                    else
+                    {
+                        gameplayRuntime.RestoreLevelAsync(archiveLoadResult.Archive.CurrentLevel).GetAwaiter().GetResult();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -235,6 +245,26 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 initialTaskBarState,
                 initialMetaProgressionState,
                 clock);
+        }
+
+        private static bool ShouldDiscardRestoredCurrentLevel(HolmasTaskBarState taskBarState, LevelSnapshot currentLevel)
+        {
+            if (currentLevel == null || currentLevel.Completed)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(currentLevel.MapId) || string.IsNullOrWhiteSpace(currentLevel.TerrainPath))
+            {
+                return true;
+            }
+
+            if (currentLevel.RevealedCells == null)
+            {
+                return true;
+            }
+
+            return currentLevel.SpawnedCats == null;
         }
 
         private static HolmasMetaCatalog CreateMetaCatalog(HolmasConfigCatalogBundle configBundle)

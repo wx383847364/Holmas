@@ -144,6 +144,13 @@ namespace App.HotUpdate.Holmas.PlayerData
                 }
 
                 TaskSlotState restoredSlot = CloneSlotState(sourceSlot, slotIndex, defaultOpenSlots);
+                if (restoredSlot.PendingRelockAfterTaskCompletion &&
+                    (string.IsNullOrWhiteSpace(restoredSlot.TaskInstanceId) || !restoredSlot.IsUnlocked))
+                {
+                    return CreateTaskBarRestoreFailure(
+                        $"待锁槽位必须保持已解锁且绑定任务。slotIndex={slotIndex}");
+                }
+
                 if (!string.IsNullOrWhiteSpace(restoredSlot.TaskInstanceId))
                 {
                     if (!restoredSlot.IsUnlocked)
@@ -403,6 +410,7 @@ namespace App.HotUpdate.Holmas.PlayerData
                     IsUnlocked = slotIndex < defaultOpenSlots,
                     UnlockExpireAt = 0L,
                     TaskInstanceId = string.Empty,
+                    PendingRelockAfterTaskCompletion = false,
                 };
             }
 
@@ -412,6 +420,7 @@ namespace App.HotUpdate.Holmas.PlayerData
                 IsUnlocked = source.IsUnlocked,
                 UnlockExpireAt = source.UnlockExpireAt,
                 TaskInstanceId = source.TaskInstanceId ?? string.Empty,
+                PendingRelockAfterTaskCompletion = source.PendingRelockAfterTaskCompletion,
             };
         }
 

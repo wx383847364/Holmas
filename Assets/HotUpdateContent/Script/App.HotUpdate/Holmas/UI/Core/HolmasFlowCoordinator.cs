@@ -94,7 +94,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                 ? context.GameplayRuntime.TaskBarState.GetUnlockedEmptySlotCount()
                 : 0;
             int generatedTaskCount = 0;
-            if (activeTaskCount <= 0 && unlockedEmptySlotCount > 0)
+            if (unlockedEmptySlotCount > 0)
             {
                 var refillResult = context.RefillAvailableTasks();
                 generatedTaskCount = refillResult != null

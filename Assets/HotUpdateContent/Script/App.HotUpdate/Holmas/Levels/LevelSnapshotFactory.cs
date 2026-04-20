@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using App.HotUpdate.Holmas.Terrain;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
@@ -75,7 +76,9 @@ namespace App.HotUpdate.Holmas.Levels
             var spawnedCats = new List<SpawnedCatData>(catCount);
             var availableCells = new List<int>(validCellIndices);
 
-            for (int i = 0; i < catCount && availableCells.Count > 0; i++)
+            SeedGuaranteedTaskCats(spawnPool, catCount, availableCells, rng, spawnedCats);
+
+            for (int i = spawnedCats.Count; i < catCount && availableCells.Count > 0; i++)
             {
                 int cellIndex = TakeRandomCell(availableCells, rng);
                 string catId = PickWeightedCatId(spawnPool, rng);
@@ -125,6 +128,7 @@ namespace App.HotUpdate.Holmas.Levels
         private static List<BoardSpawnEntry> NormalizePool(IReadOnlyList<BoardSpawnEntry> pool)
         {
             var normalized = new List<BoardSpawnEntry>();
+            var indexByCatId = new Dictionary<string, int>(StringComparer.Ordinal);
             if (pool == null)
             {
                 return normalized;
@@ -138,10 +142,69 @@ namespace App.HotUpdate.Holmas.Levels
                     continue;
                 }
 
-                normalized.Add(entry);
+                if (indexByCatId.TryGetValue(entry.CatId, out int existingIndex))
+                {
+                    normalized[existingIndex].Weight += entry.Weight;
+                    continue;
+                }
+
+                indexByCatId[entry.CatId] = normalized.Count;
+                normalized.Add(new BoardSpawnEntry
+                {
+                    CatId = entry.CatId,
+                    Weight = entry.Weight,
+                });
             }
 
             return normalized;
+        }
+
+        private static void SeedGuaranteedTaskCats(
+            IReadOnlyList<BoardSpawnEntry> pool,
+            int catCount,
+            IList<int> availableCells,
+            System.Random rng,
+            ICollection<SpawnedCatData> spawnedCats)
+        {
+            if (pool == null ||
+                pool.Count <= 1 ||
+                catCount < pool.Count ||
+                availableCells == null ||
+                availableCells.Count == 0 ||
+                spawnedCats == null)
+            {
+                return;
+            }
+
+            var pendingEntries = pool
+                .Where(entry => entry != null && !string.IsNullOrWhiteSpace(entry.CatId) && entry.Weight > 0)
+                .Select(entry => new BoardSpawnEntry
+                {
+                    CatId = entry.CatId,
+                    Weight = entry.Weight,
+                })
+                .ToList();
+
+            while (pendingEntries.Count > 0 &&
+                   spawnedCats.Count < catCount &&
+                   availableCells.Count > 0)
+            {
+                int entryIndex = rng.Next(pendingEntries.Count);
+                BoardSpawnEntry entry = pendingEntries[entryIndex];
+                pendingEntries[entryIndex] = pendingEntries[pendingEntries.Count - 1];
+                pendingEntries.RemoveAt(pendingEntries.Count - 1);
+
+                if (entry == null || string.IsNullOrWhiteSpace(entry.CatId))
+                {
+                    continue;
+                }
+
+                spawnedCats.Add(new SpawnedCatData
+                {
+                    CatId = entry.CatId,
+                    CellIndex = TakeRandomCell(availableCells, rng),
+                });
+            }
         }
 
         private static int TakeRandomCell(IList<int> availableCells, System.Random rng)

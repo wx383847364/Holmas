@@ -32,5 +32,11 @@ namespace App.Shared.Holmas.RuntimeData
         /// 为空字符串表示该槽位当前没有挂任务。
         /// </summary>
         public string TaskInstanceId = string.Empty;
+
+        /// <summary>
+        /// 广告槽位是否已到期，但允许当前任务先做完再锁回去。
+        /// 只有广告槽位会进入该状态；默认槽位始终为 false。
+        /// </summary>
+        public bool PendingRelockAfterTaskCompletion;
     }
 }

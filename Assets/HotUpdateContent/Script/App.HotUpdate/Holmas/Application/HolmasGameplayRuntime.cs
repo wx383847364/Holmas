@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
@@ -336,6 +337,11 @@ namespace App.HotUpdate.Holmas.Application
             !CurrentLevelSnapshot.Completed &&
             !CurrentBoardRuntime.Completed;
 
+        public bool IsCurrentLevelCompatibleWithTaskBar()
+        {
+            return true;
+        }
+
         public bool RefreshExpiredAdSlots()
         {
             bool changed = _taskProgressService.RefreshExpiredAdSlots(TaskBarState);
@@ -394,10 +400,12 @@ namespace App.HotUpdate.Holmas.Application
             BoardRevealResult revealResult = CurrentBoardRuntime.Reveal(cellIndex, ignoreFlag: true);
             if (revealResult.IsValidAction && revealResult.Completed)
             {
+                ApplyFoundCatProgress(revealResult);
                 progressionResult = ApplyCurrentLevelCompletion();
             }
             else if (revealResult.IsValidAction)
             {
+                ApplyFoundCatProgress(revealResult);
                 NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.LevelRevealed);
             }
 
@@ -522,7 +530,8 @@ namespace App.HotUpdate.Holmas.Application
             HolmasProgressionAdvanceResult result = _progressionCoordinator.ApplyMapCompletion(
                 TaskBarState,
                 MetaProgressionState,
-                CurrentLevelSnapshot.SpawnedCats);
+                CurrentLevelSnapshot.SpawnedCats,
+                applyTaskProgress: false);
             _currentLevelCompletionApplied = true;
 
             _logger?.LogInfo(
@@ -531,6 +540,63 @@ namespace App.HotUpdate.Holmas.Application
                 result.CompletedTaskIds.Count);
             NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.LevelCompleted);
             return result;
+        }
+
+        private void ApplyFoundCatProgress(BoardRevealResult revealResult)
+        {
+            if (revealResult == null ||
+                !revealResult.IsValidAction ||
+                revealResult.FoundCatCellIndices == null ||
+                revealResult.FoundCatCellIndices.Count == 0 ||
+                CurrentBoardRuntime == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<SpawnedCatData> foundCats = CurrentBoardRuntime.GetFoundCats(revealResult.FoundCatCellIndices);
+            if (foundCats == null || foundCats.Count == 0)
+            {
+                return;
+            }
+
+            HolmasTaskProgressResult progressResult = _taskProgressService.ApplyFoundCats(TaskBarState, foundCats);
+            if (progressResult == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < progressResult.NewlyCompletedSlotIndices.Count; i++)
+            {
+                int slotIndex = progressResult.NewlyCompletedSlotIndices[i];
+                HolmasTaskRuntimeInstance taskBeforeClaim = TaskBarState.GetTaskBySlot(slotIndex);
+                if (taskBeforeClaim == null || !taskBeforeClaim.CanClaimReward)
+                {
+                    continue;
+                }
+
+                HolmasTaskClaimResult claimResult = _taskProgressService.ClaimTaskReward(
+                    TaskBarState,
+                    slotIndex,
+                    CurrentPlayerLevel,
+                    refillEmptySlotImmediately: true);
+                if (claimResult == null || !claimResult.Success)
+                {
+                    continue;
+                }
+
+                _progressionCoordinator.ApplyTaskClaim(taskBeforeClaim, MetaProgressionState);
+                _logger?.LogInfo(
+                    "HolmasGameplayRuntime: 任务槽位 {0} 自动领奖成功，金币 +{1}，补新任务={2}。",
+                    slotIndex,
+                    claimResult.Reward,
+                    claimResult.RefilledTask != null);
+            }
+
+            _logger?.LogInfo(
+                "HolmasGameplayRuntime: 本次翻格找到 {0} 只猫，推进任务 {1} 条，新完成 {2} 条。",
+                foundCats.Count,
+                progressResult.ProgressedTaskIds.Count,
+                progressResult.NewlyCompletedTaskIds.Count);
         }
 
         /// <summary>
@@ -553,7 +619,7 @@ namespace App.HotUpdate.Holmas.Application
         public HolmasTaskClaimResult ClaimTaskReward(int slotIndex, int playerLevel)
         {
             HolmasTaskRuntimeInstance taskBeforeClaim = TaskBarState.GetTaskBySlot(slotIndex);
-            HolmasTaskClaimResult result = _taskProgressService.ClaimTaskReward(TaskBarState, slotIndex, playerLevel);
+            HolmasTaskClaimResult result = _taskProgressService.ClaimTaskReward(TaskBarState, slotIndex, playerLevel, refillEmptySlotImmediately: true);
             if (result.Success && taskBeforeClaim != null)
             {
                 _progressionCoordinator.ApplyTaskClaim(taskBeforeClaim, MetaProgressionState);

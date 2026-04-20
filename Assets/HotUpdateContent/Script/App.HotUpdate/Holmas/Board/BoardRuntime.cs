@@ -17,6 +17,7 @@ namespace App.HotUpdate.Holmas.Board
         private readonly bool[] _revealedCells;
         private readonly bool[] _flaggedCells;
         private readonly bool[] _catCells;
+        private readonly string[] _catIds;
         private readonly int[] _adjacentCatCounts;
         private readonly Color32[] _blockColors;
         private readonly int _rows;
@@ -37,6 +38,7 @@ namespace App.HotUpdate.Holmas.Board
             _revealedCells = NormalizeBoolArray(snapshot.RevealedCells, cellCount);
             _flaggedCells = new bool[cellCount];
             _catCells = new bool[cellCount];
+            _catIds = new string[cellCount];
             _adjacentCatCounts = new int[cellCount];
 
             if (snapshot.SpawnedCats != null)
@@ -60,6 +62,7 @@ namespace App.HotUpdate.Holmas.Board
                     }
 
                     _catCells[cat.CellIndex] = true;
+                    _catIds[cat.CellIndex] = cat.CatId ?? string.Empty;
                 }
             }
 
@@ -112,6 +115,7 @@ namespace App.HotUpdate.Holmas.Board
                 _revealedCells[cellIndex],
                 _flaggedCells[cellIndex],
                 _catCells[cellIndex],
+                _catIds[cellIndex],
                 _adjacentCatCounts[cellIndex],
                 _blockColors[cellIndex]);
         }
@@ -130,6 +134,44 @@ namespace App.HotUpdate.Holmas.Board
         public bool HasCatAt(int cellIndex)
         {
             return IsCellIndexValid(cellIndex) && _catCells[cellIndex];
+        }
+
+        public bool TryGetCatIdAt(int cellIndex, out string catId)
+        {
+            if (!IsCellIndexValid(cellIndex) || !_catCells[cellIndex] || string.IsNullOrWhiteSpace(_catIds[cellIndex]))
+            {
+                catId = string.Empty;
+                return false;
+            }
+
+            catId = _catIds[cellIndex];
+            return true;
+        }
+
+        public IReadOnlyList<SpawnedCatData> GetFoundCats(IReadOnlyList<int> cellIndices)
+        {
+            if (cellIndices == null || cellIndices.Count == 0)
+            {
+                return Array.Empty<SpawnedCatData>();
+            }
+
+            var foundCats = new List<SpawnedCatData>(cellIndices.Count);
+            for (int i = 0; i < cellIndices.Count; i++)
+            {
+                int cellIndex = cellIndices[i];
+                if (!TryGetCatIdAt(cellIndex, out string catId))
+                {
+                    continue;
+                }
+
+                foundCats.Add(new SpawnedCatData
+                {
+                    CellIndex = cellIndex,
+                    CatId = catId,
+                });
+            }
+
+            return foundCats;
         }
 
         public bool IsRevealed(int cellIndex)

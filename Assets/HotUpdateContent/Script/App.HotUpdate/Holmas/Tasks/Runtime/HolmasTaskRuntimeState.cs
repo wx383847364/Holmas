@@ -98,7 +98,8 @@ namespace App.HotUpdate.Holmas.Tasks.Runtime
                     SlotIndex = i,
                     IsUnlocked = i < DefaultOpenSlots,
                     UnlockExpireAt = 0L,
-                    TaskInstanceId = string.Empty
+                    TaskInstanceId = string.Empty,
+                    PendingRelockAfterTaskCompletion = false,
                 });
             }
         }
@@ -152,6 +153,7 @@ namespace App.HotUpdate.Holmas.Tasks.Runtime
 
             slot.IsUnlocked = true;
             slot.UnlockExpireAt = unlockExpireAtUtcMs;
+            slot.PendingRelockAfterTaskCompletion = false;
         }
 
         public void LockSlot(int slotIndex)
@@ -163,6 +165,19 @@ namespace App.HotUpdate.Holmas.Tasks.Runtime
             }
 
             slot.IsUnlocked = false;
+            slot.UnlockExpireAt = 0L;
+            slot.PendingRelockAfterTaskCompletion = false;
+        }
+
+        public void MarkPendingRelockAfterTaskCompletion(int slotIndex)
+        {
+            var slot = GetSlot(slotIndex);
+            if (slot == null)
+            {
+                return;
+            }
+
+            slot.PendingRelockAfterTaskCompletion = true;
             slot.UnlockExpireAt = 0L;
         }
 
@@ -223,13 +238,28 @@ namespace App.HotUpdate.Holmas.Tasks.Runtime
             return Tasks.Where(item => item != null && item.CanClaimReward).ToList();
         }
 
+        public int GetPendingRelockSlotCount()
+        {
+            int count = 0;
+            for (int i = 0; i < Slots.Count; i++)
+            {
+                TaskSlotState slot = Slots[i];
+                if (slot != null && slot.PendingRelockAfterTaskCompletion)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         public int GetUnlockedEmptySlotCount()
         {
             int count = 0;
             for (int i = 0; i < Slots.Count; i++)
             {
                 TaskSlotState slot = Slots[i];
-                if (slot != null && slot.IsUnlocked && string.IsNullOrEmpty(slot.TaskInstanceId))
+                if (slot != null && slot.IsUnlocked && !slot.PendingRelockAfterTaskCompletion && string.IsNullOrEmpty(slot.TaskInstanceId))
                 {
                     count++;
                 }

@@ -38,11 +38,12 @@ namespace App.HotUpdate.Holmas.Progression
         public HolmasProgressionAdvanceResult ApplyMapCompletion(
             HolmasTaskBarState taskBarState,
             HolmasMetaProgressionState metaState,
-            IEnumerable<SpawnedCatData> spawnedCats)
+            IEnumerable<SpawnedCatData> spawnedCats,
+            bool applyTaskProgress = true)
         {
             var result = new HolmasProgressionAdvanceResult();
 
-            if (_taskProgressService != null)
+            if (applyTaskProgress && _taskProgressService != null)
             {
                 var taskResult = _taskProgressService.ApplyMapCompletion(taskBarState, spawnedCats);
                 if (taskResult != null)

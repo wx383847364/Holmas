@@ -42,6 +42,7 @@ namespace App.HotUpdate.Holmas.Tasks.Services
     {
         public readonly List<string> ProgressedTaskIds = new List<string>();
         public readonly List<string> NewlyCompletedTaskIds = new List<string>();
+        public readonly List<int> NewlyCompletedSlotIndices = new List<int>();
     }
 
     /// <summary>
@@ -108,8 +109,16 @@ namespace App.HotUpdate.Holmas.Tasks.Services
 
                 if (slot.UnlockExpireAt > 0 && utcNowMilliseconds >= slot.UnlockExpireAt)
                 {
-                    taskBarState.ClearSlot(slot.SlotIndex, true);
-                    taskBarState.LockSlot(slot.SlotIndex);
+                    if (string.IsNullOrEmpty(slot.TaskInstanceId))
+                    {
+                        taskBarState.ClearSlot(slot.SlotIndex, true);
+                        taskBarState.LockSlot(slot.SlotIndex);
+                    }
+                    else
+                    {
+                        taskBarState.MarkPendingRelockAfterTaskCompletion(slot.SlotIndex);
+                    }
+
                     changed = true;
                 }
             }
@@ -141,7 +150,7 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             for (int i = 0; i < taskBarState.Slots.Count; i++)
             {
                 var slot = taskBarState.Slots[i];
-                if (slot == null || !slot.IsUnlocked || !string.IsNullOrEmpty(slot.TaskInstanceId))
+                if (slot == null || !slot.IsUnlocked || slot.PendingRelockAfterTaskCompletion || !string.IsNullOrEmpty(slot.TaskInstanceId))
                 {
                     continue;
                 }
@@ -209,7 +218,11 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             return TryGenerateTask(taskBarState, levelDefinition, slotIndex);
         }
 
-        public HolmasTaskClaimResult ClaimTaskReward(HolmasTaskBarState taskBarState, int slotIndex, int playerLevel)
+        public HolmasTaskClaimResult ClaimTaskReward(
+            HolmasTaskBarState taskBarState,
+            int slotIndex,
+            int playerLevel,
+            bool refillEmptySlotImmediately = true)
         {
             var result = new HolmasTaskClaimResult
             {
@@ -242,7 +255,12 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             taskBarState.ClearSlot(slotIndex, true);
 
             var slot = taskBarState.GetSlot(slotIndex);
-            if (slot != null && slot.IsUnlocked)
+            bool shouldRelockAfterClaim = slot != null && slot.PendingRelockAfterTaskCompletion;
+            if (shouldRelockAfterClaim)
+            {
+                taskBarState.LockSlot(slotIndex);
+            }
+            else if (refillEmptySlotImmediately && slot != null && slot.IsUnlocked)
             {
                 var refill = TryGenerateTask(taskBarState, playerLevel, slotIndex);
                 if (refill.Success)
@@ -254,16 +272,16 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             return result;
         }
 
-        public HolmasTaskProgressResult ApplyMapCompletion(HolmasTaskBarState taskBarState, IEnumerable<SpawnedCatData> spawnedCats)
+        public HolmasTaskProgressResult ApplyFoundCats(HolmasTaskBarState taskBarState, IEnumerable<SpawnedCatData> foundCats)
         {
             var result = new HolmasTaskProgressResult();
-            if (taskBarState == null || spawnedCats == null)
+            if (taskBarState == null || foundCats == null)
             {
                 return result;
             }
 
             var catCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (var cat in spawnedCats)
+            foreach (var cat in foundCats)
             {
                 if (cat == null || string.IsNullOrEmpty(cat.CatId))
                 {
@@ -298,10 +316,16 @@ namespace App.HotUpdate.Holmas.Tasks.Services
                 if (task.IsCompleted && before < task.Task.TargetCount)
                 {
                     result.NewlyCompletedTaskIds.Add(task.Task.TaskInstanceId);
+                    result.NewlyCompletedSlotIndices.Add(task.Task.SlotIndex);
                 }
             }
 
             return result;
+        }
+
+        public HolmasTaskProgressResult ApplyMapCompletion(HolmasTaskBarState taskBarState, IEnumerable<SpawnedCatData> spawnedCats)
+        {
+            return ApplyFoundCats(taskBarState, spawnedCats);
         }
 
         public IReadOnlyList<HolmasTaskRuntimeInstance> GetClaimableTasks(HolmasTaskBarState taskBarState)
@@ -340,6 +364,12 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             if (!slot.IsUnlocked)
             {
                 result.FailureReason = "当前槽位未解锁。";
+                return result;
+            }
+
+            if (slot.PendingRelockAfterTaskCompletion)
+            {
+                result.FailureReason = "当前槽位已到期待锁，不能补入新任务。";
                 return result;
             }
 

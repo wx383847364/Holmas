@@ -16,6 +16,7 @@ namespace App.HotUpdate.Holmas.Board
             bool isRevealed,
             bool isFlagged,
             bool hasCat,
+            string catId,
             int adjacentCatCount,
             Color32 blockColor)
         {
@@ -24,6 +25,7 @@ namespace App.HotUpdate.Holmas.Board
             IsRevealed = isRevealed;
             IsFlagged = isFlagged;
             HasCat = hasCat;
+            CatId = catId ?? string.Empty;
             AdjacentCatCount = adjacentCatCount;
             BlockColor = blockColor;
         }
@@ -37,6 +39,8 @@ namespace App.HotUpdate.Holmas.Board
         public bool IsFlagged { get; }
 
         public bool HasCat { get; }
+
+        public string CatId { get; }
 
         public int AdjacentCatCount { get; }
 
