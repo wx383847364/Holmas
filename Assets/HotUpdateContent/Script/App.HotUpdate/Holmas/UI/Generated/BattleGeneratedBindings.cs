@@ -29,8 +29,16 @@ namespace App.HotUpdate.Holmas.UI.Generated
                 notes: "controller_wires_back");
             manifest.AddEntry(BattleBindings.LevelTextKey, "TextMeshProUGUI", BattleBindings.LevelTextNodePath, notes: "battle_level");
             manifest.AddEntry(BattleBindings.GoldTextKey, "TextMeshProUGUI", BattleBindings.GoldTextNodePath, notes: "battle_gold");
+            manifest.AddEntry(BattleBindings.EnergyTextKey, "TextMeshProUGUI", BattleBindings.EnergyTextNodePath, notes: "battle_energy");
             manifest.AddEntry(BattleBindings.SummaryTextKey, "TextMeshProUGUI", BattleBindings.SummaryTextNodePath, notes: "battle_summary");
             manifest.AddEntry(BattleBindings.StatusTextKey, "TextMeshProUGUI", BattleBindings.StatusTextNodePath, notes: "battle_status");
+            manifest.AddEntry(
+                BattleBindings.AddEnergyButtonKey,
+                "Button",
+                BattleBindings.AddEnergyButtonNodePath,
+                BattleBindings.ButtonClickEvent,
+                requiresManualWiring: true,
+                notes: "controller_wires_add_energy");
             manifest.AddEntry(BattleBindings.BoardContainerKey, "RectTransform", BattleBindings.BoardContainerNodePath, notes: "runtime_board");
             return manifest;
         }

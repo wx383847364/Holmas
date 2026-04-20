@@ -29,6 +29,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             {
                 LevelLabel = $"Lv {_context?.CurrentPlayerLevel ?? 1}",
                 GoldLabel = $"Gold {_context?.CurrentGoldBalance ?? 0L}",
+                EnergyLabel = _context?.EnergyLabel ?? "50/50",
                 Summary = BuildSummary(),
                 Status = string.IsNullOrWhiteSpace(status) ? "主界面已就绪。" : status,
                 StartButtonLabel = hasUncompletedLevel ? "继续找猫" : "开始找猫",

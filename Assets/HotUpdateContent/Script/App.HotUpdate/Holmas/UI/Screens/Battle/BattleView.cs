@@ -15,6 +15,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private readonly List<BattleCellView> _cells = new List<BattleCellView>();
         private BattleBindings _bindings;
         private UnityAction _currentBackAction;
+        private UnityAction _currentAddEnergyAction;
         private Action<int, bool> _currentCellAction;
 
         public void EnsureBindingSurface()
@@ -41,6 +42,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             Button backButton = ResolveBackButton(overlay);
             TextMeshProUGUI levelText = ResolveLevelText(overlay);
             TextMeshProUGUI goldText = ResolveGoldText(overlay);
+            TextMeshProUGUI energyText = ResolveEnergyText(overlay);
             TextMeshProUGUI summaryText = GetOrCreateRuntimeText(
                 overlay,
                 "SummaryText",
@@ -61,6 +63,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 new Vector2(-200f, 100f),
                 26f,
                 TextAlignmentOptions.Center);
+            Button addEnergyButton = GetOrCreateRuntimeButton(
+                overlay,
+                "AddEnergyButton",
+                "+5体力",
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(-64f, -150f),
+                new Vector2(180f, 64f),
+                new Color(0.95f, 0.58f, 0.16f, 0.95f));
             RectTransform boardContainer = GetOrCreateBoardContainer(overlay);
 
             collector.RegisterOrReplace(
@@ -70,8 +82,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 BattleBindings.BackButtonNodePath);
             collector.RegisterOrReplace(BattleBindings.LevelTextKey, levelText, nodePath: BattleBindings.LevelTextNodePath);
             collector.RegisterOrReplace(BattleBindings.GoldTextKey, goldText, nodePath: BattleBindings.GoldTextNodePath);
+            collector.RegisterOrReplace(BattleBindings.EnergyTextKey, energyText, nodePath: BattleBindings.EnergyTextNodePath);
             collector.RegisterOrReplace(BattleBindings.SummaryTextKey, summaryText, nodePath: BattleBindings.SummaryTextNodePath);
             collector.RegisterOrReplace(BattleBindings.StatusTextKey, statusText, nodePath: BattleBindings.StatusTextNodePath);
+            collector.RegisterOrReplace(
+                BattleBindings.AddEnergyButtonKey,
+                addEnergyButton,
+                BattleBindings.ButtonClickEvent,
+                BattleBindings.AddEnergyButtonNodePath);
             collector.RegisterOrReplace(BattleBindings.BoardContainerKey, boardContainer, nodePath: BattleBindings.BoardContainerNodePath);
         }
 
@@ -105,6 +123,26 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _currentCellAction = action;
         }
 
+        public void SetAddEnergyAction(UnityAction action)
+        {
+            if (_bindings?.AddEnergyButton == null)
+            {
+                _currentAddEnergyAction = action;
+                return;
+            }
+
+            if (_currentAddEnergyAction != null)
+            {
+                _bindings.AddEnergyButton.onClick.RemoveListener(_currentAddEnergyAction);
+            }
+
+            _currentAddEnergyAction = action;
+            if (_currentAddEnergyAction != null)
+            {
+                _bindings.AddEnergyButton.onClick.AddListener(_currentAddEnergyAction);
+            }
+        }
+
         public void Render(BattleVm viewModel)
         {
             if (viewModel == null)
@@ -122,6 +160,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 TmpGlyphCoverageReporter.SetText(_bindings.GoldText, viewModel.GoldLabel);
             }
 
+            if (_bindings?.EnergyText != null)
+            {
+                TmpGlyphCoverageReporter.SetText(_bindings.EnergyText, viewModel.EnergyLabel);
+            }
+
             if (_bindings?.SummaryText != null)
             {
                 TmpGlyphCoverageReporter.SetText(_bindings.SummaryText, viewModel.Summary);
@@ -130,6 +173,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             if (_bindings?.StatusText != null)
             {
                 TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
+            }
+
+            if (_bindings?.AddEnergyButton != null)
+            {
+                _bindings.AddEnergyButton.interactable = viewModel.AddEnergyButtonEnabled;
+                SetButtonLabel(_bindings.AddEnergyButton, viewModel.AddEnergyButtonLabel);
             }
 
             RenderBoard(viewModel);
@@ -315,6 +364,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 TextAlignmentOptions.Right);
         }
 
+        private TextMeshProUGUI ResolveEnergyText(Transform overlay)
+        {
+            TextMeshProUGUI existing = FindDescendantComponent<TextMeshProUGUI>("Energy_btn/Text (TMP)")
+                ?? FindFirstDescendantByName<TextMeshProUGUI>("EnergyCount");
+            if (existing != null)
+            {
+                existing.raycastTarget = false;
+                return existing;
+            }
+
+            return GetOrCreateRuntimeText(
+                overlay,
+                "EnergyText",
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(-64f, -96f),
+                new Vector2(220f, 64f),
+                28f,
+                TextAlignmentOptions.Right);
+        }
+
         private TextMeshProUGUI GetOrCreateRuntimeText(
             Transform parent,
             string objectName,
@@ -395,6 +466,27 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 TextAlignmentOptions.Center);
             TmpGlyphCoverageReporter.SetText(labelText, label);
             return button;
+        }
+
+        private static void SetButtonLabel(Button button, string label)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            TextMeshProUGUI tmp = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (tmp != null)
+            {
+                TmpGlyphCoverageReporter.SetText(tmp, string.IsNullOrWhiteSpace(label) ? button.name : label);
+                return;
+            }
+
+            Text legacy = button.GetComponentInChildren<Text>(true);
+            if (legacy != null)
+            {
+                legacy.text = string.IsNullOrWhiteSpace(label) ? button.name : label;
+            }
         }
 
         private T FindDescendantComponent<T>(string path) where T : Component

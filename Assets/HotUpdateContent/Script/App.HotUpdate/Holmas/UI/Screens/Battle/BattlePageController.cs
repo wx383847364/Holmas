@@ -12,10 +12,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private BattlePresenter _presenter;
         private BattleView _view;
         private BattleBindings _bindings;
+        private HolmasGameplayRuntime _runtime;
         private bool _isProcessing;
 
         protected override void OnCreate()
         {
+            _runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
             _presenter = new BattlePresenter(Root != null ? Root.Context : null);
             _view = RootObject != null ? RootObject.GetComponent<BattleView>() : null;
             if (_view == null && RootObject != null)
@@ -24,6 +26,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
 
             _view?.EnsureBindingSurface();
+            if (_runtime != null)
+            {
+                _runtime.StateChanged += OnRuntimeStateChanged;
+            }
         }
 
         protected override void OnBind()
@@ -32,6 +38,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _view?.Bind(_bindings);
             _view?.SetBackAction(OnBackClicked);
             _view?.SetCellAction(OnCellClicked);
+            _view?.SetAddEnergyAction(OnAddEnergyClicked);
         }
 
         protected override void OnOpen(object payload)
@@ -52,6 +59,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         {
             _view?.SetBackAction(null);
             _view?.SetCellAction(null);
+            _view?.SetAddEnergyAction(null);
+            if (_runtime != null)
+            {
+                _runtime.StateChanged -= OnRuntimeStateChanged;
+            }
         }
 
         private void OnBackClicked()
@@ -62,6 +74,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private void OnCellClicked(int cellIndex, bool isFlagAction)
         {
             _ = HandleCellInteractionAsync(cellIndex, isFlagAction);
+        }
+
+        private void OnAddEnergyClicked()
+        {
+            HolmasApplicationContext context = Root != null ? Root.Context : null;
+            if (context == null)
+            {
+                Refresh("应用上下文不可用，无法补充体力。");
+                return;
+            }
+
+            context.AddEnergy();
+            Refresh($"体力 +{HolmasGameplayRuntime.DebugEnergyGrantAmount}。");
         }
 
         private async Task HandleCellInteractionAsync(int cellIndex, bool isFlagAction)
@@ -216,7 +241,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             if (!result.IsValidAction)
             {
-                return "该格当前不能翻开。";
+                return string.IsNullOrWhiteSpace(result.FailureReason)
+                    ? "该格当前不能翻开。"
+                    : result.FailureReason;
             }
 
             if (result.Completed)
@@ -234,6 +261,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             return result.ChangedCellIndices.Count > 1
                 ? $"已展开 {result.ChangedCellIndices.Count} 个格子。"
                 : $"已翻开格子 {result.CellIndex}。";
+        }
+
+        private void OnRuntimeStateChanged(HolmasGameplayRuntimeStateChangeReason reason)
+        {
+            if (ScreenService == null ||
+                !ReferenceEquals(ScreenService.NavigationState.CurrentPage, this))
+            {
+                return;
+            }
+
+            if (reason == HolmasGameplayRuntimeStateChangeReason.EnergyChanged)
+            {
+                Refresh(null);
+            }
         }
     }
 }

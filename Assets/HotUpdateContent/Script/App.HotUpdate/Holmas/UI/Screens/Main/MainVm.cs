@@ -17,6 +17,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
     {
         public string LevelLabel = string.Empty;
         public string GoldLabel = string.Empty;
+        public string EnergyLabel = string.Empty;
         public string Summary = string.Empty;
         public string Status = string.Empty;
         public string StartButtonLabel = "开始找猫";

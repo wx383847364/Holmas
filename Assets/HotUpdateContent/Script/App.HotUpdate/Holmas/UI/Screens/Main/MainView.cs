@@ -50,6 +50,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             RectTransform overlay = GetOrCreateOverlayRoot();
             TextMeshProUGUI levelText = ResolveLevelText(overlay);
             TextMeshProUGUI goldText = ResolveGoldText(overlay);
+            TextMeshProUGUI energyText = ResolveEnergyText(overlay);
             TextMeshProUGUI summaryText = GetOrCreateRuntimeText(
                 overlay,
                 "SummaryText",
@@ -84,6 +85,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             collector.RegisterOrReplace(MainBindings.LevelTextKey, levelText, nodePath: MainBindings.LevelTextNodePath);
             collector.RegisterOrReplace(MainBindings.GoldTextKey, goldText, nodePath: MainBindings.GoldTextNodePath);
+            collector.RegisterOrReplace(MainBindings.EnergyTextKey, energyText, nodePath: MainBindings.EnergyTextNodePath);
             collector.RegisterOrReplace(MainBindings.SummaryTextKey, summaryText, nodePath: MainBindings.SummaryTextNodePath);
             collector.RegisterOrReplace(MainBindings.StatusTextKey, statusText, nodePath: MainBindings.StatusTextNodePath);
             collector.RegisterOrReplace(
@@ -165,6 +167,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (_bindings?.GoldText != null)
             {
                 TmpGlyphCoverageReporter.SetText(_bindings.GoldText, viewModel.GoldLabel);
+            }
+
+            if (_bindings?.EnergyText != null)
+            {
+                TmpGlyphCoverageReporter.SetText(_bindings.EnergyText, viewModel.EnergyLabel);
             }
 
             if (_bindings?.SummaryText != null)
@@ -428,6 +435,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new Vector2(1f, 1f),
                 new Vector2(-64f, -72f),
                 new Vector2(240f, 72f),
+                30f,
+                TextAlignmentOptions.Right);
+        }
+
+        private TextMeshProUGUI ResolveEnergyText(Transform overlay)
+        {
+            TextMeshProUGUI existing = FindDescendantComponent<TextMeshProUGUI>("BackgroundImage/Energy_btn/Text (TMP)")
+                ?? FindFirstDescendantByName<TextMeshProUGUI>("EnergyCount");
+            if (existing != null)
+            {
+                existing.raycastTarget = false;
+                return existing;
+            }
+
+            return GetOrCreateRuntimeText(
+                overlay,
+                "EnergyText",
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(-64f, -130f),
+                new Vector2(220f, 64f),
                 30f,
                 TextAlignmentOptions.Right);
         }

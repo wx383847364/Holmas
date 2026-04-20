@@ -7,8 +7,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
     {
         public string LevelLabel = string.Empty;
         public string GoldLabel = string.Empty;
+        public string EnergyLabel = string.Empty;
         public string Summary = string.Empty;
         public string Status = string.Empty;
+        public string AddEnergyButtonLabel = "+5体力";
+        public bool AddEnergyButtonEnabled;
         public int Rows;
         public int Cols;
         public IReadOnlyList<BoardCellState> Cells = new BoardCellState[0];
