@@ -40,6 +40,8 @@ namespace App.HotUpdate.Holmas.Application
     {
         public const int DefaultEnergyRecoveryLimit = 50;
         public const int DebugEnergyGrantAmount = 5;
+        public const int WalkCatEnergyCost = 2;
+        public const int FindRevealEnergyCost = 1;
         public const long EnergyRecoveryIntervalMilliseconds = 12L * 60L * 1000L;
 
         private readonly HolmasTaskProgressService _taskProgressService;
@@ -359,6 +361,17 @@ namespace App.HotUpdate.Holmas.Application
         /// </summary>
         public BoardRevealResult RevealCell(int cellIndex, out HolmasProgressionAdvanceResult progressionResult)
         {
+            return RevealCell(cellIndex, HolmasBoardInteractionMode.Walk, out progressionResult);
+        }
+
+        /// <summary>
+        /// 按找猫交互模式翻开格子；Walk 只在踩到猫时扣 2，Find 固定扣 1。
+        /// </summary>
+        public BoardRevealResult RevealCell(
+            int cellIndex,
+            HolmasBoardInteractionMode interactionMode,
+            out HolmasProgressionAdvanceResult progressionResult)
+        {
             progressionResult = null;
 
             if (CurrentBoardRuntime == null)
@@ -367,7 +380,8 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             RefreshEnergyRecovery();
-            if (ShouldConsumeEnergyForReveal(cellIndex) && !TryConsumeRevealEnergy())
+            int energyCost = GetRevealEnergyCost(cellIndex, interactionMode);
+            if (energyCost > 0 && !TryConsumeRevealEnergy(energyCost))
             {
                 return new BoardRevealResult(cellIndex)
                 {
@@ -377,7 +391,7 @@ namespace App.HotUpdate.Holmas.Application
                 };
             }
 
-            BoardRevealResult revealResult = CurrentBoardRuntime.Reveal(cellIndex);
+            BoardRevealResult revealResult = CurrentBoardRuntime.Reveal(cellIndex, ignoreFlag: true);
             if (revealResult.IsValidAction && revealResult.Completed)
             {
                 progressionResult = ApplyCurrentLevelCompletion();
@@ -671,35 +685,47 @@ namespace App.HotUpdate.Holmas.Application
             }
         }
 
-        private bool ShouldConsumeEnergyForReveal(int cellIndex)
+        private int GetRevealEnergyCost(int cellIndex, HolmasBoardInteractionMode interactionMode)
         {
             if (CurrentBoardRuntime == null || CurrentBoardRuntime.Completed)
             {
-                return false;
+                return 0;
             }
 
             BoardCellState state = CurrentBoardRuntime.GetCellState(cellIndex);
-            return state.IsValid && !state.IsRevealed && !state.IsFlagged;
+            if (!state.IsValid || state.IsRevealed)
+            {
+                return 0;
+            }
+
+            return interactionMode == HolmasBoardInteractionMode.Find
+                ? FindRevealEnergyCost
+                : (state.HasCat ? WalkCatEnergyCost : 0);
         }
 
-        private bool TryConsumeRevealEnergy()
+        private bool TryConsumeRevealEnergy(int amount)
         {
             long nowUtcMilliseconds = _clock.UtcNowMilliseconds;
             EnsureEnergyState(nowUtcMilliseconds);
-            if (MetaProgressionState.EnergyCurrent <= 0)
+            if (amount <= 0)
+            {
+                return true;
+            }
+
+            if (MetaProgressionState.EnergyCurrent < amount)
             {
                 return false;
             }
 
             int previousEnergy = MetaProgressionState.EnergyCurrent;
-            MetaProgressionState.EnergyCurrent = Math.Max(0, MetaProgressionState.EnergyCurrent - 1);
+            MetaProgressionState.EnergyCurrent = Math.Max(0, MetaProgressionState.EnergyCurrent - amount);
             if (previousEnergy >= MetaProgressionState.EnergyRecoveryLimit ||
                 MetaProgressionState.EnergyCurrent < MetaProgressionState.EnergyRecoveryLimit)
             {
                 MetaProgressionState.EnergyLastRecoveryAtUtcMilliseconds = nowUtcMilliseconds;
             }
 
-            _logger?.LogInfo("HolmasGameplayRuntime: 翻格消耗体力 1，当前={0}/{1}。", CurrentEnergy, EnergyRecoveryLimit);
+            _logger?.LogInfo("HolmasGameplayRuntime: 翻格消耗体力 {0}，当前={1}/{2}。", amount, CurrentEnergy, EnergyRecoveryLimit);
             NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.EnergyChanged);
             return true;
         }

@@ -142,6 +142,26 @@ namespace App.HotUpdate.Holmas.Board
             return IsCellIndexValid(cellIndex) && _flaggedCells[cellIndex];
         }
 
+        public void ClearFlags()
+        {
+            bool changed = false;
+            for (int i = 0; i < _flaggedCells.Length; i++)
+            {
+                if (!_flaggedCells[i])
+                {
+                    continue;
+                }
+
+                _flaggedCells[i] = false;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                SyncSnapshot();
+            }
+        }
+
         public BoardRevealResult ToggleFlag(int cellIndex)
         {
             var result = new BoardRevealResult(cellIndex)
@@ -170,6 +190,11 @@ namespace App.HotUpdate.Holmas.Board
 
         public BoardRevealResult Reveal(int cellIndex)
         {
+            return Reveal(cellIndex, ignoreFlag: false);
+        }
+
+        public BoardRevealResult Reveal(int cellIndex, bool ignoreFlag)
+        {
             var result = new BoardRevealResult(cellIndex)
             {
                 IsValidAction = false,
@@ -181,9 +206,17 @@ namespace App.HotUpdate.Holmas.Board
                 return result;
             }
 
-            if (!IsCellIndexValid(cellIndex) || !_validMask[cellIndex] || _revealedCells[cellIndex] || _flaggedCells[cellIndex])
+            if (!IsCellIndexValid(cellIndex) ||
+                !_validMask[cellIndex] ||
+                _revealedCells[cellIndex] ||
+                (!ignoreFlag && _flaggedCells[cellIndex]))
             {
                 return result;
+            }
+
+            if (ignoreFlag && _flaggedCells[cellIndex])
+            {
+                _flaggedCells[cellIndex] = false;
             }
 
             result.IsValidAction = true;

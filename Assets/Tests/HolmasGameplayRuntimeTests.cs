@@ -147,7 +147,7 @@ namespace Holmas.Tests
 
             for (int i = 0; i < 6; i++)
             {
-                runtime.RevealCell(i * 2, out _);
+                runtime.RevealCell(i * 2, HolmasBoardInteractionMode.Find, out _);
             }
 
             Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
@@ -175,7 +175,75 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasGameplayRuntime_RevealCell_ConsumesEnergyOnlyForValidReveal()
+        public void HolmasGameplayRuntime_RevealCell_WalkConsumesEnergyOnlyWhenCatFound()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateBoardTemplate(1, 2),
+                new LevelSnapshot
+                {
+                    MapId = "energy",
+                    TerrainPath = "energy",
+                    RevealedCells = new bool[2],
+                    SpawnedCats = new List<SpawnedCatData>
+                    {
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 1 },
+                    },
+                });
+
+            BoardRevealResult emptyReveal = runtime.RevealCell(0, HolmasBoardInteractionMode.Walk, out _);
+            Assert.That(emptyReveal.IsValidAction, Is.True);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+
+            BoardRevealResult catReveal = runtime.RevealCell(1, HolmasBoardInteractionMode.Walk, out _);
+            Assert.That(catReveal.IsValidAction, Is.True);
+            Assert.That(catReveal.FoundCat, Is.True);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(48));
+
+            BoardRevealResult duplicateReveal = runtime.RevealCell(1, HolmasBoardInteractionMode.Walk, out _);
+            Assert.That(duplicateReveal.IsValidAction, Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(48));
+
+            BoardRevealResult invalidReveal = runtime.RevealCell(-1, HolmasBoardInteractionMode.Walk, out _);
+            Assert.That(invalidReveal.IsValidAction, Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(48));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RevealCell_FindAlwaysConsumesOneForValidReveal()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateBoardTemplate(1, 2),
+                new LevelSnapshot
+                {
+                    MapId = "energy",
+                    TerrainPath = "energy",
+                    RevealedCells = new bool[2],
+                    SpawnedCats = new List<SpawnedCatData>
+                    {
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 1 },
+                    },
+                });
+
+            BoardRevealResult emptyReveal = runtime.RevealCell(0, HolmasBoardInteractionMode.Find, out _);
+            Assert.That(emptyReveal.IsValidAction, Is.True);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
+
+            BoardRevealResult catReveal = runtime.RevealCell(1, HolmasBoardInteractionMode.Find, out _);
+            Assert.That(catReveal.IsValidAction, Is.True);
+            Assert.That(catReveal.FoundCat, Is.True);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(48));
+
+            BoardRevealResult invalidReveal = runtime.RevealCell(-1, HolmasBoardInteractionMode.Find, out _);
+            Assert.That(invalidReveal.IsValidAction, Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(48));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RevealCell_NewInteractionIgnoresOldFlags()
         {
             var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
             HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock);
@@ -194,34 +262,24 @@ namespace Holmas.Tests
 
             BoardRevealResult flag = runtime.ToggleFlag(0);
             Assert.That(flag.IsValidAction, Is.True);
-            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+            Assert.That(runtime.CurrentBoardRuntime.IsFlagged(0), Is.True);
 
-            BoardRevealResult flaggedReveal = runtime.RevealCell(0, out _);
-            Assert.That(flaggedReveal.IsValidAction, Is.False);
-            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
+            BoardRevealResult reveal = runtime.RevealCell(0, HolmasBoardInteractionMode.Walk, out _);
 
-            runtime.ToggleFlag(0);
-            BoardRevealResult reveal = runtime.RevealCell(0, out _);
             Assert.That(reveal.IsValidAction, Is.True);
-            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
-
-            BoardRevealResult duplicateReveal = runtime.RevealCell(0, out _);
-            Assert.That(duplicateReveal.IsValidAction, Is.False);
-            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
-
-            BoardRevealResult invalidReveal = runtime.RevealCell(-1, out _);
-            Assert.That(invalidReveal.IsValidAction, Is.False);
-            Assert.That(runtime.CurrentEnergy, Is.EqualTo(49));
+            Assert.That(runtime.CurrentBoardRuntime.IsRevealed(0), Is.True);
+            Assert.That(runtime.CurrentBoardRuntime.IsFlagged(0), Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(50));
         }
 
         [Test]
-        public void HolmasGameplayRuntime_RevealCell_RejectsWhenEnergyEmpty()
+        public void HolmasGameplayRuntime_RevealCell_RejectsWhenEnergyInsufficient()
         {
             var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
             var state = new HolmasMetaProgressionState
             {
                 EnergyInitialized = true,
-                EnergyCurrent = 0,
+                EnergyCurrent = 1,
                 EnergyRecoveryLimit = 50,
                 EnergyLastRecoveryAtUtcMilliseconds = 1000,
             };
@@ -239,12 +297,12 @@ namespace Holmas.Tests
                     },
                 });
 
-            BoardRevealResult reveal = runtime.RevealCell(0, out _);
+            BoardRevealResult reveal = runtime.RevealCell(1, HolmasBoardInteractionMode.Walk, out _);
 
             Assert.That(reveal.IsValidAction, Is.False);
             Assert.That(reveal.FailureReason, Is.EqualTo("体力不足。"));
-            Assert.That(runtime.CurrentEnergy, Is.EqualTo(0));
-            Assert.That(runtime.CurrentBoardRuntime.IsRevealed(0), Is.False);
+            Assert.That(runtime.CurrentEnergy, Is.EqualTo(1));
+            Assert.That(runtime.CurrentBoardRuntime.IsRevealed(1), Is.False);
         }
 
         [Test]
