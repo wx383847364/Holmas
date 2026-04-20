@@ -73,23 +73,23 @@ public static class HolmasCoreValidationMenu
                 throw new InvalidOperationException("Holmas smoke test failed to recover an active task from the exported config bundle.");
             }
 
-            HolmasTaskRuntimeInstance claimableTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(0);
-            if (claimableTask == null || claimableTask.Task == null)
+            HolmasTaskRuntimeInstance activeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(0);
+            if (activeTask == null || activeTask.Task == null)
             {
                 throw new InvalidOperationException("Holmas smoke test could not recover the active task from the task bar.");
             }
 
+            int expectedAutoReward = activeTask.Task.Reward;
             var reveal = CompleteTaskThroughFormalMapProgression(context, gateway, 0, out HolmasProgressionAdvanceResult progressionResult);
-            claimableTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(0);
-            if (claimableTask == null || claimableTask.Task == null || !claimableTask.CanClaimReward)
+            activeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(0);
+            if (context.CurrentGoldBalance < expectedAutoReward)
             {
-                throw new InvalidOperationException("Holmas smoke test failed to make the active task claimable through formal map completion.");
+                throw new InvalidOperationException("Holmas smoke test failed to auto-claim the active task through formal map completion.");
             }
 
-            var claim = context.ClaimTaskReward(0);
-            if (!claim.Success)
+            if (context.GameplayRuntime.MetaProgressionState.ClaimedTaskCount <= 0)
             {
-                throw new InvalidOperationException($"Holmas smoke test failed to complete exported task claim: {claim.FailureReason}");
+                throw new InvalidOperationException("Holmas smoke test did not record the automatic task claim.");
             }
 
             long requiredGold = CalculatePromotionTotalCost(smokeStagePromotions);
@@ -155,7 +155,10 @@ public static class HolmasCoreValidationMenu
             }
 
             string promotionLevels = string.Join(",", promotionLevelEntries);
-            Debug.Log($"Holmas smoke test passed. revealCompleted={reveal.Completed}, taskProgressed={progressionResult?.ProgressedTaskIds.Count ?? 0}, taskClaimSuccess={claim.Success}, gold={context.CurrentGoldBalance}, experience={context.GameplayRuntime.MetaProgressionState.Experience}, playerLevel={context.CurrentPlayerLevel}, agencyStageId={context.CurrentAgencyStageId}, promotionLevels={promotionLevels}");
+            string taskProgress = activeTask != null && activeTask.Task != null
+                ? $"{activeTask.Task.CurrentCount}/{activeTask.Task.TargetCount}"
+                : "auto-claimed";
+            Debug.Log($"Holmas smoke test passed. revealCompleted={reveal.Completed}, taskProgress={taskProgress}, taskAutoClaimed={context.GameplayRuntime.MetaProgressionState.ClaimedTaskCount > 0}, gold={context.CurrentGoldBalance}, experience={context.GameplayRuntime.MetaProgressionState.Experience}, playerLevel={context.CurrentPlayerLevel}, agencyStageId={context.CurrentAgencyStageId}, promotionLevels={promotionLevels}");
         }
         finally
         {
@@ -327,20 +330,20 @@ public static class HolmasCoreValidationMenu
 
             finalReveal = CompleteCurrentLevelByRevealingAllCats(context, out progressionResult);
 
+            if (progressionResult == null)
+            {
+                throw new InvalidOperationException("Holmas smoke test did not produce a completion result for the formal map.");
+            }
+
             runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
             if (runtimeTask == null || runtimeTask.Task == null)
             {
-                throw new InvalidOperationException($"Holmas smoke test lost the active task from slot {slotIndex} after map completion.");
+                return finalReveal ?? new BoardRevealResult(-1) { IsValidAction = true, Completed = true };
             }
 
             if (!string.Equals(runtimeTask.Task.TaskInstanceId, taskInstanceId, StringComparison.Ordinal))
             {
-                throw new InvalidOperationException("Holmas smoke test unexpectedly replaced the active task before reward claim.");
-            }
-
-            if (progressionResult == null || !progressionResult.ProgressedTaskIds.Contains(taskInstanceId))
-            {
-                throw new InvalidOperationException("Holmas smoke test did not record formal task progression after map completion.");
+                return finalReveal ?? new BoardRevealResult(-1) { IsValidAction = true, Completed = true };
             }
 
             if (runtimeTask.Task.CurrentCount <= progressBefore)

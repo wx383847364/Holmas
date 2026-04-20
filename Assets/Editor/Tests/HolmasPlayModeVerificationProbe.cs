@@ -368,6 +368,7 @@ public static class HolmasPlayModeVerificationProbe
 
             string catId = firstTask.Task.CatId;
             int slotIndex = firstTask.Task.SlotIndex;
+            int progressBefore = firstTask.Task.CurrentCount;
             Log($"Starting embedded main board for task slot {slotIndex + 1}, cat {catId}.");
 
             root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(
@@ -400,15 +401,25 @@ public static class HolmasPlayModeVerificationProbe
                 throw new InvalidOperationException("Holmas probe: battle did not complete after revealing all cats.");
             }
 
-            if (completionResult == null || completionResult.ProgressedTaskIds.Count == 0)
-            {
-                throw new InvalidOperationException("Holmas probe: no task progression recorded after battle completion.");
-            }
-
             CaptureMainSnapshot("after_battle_before_claim");
 
             var taskAfterBattle = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
-            if (taskAfterBattle == null || !taskAfterBattle.CanClaimReward)
+            if (taskAfterBattle == null || taskAfterBattle.Task == null)
+            {
+                throw new InvalidOperationException($"Holmas probe: slot {slotIndex + 1} lost its task after battle.");
+            }
+
+            if (completionResult == null)
+            {
+                throw new InvalidOperationException("Holmas probe: battle completion did not return a progression result.");
+            }
+
+            if (taskAfterBattle.Task.CurrentCount <= progressBefore)
+            {
+                throw new InvalidOperationException("Holmas probe: battle completion did not increase task progress.");
+            }
+
+            if (!taskAfterBattle.CanClaimReward)
             {
                 throw new InvalidOperationException($"Holmas probe: slot {slotIndex + 1} not claimable after battle.");
             }
