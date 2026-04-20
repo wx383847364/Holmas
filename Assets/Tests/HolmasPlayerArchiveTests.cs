@@ -327,6 +327,47 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasPlayerArchiveMapper_RoundTripsPendingRelockSlotState()
+        {
+            var mapper = new HolmasPlayerArchiveMapper();
+            HolmasPlayerArchiveRoot archive = mapper.CreateDefaultArchive();
+            archive.TaskBar.Slots = new[]
+            {
+                new TaskSlotState
+                {
+                    SlotIndex = 0,
+                    IsUnlocked = true,
+                    UnlockExpireAt = 0L,
+                    TaskInstanceId = "task-1",
+                    PendingRelockAfterTaskCompletion = true,
+                },
+            };
+            archive.TaskBar.Tasks = new[]
+            {
+                new HolmasTaskRuntimeArchiveData
+                {
+                    Task = new TaskInstanceData
+                    {
+                        TaskInstanceId = "task-1",
+                        SourceTaskTypeId = "task-normal",
+                        TaskKind = "Money",
+                        CatId = "cat-a",
+                        TargetCount = 2,
+                        CurrentCount = 1,
+                        Reward = 20,
+                        SlotIndex = 0,
+                    }
+                }
+            };
+
+            HolmasTaskBarRestoreResult result = mapper.TryRestoreTaskBar(archive);
+
+            Assert.That(result.Success, Is.True, result.FailureReason);
+            Assert.That(result.State.GetSlot(0).PendingRelockAfterTaskCompletion, Is.True);
+            Assert.That(result.State.GetTaskBySlot(0), Is.Not.Null);
+        }
+
+        [Test]
         public void HolmasPlayerArchiveMapper_CreateArchiveWithResetTaskBar_PreservesProgressionAndClearsCurrentLevel()
         {
             var mapper = new HolmasPlayerArchiveMapper();

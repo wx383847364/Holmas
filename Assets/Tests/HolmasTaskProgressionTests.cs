@@ -30,7 +30,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasTaskProgressService_ExpiredAdSlot_IsClearedAndLocked()
+        public void HolmasTaskProgressService_ExpiredAdSlot_WithActiveTask_BecomesPendingRelock()
         {
             var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
             var service = new HolmasTaskProgressService(
@@ -47,10 +47,34 @@ namespace Holmas.Tests
 
             service.RefreshExpiredAdSlots(taskBarState, 3000);
 
+            Assert.That(taskBarState.GetSlot(2).IsUnlocked, Is.True);
+            Assert.That(taskBarState.GetSlot(2).UnlockExpireAt, Is.EqualTo(0L));
+            Assert.That(taskBarState.GetSlot(2).PendingRelockAfterTaskCompletion, Is.True);
+            Assert.That(taskBarState.GetSlot(2).TaskInstanceId, Is.Not.Empty);
+            Assert.That(taskBarState.GetTaskBySlot(2), Is.Not.Null);
+        }
+
+        [Test]
+        public void HolmasTaskProgressService_ExpiredEmptyAdSlot_IsClearedAndLocked()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var service = new HolmasTaskProgressService(
+                catalog,
+                new ScriptedRandomSource(0, 0, 1),
+                new FixedUtcClock { UtcNowMilliseconds = 1000 });
+
+            var taskBarState = service.CreateDefaultTaskBarState();
+            var unlock = service.UnlockAdSlot(taskBarState, 2, 1, 2000);
+
+            Assert.That(unlock.Success, Is.True);
+            taskBarState.ClearSlot(2, true);
+
+            service.RefreshExpiredAdSlots(taskBarState, 3000);
+
             Assert.That(taskBarState.GetSlot(2).IsUnlocked, Is.False);
             Assert.That(taskBarState.GetSlot(2).UnlockExpireAt, Is.EqualTo(0L));
+            Assert.That(taskBarState.GetSlot(2).PendingRelockAfterTaskCompletion, Is.False);
             Assert.That(taskBarState.GetSlot(2).TaskInstanceId, Is.Empty);
-            Assert.That(taskBarState.GetTaskBySlot(2), Is.Null);
         }
 
         [Test]
@@ -163,6 +187,34 @@ namespace Holmas.Tests
             Assert.That(claim.FailureReason, Is.EqualTo("任务尚未完成，不能领奖。"));
             Assert.That(claim.Reward, Is.EqualTo(0));
             Assert.That(taskBarState.GetTaskBySlot(0), Is.SameAs(taskBeforeClaim));
+        }
+
+        [Test]
+        public void HolmasTaskProgressService_ClaimReward_PendingRelockSlot_LocksInsteadOfRefilling()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var service = new HolmasTaskProgressService(
+                catalog,
+                new ScriptedRandomSource(0, 0, 1, 0, 1, 1),
+                new FixedUtcClock { UtcNowMilliseconds = 1000 });
+
+            var taskBarState = service.CreateDefaultTaskBarState();
+            var unlock = service.UnlockAdSlot(taskBarState, 2, 1, 2000);
+            var task = taskBarState.GetTaskBySlot(2);
+
+            Assert.That(unlock.Success, Is.True);
+            Assert.That(task, Is.Not.Null);
+
+            service.RefreshExpiredAdSlots(taskBarState, 3000);
+            task.ApplyProgress(task.Task.TargetCount);
+
+            var claim = service.ClaimTaskReward(taskBarState, 2, 1);
+
+            Assert.That(claim.Success, Is.True);
+            Assert.That(claim.RefilledTask, Is.Null);
+            Assert.That(taskBarState.GetSlot(2).IsUnlocked, Is.False);
+            Assert.That(taskBarState.GetSlot(2).PendingRelockAfterTaskCompletion, Is.False);
+            Assert.That(taskBarState.GetTaskBySlot(2), Is.Null);
         }
 
         [Test]

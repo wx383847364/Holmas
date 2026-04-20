@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
@@ -10,6 +11,8 @@ using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Terrain;
+using App.HotUpdate.Holmas.UI.Core;
+using App.HotUpdate.Holmas.UI.Screens.AgencyMain;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.Shared.Contracts;
@@ -59,19 +62,15 @@ namespace Holmas.Tests
             Assert.That(reveal.IsValidAction, Is.True);
             Assert.That(reveal.Completed, Is.True);
             Assert.That(progressionResult, Is.Not.Null);
-            Assert.That(progressionResult.ProgressedTaskIds, Has.Count.EqualTo(1));
-            Assert.That(progressionResult.CompletedTaskIds, Has.Count.EqualTo(1));
-            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(1));
+            Assert.That(progressionResult.ProgressedTaskIds, Has.Count.EqualTo(0), "任务进度应在翻到猫当下写入 runtime，而不是等到整图结算时再重复累计。");
+            Assert.That(progressionResult.CompletedTaskIds, Has.Count.EqualTo(0));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(20));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0), Is.Not.Null);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(0));
             Assert.That(progressionResult.TaskExperienceGained, Is.EqualTo(0));
             Assert.That(progressionResult.MetaExperienceGained, Is.EqualTo(0));
             Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
             Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(1));
-
-            var claim = runtime.ClaimTaskReward(0, 1);
-
-            Assert.That(claim.Success, Is.True);
-            Assert.That(claim.Reward, Is.EqualTo(20));
-            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(20));
             Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
             Assert.That(runtime.MetaProgressionState.PlayerLevel, Is.EqualTo(1));
             Assert.That(runtime.MetaProgressionState.AgencyStageId, Is.EqualTo(1));
@@ -380,7 +379,8 @@ namespace Holmas.Tests
             Assert.That(secondResult.CompletedTaskIds, Is.Empty);
             Assert.That(secondResult.MetaExperienceGained, Is.EqualTo(0));
             Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
-            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(1));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(20));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(0));
         }
 
         [Test]
@@ -613,6 +613,339 @@ namespace Holmas.Tests
             Assert.That(viewModel.PromotionButtonEnabled, Is.False);
             Assert.That(viewModel.PromotionButtonLabel, Is.EqualTo("宣传已满级"));
             Assert.That(viewModel.PromotionId, Is.Empty);
+        }
+
+        [Test]
+        public void MainPresenter_RevealFoundCat_RefreshesTaskProgressImmediately()
+        {
+            var catalog = CreateSingleCatTaskCatalog(targetCount: 2);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 1), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            runtime.RefillAvailableTasks(1);
+
+            var request = HolmasTestSupport.CreateRequest(
+                "map-progress",
+                TerrainAssetPathUtility.BuildAssetPath("1"),
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+
+            runtime.StartLevel(HolmasTestSupport.CreateTerrain(1, 1), request);
+
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            BoardRevealResult reveal = runtime.RevealCell(0, out HolmasProgressionAdvanceResult progressionResult);
+            MainVm viewModel = new MainPresenter(context).Build();
+
+            Assert.That(reveal.IsValidAction, Is.True);
+            Assert.That(reveal.FoundCat, Is.True);
+            Assert.That(reveal.Completed, Is.True, "单猫棋盘应在找到猫后完成，但任务目标仍可保留为跨图累计。");
+            Assert.That(progressionResult, Is.Not.Null);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(1));
+            Assert.That(viewModel.TaskItems[0].Progress, Is.EqualTo("1/2"));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RevealCell_AutoClaimsCompletedTaskDuringActiveLevel()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b", "cat-c");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+
+            runtime.RefillAvailableTasks(1);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateTerrain(1, 3),
+                HolmasTestSupport.CreateRequest(
+                    "map-active-claim",
+                    TerrainAssetPathUtility.BuildAssetPath("1"),
+                    23,
+                    3,
+                    3,
+                    new BoardSpawnEntry { CatId = "cat-a", Weight = 1 }));
+
+            BoardRevealResult reveal = runtime.RevealCell(runtime.CurrentLevelSnapshot.SpawnedCats[0].CellIndex, out _);
+
+            Assert.That(reveal.IsValidAction, Is.True);
+            Assert.That(runtime.HasActiveUncompletedLevel, Is.True);
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(10));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0), Is.Not.Null);
+            Assert.That(runtime.TaskBarState.GetUnlockedEmptySlotCount(), Is.EqualTo(0));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_IsCurrentLevelCompatibleWithTaskBar_AllowsUnlockedEmptySlotSession()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+
+            runtime.RefillAvailableTasks(1);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateTerrain(1, 2),
+                HolmasTestSupport.CreateRequest(
+                    "map-compatible-check",
+                    TerrainAssetPathUtility.BuildAssetPath("1"),
+                    31,
+                    2,
+                    2,
+                    new BoardSpawnEntry { CatId = "cat-a", Weight = 1 }));
+
+            runtime.TaskBarState.ClearSlot(0, true);
+
+            Assert.That(runtime.HasActiveUncompletedLevel, Is.True);
+            Assert.That(runtime.IsCurrentLevelCompatibleWithTaskBar(), Is.True);
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_IsCurrentLevelCompatibleWithTaskBar_AllowsMissingActiveCatCoverage()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+
+            runtime.RefillAvailableTasks(1);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateTerrain(1, 2),
+                HolmasTestSupport.CreateRequest(
+                    "map-partial-active-cats",
+                    TerrainAssetPathUtility.BuildAssetPath("1"),
+                    37,
+                    2,
+                    2,
+                    new BoardSpawnEntry { CatId = "cat-a", Weight = 1 }));
+
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0), Is.Not.Null);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(1), Is.Not.Null);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CatId, Is.EqualTo("cat-a"));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(1).Task.CatId, Is.EqualTo("cat-b"));
+            Assert.That(runtime.IsCurrentLevelCompatibleWithTaskBar(), Is.True);
+        }
+
+        [Test]
+        public void MainView_RenderLockedTaskSlot_ClearsLegacyProgressText()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            try
+            {
+                CreateTaskSlot(root.transform, "Task1");
+                CreateTaskSlot(root.transform, "Task2");
+                CreateTaskSlot(root.transform, "Task3");
+                TextMeshProUGUI legacyTask4Text = CreateTaskSlot(root.transform, "Task4", withLegacyProgressText: true);
+
+                MainView view = root.GetComponent<MainView>();
+                view.Render(new MainVm
+                {
+                    TaskItems = new[]
+                    {
+                        new MainTaskItemVm { Title = "A", Progress = "1/1", Reward = "R1", ProgressNormalized = 1f },
+                        new MainTaskItemVm { Title = "B", Progress = "0/2", Reward = "R2", ProgressNormalized = 0f },
+                        new MainTaskItemVm { Title = "C", Progress = "未解锁", Reward = "广告位后续接入", ProgressNormalized = 0f, IsLocked = true, ButtonEnabled = false },
+                        new MainTaskItemVm { Title = "D", Progress = "未解锁", Reward = "广告位后续接入", ProgressNormalized = 0f, IsLocked = true, ButtonEnabled = false },
+                    }
+                });
+
+                Assert.That(legacyTask4Text.text, Is.EqualTo(string.Empty));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void MainView_RenderWithoutBoard_HidesStaticPlaceholderTiles()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            try
+            {
+                var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
+                minesGroup.transform.SetParent(root.transform, false);
+                var placeholderTile = new GameObject("PlaceholderTile", typeof(RectTransform), typeof(Image));
+                placeholderTile.transform.SetParent(minesGroup.transform, false);
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform));
+                boardContainer.transform.SetParent(minesGroup.transform, false);
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(new MainBindings
+                {
+                    MinesGroup = minesGroup.GetComponent<RectTransform>(),
+                    BoardContainer = boardContainer.GetComponent<RectTransform>(),
+                });
+
+                view.Render(new MainVm { BoardVisible = false });
+
+                Assert.That(placeholderTile.activeSelf, Is.False);
+                Assert.That(boardContainer.activeSelf, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void MainPageController_RepairIncompatibleLevelSession_DoesNotClearActiveBoard()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+
+            runtime.RefillAvailableTasks(1);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateTerrain(1, 2),
+                HolmasTestSupport.CreateRequest(
+                    "map-bad-archive",
+                    TerrainAssetPathUtility.BuildAssetPath("1"),
+                    17,
+                    2,
+                    2,
+                    new BoardSpawnEntry { CatId = "cat-a", Weight = 1 }));
+            runtime.TaskBarState.ClearSlot(0, true);
+
+            MainPageController controller = new MainPageController();
+            typeof(MainPageController)
+                .GetField("_runtime", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.SetValue(controller, runtime);
+
+            string status = (string)typeof(MainPageController)
+                .GetMethod("RepairIncompatibleLevelSession", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.Invoke(controller, null);
+
+            Assert.That(status, Is.Null);
+            Assert.That(runtime.HasActiveUncompletedLevel, Is.True);
+            Assert.That(runtime.TaskBarState.GetUnlockedEmptySlotCount(), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void MainPresenter_BoardAndTaskUseSameCatVisualMapping()
+        {
+            var catalog = CreateIconTaskCatalog("Assets/HotUpdateContent/Res/Icons/cat_01.png");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 1), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            runtime.RefillAvailableTasks(1);
+
+            var request = HolmasTestSupport.CreateRequest(
+                "map-visual",
+                TerrainAssetPathUtility.BuildAssetPath("1"),
+                7,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+            runtime.StartLevel(HolmasTestSupport.CreateTerrain(1, 1), request);
+
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            MainVm viewModel = new MainPresenter(context).Build();
+
+            Assert.That(viewModel.Cells[0].CatId, Is.EqualTo("cat-a"));
+            Assert.That(viewModel.TaskItems[0].CatId, Is.EqualTo("cat-a"));
+            Assert.That(viewModel.CatVisuals.ContainsKey("cat-a"), Is.True);
+            Assert.That(viewModel.CatVisuals["cat-a"].IconPath, Is.EqualTo(viewModel.TaskItems[0].CatIconPath));
+            Assert.That(viewModel.TaskItems[0].CatIconPath, Is.EqualTo("Assets/HotUpdateContent/Res/Icons/cat_01.png"));
+        }
+
+        [Test]
+        public void MainAndAgencyPresenters_UseAutoClaimTaskCopy()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            runtime.RefillAvailableTasks(1);
+            runtime.TaskBarState.MarkPendingRelockAfterTaskCompletion(1);
+
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            MainVm mainVm = new MainPresenter(context).Build();
+            AgencyMainVm agencyVm = new AgencyMainPresenter(context).Build();
+
+            Assert.That(mainVm.Summary, Does.Not.Contain("可领奖"));
+            Assert.That(mainVm.TaskItems[0].Reward, Does.Contain("自动领奖"));
+            Assert.That(mainVm.TaskItems[1].Reward, Does.Contain("自动领奖并锁定"));
+            Assert.That(agencyVm.TaskSummary, Does.Not.Contain("可领奖"));
+            Assert.That(agencyVm.TaskItems[0].ClaimButtonLabel, Is.EqualTo("查看状态"));
+            Assert.That(agencyVm.TaskItems[1].Reward, Does.Contain("自动领奖并锁定"));
         }
 
         [Test]
@@ -923,10 +1256,11 @@ namespace Holmas.Tests
                     false,
                     false,
                     true,
+                    "cat-a",
                     0,
                     new Color32(30, 60, 100, 255));
 
-                view.Bind(state, null);
+                view.Bind(state, HolmasCatVisualVm.CreateFallback("cat-a"), null, null);
 
                 Image background = cellObject.GetComponent<Image>();
                 Outline outline = cellObject.GetComponent<Outline>();
@@ -939,6 +1273,27 @@ namespace Holmas.Tests
             finally
             {
                 Object.DestroyImmediate(cellObject);
+            }
+        }
+
+        [Test]
+        public void HolmasCatSpriteLoader_MissingIconPath_UsesFallbackWithoutCrash()
+        {
+            var iconObject = new GameObject("icon", typeof(RectTransform), typeof(Image));
+            try
+            {
+                Image image = iconObject.GetComponent<Image>();
+                var loader = new HolmasCatSpriteLoader(null);
+
+                loader.Bind(image, HolmasCatVisualVm.CreateFallback("cat-a"));
+
+                Assert.That(image.enabled, Is.True);
+                Assert.That(image.sprite, Is.Not.Null);
+                Assert.That(image.color.a, Is.GreaterThan(0f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(iconObject);
             }
         }
 
@@ -1202,6 +1557,86 @@ namespace Holmas.Tests
                 });
         }
 
+        private static HolmasTaskCatalog CreateIconTaskCatalog(string iconPath)
+        {
+            return new HolmasTaskCatalog(
+                new[]
+                {
+                    new HolmasCatDefinition
+                    {
+                        CatId = "cat-a",
+                        CatName = "测试猫",
+                        IconPath = iconPath,
+                        Price = 10,
+                        Weight = 1,
+                    },
+                },
+                new[]
+                {
+                    new HolmasTaskTemplateDefinition
+                    {
+                        TaskTypeId = "task-icon",
+                        CatIdList = new[] { "cat-a" },
+                        CountMin = 1,
+                        CountMax = 1,
+                        RewardArray = System.Array.Empty<string>(),
+                        LevelRewardFactor = 1f,
+                    }
+                },
+                new[]
+                {
+                    new HolmasPlayerLevelDefinition
+                    {
+                        PlayerLevel = 1,
+                        UpgradeExp = 0,
+                        TaskTypeIds = new[] { "task-icon" },
+                        TaskTypeWeights = new[] { 1 },
+                        MapIds = new[] { "map-visual" },
+                        MapWeights = new[] { 1 },
+                    }
+                });
+        }
+
+        private static HolmasTaskCatalog CreateMultiCatTaskCatalog(params string[] catIds)
+        {
+            HolmasCatDefinition[] cats = catIds
+                .Select((catId, index) => new HolmasCatDefinition
+                {
+                    CatId = catId,
+                    CatName = $"Cat {index + 1}",
+                    Price = 10 + index,
+                    Weight = 1,
+                })
+                .ToArray();
+
+            return new HolmasTaskCatalog(
+                cats,
+                new[]
+                {
+                    new HolmasTaskTemplateDefinition
+                    {
+                        TaskTypeId = "task-multi",
+                        CatIdList = catIds,
+                        CountMin = 1,
+                        CountMax = 1,
+                        RewardArray = System.Array.Empty<string>(),
+                        LevelRewardFactor = 1f,
+                    }
+                },
+                new[]
+                {
+                    new HolmasPlayerLevelDefinition
+                    {
+                        PlayerLevel = 1,
+                        UpgradeExp = 0,
+                        TaskTypeIds = new[] { "task-multi" },
+                        TaskTypeWeights = new[] { 1 },
+                        MapIds = new[] { "map-active-claim" },
+                        MapWeights = new[] { 1 },
+                    }
+                });
+        }
+
         private static HolmasMetaCatalog CreateGrowthMetaCatalog()
         {
             return new HolmasMetaCatalog(new[]
@@ -1314,6 +1749,29 @@ namespace Holmas.Tests
                     PromotionUpgradeCosts = new[] { 30, 40 },
                 },
             });
+        }
+
+        private static TextMeshProUGUI CreateTaskSlot(Transform parent, string name, bool withLegacyProgressText = false)
+        {
+            var slot = new GameObject(name, typeof(RectTransform));
+            slot.transform.SetParent(parent, false);
+
+            var count = new GameObject("Count", typeof(RectTransform), typeof(TextMeshProUGUI));
+            count.transform.SetParent(slot.transform, false);
+
+            var slider = new GameObject("Slider", typeof(RectTransform), typeof(Slider));
+            slider.transform.SetParent(slot.transform, false);
+
+            TextMeshProUGUI legacyText = null;
+            if (withLegacyProgressText)
+            {
+                var legacy = new GameObject("LegacyProgress", typeof(RectTransform), typeof(TextMeshProUGUI));
+                legacy.transform.SetParent(slot.transform, false);
+                legacyText = legacy.GetComponent<TextMeshProUGUI>();
+                legacyText.text = "10/10";
+            }
+
+            return legacyText;
         }
 
         private static HolmasGameplayRuntime CreateEnergyRuntime(

@@ -79,6 +79,27 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void LevelSnapshotFactory_WhenCatCountCoversTaskPool_IncludesEveryActiveCatAtLeastOnce()
+        {
+            var template = HolmasTestSupport.CreateBoardTemplate(2, 3);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-guaranteed-active-cats",
+                "terrain://guaranteed-active-cats",
+                17,
+                4,
+                4,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 },
+                new BoardSpawnEntry { CatId = "cat-b", Weight = 1 });
+
+            var snapshot = LevelSnapshotFactory.Create(template, request);
+            string[] spawnedCatIds = snapshot.SpawnedCats.Select(item => item.CatId).Distinct().ToArray();
+
+            Assert.That(snapshot.SpawnedCats, Has.Count.EqualTo(4));
+            Assert.That(spawnedCatIds, Does.Contain("cat-a"));
+            Assert.That(spawnedCatIds, Does.Contain("cat-b"));
+        }
+
+        [Test]
         public void HolmasLevelRequestGenerator_SelectsMapAndBuildsStableRequest()
         {
             var taskCatalog = new HolmasTaskCatalog();
