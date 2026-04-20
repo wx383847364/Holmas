@@ -518,6 +518,74 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertIsNone(update_project_docs.read_last_finalize_report(doc_root))
 
+    def test_append_iteration_skips_duplicate_round_notes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_tools_dir = install_doc_maintenance_tools(root)
+            create_doc_root(root)
+            iteration_path = write_file(
+                root,
+                "doc/迭代记录/迭代记录_20260405_001.md",
+                """
+                # 迭代记录 2026-04-05 001
+
+                ## 分工状态
+
+                - Agent 1：待补充
+                - Agent 2：待补充
+                - Agent 3：待补充
+                - Agent 4：待补充
+                - Agent 5：待补充
+                - Agent 6：待补充
+
+                ## 工作日志
+
+                ## 完成项
+
+                - 暂无
+
+                ## 风险与阻塞
+
+                - 暂无
+
+                ## 下一步
+
+                - 待补充
+                """,
+            )
+
+            command = [
+                "python3",
+                str(doc_tools_dir / "update_project_docs.py"),
+                "--doc-root",
+                str(root / "doc"),
+                "append-iteration",
+                "--latest",
+                "--summary",
+                "修正 finalize 参数",
+                "--done",
+                "完成脚本幂等保护",
+                "--risk",
+                "无新增风险",
+                "--next",
+                "继续验证收尾流程",
+            ]
+            for _ in range(2):
+                completed = subprocess.run(
+                    command,
+                    cwd=root,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+
+            text = iteration_path.read_text(encoding="utf-8")
+            self.assertEqual(text.count("- 修正 finalize 参数"), 1)
+            self.assertEqual(text.count("- 完成脚本幂等保护"), 1)
+            self.assertEqual(text.count("- 无新增风险"), 1)
+            self.assertEqual(text.count("- 继续验证收尾流程"), 1)
+
     def test_finalize_task_forwards_agent_status(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)

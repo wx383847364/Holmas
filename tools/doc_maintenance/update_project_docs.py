@@ -1862,6 +1862,31 @@ def insert_under_heading(text: str, heading: str, block: str) -> str:
     return text.rstrip() + f"\n\n{heading_line}\n\n{block.rstrip()}\n"
 
 
+def section_lines(text: str, heading: str) -> list[str]:
+    heading_line = f"## {heading}"
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() != heading_line:
+            continue
+
+        end = len(lines)
+        for j in range(i + 1, len(lines)):
+            if lines[j].startswith("## "):
+                end = j
+                break
+        return lines[i + 1 : end]
+
+    return []
+
+
+def heading_has_bullet(text: str, heading: str, item: str) -> bool:
+    if not item:
+        return False
+
+    expected = "- " + item.strip()
+    return any(line.strip() == expected for line in section_lines(text, heading))
+
+
 def append_iteration(doc_root: Path, target: str, latest: bool, summary: str, done, risks, next_steps, agent_statuses):
     if latest:
         path = latest_iteration_file(doc_root)
@@ -1876,16 +1901,19 @@ def append_iteration(doc_root: Path, target: str, latest: bool, summary: str, do
     text = apply_agent_status_overrides(text, agent_statuses)
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-    if summary:
+    if summary and not heading_has_bullet(text, "工作日志", summary):
         block = f"### {timestamp}\n\n- {summary}"
         text = insert_under_heading(text, "工作日志", block)
 
     for item in done:
-        text = insert_under_heading(text, "完成项", f"- {item}")
+        if not heading_has_bullet(text, "完成项", item):
+            text = insert_under_heading(text, "完成项", f"- {item}")
     for item in risks:
-        text = insert_under_heading(text, "风险与阻塞", f"- {item}")
+        if not heading_has_bullet(text, "风险与阻塞", item):
+            text = insert_under_heading(text, "风险与阻塞", f"- {item}")
     for item in next_steps:
-        text = insert_under_heading(text, "下一步", f"- {item}")
+        if not heading_has_bullet(text, "下一步", item):
+            text = insert_under_heading(text, "下一步", f"- {item}")
 
     for heading, placeholders in DEFAULT_PLACEHOLDERS.items():
         text = clean_placeholder_bullets(text, heading, placeholders)
