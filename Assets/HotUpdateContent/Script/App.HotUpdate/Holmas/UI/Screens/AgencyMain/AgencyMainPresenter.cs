@@ -62,8 +62,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             HolmasTaskBarState taskBarState = _context.GameplayRuntime.TaskBarState;
             int unlockedCount = taskBarState.Slots != null ? taskBarState.Slots.Count(slot => slot != null && slot.IsUnlocked) : 0;
             int activeCount = taskBarState.Tasks != null ? taskBarState.Tasks.Count(item => item != null && item.Task != null) : 0;
-            int claimableCount = taskBarState.GetClaimableTasks().Count;
-            return $"任务槽 {activeCount}/{unlockedCount}/{taskBarState.TotalSlots} | 可领奖 {claimableCount}";
+            int pendingRelockCount = taskBarState.GetPendingRelockSlotCount();
+            return $"任务槽 {activeCount}/{unlockedCount}/{taskBarState.TotalSlots} | 待锁 {pendingRelockCount}";
         }
 
         private string BuildBoardSummary()
@@ -112,7 +112,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             {
                 SlotIndex = slotIndex,
                 Title = $"任务槽 {slotIndex + 1}",
-                ClaimButtonLabel = "领取",
+                ClaimButtonLabel = "查看状态",
             };
 
             if (slot == null || !slot.IsUnlocked)
@@ -128,19 +128,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             if (runtimeTask == null || runtimeTask.Task == null)
             {
                 item.Progress = "当前空槽";
-                item.Reward = "等待补任务";
-                item.ClaimButtonEnabled = false;
-                item.ClaimButtonLabel = "暂无任务";
+                item.Reward = "当前等级暂无可补任务";
+                item.ClaimButtonEnabled = true;
+                item.ClaimButtonLabel = "查看说明";
                 return item;
             }
 
             item.Title = $"任务槽 {slotIndex + 1} | 猫 {runtimeTask.Task.CatId}";
-            item.Progress = runtimeTask.CanClaimReward
-                ? $"已完成 {runtimeTask.Task.CurrentCount}/{runtimeTask.Task.TargetCount}"
-                : $"进度 {runtimeTask.Task.CurrentCount}/{runtimeTask.Task.TargetCount}";
-            item.Reward = $"奖励 {runtimeTask.Task.Reward} Gold";
-            item.ClaimButtonEnabled = runtimeTask.CanClaimReward;
-            item.ClaimButtonLabel = runtimeTask.CanClaimReward ? "领取奖励" : "进行中";
+            item.Progress = $"进度 {runtimeTask.Task.CurrentCount}/{runtimeTask.Task.TargetCount}";
+            item.Reward = slot.PendingRelockAfterTaskCompletion
+                ? $"奖励 {runtimeTask.Task.Reward} Gold | 广告槽已到期，完成后自动领奖并锁定"
+                : $"奖励 {runtimeTask.Task.Reward} Gold | 完成后自动领奖";
+            item.ClaimButtonEnabled = true;
+            item.ClaimButtonLabel = "查看状态";
             return item;
         }
     }

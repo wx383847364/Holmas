@@ -1,5 +1,6 @@
 using System;
 using App.HotUpdate.Holmas.UI.Binding;
+using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Screens.FindCat;
 using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
@@ -15,6 +16,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private FindCatBoardView _boardView;
         private UnityAction _currentBackAction;
         private Action<int, bool> _currentCellAction;
+        private HolmasCatSpriteLoader _catSpriteLoader;
 
         public void EnsureBindingSurface()
         {
@@ -106,6 +108,23 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _currentCellAction = action;
         }
 
+        public void SetAssetsRuntime(App.Shared.Contracts.IAssetsRuntime assetsRuntime)
+        {
+            if (_catSpriteLoader == null)
+            {
+                _catSpriteLoader = new HolmasCatSpriteLoader(assetsRuntime);
+            }
+            else
+            {
+                _catSpriteLoader.SetAssetsRuntime(assetsRuntime);
+            }
+
+            if (_boardView != null)
+            {
+                _boardView.SetCatSpriteLoader(_catSpriteLoader);
+            }
+        }
+
         public void Render(BattleVm viewModel)
         {
             if (viewModel == null)
@@ -194,6 +213,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             background.color = new Color(0f, 0f, 0f, 0.18f);
 
             _boardView = boardObject.GetComponent<FindCatBoardView>() ?? boardObject.AddComponent<FindCatBoardView>();
+            _boardView.SetCatSpriteLoader(_catSpriteLoader);
             return rectTransform;
         }
 
@@ -206,7 +226,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             FindCatBoardView boardView = _boardView ?? _bindings.BoardContainer.GetComponent<FindCatBoardView>() ?? _bindings.BoardContainer.gameObject.AddComponent<FindCatBoardView>();
             _boardView = boardView;
-            boardView.Render(viewModel.Rows, viewModel.Cols, viewModel.Cells, _currentCellAction);
+            boardView.SetCatSpriteLoader(_catSpriteLoader);
+            boardView.Render(viewModel.Rows, viewModel.Cols, viewModel.Cells, viewModel.CatVisuals, _currentCellAction);
+        }
+
+        private void OnDestroy()
+        {
+            _catSpriteLoader?.Dispose();
+            _catSpriteLoader = null;
         }
 
         private Button ResolveBackButton(Transform overlay)

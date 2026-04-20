@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.HotUpdate.Holmas.UI.Core;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Battle
 {
@@ -19,6 +21,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public BattleVm Build(string status = null)
         {
             BoardRuntime board = _context?.GameplayRuntime?.CurrentBoardRuntime;
+            var visualResolver = CreateCatVisualResolver();
+            IReadOnlyList<BoardCellState> cells = board != null ? board.GetAllCellStates() : new BoardCellState[0];
             return new BattleVm
             {
                 LevelLabel = $"Lv {_context?.CurrentPlayerLevel ?? 1}",
@@ -30,8 +34,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                     : status,
                 Rows = board != null ? board.Rows : 0,
                 Cols = board != null ? board.Cols : 0,
-                Cells = board != null ? board.GetAllCellStates() : new BoardCellState[0],
+                Cells = cells,
+                CatVisuals = BuildCatVisualLookup(cells, visualResolver),
             };
+        }
+
+        private HolmasCatVisualResolver CreateCatVisualResolver()
+        {
+            IHolmasTaskCatalog taskCatalog = _context?.ServiceContainer != null
+                ? _context.ServiceContainer.Get<IHolmasTaskCatalog>()
+                : null;
+            return new HolmasCatVisualResolver(taskCatalog);
         }
 
         private string BuildSummary(BoardRuntime board)
@@ -113,6 +126,30 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 ? $"{label} {task.Task.CatId}"
                 : label;
             return $"{prefix} {Math.Max(0, task.Task.CurrentCount)}/{Math.Max(0, task.Task.TargetCount)}";
+        }
+
+        private static IReadOnlyDictionary<string, HolmasCatVisualVm> BuildCatVisualLookup(
+            IReadOnlyList<BoardCellState> cells,
+            HolmasCatVisualResolver visualResolver)
+        {
+            var lookup = new Dictionary<string, HolmasCatVisualVm>(StringComparer.Ordinal);
+            if (cells == null || visualResolver == null)
+            {
+                return lookup;
+            }
+
+            for (int i = 0; i < cells.Count; i++)
+            {
+                string catId = cells[i].CatId;
+                if (string.IsNullOrWhiteSpace(catId) || lookup.ContainsKey(catId))
+                {
+                    continue;
+                }
+
+                lookup[catId] = visualResolver.Resolve(catId);
+            }
+
+            return lookup;
         }
     }
 }

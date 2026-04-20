@@ -18,7 +18,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             "Task1",
             "Task2",
             "Task3",
-            "Task5",
+            "Task4",
         };
 
         private readonly List<MainTaskSlotView> _taskSlotViews = new List<MainTaskSlotView>();
@@ -33,6 +33,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private Action<int> _currentTaskSlotAction;
         private Action<int, bool> _currentCellAction;
         private bool _isSyncingToggles;
+        private HolmasCatSpriteLoader _catSpriteLoader;
 
         public void EnsureBindingSurface()
         {
@@ -239,6 +240,23 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _currentCellAction = action;
         }
 
+        public void SetAssetsRuntime(App.Shared.Contracts.IAssetsRuntime assetsRuntime)
+        {
+            if (_catSpriteLoader == null)
+            {
+                _catSpriteLoader = new HolmasCatSpriteLoader(assetsRuntime);
+            }
+            else
+            {
+                _catSpriteLoader.SetAssetsRuntime(assetsRuntime);
+            }
+
+            if (_boardView != null)
+            {
+                _boardView.SetCatSpriteLoader(_catSpriteLoader);
+            }
+        }
+
         public bool IsSyncingToggles => _isSyncingToggles;
 
         public void Render(MainVm viewModel)
@@ -390,6 +408,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                         new Vector2(0f, 34f),
                         16f,
                         TextAlignmentOptions.Center),
+                    AllTextLabels = slotRoot.GetComponentsInChildren<TMP_Text>(true),
+                    AllSliders = slotRoot.GetComponentsInChildren<Slider>(true),
                 };
 
                 _taskSlotViews.Add(view);
@@ -413,9 +433,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return;
             }
 
+            ResetTaskSlotResidualVisuals(slotView);
+
             if (item == null)
             {
                 ApplyTaskSlotVisual(slotView, "未使用", string.Empty, "空位", 0f, false, false, false);
+                _catSpriteLoader?.Clear(slotView.CatIcon);
                 return;
             }
 
@@ -428,6 +451,66 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 item.IsLocked,
                 item.IsClaimable,
                 item.ButtonEnabled);
+
+            if (slotView.CatIcon == null)
+            {
+                return;
+            }
+
+            if (item.IsLocked || item.IsEmpty)
+            {
+                _catSpriteLoader?.Clear(slotView.CatIcon);
+                return;
+            }
+
+            _catSpriteLoader?.Bind(
+                slotView.CatIcon,
+                new HolmasCatVisualVm
+                {
+                    CatId = item.CatId,
+                    CatName = item.CatName,
+                    IconPath = item.CatIconPath,
+                });
+        }
+
+        private static void ResetTaskSlotResidualVisuals(MainTaskSlotView slotView)
+        {
+            if (slotView == null)
+            {
+                return;
+            }
+
+            if (slotView.AllTextLabels != null)
+            {
+                for (int i = 0; i < slotView.AllTextLabels.Length; i++)
+                {
+                    TMP_Text label = slotView.AllTextLabels[i];
+                    if (label == null ||
+                        ReferenceEquals(label, slotView.TitleLabel) ||
+                        ReferenceEquals(label, slotView.ProgressLabel) ||
+                        ReferenceEquals(label, slotView.RewardLabel))
+                    {
+                        continue;
+                    }
+
+                    SetTmpText(label, string.Empty);
+                }
+            }
+
+            if (slotView.AllSliders != null)
+            {
+                for (int i = 0; i < slotView.AllSliders.Length; i++)
+                {
+                    Slider slider = slotView.AllSliders[i];
+                    if (slider == null || ReferenceEquals(slider, slotView.ProgressSlider))
+                    {
+                        continue;
+                    }
+
+                    slider.value = 0f;
+                    slider.interactable = false;
+                }
+            }
         }
 
         private static void ApplyTaskSlotVisual(
@@ -643,6 +726,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             background.color = new Color(0f, 0f, 0f, 0f);
             background.raycastTarget = false;
             _boardView = boardObject.GetComponent<FindCatBoardView>() ?? boardObject.AddComponent<FindCatBoardView>();
+            _boardView.SetCatSpriteLoader(_catSpriteLoader);
             return boardContainer;
         }
 
@@ -708,16 +792,24 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return;
             }
 
-            SetMinesGroupPlaceholderVisible(!viewModel.BoardVisible);
+            SetMinesGroupPlaceholderVisible(false);
             _bindings.BoardContainer.gameObject.SetActive(viewModel.BoardVisible);
             if (!viewModel.BoardVisible)
             {
+                _boardView?.Render(0, 0, null, null, _currentCellAction);
                 return;
             }
 
             FindCatBoardView boardView = _boardView ?? _bindings.BoardContainer.GetComponent<FindCatBoardView>() ?? _bindings.BoardContainer.gameObject.AddComponent<FindCatBoardView>();
             _boardView = boardView;
-            boardView.Render(viewModel.Rows, viewModel.Cols, viewModel.Cells, _currentCellAction);
+            boardView.SetCatSpriteLoader(_catSpriteLoader);
+            boardView.Render(viewModel.Rows, viewModel.Cols, viewModel.Cells, viewModel.CatVisuals, _currentCellAction);
+        }
+
+        private void OnDestroy()
+        {
+            _catSpriteLoader?.Dispose();
+            _catSpriteLoader = null;
         }
 
         private void SetMinesGroupPlaceholderVisible(bool isVisible)
@@ -961,6 +1053,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             public Slider ProgressSlider;
             public Image RewardIcon;
             public Image CatIcon;
+            public TMP_Text[] AllTextLabels;
+            public Slider[] AllSliders;
         }
     }
 }

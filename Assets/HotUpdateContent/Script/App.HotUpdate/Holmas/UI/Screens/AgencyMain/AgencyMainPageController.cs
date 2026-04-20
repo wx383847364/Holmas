@@ -158,25 +158,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             HolmasApplicationContext context = Root != null ? Root.Context : null;
             if (context == null)
             {
-                Refresh("应用上下文不可用，无法领奖。");
+                Refresh("应用上下文不可用，无法查看任务状态。");
                 return;
             }
 
             _isBusy = true;
             string finalStatus = null;
-            Refresh($"正在领取任务槽 {slotIndex + 1} 奖励...");
+            Refresh($"正在查看任务槽 {slotIndex + 1} 状态...");
 
             try
             {
-                var result = context.ClaimTaskReward(slotIndex);
-                finalStatus = result != null && result.Success
-                    ? BuildClaimSuccessStatus(slotIndex, result)
-                    : $"任务领奖失败：{result?.FailureReason ?? "未知错误"}";
+                var slot = context.GameplayRuntime != null && context.GameplayRuntime.TaskBarState != null
+                    ? context.GameplayRuntime.TaskBarState.GetSlot(slotIndex)
+                    : null;
+                var runtimeTask = context.GameplayRuntime != null && context.GameplayRuntime.TaskBarState != null
+                    ? context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex)
+                    : null;
+                finalStatus = BuildTaskStatus(slotIndex, slot, runtimeTask);
                 Refresh(finalStatus);
             }
             catch (Exception ex)
             {
-                finalStatus = "任务领奖失败：" + ex.Message;
+                finalStatus = "任务状态查看失败：" + ex.Message;
                 Refresh(finalStatus);
             }
             finally
@@ -212,14 +215,22 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             }
         }
 
-        private static string BuildClaimSuccessStatus(int slotIndex, HolmasTaskClaimResult result)
+        private static string BuildTaskStatus(int slotIndex, App.Shared.Holmas.RuntimeData.TaskSlotState slot, App.HotUpdate.Holmas.Tasks.Runtime.HolmasTaskRuntimeInstance runtimeTask)
         {
-            string refillSummary = result.RefilledTask != null
-                ? $"已补新任务 {result.RefilledTask.CatId}。"
-                : string.Empty;
-            return string.IsNullOrWhiteSpace(refillSummary)
-                ? $"任务槽 {slotIndex + 1} 已领奖，金币 +{result.Reward}。"
-                : $"任务槽 {slotIndex + 1} 已领奖，金币 +{result.Reward}。{refillSummary}";
+            if (slot == null || !slot.IsUnlocked)
+            {
+                return $"任务槽 {slotIndex + 1} 尚未解锁。";
+            }
+
+            if (runtimeTask == null || runtimeTask.Task == null)
+            {
+                return $"任务槽 {slotIndex + 1} 当前为空；当前等级暂无可补任务。";
+            }
+
+            string suffix = slot.PendingRelockAfterTaskCompletion
+                ? "广告槽已到期，完成当前任务后会自动领奖并重新锁定。"
+                : "完成后会自动领奖并补新任务。";
+            return $"任务槽 {slotIndex + 1} 进度 {runtimeTask.Task.CurrentCount}/{runtimeTask.Task.TargetCount}，{suffix}";
         }
     }
 }

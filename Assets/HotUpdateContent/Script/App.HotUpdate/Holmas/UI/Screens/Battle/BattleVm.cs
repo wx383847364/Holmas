@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.UI.Core;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Battle
 {
@@ -13,5 +14,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public int Rows;
         public int Cols;
         public IReadOnlyList<BoardCellState> Cells = new BoardCellState[0];
+        public IReadOnlyDictionary<string, HolmasCatVisualVm> CatVisuals = HolmasCatVisualVm.EmptyLookup;
     }
 }

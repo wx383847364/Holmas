@@ -36,6 +36,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         {
             _bindings = BattleBindings.Resolve(BindingResolver);
             _view?.Bind(_bindings);
+            _view?.SetAssetsRuntime(Root != null && Root.Context != null ? Root.Context.AssetsRuntime : null);
             _view?.SetBackAction(OnBackClicked);
             _view?.SetCellAction(OnCellClicked);
         }

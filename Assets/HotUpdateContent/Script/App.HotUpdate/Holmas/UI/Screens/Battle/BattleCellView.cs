@@ -1,5 +1,6 @@
 using System;
 using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
 using UnityEngine;
@@ -16,6 +17,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private Image _background;
         private Outline _outline;
         private TextMeshProUGUI _label;
+        private Image _catIcon;
+        private HolmasCatVisualVm _catVisual;
+        private HolmasCatSpriteLoader _catSpriteLoader;
 
         private void Awake()
         {
@@ -57,11 +61,33 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _label.enableAutoSizing = true;
             _label.fontSizeMin = 14f;
             _label.fontSizeMax = 28f;
+
+            GameObject iconObject = transform.Find("CatIcon") != null
+                ? transform.Find("CatIcon").gameObject
+                : new GameObject("CatIcon", typeof(RectTransform), typeof(Image));
+            iconObject.transform.SetParent(transform, false);
+
+            RectTransform iconRect = iconObject.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.18f, 0.18f);
+            iconRect.anchorMax = new Vector2(0.82f, 0.82f);
+            iconRect.offsetMin = Vector2.zero;
+            iconRect.offsetMax = Vector2.zero;
+
+            _catIcon = iconObject.GetComponent<Image>();
+            _catIcon.enabled = false;
+            _catIcon.raycastTarget = false;
+            _catIcon.preserveAspect = true;
         }
 
-        public void Bind(BoardCellState state, Action<int, bool> onInteract)
+        public void Bind(
+            BoardCellState state,
+            HolmasCatVisualVm catVisual,
+            HolmasCatSpriteLoader catSpriteLoader,
+            Action<int, bool> onInteract)
         {
             _state = state;
+            _catVisual = catVisual;
+            _catSpriteLoader = catSpriteLoader;
             _onInteract = onInteract;
             Refresh();
         }
@@ -79,10 +105,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         private void Refresh()
         {
-            if (_background == null || _label == null)
+            if (_background == null || _label == null || _catIcon == null)
             {
                 return;
             }
+
+            _catIcon.enabled = false;
+            _catSpriteLoader?.Clear(_catIcon);
 
             if (!_state.IsValid)
             {
@@ -120,8 +149,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             if (_state.HasCat)
             {
                 _background.color = new Color(0.97f, 0.62f, 0.24f, 1f);
-                TmpGlyphCoverageReporter.SetText(_label, "猫");
-                _label.color = Color.white;
+                TmpGlyphCoverageReporter.SetText(_label, string.Empty);
+                _catIcon.enabled = true;
+                _catSpriteLoader?.Bind(_catIcon, _catVisual ?? HolmasCatVisualVm.CreateFallback(_state.CatId));
                 SetOutline(true, new Color(1f, 0.8f, 0.38f, 1f));
                 return;
             }

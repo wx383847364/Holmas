@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,8 +11,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
     public sealed class FindCatBoardView : MonoBehaviour
     {
         private readonly List<BattleCellView> _cells = new List<BattleCellView>();
+        private HolmasCatSpriteLoader _catSpriteLoader;
 
-        public void Render(int rows, int cols, IReadOnlyList<BoardCellState> cells, Action<int, bool> onInteract)
+        public void SetCatSpriteLoader(HolmasCatSpriteLoader catSpriteLoader)
+        {
+            _catSpriteLoader = catSpriteLoader;
+        }
+
+        public void Render(
+            int rows,
+            int cols,
+            IReadOnlyList<BoardCellState> cells,
+            IReadOnlyDictionary<string, HolmasCatVisualVm> catVisuals,
+            Action<int, bool> onInteract)
         {
             RectTransform boardRect = gameObject.GetComponent<RectTransform>();
             if (boardRect == null)
@@ -54,7 +66,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
                 if (i < cells.Count)
                 {
                     _cells[i].gameObject.SetActive(true);
-                    _cells[i].Bind(cells[i], onInteract);
+                    HolmasCatVisualVm visual = null;
+                    if (catVisuals != null &&
+                        !string.IsNullOrWhiteSpace(cells[i].CatId) &&
+                        catVisuals.TryGetValue(cells[i].CatId, out HolmasCatVisualVm resolvedVisual))
+                    {
+                        visual = resolvedVisual;
+                    }
+
+                    _cells[i].Bind(cells[i], visual, _catSpriteLoader, onInteract);
                 }
                 else
                 {

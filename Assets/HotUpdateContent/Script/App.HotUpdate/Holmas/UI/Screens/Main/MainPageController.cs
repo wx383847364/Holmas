@@ -1,8 +1,10 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Progression;
+using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.UI.Core;
 using App.Shared.Holmas.RuntimeData;
 
@@ -38,6 +40,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         {
             _bindings = MainBindings.Resolve(BindingResolver);
             _view?.Bind(_bindings);
+            _view?.SetAssetsRuntime(Root != null && Root.Context != null ? Root.Context.AssetsRuntime : null);
             _view?.SetStartAction(OnStartClicked);
             _view?.SetPromotionAction(OnPromotionClicked);
             _view?.SetAddEnergyAction(OnAddEnergyClicked);
@@ -48,12 +51,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         protected override void OnOpen(object payload)
         {
-            Refresh(payload as string);
+            string repairedStatus = RepairIncompatibleLevelSession();
+            Refresh(repairedStatus ?? payload as string);
         }
 
         protected override void OnResume()
         {
-            Refresh("已返回主界面。");
+            string repairedStatus = RepairIncompatibleLevelSession();
+            Refresh(repairedStatus ?? "已返回主界面。");
         }
 
         protected override void OnDestroy()
@@ -73,6 +78,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private void OnStartClicked()
         {
             _ = HandleStartAsync();
+        }
+
+        private string RepairIncompatibleLevelSession()
+        {
+            return null;
         }
 
         private void OnPromotionClicked()
@@ -285,24 +295,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             try
             {
                 var runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
+                bool hasActiveLevel = context.GameplayRuntime.HasActiveUncompletedLevel;
                 if (!slot.IsUnlocked)
                 {
                     finalStatus = $"任务槽 {slotIndex + 1} 尚未解锁。";
                 }
-                else if (runtimeTask != null && runtimeTask.CanClaimReward)
+                else if (runtimeTask != null && runtimeTask.Task != null)
                 {
-                    var claimResult = context.ClaimTaskReward(slotIndex);
-                    finalStatus = claimResult != null && claimResult.Success
-                        ? $"任务槽 {slotIndex + 1} 已领奖，金币 +{claimResult.Reward}。"
-                        : $"任务领奖失败：{claimResult?.FailureReason ?? "未知错误"}";
+                    finalStatus = BuildTaskSlotStatus(slotIndex, slot, runtimeTask, hasActiveLevel);
                 }
                 else
                 {
-                    var refillResult = context.RefillAvailableTasks();
-                    int generatedCount = refillResult != null ? refillResult.GeneratedTasks.Count : 0;
-                    finalStatus = generatedCount > 0
-                        ? $"任务栏已补 {generatedCount} 条新任务。"
-                        : $"任务槽 {slotIndex + 1} 当前没有可领取奖励。";
+                    finalStatus = hasActiveLevel
+                        ? $"任务槽 {slotIndex + 1} 当前为空；后续新任务会在满足抽取条件时直接补入。"
+                        : $"任务槽 {slotIndex + 1} 当前为空；当前等级暂无可补任务。";
                 }
 
                 Refresh(finalStatus);
@@ -323,6 +329,27 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
                 await Task.CompletedTask;
             }
+        }
+
+        private static string BuildTaskSlotStatus(
+            int slotIndex,
+            TaskSlotState slot,
+            HolmasTaskRuntimeInstance runtimeTask,
+            bool hasActiveLevel)
+        {
+            if (runtimeTask == null || runtimeTask.Task == null)
+            {
+                return hasActiveLevel
+                    ? $"任务槽 {slotIndex + 1} 当前为空；后续新任务会在满足抽取条件时直接补入。"
+                    : $"任务槽 {slotIndex + 1} 当前为空；当前等级暂无可补任务。";
+            }
+
+            string suffix = slot != null && slot.PendingRelockAfterTaskCompletion
+                ? "广告槽已到期，完成当前任务后会重新锁定。"
+                : hasActiveLevel
+                    ? "继续当前棋盘即可推进。"
+                    : "完成后会自动领奖并补新任务。";
+            return $"任务槽 {slotIndex + 1} 进度 {runtimeTask.Task.CurrentCount}/{runtimeTask.Task.TargetCount}，{suffix}";
         }
 
         private void Refresh(string status = null)

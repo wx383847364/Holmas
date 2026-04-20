@@ -5,6 +5,7 @@ using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.HotUpdate.Holmas.UI.Core;
 using App.Shared.Holmas.RuntimeData;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Main
@@ -21,6 +22,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public MainVm Build(string status = null)
         {
             BoardRuntime board = _context?.GameplayRuntime?.CurrentBoardRuntime;
+            var visualResolver = CreateCatVisualResolver();
+            IReadOnlyList<BoardCellState> cells = board != null ? board.GetAllCellStates() : new BoardCellState[0];
+            MainTaskItemVm[] taskItems = BuildTaskItems(visualResolver);
             HolmasAgencyBuildingDefinition promotion = GetPrimaryPromotionDefinition();
             string promotionId = promotion != null ? promotion.PromotionId : string.Empty;
             bool hasConfiguredPromotions = HasConfiguredPromotionsForCurrentStage();
@@ -46,8 +50,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 BoardVisible = board != null,
                 Rows = board != null ? board.Rows : 0,
                 Cols = board != null ? board.Cols : 0,
-                Cells = board != null ? board.GetAllCellStates() : new BoardCellState[0],
-                TaskItems = BuildTaskItems(),
+                Cells = cells,
+                CatVisuals = BuildCatVisualLookup(cells, taskItems, visualResolver),
+                TaskItems = taskItems,
             };
         }
 
@@ -115,12 +120,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             int activeTaskCount = taskBar != null && taskBar.Tasks != null
                 ? taskBar.Tasks.Count(item => item != null && item.Task != null)
                 : 0;
-            int claimableCount = taskBar != null ? taskBar.GetClaimableTasks().Count : 0;
+            int pendingRelockCount = taskBar != null ? taskBar.GetPendingRelockSlotCount() : 0;
             string boardSummary = _context.GameplayRuntime.CurrentBoardRuntime == null
                 ? "未进入棋盘"
                 : BuildBoardSummary(_context.GameplayRuntime.CurrentBoardRuntime);
 
-            return $"{BuildProgressionSummary()} | 任务 {activeTaskCount}/{unlockedCount} | 可领奖 {claimableCount}\n{BuildPromotionSummary()} | {boardSummary}";
+            return $"{BuildProgressionSummary()} | 任务 {activeTaskCount}/{unlockedCount} | 待锁 {pendingRelockCount}\n{BuildPromotionSummary()} | {boardSummary}";
         }
 
         private string BuildBoardSummary(BoardRuntime board)
@@ -227,7 +232,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             return System.Math.Max(0, promotion.PromotionUpgradeCosts[currentLevel]);
         }
 
-        private MainTaskItemVm[] BuildTaskItems()
+        private HolmasCatVisualResolver CreateCatVisualResolver()
+        {
+            IHolmasTaskCatalog taskCatalog = _context?.ServiceContainer != null
+                ? _context.ServiceContainer.Get<IHolmasTaskCatalog>()
+                : null;
+            return new HolmasCatVisualResolver(taskCatalog);
+        }
+
+        private MainTaskItemVm[] BuildTaskItems(HolmasCatVisualResolver visualResolver)
         {
             if (_context == null || _context.GameplayRuntime == null || _context.GameplayRuntime.TaskBarState == null)
             {
@@ -244,7 +257,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             var items = new List<MainTaskItemVm>(count);
             for (int i = 0; i < count; i++)
             {
-                items.Add(BuildTaskItem(taskBar.Slots[i], taskBar.GetTaskBySlot(i), i));
+                items.Add(BuildTaskItem(taskBar.Slots[i], taskBar.GetTaskBySlot(i), i, visualResolver));
             }
 
             return items.ToArray();
@@ -299,7 +312,54 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             return $"{prefix} {System.Math.Max(0, task.Task.CurrentCount)}/{System.Math.Max(0, task.Task.TargetCount)}";
         }
 
-        private static MainTaskItemVm BuildTaskItem(TaskSlotState slot, HolmasTaskRuntimeInstance runtimeTask, int slotIndex)
+        private static IReadOnlyDictionary<string, HolmasCatVisualVm> BuildCatVisualLookup(
+            IReadOnlyList<BoardCellState> cells,
+            IReadOnlyList<MainTaskItemVm> taskItems,
+            HolmasCatVisualResolver visualResolver)
+        {
+            var lookup = new Dictionary<string, HolmasCatVisualVm>(System.StringComparer.Ordinal);
+            if (visualResolver == null)
+            {
+                return lookup;
+            }
+
+            if (cells != null)
+            {
+                for (int i = 0; i < cells.Count; i++)
+                {
+                    RegisterCatVisual(lookup, cells[i].CatId, visualResolver);
+                }
+            }
+
+            if (taskItems != null)
+            {
+                for (int i = 0; i < taskItems.Count; i++)
+                {
+                    RegisterCatVisual(lookup, taskItems[i]?.CatId, visualResolver);
+                }
+            }
+
+            return lookup;
+        }
+
+        private static void RegisterCatVisual(
+            IDictionary<string, HolmasCatVisualVm> lookup,
+            string catId,
+            HolmasCatVisualResolver visualResolver)
+        {
+            if (lookup == null || visualResolver == null || string.IsNullOrWhiteSpace(catId) || lookup.ContainsKey(catId))
+            {
+                return;
+            }
+
+            lookup[catId] = visualResolver.Resolve(catId);
+        }
+
+        private static MainTaskItemVm BuildTaskItem(
+            TaskSlotState slot,
+            HolmasTaskRuntimeInstance runtimeTask,
+            int slotIndex,
+            HolmasCatVisualResolver visualResolver)
         {
             var item = new MainTaskItemVm
             {
@@ -311,7 +371,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (slot == null || !slot.IsUnlocked)
             {
                 item.Progress = "未解锁";
-                item.Reward = "广告位后续接入";
+                item.Reward = "观看广告后开启";
                 item.ProgressNormalized = 0f;
                 item.IsLocked = true;
                 item.ButtonEnabled = false;
@@ -321,21 +381,27 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (runtimeTask == null || runtimeTask.Task == null)
             {
                 item.Progress = "空槽";
-                item.Reward = "点击后补任务";
+                item.Reward = "当前等级暂无可补任务";
                 item.ProgressNormalized = 0f;
                 item.IsEmpty = true;
                 return item;
             }
 
-            item.Title = runtimeTask.Task.CatId;
+            HolmasCatVisualVm visual = visualResolver != null
+                ? visualResolver.Resolve(runtimeTask.Task.CatId)
+                : HolmasCatVisualVm.CreateFallback(runtimeTask.Task.CatId);
+            item.CatId = visual.CatId;
+            item.CatName = visual.CatName;
+            item.CatIconPath = visual.IconPath;
+            item.Title = string.IsNullOrWhiteSpace(visual.CatName) ? runtimeTask.Task.CatId : visual.CatName;
             item.Progress = $"{runtimeTask.Task.CurrentCount}/{runtimeTask.Task.TargetCount}";
-            item.Reward = runtimeTask.CanClaimReward
-                ? $"奖励 {runtimeTask.Task.Reward} Gold - 点击领取"
-                : $"奖励 {runtimeTask.Task.Reward} Gold";
+            item.Reward = slot.PendingRelockAfterTaskCompletion
+                ? $"奖励 {runtimeTask.Task.Reward} Gold | 完成后自动领奖并锁定"
+                : $"奖励 {runtimeTask.Task.Reward} Gold | 完成后自动领奖";
             item.ProgressNormalized = runtimeTask.Task.TargetCount > 0
                 ? UnityEngine.Mathf.Clamp01((float)runtimeTask.Task.CurrentCount / runtimeTask.Task.TargetCount)
                 : 0f;
-            item.IsClaimable = runtimeTask.CanClaimReward;
+            item.IsClaimable = false;
             return item;
         }
     }
