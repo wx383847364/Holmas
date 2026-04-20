@@ -10,7 +10,6 @@ using App.HotUpdate.Holmas.Bootstrap;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.UI.Core;
-using App.HotUpdate.Holmas.UI.Screens.Battle;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.Shared.Holmas.RuntimeData;
 using TMPro;
@@ -369,7 +368,7 @@ public static class HolmasPlayModeVerificationProbe
 
             string catId = firstTask.Task.CatId;
             int slotIndex = firstTask.Task.SlotIndex;
-            Log($"Starting explicit battle for task slot {slotIndex + 1}, cat {catId}.");
+            Log($"Starting embedded main board for task slot {slotIndex + 1}, cat {catId}.");
 
             root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(
                 4201,
@@ -377,9 +376,8 @@ public static class HolmasPlayModeVerificationProbe
                 {
                     new BoardSpawnEntry { CatId = catId, Weight = 1 }
                 }).GetAwaiter().GetResult();
-            root.ScreenService.OpenPageAsync(BattleScreenRegistration.ScreenId, "Probe task battle").GetAwaiter().GetResult();
-            CaptureBattleSnapshot("task_progress_battle", context.CurrentPlayerLevel, 1);
-            CaptureScreenshot("task_progress_battle.png");
+            CaptureBattleSnapshot("task_progress_main_board", context.CurrentPlayerLevel, 1);
+            CaptureScreenshot("task_progress_main_board.png");
 
             LevelSnapshot snapshot = context.GameplayRuntime.CurrentLevelSnapshot;
             if (snapshot == null || snapshot.SpawnedCats == null || snapshot.SpawnedCats.Count == 0)
@@ -390,7 +388,7 @@ public static class HolmasPlayModeVerificationProbe
             HolmasProgressionAdvanceResult completionResult = null;
             foreach (int cellIndex in snapshot.SpawnedCats.Where(item => item != null).Select(item => item.CellIndex).Distinct().OrderBy(item => item))
             {
-                BoardRevealResult reveal = context.GameplayRuntime.RevealCell(cellIndex, out completionResult);
+                BoardRevealResult reveal = context.GameplayRuntime.RevealCell(cellIndex, HolmasBoardInteractionMode.Find, out completionResult);
                 if (!reveal.IsValidAction)
                 {
                     throw new InvalidOperationException($"Holmas probe: reveal rejected for cat cell {cellIndex}.");
@@ -407,7 +405,6 @@ public static class HolmasPlayModeVerificationProbe
                 throw new InvalidOperationException("Holmas probe: no task progression recorded after battle completion.");
             }
 
-            root.ScreenService.OpenPageAsync(MainScreenRegistration.ScreenId, "Probe returned from battle").GetAwaiter().GetResult();
             CaptureMainSnapshot("after_battle_before_claim");
 
             var taskAfterBattle = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
@@ -483,7 +480,6 @@ public static class HolmasPlayModeVerificationProbe
                     {
                         new BoardSpawnEntry { CatId = trackedCatId, Weight = 1 }
                     });
-                await root.ScreenService.OpenPageAsync(BattleScreenRegistration.ScreenId, $"Probe level {requestedLevel} attempt {attempt}");
                 await DelayFramesAsync(4);
 
                 BattleSnapshot snapshot = CaptureBattleSnapshot($"level_{requestedLevel}_attempt_{attempt}", requestedLevel, attempt);
@@ -530,10 +526,10 @@ public static class HolmasPlayModeVerificationProbe
 
         private BattleSnapshot CaptureBattleSnapshot(string label, int requestedLevel, int attempt)
         {
-            BattleView view = UnityEngine.Object.FindObjectOfType<BattleView>(true);
+            MainView view = UnityEngine.Object.FindObjectOfType<MainView>(true);
             if (view == null)
             {
-                throw new InvalidOperationException("Holmas probe: BattleView not found.");
+                throw new InvalidOperationException("Holmas probe: MainView not found while capturing embedded board.");
             }
 
             string summary = ReadText(view.transform, "SummaryText");
@@ -599,13 +595,9 @@ public static class HolmasPlayModeVerificationProbe
                 cols = ParseInt(boardMatch.Groups[2].Value);
             }
 
-            string[] lines = summary.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            if (lines.Length < 2)
-            {
-                return;
-            }
-
-            foreach (string segment in lines[1].Split('|').Select(item => item.Trim()))
+            foreach (string segment in summary
+                         .Split(new[] { '\n', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                         .Select(item => item.Trim()))
             {
                 if (segment.StartsWith("Board Cats ", StringComparison.Ordinal))
                 {
