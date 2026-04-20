@@ -39,6 +39,29 @@ namespace App.HotUpdate.Holmas.UI.Generated
                 MainBindings.ButtonClickEvent,
                 requiresManualWiring: true,
                 notes: "controller_wires_promotion");
+            manifest.AddEntry(
+                MainBindings.AddEnergyButtonKey,
+                "Button",
+                MainBindings.AddEnergyButtonNodePath,
+                MainBindings.ButtonClickEvent,
+                requiresManualWiring: true,
+                notes: "controller_wires_add_energy");
+            manifest.AddEntry(MainBindings.MinesGroupKey, "RectTransform", MainBindings.MinesGroupNodePath, notes: "embedded_board_parent");
+            manifest.AddEntry(MainBindings.BoardContainerKey, "RectTransform", MainBindings.BoardContainerNodePath, notes: "embedded_runtime_board");
+            manifest.AddEntry(
+                MainBindings.WalkToggleKey,
+                "Toggle",
+                MainBindings.WalkToggleNodePath,
+                MainBindings.ToggleChangedEvent,
+                requiresManualWiring: true,
+                notes: "controller_wires_walk_mode");
+            manifest.AddEntry(
+                MainBindings.FindToggleKey,
+                "Toggle",
+                MainBindings.FindToggleNodePath,
+                MainBindings.ToggleChangedEvent,
+                requiresManualWiring: true,
+                notes: "controller_wires_find_mode");
             return manifest;
         }
     }

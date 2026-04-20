@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using App.HotUpdate.Holmas.Board;
+
 namespace App.HotUpdate.Holmas.UI.Screens.Main
 {
     public sealed class MainTaskItemVm
@@ -25,6 +28,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public string PromotionButtonLabel = "宣传升级";
         public bool PromotionButtonEnabled;
         public string PromotionId = string.Empty;
+        public string AddEnergyButtonLabel = "+5体力";
+        public bool AddEnergyButtonEnabled;
+        public bool BoardVisible;
+        public bool WalkToggleIsOn = true;
+        public bool FindToggleIsOn;
+        public int Rows;
+        public int Cols;
+        public IReadOnlyList<BoardCellState> Cells = new BoardCellState[0];
         public MainTaskItemVm[] TaskItems = System.Array.Empty<MainTaskItemVm>();
     }
 }

@@ -178,6 +178,67 @@ namespace App.HotUpdate.Holmas.UI.Core
         }
 
         /// <summary>
+        /// 从首页启动或恢复棋盘，但保持 MainPage 为当前页面，由 MainPanel 内嵌棋盘承载交互。
+        /// </summary>
+        public async Task<string> StartBattleInMainAsync()
+        {
+            string finalStatus = "棋盘已准备。";
+            await RunExclusiveAsync(async () =>
+            {
+                if (_root.LevelLaunchGateway == null)
+                {
+                    throw new InvalidOperationException("关卡启动网关不可用。");
+                }
+
+                bool sessionStarted = false;
+                await _root.ScreenService.ShowOverlayAsync(
+                    LoadingScreenRegistration.TransitionOverlayScreenId,
+                    CreateLoadingVm("正在准备棋盘...", 0.15f, true));
+
+                try
+                {
+                    HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
+                    bool continueExistingLevel = runtime != null && runtime.HasActiveUncompletedLevel;
+                    if (continueExistingLevel)
+                    {
+                        finalStatus = $"已恢复未完成关卡，map={runtime.CurrentLevelSnapshot?.MapId ?? "unknown"}";
+                    }
+                    else
+                    {
+                        int seed = Environment.TickCount;
+                        await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
+                        sessionStarted = true;
+                        finalStatus = $"关卡已启动，seed={seed}";
+                    }
+
+                    runtime = _root.Context != null ? _root.Context.GameplayRuntime : runtime;
+                    runtime?.CurrentBoardRuntime?.ClearFlags();
+
+                    await _battleWorldHost.PrepareAsync(_root.Context != null && _root.Context.GameplayRuntime != null
+                        ? _root.Context.GameplayRuntime.CurrentLevelSnapshot
+                        : null);
+                    _battleWorldHost.Show();
+                }
+                catch
+                {
+                    _battleWorldHost.Release();
+                    if (sessionStarted && _root.Context != null && _root.Context.GameplayRuntime != null)
+                    {
+                        _root.Context.GameplayRuntime.EndCurrentLevelSession();
+                    }
+
+                    throw;
+                }
+                finally
+                {
+                    await _root.ScreenService.CloseAsync(LoadingScreenRegistration.TransitionOverlayScreenId);
+                }
+            });
+
+            return finalStatus;
+        }
+
+        /// <summary>
         /// 当前棋盘完成后立即进入下一局。
         /// 任务推进和结算已经由 HolmasGameplayRuntime 完成，这里只负责新关卡加载与页面刷新。
         /// </summary>
@@ -231,6 +292,62 @@ namespace App.HotUpdate.Holmas.UI.Core
                     await _root.ScreenService.CloseAsync(LoadingScreenRegistration.TransitionOverlayScreenId);
                 }
             });
+        }
+
+        /// <summary>
+        /// 当前内嵌棋盘完成后立即启动下一局，并保持 MainPage 不跳转。
+        /// </summary>
+        public async Task<string> AdvanceToNextBattleInMainAsync(HolmasProgressionAdvanceResult progressionResult)
+        {
+            string finalStatus = "已进入下一关。";
+            await RunExclusiveAsync(async () =>
+            {
+                if (_root.LevelLaunchGateway == null)
+                {
+                    throw new InvalidOperationException("关卡启动网关不可用。");
+                }
+
+                HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
+                if (runtime == null || runtime.CurrentLevelSnapshot == null || !runtime.CurrentLevelSnapshot.Completed)
+                {
+                    throw new InvalidOperationException("当前棋盘尚未完成，不能进入下一关。");
+                }
+
+                string completedMapId = runtime.CurrentLevelSnapshot.MapId ?? "unknown";
+                bool sessionStarted = false;
+                await _root.ScreenService.ShowOverlayAsync(
+                    LoadingScreenRegistration.TransitionOverlayScreenId,
+                    CreateLoadingVm("正在进入下一关...", 0.2f, true));
+
+                try
+                {
+                    int seed = Environment.TickCount;
+                    await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
+                    sessionStarted = true;
+
+                    LevelSnapshot nextSnapshot = runtime.CurrentLevelSnapshot;
+                    await _battleWorldHost.PrepareAsync(nextSnapshot);
+                    _battleWorldHost.Show();
+
+                    finalStatus = BuildNextBattleStatus(completedMapId, nextSnapshot, seed, progressionResult);
+                }
+                catch
+                {
+                    if (sessionStarted && runtime != null)
+                    {
+                        runtime.EndCurrentLevelSession();
+                    }
+
+                    _battleWorldHost.Release();
+                    throw;
+                }
+                finally
+                {
+                    await _root.ScreenService.CloseAsync(LoadingScreenRegistration.TransitionOverlayScreenId);
+                }
+            });
+
+            return finalStatus;
         }
 
         /// <summary>

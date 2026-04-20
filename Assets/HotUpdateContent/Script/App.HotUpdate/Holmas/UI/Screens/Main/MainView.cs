@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.UI.Binding;
 using App.HotUpdate.Holmas.UI.Core;
+using App.HotUpdate.Holmas.UI.Screens.FindCat;
 using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
 using UnityEngine;
@@ -23,9 +24,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private readonly List<MainTaskSlotView> _taskSlotViews = new List<MainTaskSlotView>();
 
         private MainBindings _bindings;
+        private FindCatBoardView _boardView;
         private UnityAction _currentStartAction;
         private UnityAction _currentPromotionAction;
+        private UnityAction _currentAddEnergyAction;
+        private UnityAction<bool> _currentWalkToggleAction;
+        private UnityAction<bool> _currentFindToggleAction;
         private Action<int> _currentTaskSlotAction;
+        private Action<int, bool> _currentCellAction;
+        private bool _isSyncingToggles;
 
         public void EnsureBindingSurface()
         {
@@ -82,6 +89,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new Vector2(320f, 108f),
                 new Color(0.96f, 0.57f, 0.16f, 0.96f));
             Button promotionButton = ResolvePromotionButton(overlay);
+            Button addEnergyButton = ResolveAddEnergyButton(overlay);
+            RectTransform minesGroup = ResolveMinesGroup(overlay);
+            RectTransform boardContainer = GetOrCreateBoardContainer(minesGroup);
+            Toggle walkToggle = ResolveModeToggle("WalkToggle", true);
+            Toggle findToggle = ResolveModeToggle("FindToggle", false);
+            EnsureExclusiveModeToggles(walkToggle, findToggle);
 
             collector.RegisterOrReplace(MainBindings.LevelTextKey, levelText, nodePath: MainBindings.LevelTextNodePath);
             collector.RegisterOrReplace(MainBindings.GoldTextKey, goldText, nodePath: MainBindings.GoldTextNodePath);
@@ -98,6 +111,23 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 promotionButton,
                 MainBindings.ButtonClickEvent,
                 MainBindings.PromotionButtonNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.AddEnergyButtonKey,
+                addEnergyButton,
+                MainBindings.ButtonClickEvent,
+                MainBindings.AddEnergyButtonNodePath);
+            collector.RegisterOrReplace(MainBindings.MinesGroupKey, minesGroup, nodePath: MainBindings.MinesGroupNodePath);
+            collector.RegisterOrReplace(MainBindings.BoardContainerKey, boardContainer, nodePath: MainBindings.BoardContainerNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.WalkToggleKey,
+                walkToggle,
+                MainBindings.ToggleChangedEvent,
+                MainBindings.WalkToggleNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.FindToggleKey,
+                findToggle,
+                MainBindings.ToggleChangedEvent,
+                MainBindings.FindToggleNodePath);
 
             EnsureTaskSlotViews();
         }
@@ -147,10 +177,69 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
         }
 
+        public void SetAddEnergyAction(UnityAction action)
+        {
+            if (_bindings?.AddEnergyButton == null)
+            {
+                _currentAddEnergyAction = action;
+                return;
+            }
+
+            if (_currentAddEnergyAction != null)
+            {
+                _bindings.AddEnergyButton.onClick.RemoveListener(_currentAddEnergyAction);
+            }
+
+            _currentAddEnergyAction = action;
+            if (_currentAddEnergyAction != null)
+            {
+                _bindings.AddEnergyButton.onClick.AddListener(_currentAddEnergyAction);
+            }
+        }
+
+        public void SetModeToggleActions(UnityAction<bool> walkAction, UnityAction<bool> findAction)
+        {
+            if (_bindings?.WalkToggle == null || _bindings.FindToggle == null)
+            {
+                _currentWalkToggleAction = walkAction;
+                _currentFindToggleAction = findAction;
+                return;
+            }
+
+            if (_currentWalkToggleAction != null)
+            {
+                _bindings.WalkToggle.onValueChanged.RemoveListener(_currentWalkToggleAction);
+            }
+
+            if (_currentFindToggleAction != null)
+            {
+                _bindings.FindToggle.onValueChanged.RemoveListener(_currentFindToggleAction);
+            }
+
+            _currentWalkToggleAction = walkAction;
+            _currentFindToggleAction = findAction;
+            if (_currentWalkToggleAction != null)
+            {
+                _bindings.WalkToggle.onValueChanged.AddListener(_currentWalkToggleAction);
+            }
+
+            if (_currentFindToggleAction != null)
+            {
+                _bindings.FindToggle.onValueChanged.AddListener(_currentFindToggleAction);
+            }
+        }
+
         public void SetTaskSlotAction(Action<int> action)
         {
             _currentTaskSlotAction = action;
         }
+
+        public void SetCellAction(Action<int, bool> action)
+        {
+            _currentCellAction = action;
+        }
+
+        public bool IsSyncingToggles => _isSyncingToggles;
 
         public void Render(MainVm viewModel)
         {
@@ -196,6 +285,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 SetButtonLabel(_bindings.PromotionButton, viewModel.PromotionButtonLabel);
             }
 
+            if (_bindings?.AddEnergyButton != null)
+            {
+                _bindings.AddEnergyButton.interactable = viewModel.AddEnergyButtonEnabled;
+                SetButtonLabel(_bindings.AddEnergyButton, viewModel.AddEnergyButtonLabel);
+            }
+
+            SyncModeToggles(viewModel);
+            RenderBoard(viewModel);
             RenderTaskSlots(viewModel.TaskItems ?? Array.Empty<MainTaskItemVm>());
         }
 
@@ -480,6 +577,170 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new Vector2(-60f, 96f),
                 new Vector2(240f, 96f),
                 new Color(0.28f, 0.63f, 0.89f, 0.96f));
+        }
+
+        private Button ResolveAddEnergyButton(Transform overlay)
+        {
+            return GetOrCreateRuntimeButton(
+                overlay,
+                "AddEnergyButton",
+                "+5体力",
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(-64f, -190f),
+                new Vector2(180f, 64f),
+                new Color(0.95f, 0.58f, 0.16f, 0.95f));
+        }
+
+        private RectTransform ResolveMinesGroup(Transform overlay)
+        {
+            RectTransform existing = FindFirstDescendantByName<RectTransform>("MinesGroup");
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            GameObject minesGroupObject = GetOrCreateChild(overlay, "MinesGroup");
+            RectTransform minesGroup = minesGroupObject.GetComponent<RectTransform>();
+            if (minesGroup == null)
+            {
+                minesGroup = minesGroupObject.AddComponent<RectTransform>();
+            }
+
+            ConfigureRect(
+                minesGroup,
+                new Vector2(0.08f, 0.17f),
+                new Vector2(0.92f, 0.75f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                Vector2.zero);
+            return minesGroup;
+        }
+
+        private RectTransform GetOrCreateBoardContainer(RectTransform minesGroup)
+        {
+            if (minesGroup == null)
+            {
+                return null;
+            }
+
+            GameObject boardObject = GetOrCreateChild(minesGroup, "BoardContainer");
+            RectTransform boardContainer = boardObject.GetComponent<RectTransform>();
+            if (boardContainer == null)
+            {
+                boardContainer = boardObject.AddComponent<RectTransform>();
+            }
+
+            Stretch(boardContainer);
+
+            Image background = boardObject.GetComponent<Image>();
+            if (background == null)
+            {
+                background = boardObject.AddComponent<Image>();
+            }
+
+            background.color = new Color(0f, 0f, 0f, 0f);
+            background.raycastTarget = false;
+            _boardView = boardObject.GetComponent<FindCatBoardView>() ?? boardObject.AddComponent<FindCatBoardView>();
+            return boardContainer;
+        }
+
+        private Toggle ResolveModeToggle(string objectName, bool defaultOn)
+        {
+            Toggle toggle = FindFirstDescendantByName<Toggle>(objectName);
+            if (toggle == null)
+            {
+                return null;
+            }
+
+            toggle.isOn = defaultOn;
+            return toggle;
+        }
+
+        private ToggleGroup EnsureExclusiveModeToggles(Toggle walkToggle, Toggle findToggle)
+        {
+            if (walkToggle == null || findToggle == null)
+            {
+                return null;
+            }
+
+            Transform groupRoot = walkToggle.transform.parent != null &&
+                                  walkToggle.transform.parent == findToggle.transform.parent
+                ? walkToggle.transform.parent
+                : walkToggle.transform.parent ?? findToggle.transform.parent;
+            if (groupRoot == null)
+            {
+                return null;
+            }
+
+            ToggleGroup group = groupRoot.GetComponent<ToggleGroup>();
+            if (group == null)
+            {
+                group = groupRoot.gameObject.AddComponent<ToggleGroup>();
+            }
+
+            group.allowSwitchOff = false;
+            walkToggle.group = group;
+            findToggle.group = group;
+            walkToggle.SetIsOnWithoutNotify(true);
+            findToggle.SetIsOnWithoutNotify(false);
+            return group;
+        }
+
+        private void SyncModeToggles(MainVm viewModel)
+        {
+            if (_bindings?.WalkToggle == null || _bindings.FindToggle == null)
+            {
+                return;
+            }
+
+            _isSyncingToggles = true;
+            _bindings.WalkToggle.SetIsOnWithoutNotify(viewModel.WalkToggleIsOn);
+            _bindings.FindToggle.SetIsOnWithoutNotify(viewModel.FindToggleIsOn);
+            _isSyncingToggles = false;
+        }
+
+        private void RenderBoard(MainVm viewModel)
+        {
+            if (_bindings?.BoardContainer == null)
+            {
+                return;
+            }
+
+            SetMinesGroupPlaceholderVisible(!viewModel.BoardVisible);
+            _bindings.BoardContainer.gameObject.SetActive(viewModel.BoardVisible);
+            if (!viewModel.BoardVisible)
+            {
+                return;
+            }
+
+            FindCatBoardView boardView = _boardView ?? _bindings.BoardContainer.GetComponent<FindCatBoardView>() ?? _bindings.BoardContainer.gameObject.AddComponent<FindCatBoardView>();
+            _boardView = boardView;
+            boardView.Render(viewModel.Rows, viewModel.Cols, viewModel.Cells, _currentCellAction);
+        }
+
+        private void SetMinesGroupPlaceholderVisible(bool isVisible)
+        {
+            if (_bindings?.MinesGroup == null)
+            {
+                return;
+            }
+
+            GridLayoutGroup parentLayout = _bindings.MinesGroup.GetComponent<GridLayoutGroup>();
+            if (parentLayout != null)
+            {
+                parentLayout.enabled = isVisible;
+            }
+
+            for (int i = 0; i < _bindings.MinesGroup.childCount; i++)
+            {
+                Transform child = _bindings.MinesGroup.GetChild(i);
+                if (child != null && child.name != "BoardContainer")
+                {
+                    child.gameObject.SetActive(isVisible);
+                }
+            }
         }
 
         private TextMeshProUGUI GetOrCreateRuntimeText(

@@ -38,7 +38,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _view?.Bind(_bindings);
             _view?.SetBackAction(OnBackClicked);
             _view?.SetCellAction(OnCellClicked);
-            _view?.SetAddEnergyAction(OnAddEnergyClicked);
         }
 
         protected override void OnOpen(object payload)
@@ -59,7 +58,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         {
             _view?.SetBackAction(null);
             _view?.SetCellAction(null);
-            _view?.SetAddEnergyAction(null);
             if (_runtime != null)
             {
                 _runtime.StateChanged -= OnRuntimeStateChanged;
@@ -74,19 +72,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private void OnCellClicked(int cellIndex, bool isFlagAction)
         {
             _ = HandleCellInteractionAsync(cellIndex, isFlagAction);
-        }
-
-        private void OnAddEnergyClicked()
-        {
-            HolmasApplicationContext context = Root != null ? Root.Context : null;
-            if (context == null)
-            {
-                Refresh("应用上下文不可用，无法补充体力。");
-                return;
-            }
-
-            context.AddEnergy();
-            Refresh($"体力 +{HolmasGameplayRuntime.DebugEnergyGrantAmount}。");
         }
 
         private async Task HandleCellInteractionAsync(int cellIndex, bool isFlagAction)
@@ -106,21 +91,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _isProcessing = true;
             try
             {
-                if (isFlagAction)
+                HolmasProgressionAdvanceResult progressionResult;
+                HolmasBoardInteractionMode mode = isFlagAction
+                    ? HolmasBoardInteractionMode.Find
+                    : HolmasBoardInteractionMode.Walk;
+                BoardRevealResult revealResult = runtime.RevealCell(cellIndex, mode, out progressionResult);
+                string revealStatus = BuildRevealStatus(revealResult, progressionResult, mode);
+                Refresh(revealStatus);
+                if (revealResult != null && revealResult.IsValidAction && revealResult.Completed)
                 {
-                    BoardRevealResult flagResult = runtime.ToggleFlag(cellIndex);
-                    Refresh(BuildFlagStatus(flagResult));
-                }
-                else
-                {
-                    HolmasProgressionAdvanceResult progressionResult;
-                    BoardRevealResult revealResult = runtime.RevealCell(cellIndex, out progressionResult);
-                    string revealStatus = BuildRevealStatus(revealResult, progressionResult);
-                    Refresh(revealStatus);
-                    if (revealResult != null && revealResult.IsValidAction && revealResult.Completed)
-                    {
-                        await AdvanceToNextLevelAsync(progressionResult, revealStatus);
-                    }
+                    await AdvanceToNextLevelAsync(progressionResult, revealStatus);
                 }
             }
             catch (Exception ex)
@@ -217,22 +197,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _view?.Render(viewModel);
         }
 
-        private static string BuildFlagStatus(BoardRevealResult result)
-        {
-            if (result == null)
-            {
-                return "插旗结果为空。";
-            }
-
-            if (!result.IsValidAction)
-            {
-                return "该格当前不能插旗。";
-            }
-
-            return $"已切换格子 {result.CellIndex} 的旗标。";
-        }
-
-        private static string BuildRevealStatus(BoardRevealResult result, HolmasProgressionAdvanceResult progression)
+        private static string BuildRevealStatus(
+            BoardRevealResult result,
+            HolmasProgressionAdvanceResult progression,
+            HolmasBoardInteractionMode mode)
         {
             if (result == null)
             {
@@ -255,7 +223,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             if (result.FoundCat)
             {
-                return $"找到了一只猫，格子 {result.CellIndex}。";
+                return mode == HolmasBoardInteractionMode.Find
+                    ? $"寻找成功，找到猫，格子 {result.CellIndex}。"
+                    : $"行走遇到猫，格子 {result.CellIndex}。";
             }
 
             return result.ChangedCellIndices.Count > 1

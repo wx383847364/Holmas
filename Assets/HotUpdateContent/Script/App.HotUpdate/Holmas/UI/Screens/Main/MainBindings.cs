@@ -15,7 +15,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string StatusTextKey = "main/status_text";
         public const string StartButtonKey = "main/start_button";
         public const string PromotionButtonKey = "main/promotion_button";
+        public const string AddEnergyButtonKey = "main/add_energy_button";
+        public const string MinesGroupKey = "main/mines_group";
+        public const string BoardContainerKey = "main/board_container";
+        public const string WalkToggleKey = "main/walk_toggle";
+        public const string FindToggleKey = "main/find_toggle";
         public const string ButtonClickEvent = "on_click";
+        public const string ToggleChangedEvent = "on_value_changed";
 
         public const string RootNodePath = "MainPanel";
         public const string RuntimeOverlayNodeName = "RuntimeOverlay";
@@ -27,6 +33,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string StatusTextNodePath = RuntimeOverlayNodePath + "/StatusText";
         public const string StartButtonNodePath = RuntimeOverlayNodePath + "/StartButton";
         public const string PromotionButtonNodePath = RuntimeOverlayNodePath + "/PromotionButton";
+        public const string AddEnergyButtonNodePath = RuntimeOverlayNodePath + "/AddEnergyButton";
+        public const string MinesGroupNodePath = "MainPanel/MinesGroup";
+        public const string BoardContainerNodePath = MinesGroupNodePath + "/BoardContainer";
+        public const string WalkToggleNodePath = "MainPanel/WalkToggle";
+        public const string FindToggleNodePath = "MainPanel/FindToggle";
 
         public RectTransform RootPanel;
         public TextMeshProUGUI LevelText;
@@ -36,6 +47,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public TextMeshProUGUI StatusText;
         public Button StartButton;
         public Button PromotionButton;
+        public Button AddEnergyButton;
+        public RectTransform MinesGroup;
+        public RectTransform BoardContainer;
+        public Toggle WalkToggle;
+        public Toggle FindToggle;
 
         public bool HasRequiredBindings =>
             RootPanel != null &&
@@ -45,7 +61,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             SummaryText != null &&
             StatusText != null &&
             StartButton != null &&
-            PromotionButton != null;
+            PromotionButton != null &&
+            AddEnergyButton != null &&
+            MinesGroup != null &&
+            BoardContainer != null &&
+            WalkToggle != null &&
+            FindToggle != null;
 
         public static bool HasCompleteBindings(UiBindingResolver resolver)
         {
@@ -61,7 +82,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                    resolver.HasExplicitBinding<TextMeshProUGUI>(SummaryTextKey, nodePath: SummaryTextNodePath) &&
                    resolver.HasExplicitBinding<TextMeshProUGUI>(StatusTextKey, nodePath: StatusTextNodePath) &&
                    resolver.HasExplicitBinding<Button>(StartButtonKey, ButtonClickEvent, StartButtonNodePath) &&
-                   resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath);
+                   resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath) &&
+                   resolver.HasExplicitBinding<Button>(AddEnergyButtonKey, ButtonClickEvent, AddEnergyButtonNodePath) &&
+                   resolver.HasExplicitBinding<RectTransform>(MinesGroupKey, nodePath: MinesGroupNodePath) &&
+                   resolver.HasExplicitBinding<RectTransform>(BoardContainerKey, nodePath: BoardContainerNodePath) &&
+                   resolver.HasExplicitBinding<Toggle>(WalkToggleKey, ToggleChangedEvent, WalkToggleNodePath) &&
+                   resolver.HasExplicitBinding<Toggle>(FindToggleKey, ToggleChangedEvent, FindToggleNodePath);
         }
 
         public static MainBindings Resolve(UiBindingResolver resolver)
@@ -80,6 +106,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             resolver.TryResolve(StatusTextKey, out bindings.StatusText, nodePath: StatusTextNodePath);
             resolver.TryResolve(StartButtonKey, out bindings.StartButton, ButtonClickEvent, StartButtonNodePath);
             resolver.TryResolve(PromotionButtonKey, out bindings.PromotionButton, ButtonClickEvent, PromotionButtonNodePath);
+            resolver.TryResolve(AddEnergyButtonKey, out bindings.AddEnergyButton, ButtonClickEvent, AddEnergyButtonNodePath);
+            resolver.TryResolve(MinesGroupKey, out bindings.MinesGroup, nodePath: MinesGroupNodePath);
+            resolver.TryResolve(BoardContainerKey, out bindings.BoardContainer, nodePath: BoardContainerNodePath);
+            resolver.TryResolve(WalkToggleKey, out bindings.WalkToggle, ToggleChangedEvent, WalkToggleNodePath);
+            resolver.TryResolve(FindToggleKey, out bindings.FindToggle, ToggleChangedEvent, FindToggleNodePath);
             return bindings;
         }
     }

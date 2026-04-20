@@ -26,10 +26,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 EnergyLabel = _context?.EnergyLabel ?? "50/50",
                 Summary = BuildSummary(board),
                 Status = string.IsNullOrWhiteSpace(status)
-                    ? "点击格子翻开，右键插旗。"
+                    ? "左键行走，右键寻找。"
                     : status,
-                AddEnergyButtonLabel = "+5体力",
-                AddEnergyButtonEnabled = _context != null && _context.GameplayRuntime != null,
                 Rows = board != null ? board.Rows : 0,
                 Cols = board != null ? board.Cols : 0,
                 Cells = board != null ? board.GetAllCellStates() : new BoardCellState[0],

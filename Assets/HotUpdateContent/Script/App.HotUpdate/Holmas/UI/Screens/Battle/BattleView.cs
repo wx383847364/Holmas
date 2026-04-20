@@ -1,7 +1,6 @@
 using System;
-using System.Collections.Generic;
-using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.UI.Binding;
+using App.HotUpdate.Holmas.UI.Screens.FindCat;
 using App.HotUpdate.Holmas.UI.Tool;
 using TMPro;
 using UnityEngine;
@@ -12,10 +11,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 {
     public sealed class BattleView : MonoBehaviour
     {
-        private readonly List<BattleCellView> _cells = new List<BattleCellView>();
         private BattleBindings _bindings;
+        private FindCatBoardView _boardView;
         private UnityAction _currentBackAction;
-        private UnityAction _currentAddEnergyAction;
         private Action<int, bool> _currentCellAction;
 
         public void EnsureBindingSurface()
@@ -63,16 +61,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 new Vector2(-200f, 100f),
                 26f,
                 TextAlignmentOptions.Center);
-            Button addEnergyButton = GetOrCreateRuntimeButton(
-                overlay,
-                "AddEnergyButton",
-                "+5体力",
-                new Vector2(1f, 1f),
-                new Vector2(1f, 1f),
-                new Vector2(1f, 1f),
-                new Vector2(-64f, -150f),
-                new Vector2(180f, 64f),
-                new Color(0.95f, 0.58f, 0.16f, 0.95f));
             RectTransform boardContainer = GetOrCreateBoardContainer(overlay);
 
             collector.RegisterOrReplace(
@@ -85,11 +73,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             collector.RegisterOrReplace(BattleBindings.EnergyTextKey, energyText, nodePath: BattleBindings.EnergyTextNodePath);
             collector.RegisterOrReplace(BattleBindings.SummaryTextKey, summaryText, nodePath: BattleBindings.SummaryTextNodePath);
             collector.RegisterOrReplace(BattleBindings.StatusTextKey, statusText, nodePath: BattleBindings.StatusTextNodePath);
-            collector.RegisterOrReplace(
-                BattleBindings.AddEnergyButtonKey,
-                addEnergyButton,
-                BattleBindings.ButtonClickEvent,
-                BattleBindings.AddEnergyButtonNodePath);
             collector.RegisterOrReplace(BattleBindings.BoardContainerKey, boardContainer, nodePath: BattleBindings.BoardContainerNodePath);
         }
 
@@ -123,26 +106,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _currentCellAction = action;
         }
 
-        public void SetAddEnergyAction(UnityAction action)
-        {
-            if (_bindings?.AddEnergyButton == null)
-            {
-                _currentAddEnergyAction = action;
-                return;
-            }
-
-            if (_currentAddEnergyAction != null)
-            {
-                _bindings.AddEnergyButton.onClick.RemoveListener(_currentAddEnergyAction);
-            }
-
-            _currentAddEnergyAction = action;
-            if (_currentAddEnergyAction != null)
-            {
-                _bindings.AddEnergyButton.onClick.AddListener(_currentAddEnergyAction);
-            }
-        }
-
         public void Render(BattleVm viewModel)
         {
             if (viewModel == null)
@@ -173,12 +136,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             if (_bindings?.StatusText != null)
             {
                 TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
-            }
-
-            if (_bindings?.AddEnergyButton != null)
-            {
-                _bindings.AddEnergyButton.interactable = viewModel.AddEnergyButtonEnabled;
-                SetButtonLabel(_bindings.AddEnergyButton, viewModel.AddEnergyButtonLabel);
             }
 
             RenderBoard(viewModel);
@@ -236,15 +193,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             background.color = new Color(0f, 0f, 0f, 0.18f);
 
-            GridLayoutGroup layout = boardObject.GetComponent<GridLayoutGroup>();
-            if (layout == null)
-            {
-                layout = boardObject.AddComponent<GridLayoutGroup>();
-            }
-
-            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            layout.spacing = new Vector2(4f, 4f);
-            layout.childAlignment = TextAnchor.MiddleCenter;
+            _boardView = boardObject.GetComponent<FindCatBoardView>() ?? boardObject.AddComponent<FindCatBoardView>();
             return rectTransform;
         }
 
@@ -255,63 +204,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return;
             }
 
-            GridLayoutGroup layout = _bindings.BoardContainer.GetComponent<GridLayoutGroup>();
-            int rows = Mathf.Max(0, viewModel.Rows);
-            int cols = Mathf.Max(0, viewModel.Cols);
-
-            if (rows <= 0 || cols <= 0 || viewModel.Cells == null)
-            {
-                for (int i = 0; i < _cells.Count; i++)
-                {
-                    _cells[i].gameObject.SetActive(false);
-                }
-                return;
-            }
-
-            layout.constraintCount = cols;
-            float width = _bindings.BoardContainer.rect.width;
-            float height = _bindings.BoardContainer.rect.height;
-            if (width <= 0f)
-            {
-                width = 720f;
-            }
-
-            if (height <= 0f)
-            {
-                height = 960f;
-            }
-
-            float spacingX = layout.spacing.x;
-            float spacingY = layout.spacing.y;
-            float cellWidth = (width - (cols - 1) * spacingX) / cols;
-            float cellHeight = (height - (rows - 1) * spacingY) / rows;
-            float cellSize = Mathf.Max(18f, Mathf.Min(cellWidth, cellHeight));
-            layout.cellSize = new Vector2(cellSize, cellSize);
-
-            SetCellCount(viewModel.Cells.Count);
-            for (int i = 0; i < _cells.Count; i++)
-            {
-                if (i < viewModel.Cells.Count)
-                {
-                    _cells[i].gameObject.SetActive(true);
-                    _cells[i].Bind(viewModel.Cells[i], _currentCellAction);
-                }
-                else
-                {
-                    _cells[i].gameObject.SetActive(false);
-                }
-            }
-        }
-
-        private void SetCellCount(int requiredCount)
-        {
-            while (_cells.Count < requiredCount)
-            {
-                GameObject cellObject = new GameObject($"Cell_{_cells.Count}", typeof(RectTransform), typeof(Image), typeof(BattleCellView));
-                cellObject.transform.SetParent(_bindings.BoardContainer, false);
-                BattleCellView cellView = cellObject.GetComponent<BattleCellView>();
-                _cells.Add(cellView);
-            }
+            FindCatBoardView boardView = _boardView ?? _bindings.BoardContainer.GetComponent<FindCatBoardView>() ?? _bindings.BoardContainer.gameObject.AddComponent<FindCatBoardView>();
+            _boardView = boardView;
+            boardView.Render(viewModel.Rows, viewModel.Cols, viewModel.Cells, _currentCellAction);
         }
 
         private Button ResolveBackButton(Transform overlay)
@@ -466,27 +361,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 TextAlignmentOptions.Center);
             TmpGlyphCoverageReporter.SetText(labelText, label);
             return button;
-        }
-
-        private static void SetButtonLabel(Button button, string label)
-        {
-            if (button == null)
-            {
-                return;
-            }
-
-            TextMeshProUGUI tmp = button.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (tmp != null)
-            {
-                TmpGlyphCoverageReporter.SetText(tmp, string.IsNullOrWhiteSpace(label) ? button.name : label);
-                return;
-            }
-
-            Text legacy = button.GetComponentInChildren<Text>(true);
-            if (legacy != null)
-            {
-                legacy.text = string.IsNullOrWhiteSpace(label) ? button.name : label;
-            }
         }
 
         private T FindDescendantComponent<T>(string path) where T : Component

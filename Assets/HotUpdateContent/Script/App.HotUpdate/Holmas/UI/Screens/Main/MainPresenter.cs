@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
@@ -19,6 +20,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         public MainVm Build(string status = null)
         {
+            BoardRuntime board = _context?.GameplayRuntime?.CurrentBoardRuntime;
             HolmasAgencyBuildingDefinition promotion = GetPrimaryPromotionDefinition();
             string promotionId = promotion != null ? promotion.PromotionId : string.Empty;
             bool hasConfiguredPromotions = HasConfiguredPromotionsForCurrentStage();
@@ -39,6 +41,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                     : BuildPromotionButtonLabel(promotion),
                 PromotionButtonEnabled = !string.IsNullOrWhiteSpace(promotionId),
                 PromotionId = promotionId ?? string.Empty,
+                AddEnergyButtonLabel = "+5体力",
+                AddEnergyButtonEnabled = _context != null && _context.GameplayRuntime != null,
+                BoardVisible = board != null,
+                Rows = board != null ? board.Rows : 0,
+                Cols = board != null ? board.Cols : 0,
+                Cells = board != null ? board.GetAllCellStates() : new BoardCellState[0],
                 TaskItems = BuildTaskItems(),
             };
         }
@@ -110,9 +118,41 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             int claimableCount = taskBar != null ? taskBar.GetClaimableTasks().Count : 0;
             string boardSummary = _context.GameplayRuntime.CurrentBoardRuntime == null
                 ? "未进入棋盘"
-                : $"棋盘 {_context.GameplayRuntime.CurrentBoardRuntime.Rows}x{_context.GameplayRuntime.CurrentBoardRuntime.Cols}";
+                : BuildBoardSummary(_context.GameplayRuntime.CurrentBoardRuntime);
 
             return $"{BuildProgressionSummary()} | 任务 {activeTaskCount}/{unlockedCount} | 可领奖 {claimableCount}\n{BuildPromotionSummary()} | {boardSummary}";
+        }
+
+        private string BuildBoardSummary(BoardRuntime board)
+        {
+            if (board == null)
+            {
+                return "未进入棋盘";
+            }
+
+            string mapId = _context?.GameplayRuntime?.CurrentLevelSnapshot != null
+                ? _context.GameplayRuntime.CurrentLevelSnapshot.MapId
+                : "unknown";
+            string terrainName = _context?.GameplayRuntime?.CurrentLevelSnapshot != null
+                ? GetTerrainFileName(_context.GameplayRuntime.CurrentLevelSnapshot.TerrainPath)
+                : "unknown";
+            int hiddenCatCount = System.Math.Max(0, board.TotalCatCount - board.FoundCatCount);
+            return $"Map {mapId} | Terrain {terrainName} | Board {board.Rows}x{board.Cols} | Board Cats {board.FoundCatCount}/{board.TotalCatCount} | Hidden {hiddenCatCount} | {BuildTaskProgressSummary()}";
+        }
+
+        private static string GetTerrainFileName(string terrainPath)
+        {
+            if (string.IsNullOrWhiteSpace(terrainPath))
+            {
+                return "unknown";
+            }
+
+            int slashIndex = terrainPath.LastIndexOf('/');
+            int backslashIndex = terrainPath.LastIndexOf('\\');
+            int index = System.Math.Max(slashIndex, backslashIndex);
+            return index >= 0 && index + 1 < terrainPath.Length
+                ? terrainPath.Substring(index + 1)
+                : terrainPath;
         }
 
         private string BuildProgressionSummary()
@@ -208,6 +248,55 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             return items.ToArray();
+        }
+
+        private string BuildTaskProgressSummary()
+        {
+            HolmasTaskBarState taskBar = _context?.GameplayRuntime?.TaskBarState;
+            if (taskBar == null || taskBar.Tasks == null || taskBar.Tasks.Count == 0)
+            {
+                return "Task none";
+            }
+
+            List<HolmasTaskRuntimeInstance> activeTasks = taskBar.Tasks
+                .Where(item => item != null && item.Task != null && !item.IsRewardClaimed)
+                .OrderBy(item => item.Task.SlotIndex)
+                .ToList();
+            if (activeTasks.Count == 0)
+            {
+                return "Task none";
+            }
+
+            if (activeTasks.Count == 1)
+            {
+                return BuildSingleTaskProgress("Task", activeTasks[0], includeCatId: false);
+            }
+
+            return "Tasks " + string.Join("; ", activeTasks.Select(BuildTaskProgressEntry));
+        }
+
+        private static string BuildTaskProgressEntry(HolmasTaskRuntimeInstance task)
+        {
+            if (task == null || task.Task == null)
+            {
+                return "unknown 0/0";
+            }
+
+            string catId = string.IsNullOrWhiteSpace(task.Task.CatId) ? "unknown" : task.Task.CatId;
+            return $"{catId} {System.Math.Max(0, task.Task.CurrentCount)}/{System.Math.Max(0, task.Task.TargetCount)}";
+        }
+
+        private static string BuildSingleTaskProgress(string label, HolmasTaskRuntimeInstance task, bool includeCatId)
+        {
+            if (task == null || task.Task == null)
+            {
+                return $"{label} 0/0";
+            }
+
+            string prefix = includeCatId && !string.IsNullOrWhiteSpace(task.Task.CatId)
+                ? $"{label} {task.Task.CatId}"
+                : label;
+            return $"{prefix} {System.Math.Max(0, task.Task.CurrentCount)}/{System.Math.Max(0, task.Task.TargetCount)}";
         }
 
         private static MainTaskItemVm BuildTaskItem(TaskSlotState slot, HolmasTaskRuntimeInstance runtimeTask, int slotIndex)

@@ -1,6 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.UI.Core;
 using App.Shared.Holmas.RuntimeData;
 
@@ -13,6 +15,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private MainBindings _bindings;
         private bool _isBusy;
         private HolmasGameplayRuntime _runtime;
+        private HolmasBoardInteractionMode _interactionMode = HolmasBoardInteractionMode.Walk;
 
         protected override void OnCreate()
         {
@@ -37,7 +40,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _view?.Bind(_bindings);
             _view?.SetStartAction(OnStartClicked);
             _view?.SetPromotionAction(OnPromotionClicked);
+            _view?.SetAddEnergyAction(OnAddEnergyClicked);
+            _view?.SetModeToggleActions(OnWalkToggleChanged, OnFindToggleChanged);
             _view?.SetTaskSlotAction(OnTaskSlotClicked);
+            _view?.SetCellAction(OnCellClicked);
         }
 
         protected override void OnOpen(object payload)
@@ -54,7 +60,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         {
             _view?.SetStartAction(null);
             _view?.SetPromotionAction(null);
+            _view?.SetAddEnergyAction(null);
+            _view?.SetModeToggleActions(null, null);
             _view?.SetTaskSlotAction(null);
+            _view?.SetCellAction(null);
             if (_runtime != null)
             {
                 _runtime.StateChanged -= OnRuntimeStateChanged;
@@ -88,9 +97,59 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 : $"宣传升级失败：{result?.FailureReason ?? "未知错误"}");
         }
 
+        private void OnAddEnergyClicked()
+        {
+            HolmasApplicationContext context = Root != null ? Root.Context : null;
+            if (context == null)
+            {
+                Refresh("应用上下文不可用，无法补充体力。");
+                return;
+            }
+
+            context.AddEnergy();
+            Refresh($"体力 +{HolmasGameplayRuntime.DebugEnergyGrantAmount}。");
+        }
+
+        private void OnWalkToggleChanged(bool isOn)
+        {
+            if (_view != null && _view.IsSyncingToggles)
+            {
+                return;
+            }
+
+            if (isOn)
+            {
+                SetInteractionMode(HolmasBoardInteractionMode.Walk, "已切换为行走模式。");
+            }
+        }
+
+        private void OnFindToggleChanged(bool isOn)
+        {
+            if (_view != null && _view.IsSyncingToggles)
+            {
+                return;
+            }
+
+            if (isOn)
+            {
+                SetInteractionMode(HolmasBoardInteractionMode.Find, "已切换为寻找模式。");
+            }
+        }
+
+        private void SetInteractionMode(HolmasBoardInteractionMode mode, string status)
+        {
+            _interactionMode = mode;
+            Refresh(status);
+        }
+
         private void OnTaskSlotClicked(int slotIndex)
         {
             _ = HandleTaskSlotAsync(slotIndex);
+        }
+
+        private void OnCellClicked(int cellIndex, bool isRightButton)
+        {
+            _ = HandleCellInteractionAsync(cellIndex, isRightButton);
         }
 
         private async Task HandleStartAsync()
@@ -113,7 +172,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             try
             {
-                await flowCoordinator.StartBattleAsync();
+                finalStatus = await flowCoordinator.StartBattleInMainAsync();
             }
             catch (Exception ex)
             {
@@ -128,6 +187,74 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 {
                     Refresh(finalStatus ?? "主界面已就绪。");
                 }
+            }
+        }
+
+        private async Task HandleCellInteractionAsync(int cellIndex, bool isRightButton)
+        {
+            if (_isBusy)
+            {
+                return;
+            }
+
+            HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
+            if (runtime == null)
+            {
+                Refresh("玩法运行时不可用。");
+                return;
+            }
+
+            HolmasBoardInteractionMode mode = isRightButton
+                ? HolmasBoardInteractionMode.Find
+                : _interactionMode;
+
+            _isBusy = true;
+            string finalStatus = null;
+            try
+            {
+                HolmasProgressionAdvanceResult progressionResult;
+                BoardRevealResult revealResult = runtime.RevealCell(cellIndex, mode, out progressionResult);
+                string revealStatus = BuildRevealStatus(revealResult, progressionResult, mode);
+                finalStatus = revealStatus;
+                Refresh(revealStatus);
+                if (revealResult != null && revealResult.IsValidAction && revealResult.Completed)
+                {
+                    finalStatus = await AdvanceToNextLevelAsync(progressionResult, revealStatus);
+                }
+            }
+            catch (Exception ex)
+            {
+                finalStatus = $"棋盘操作失败：{ex.Message}";
+                Refresh(finalStatus);
+            }
+            finally
+            {
+                _isBusy = false;
+                Refresh(finalStatus);
+                await Task.CompletedTask;
+            }
+        }
+
+        private async Task<string> AdvanceToNextLevelAsync(HolmasProgressionAdvanceResult progressionResult, string fallbackStatus)
+        {
+            HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
+            if (flowCoordinator == null)
+            {
+                Refresh(fallbackStatus);
+                return fallbackStatus;
+            }
+
+            try
+            {
+                string status = await flowCoordinator.AdvanceToNextBattleInMainAsync(progressionResult);
+                Refresh(status);
+                return status;
+            }
+            catch (Exception ex)
+            {
+                string status = $"本局完成，但进入下一关失败：{ex.Message}";
+                Refresh(status);
+                return status;
             }
         }
 
@@ -202,6 +329,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         {
             MainVm viewModel = _presenter != null ? _presenter.Build(status) : new MainVm();
             viewModel.StartButtonEnabled = !_isBusy && viewModel.StartButtonEnabled;
+            viewModel.WalkToggleIsOn = _interactionMode == HolmasBoardInteractionMode.Walk;
+            viewModel.FindToggleIsOn = _interactionMode == HolmasBoardInteractionMode.Find;
             if (viewModel.TaskItems != null)
             {
                 for (int i = 0; i < viewModel.TaskItems.Length; i++)
@@ -230,11 +359,48 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 case HolmasGameplayRuntimeStateChangeReason.PromotionUpgraded:
                 case HolmasGameplayRuntimeStateChangeReason.EnergyChanged:
                 case HolmasGameplayRuntimeStateChangeReason.LevelStarted:
+                case HolmasGameplayRuntimeStateChangeReason.LevelRevealed:
                 case HolmasGameplayRuntimeStateChangeReason.LevelCompleted:
                 case HolmasGameplayRuntimeStateChangeReason.CurrentLevelSessionEnded:
                     Refresh(null);
                     break;
             }
+        }
+
+        private static string BuildRevealStatus(
+            BoardRevealResult result,
+            HolmasProgressionAdvanceResult progression,
+            HolmasBoardInteractionMode mode)
+        {
+            if (result == null)
+            {
+                return "翻格结果为空。";
+            }
+
+            if (!result.IsValidAction)
+            {
+                return string.IsNullOrWhiteSpace(result.FailureReason)
+                    ? "该格当前不能翻开。"
+                    : result.FailureReason;
+            }
+
+            if (result.Completed)
+            {
+                int progressed = progression != null ? progression.ProgressedTaskIds.Count : 0;
+                int completed = progression != null ? progression.CompletedTaskIds.Count : 0;
+                return $"本局完成，推进任务 {progressed} 条，新完成 {completed} 条。";
+            }
+
+            if (result.FoundCat)
+            {
+                return mode == HolmasBoardInteractionMode.Find
+                    ? $"寻找成功，找到猫，格子 {result.CellIndex}。"
+                    : $"行走遇到猫，格子 {result.CellIndex}。";
+            }
+
+            return result.ChangedCellIndices.Count > 1
+                ? $"已展开 {result.ChangedCellIndices.Count} 个格子。"
+                : $"已翻开格子 {result.CellIndex}。";
         }
     }
 }
