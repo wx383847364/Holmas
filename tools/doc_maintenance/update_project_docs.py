@@ -810,7 +810,12 @@ def commit_scope_for_path(path: str) -> str:
     normalized = path.replace("\\", "/")
     if normalized == "doc/长期主文档/协作与执行/commit_module_sequences.json":
         return "registry"
-    if normalized.startswith("doc/长期主文档/协作与执行/") or normalized.startswith("tools/doc_maintenance/") or normalized.startswith(".githooks/"):
+    if (
+        normalized.startswith("doc/长期主文档/协作与执行/")
+        or normalized.startswith("tools/doc_maintenance/")
+        or normalized.startswith(".githooks/")
+        or normalized == "tools/repo_maintenance/install_git_hooks.sh"
+    ):
         return "230"
     if normalized.startswith("doc/迭代记录/"):
         return "260"
@@ -875,13 +880,13 @@ def current_commit_title_and_content(doc_root: Path, paths):
     module_code = next(iter(module_codes))
     if module_code == "230":
         if any("suggest-current-commit" in path or "update_project_docs.py" in path for path in normalized):
-            summary = "流程：优化 Git 提交建议与编号校验链路"
+            summary = "流程：修复 Git hook 编号登记时机"
             content = [
-                "优化 update_project_docs.py 的提交建议、合并标题与编号校验逻辑",
-                "更新 Git 提交建议与任务收尾规则文档的合并提交说明",
+                "将模块编号登记从 commit-msg 延后到 post-commit amend 流程",
+                "更新 Git 提交建议与任务收尾规则文档的 hook 分工说明",
             ]
             if any(is_auxiliary_test_path(path) for path in normalized):
-                content.append("补充 doc_maintenance 合并标题与边界场景回归测试")
+                content.append("补充 doc_maintenance 真实 hook 提交树回归测试")
             return module_code, f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))} {summary}", content[:4]
         else:
             summary = "流程：同步协作与执行规则"
@@ -1200,11 +1205,11 @@ def validate_commit_message(doc_root: Path, message_file: Path, fetch_latest: bo
             ),
         }
 
+    registry_path = commit_sequence_registry_path(doc_root)
     updated_modules = dict(registry_modules)
     updated_modules[parsed["module_code"]] = max(updated_modules.get(parsed["module_code"], 0), parsed["sequence"])
-    registry_changed = updated_modules != registry_modules or not commit_sequence_registry_path(doc_root).exists()
-    registry_path = commit_sequence_registry_path(doc_root)
-    if registry_changed:
+    registry_changed = updated_modules != registry_modules or not registry_path.exists()
+    if registry_changed and stage_registry:
         registry_path = write_commit_sequence_registry(doc_root, updated_modules)
     if stage_registry and registry_path.exists():
         stage_repo_file(doc_root, registry_path)

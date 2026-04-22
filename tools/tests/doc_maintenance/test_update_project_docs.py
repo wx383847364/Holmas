@@ -18,6 +18,7 @@ FINALIZE_SCRIPT = TOOLS_ROOT / "doc_maintenance" / "finalize_task.sh"
 SYNC_SKILLS_SCRIPT = TOOLS_ROOT / "repo_maintenance" / "sync_codex_skills.sh"
 PRE_COMMIT_HOOK = TOOLS_ROOT.parents[0] / ".githooks" / "pre-commit"
 COMMIT_MSG_HOOK = TOOLS_ROOT.parents[0] / ".githooks" / "commit-msg"
+POST_COMMIT_HOOK = TOOLS_ROOT.parents[0] / ".githooks" / "post-commit"
 
 spec = importlib.util.spec_from_file_location("update_project_docs", SCRIPT_PATH)
 update_project_docs = importlib.util.module_from_spec(spec)
@@ -90,7 +91,12 @@ def install_repo_maintenance_tools(root: Path, include_sync: bool = False) -> Pa
     return repo_tools_dir
 
 
-def install_git_hooks(root: Path, include_pre_commit: bool = True, include_commit_msg: bool = False) -> Path:
+def install_git_hooks(
+    root: Path,
+    include_pre_commit: bool = True,
+    include_commit_msg: bool = False,
+    include_post_commit: bool = False,
+) -> Path:
     hooks_dir = root / ".githooks"
     hooks_dir.mkdir(parents=True, exist_ok=True)
     if include_pre_commit:
@@ -99,6 +105,9 @@ def install_git_hooks(root: Path, include_pre_commit: bool = True, include_commi
     if include_commit_msg:
         copy2(COMMIT_MSG_HOOK, hooks_dir / "commit-msg")
         os.chmod(hooks_dir / "commit-msg", 0o755)
+    if include_post_commit:
+        copy2(POST_COMMIT_HOOK, hooks_dir / "post-commit")
+        os.chmod(hooks_dir / "post-commit", 0o755)
     subprocess.run(["git", "config", "core.hooksPath", ".githooks"], cwd=root, check=True, capture_output=True, text=True)
     return hooks_dir
 
@@ -1975,7 +1984,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             report = update_project_docs.suggest_current_commit(doc_root)
 
             self.assertTrue(report["suitable"])
-            self.assertTrue(report["title"].startswith("[23000002] 流程：优化 Git 提交建议与编号校验链路"))
+            self.assertTrue(report["title"].startswith("[23000002] 流程：修复 Git hook 编号登记时机"))
 
     def test_suggest_current_commit_reuses_unsuitable_snapshot_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -2019,7 +2028,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             with mock.patch.object(
                 update_project_docs,
                 "current_commit_title_and_content",
-                return_value=("230", "[23000002] 流程：优化 Git 提交建议与编号校验链路", ["x"]),
+                return_value=("230", "[23000002] 流程：修复 Git hook 编号登记时机", ["x"]),
             ) as mocked_builder:
                 report = update_project_docs.suggest_current_commit(doc_root)
 
@@ -2043,7 +2052,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             with mock.patch.object(
                 update_project_docs,
                 "current_commit_title_and_content",
-                return_value=("230", "[23000002] 流程：优化 Git 提交建议与编号校验链路", ["x"]),
+                return_value=("230", "[23000002] 流程：修复 Git hook 编号登记时机", ["x"]),
             ) as mocked_builder:
                 report = update_project_docs.suggest_current_commit(doc_root)
 
@@ -2114,6 +2123,53 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertNotEqual(completed.returncode, 0)
             self.assertIn("提交标题编号校验失败", completed.stderr)
             self.assertIn("[23000003]", completed.stderr)
+
+    def test_commit_hooks_amend_sequence_registry_into_same_commit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            install_doc_maintenance_tools(root)
+            install_git_hooks(root, include_pre_commit=False, include_commit_msg=True, include_post_commit=True)
+
+            write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=root, check=True, capture_output=True, text=True)
+
+            registry_path = "doc/长期主文档/协作与执行/commit_module_sequences.json"
+            head_registry = json.loads(
+                subprocess.run(
+                    ["git", "show", f"HEAD:{registry_path}"],
+                    cwd=root,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout
+            )
+            self.assertEqual(head_registry["modules"]["230"], 1)
+            self.assertEqual(
+                subprocess.run(["git", "status", "--short"], cwd=root, check=True, capture_output=True, text=True).stdout,
+                "",
+            )
+
+            write_file(root, "README.md", "next\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000002] 流程：继续规则"], cwd=root, check=True, capture_output=True, text=True)
+
+            head_registry = json.loads(
+                subprocess.run(
+                    ["git", "show", f"HEAD:{registry_path}"],
+                    cwd=root,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout
+            )
+            self.assertEqual(head_registry["modules"]["230"], 2)
+            self.assertEqual(
+                subprocess.run(["git", "status", "--short"], cwd=root, check=True, capture_output=True, text=True).stdout,
+                "",
+            )
 
     def test_unsuitable_handoff_clears_pending_commit_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
