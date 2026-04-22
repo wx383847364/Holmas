@@ -1635,6 +1635,173 @@ class UpdateProjectDocsTests(unittest.TestCase):
             staged = [chunk.decode("utf-8") for chunk in staged_output.split(b"\0") if chunk]
             self.assertIn("doc/长期主文档/协作与执行/commit_module_sequences.json", staged)
 
+    def test_validate_commit_message_rewrites_default_merge_title(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            install_doc_maintenance_tools(root)
+
+            write_file(root, "README.md", "hello\n")
+            subprocess.run(["git", "add", "README.md"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "[23000002] 流程：已有提交流水"], cwd=root, check=True, capture_output=True, text=True)
+
+            write_file(root, "doc/长期主文档/协作与执行/Git 提交建议与确认规则.md", "规则\n")
+            subprocess.run(
+                ["git", "add", "doc/长期主文档/协作与执行/Git 提交建议与确认规则.md"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            message_file = write_file(
+                root,
+                ".git/COMMIT_EDITMSG",
+                """
+                Merge branch 'main' of github.com:wx383847364/Holmas
+
+                # Please enter the commit message for your changes.
+                """,
+            )
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(root / "tools/doc_maintenance/update_project_docs.py"),
+                    "--doc-root",
+                    str(doc_root),
+                    "validate-commit-message",
+                    "--message-file",
+                    str(message_file),
+                    "--no-fetch",
+                    "--stage-registry",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            rewritten = message_file.read_text(encoding="utf-8")
+            self.assertTrue(rewritten.startswith("[23000003] 合并：同步 main 分支\n"), rewritten)
+            self.assertIn("- 合并 main 分支并同步当前分支基线", rewritten)
+            self.assertIn("- 保持合并提交标题和正文符合 Holmas 八位编号规则", rewritten)
+            self.assertIn("# Please enter the commit message for your changes.", rewritten)
+
+            registry_path = root / "doc/长期主文档/协作与执行/commit_module_sequences.json"
+            payload = json.loads(registry_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["modules"]["230"], 3)
+            staged_output = subprocess.run(
+                ["git", "diff", "--cached", "--name-only", "-z"],
+                cwd=root,
+                capture_output=True,
+                check=True,
+            ).stdout
+            staged = [chunk.decode("utf-8") for chunk in staged_output.split(b"\0") if chunk]
+            self.assertIn("doc/长期主文档/协作与执行/commit_module_sequences.json", staged)
+
+    def test_merge_source_parses_remote_tracking_branch(self):
+        source = update_project_docs.merge_source_from_subject("Merge remote-tracking branch 'origin/main'")
+
+        self.assertEqual(source, "origin/main")
+
+    def test_validate_commit_message_rejects_plain_non_numbered_title(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            install_doc_maintenance_tools(root)
+            message_file = write_file(root, ".git/COMMIT_EDITMSG", "流程：缺少编号\n")
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(root / "tools/doc_maintenance/update_project_docs.py"),
+                    "--doc-root",
+                    str(doc_root),
+                    "validate-commit-message",
+                    "--message-file",
+                    str(message_file),
+                    "--no-fetch",
+                    "--stage-registry",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("提交标题必须以 [TMMSSSSS] 八位编号开头。", completed.stderr)
+            self.assertIn("当前标题：流程：缺少编号", completed.stderr)
+
+    def test_validate_commit_message_rejects_empty_title(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            install_doc_maintenance_tools(root)
+            message_file = write_file(root, ".git/COMMIT_EDITMSG", "\n# comment only\n")
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(root / "tools/doc_maintenance/update_project_docs.py"),
+                    "--doc-root",
+                    str(doc_root),
+                    "validate-commit-message",
+                    "--message-file",
+                    str(message_file),
+                    "--no-fetch",
+                    "--stage-registry",
+                ],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("提交标题不能为空，且必须以 [TMMSSSSS] 八位编号开头。", completed.stderr)
+
+    def test_validate_commit_message_rejects_non_numbered_revert_fixup_and_squash(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            install_doc_maintenance_tools(root)
+
+            for subject in [
+                "Revert \"[23000002] 流程：已有提交流水\"",
+                "fixup! [23000002] 流程：已有提交流水",
+                "squash! [23000002] 流程：已有提交流水",
+            ]:
+                with self.subTest(subject=subject):
+                    message_file = write_file(root, ".git/COMMIT_EDITMSG", subject + "\n")
+
+                    completed = subprocess.run(
+                        [
+                            "python3",
+                            str(root / "tools/doc_maintenance/update_project_docs.py"),
+                            "--doc-root",
+                            str(doc_root),
+                            "validate-commit-message",
+                            "--message-file",
+                            str(message_file),
+                            "--no-fetch",
+                            "--stage-registry",
+                        ],
+                        cwd=root,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+
+                    self.assertNotEqual(completed.returncode, 0)
+                    self.assertIn("提交标题必须以 [TMMSSSSS] 八位编号开头。", completed.stderr)
+                    self.assertEqual(message_file.read_text(encoding="utf-8"), subject + "\n")
+
     def test_fetch_commit_sequence_baseline_reuses_recent_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -1808,7 +1975,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             report = update_project_docs.suggest_current_commit(doc_root)
 
             self.assertTrue(report["suitable"])
-            self.assertTrue(report["title"].startswith("[23000002] 流程：优化 Git 提交建议快路径与校验链路"))
+            self.assertTrue(report["title"].startswith("[23000002] 流程：优化 Git 提交建议与编号校验链路"))
 
     def test_suggest_current_commit_reuses_unsuitable_snapshot_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1852,7 +2019,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             with mock.patch.object(
                 update_project_docs,
                 "current_commit_title_and_content",
-                return_value=("230", "[23000002] 流程：优化 Git 提交建议快路径与校验链路", ["x"]),
+                return_value=("230", "[23000002] 流程：优化 Git 提交建议与编号校验链路", ["x"]),
             ) as mocked_builder:
                 report = update_project_docs.suggest_current_commit(doc_root)
 
@@ -1876,7 +2043,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             with mock.patch.object(
                 update_project_docs,
                 "current_commit_title_and_content",
-                return_value=("230", "[23000002] 流程：优化 Git 提交建议快路径与校验链路", ["x"]),
+                return_value=("230", "[23000002] 流程：优化 Git 提交建议与编号校验链路", ["x"]),
             ) as mocked_builder:
                 report = update_project_docs.suggest_current_commit(doc_root)
 

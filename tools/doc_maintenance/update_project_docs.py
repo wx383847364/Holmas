@@ -72,7 +72,7 @@ COMMIT_SEQUENCE_REGISTRY_RELATIVE = Path(LONG_DIR_NAME) / "协作与执行" / "c
 COMMIT_MODULE_SEQUENCE_START = 1
 COMMIT_MODULE_DEFAULT = "610"
 NUMBERED_COMMIT_RE = re.compile(r"^\[(\d{8})\]\s+")
-SKIPPED_COMMIT_MESSAGE_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
+DEFAULT_MERGE_COMMIT_MESSAGE_PREFIXES = ("Merge ",)
 DEFAULT_COMMIT_SEQUENCE_FETCH_TIMEOUT_SECONDS = 5
 DEFAULT_COMMIT_SEQUENCE_FETCH_MAX_AGE_SECONDS = 300
 DOC_MODULE_PATTERNS = [
@@ -875,13 +875,13 @@ def current_commit_title_and_content(doc_root: Path, paths):
     module_code = next(iter(module_codes))
     if module_code == "230":
         if any("suggest-current-commit" in path or "update_project_docs.py" in path for path in normalized):
-            summary = "流程：优化 Git 提交建议快路径与校验链路"
+            summary = "流程：优化 Git 提交建议与编号校验链路"
             content = [
-                "优化 update_project_docs.py 的快路径提交建议与编号校验逻辑",
-                "更新 Git 提交建议与任务收尾规则文档的快路径说明",
+                "优化 update_project_docs.py 的提交建议、合并标题与编号校验逻辑",
+                "更新 Git 提交建议与任务收尾规则文档的合并提交说明",
             ]
             if any(is_auxiliary_test_path(path) for path in normalized):
-                content.append("补充 doc_maintenance 快路径与边界场景回归测试")
+                content.append("补充 doc_maintenance 合并标题与边界场景回归测试")
             return module_code, f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))} {summary}", content[:4]
         else:
             summary = "流程：同步协作与执行规则"
@@ -900,6 +900,59 @@ def current_commit_title_and_content(doc_root: Path, paths):
     title = f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))} {summary}"
     content = [f"更新 {path}" for path in normalized[:4]]
     return module_code, title, content
+
+
+def cached_changed_paths(doc_root: Path):
+    try:
+        result = run_git(doc_root, ["diff", "--cached", "--name-only", "-z"])
+    except OSError:
+        return []
+    if result.returncode != 0:
+        return []
+    return [chunk for chunk in result.stdout.split("\0") if chunk]
+
+
+def merge_source_from_subject(subject: str) -> str:
+    stripped = (subject or "").strip()
+    patterns = [
+        r"^Merge (?:remote-tracking )?branch '([^']+)'",
+        r"^Merge pull request #\d+ from ([^\s]+)",
+        r"^Merge tag '([^']+)'",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, stripped)
+        if match:
+            return match.group(1).strip()
+    return "上游"
+
+
+def merge_commit_title_and_content(doc_root: Path, subject: str, fetch_latest: bool = True):
+    paths = cached_changed_paths(doc_root)
+    module_codes = dominant_commit_modules(paths)
+    if len(module_codes) == 1:
+        module_code = next(iter(module_codes))
+    else:
+        module_code = COMMIT_MODULE_DEFAULT
+    source = merge_source_from_subject(subject)
+    title = f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=fetch_latest))} 合并：同步 {source} 分支"
+    content = [
+        f"合并 {source} 分支并同步当前分支基线",
+        "保持合并提交标题和正文符合 Holmas 八位编号规则",
+    ]
+    if paths:
+        content.append(f"纳入 {paths[0]} 等合并结果" if len(paths) > 1 else f"纳入 {paths[0]} 的合并结果")
+    return module_code, title, content[:4]
+
+
+def rewrite_commit_message(message_file: Path, title: str, content):
+    original_lines = message_file.read_text(encoding="utf-8").splitlines()
+    comment_start = next((index for index, line in enumerate(original_lines) if line.startswith("#")), len(original_lines))
+    comment_lines = original_lines[comment_start:]
+    body_lines = [title, ""]
+    body_lines.extend(f"- {item}" for item in content)
+    if comment_lines:
+        body_lines.extend(["", *comment_lines])
+    message_file.write_text("\n".join(body_lines).rstrip() + "\n", encoding="utf-8")
 
 
 def suggest_current_commit(doc_root: Path):
@@ -1085,39 +1138,44 @@ def cached_current_commit_suggestion(doc_root: Path):
 
 
 def validate_commit_message(doc_root: Path, message_file: Path, fetch_latest: bool = True, stage_registry: bool = False):
-    subject = ""
-    for line in message_file.read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            subject = line.strip()
-            break
-
-    if not subject:
-        return {
-            "valid": True,
-            "skipped": True,
-            "reason": "提交消息为空，跳过编号校验。",
-        }
-
-    if subject.startswith(SKIPPED_COMMIT_MESSAGE_PREFIXES):
-        return {
-            "valid": True,
-            "skipped": True,
-            "reason": "merge/revert/fixup/squash 提交跳过编号校验。",
-        }
-
-    parsed = parse_numbered_commit_title(subject)
-    if not parsed:
-        return {
-            "valid": True,
-            "skipped": True,
-            "reason": "非八位编号提交标题，跳过编号校验。",
-        }
-
     fetch_info = {
         "attempted": False,
         "ok": True,
         "message": "未执行 fetch。",
     }
+    subject = ""
+    for line in message_file.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            subject = stripped
+            break
+
+    if not subject:
+        return {
+            "valid": False,
+            "skipped": False,
+            "subject": "",
+            "expected_title": "[TMMSSSSS] 前缀：摘要",
+            "fetch": fetch_info,
+            "reason": "提交标题不能为空，且必须以 [TMMSSSSS] 八位编号开头。",
+        }
+
+    if subject.startswith(DEFAULT_MERGE_COMMIT_MESSAGE_PREFIXES):
+        _, title, content = merge_commit_title_and_content(doc_root, subject, fetch_latest=fetch_latest)
+        rewrite_commit_message(message_file, title, content)
+        subject = title
+
+    parsed = parse_numbered_commit_title(subject)
+    if not parsed:
+        return {
+            "valid": False,
+            "skipped": False,
+            "subject": subject,
+            "expected_title": "[TMMSSSSS] 前缀：摘要",
+            "fetch": fetch_info,
+            "reason": "提交标题必须以 [TMMSSSSS] 八位编号开头。",
+        }
+
     if fetch_latest:
         fetch_info = fetch_commit_sequence_baseline(doc_root, allow_cached=False)
     registry_modules = read_commit_sequence_registry(doc_root)
