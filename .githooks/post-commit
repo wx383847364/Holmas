@@ -7,7 +7,7 @@ if [[ "${HOLMAS_POST_COMMIT_AMEND:-}" == "1" ]]; then
 fi
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-REGISTRY_RELATIVE_PATH="doc/长期主文档/协作与执行/commit_module_sequences.json"
+REGISTRY_RELATIVE_PATH="doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json"
 
 python3 "${REPO_ROOT}/tools/doc_maintenance/update_project_docs.py" \
   --doc-root "${REPO_ROOT}/doc" \

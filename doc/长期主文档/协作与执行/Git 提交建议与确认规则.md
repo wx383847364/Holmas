@@ -82,7 +82,7 @@ python3 tools/doc_maintenance/update_project_docs.py --doc-root doc suggest-curr
 固定说明：
 
 - 当前没有专门自动提交脚本，`commit / push` 仍由主线程按确认词执行
-- 当前模块最新编号登记在 [commit_module_sequences.json](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/commit_module_sequences.json)
+- 当前模块最新编号登记在 [commit_module_sequences.json](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json)
 - `Git 提交建议` 生成时会先尽量 fetch 远端基线，再结合 git history 与本地登记文件重算下一个编号
 - 真正执行 `git commit` 时，`.githooks/commit-msg` 会再次校验标题编号
 - 提交成功后，`.githooks/post-commit` 会同步模块编号登记文件，并用 `amend` 把登记更新并入同一个提交

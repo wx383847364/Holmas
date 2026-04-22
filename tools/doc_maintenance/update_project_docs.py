@@ -68,7 +68,7 @@ PENDING_COMMIT_CACHE_RELATIVE = Path("codex") / "pending_commit_suggestion.json"
 LAST_FINALIZE_REPORT_RELATIVE = Path("codex") / "last_finalize_report.json"
 COMMIT_SEQUENCE_FETCH_CACHE_RELATIVE = Path("codex") / "commit_sequence_fetch_state.json"
 CURRENT_COMMIT_SUGGESTION_CACHE_RELATIVE = Path("codex") / "current_commit_suggestion.json"
-COMMIT_SEQUENCE_REGISTRY_RELATIVE = Path(LONG_DIR_NAME) / "协作与执行" / "commit_module_sequences.json"
+COMMIT_SEQUENCE_REGISTRY_RELATIVE = Path(LONG_DIR_NAME) / "协作与执行" / "状态登记" / "commit_module_sequences.json"
 COMMIT_MODULE_SEQUENCE_START = 1
 COMMIT_MODULE_DEFAULT = "610"
 NUMBERED_COMMIT_RE = re.compile(r"^\[(\d{8})\]\s+")
@@ -808,7 +808,7 @@ def parse_worktree_entries(doc_root: Path):
 
 def commit_scope_for_path(path: str) -> str:
     normalized = path.replace("\\", "/")
-    if normalized == "doc/长期主文档/协作与执行/commit_module_sequences.json":
+    if normalized == "doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json":
         return "registry"
     if (
         normalized.startswith("doc/长期主文档/协作与执行/")
@@ -861,7 +861,7 @@ def dominant_commit_modules(paths):
 
 def current_commit_title_and_content(doc_root: Path, paths):
     normalized = dedupe_preserve_order(path.replace("\\", "/") for path in paths)
-    if normalized == ["doc/长期主文档/协作与执行/commit_module_sequences.json"]:
+    if normalized == ["doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json"]:
         module_code = "230"
         title = f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))} 流程：同步协作模块编号登记"
         content = [
@@ -879,6 +879,21 @@ def current_commit_title_and_content(doc_root: Path, paths):
 
     module_code = next(iter(module_codes))
     if module_code == "230":
+        if any(
+            path in {
+                "doc/长期主文档/协作与执行/commit_module_sequences.json",
+                "doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json",
+                "doc/长期主文档/协作与执行/状态登记/README.md",
+            }
+            for path in normalized
+        ):
+            summary = "流程：迁移提交编号状态登记"
+            content = [
+                "将提交编号登记移动到协作与执行/状态登记目录",
+                "保持 commit_module_sequences.json 纯数据结构并新增 README 说明用途",
+                "同步 hooks、doc_maintenance 脚本、测试和长期文档路径引用",
+            ]
+            return module_code, f"{format_commit_sequence(module_code, next_commit_sequence(doc_root, module_code, fetch_latest=True))} {summary}", content[:4]
         if any("suggest-current-commit" in path or "update_project_docs.py" in path for path in normalized):
             summary = "流程：修复 Git hook 编号登记时机"
             content = [

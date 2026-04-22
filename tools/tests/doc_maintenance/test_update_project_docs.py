@@ -1594,7 +1594,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             result = update_project_docs.sync_commit_sequence_registry(doc_root)
 
             self.assertTrue(result["changed"])
-            payload = json.loads((doc_root / "长期主文档/协作与执行/commit_module_sequences.json").read_text(encoding="utf-8"))
+            payload = json.loads((doc_root / "长期主文档/协作与执行/状态登记/commit_module_sequences.json").read_text(encoding="utf-8"))
             self.assertEqual(payload["modules"]["230"], 2)
             self.assertEqual(payload["modules"]["210"], 1)
 
@@ -1632,7 +1632,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             )
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
-            registry_path = root / "doc/长期主文档/协作与执行/commit_module_sequences.json"
+            registry_path = root / "doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json"
             payload = json.loads(registry_path.read_text(encoding="utf-8"))
             self.assertEqual(payload["modules"]["230"], 3)
             staged_output = subprocess.run(
@@ -1642,7 +1642,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
                 check=True,
             ).stdout
             staged = [chunk.decode("utf-8") for chunk in staged_output.split(b"\0") if chunk]
-            self.assertIn("doc/长期主文档/协作与执行/commit_module_sequences.json", staged)
+            self.assertIn("doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json", staged)
 
     def test_validate_commit_message_rewrites_default_merge_title(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1698,7 +1698,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             self.assertIn("- 保持合并提交标题和正文符合 Holmas 八位编号规则", rewritten)
             self.assertIn("# Please enter the commit message for your changes.", rewritten)
 
-            registry_path = root / "doc/长期主文档/协作与执行/commit_module_sequences.json"
+            registry_path = root / "doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json"
             payload = json.loads(registry_path.read_text(encoding="utf-8"))
             self.assertEqual(payload["modules"]["230"], 3)
             staged_output = subprocess.run(
@@ -1708,7 +1708,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
                 check=True,
             ).stdout
             staged = [chunk.decode("utf-8") for chunk in staged_output.split(b"\0") if chunk]
-            self.assertIn("doc/长期主文档/协作与执行/commit_module_sequences.json", staged)
+            self.assertIn("doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json", staged)
 
     def test_merge_source_parses_remote_tracking_branch(self):
         source = update_project_docs.merge_source_from_subject("Merge remote-tracking branch 'origin/main'")
@@ -1889,7 +1889,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             registry_path = write_file(
                 root,
-                "doc/长期主文档/协作与执行/commit_module_sequences.json",
+                "doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json",
                 """
                 {
                   "version": 1,
@@ -2136,7 +2136,7 @@ class UpdateProjectDocsTests(unittest.TestCase):
             subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True, text=True)
             subprocess.run(["git", "commit", "-m", "[23000001] 流程：初始化规则"], cwd=root, check=True, capture_output=True, text=True)
 
-            registry_path = "doc/长期主文档/协作与执行/commit_module_sequences.json"
+            registry_path = "doc/长期主文档/协作与执行/状态登记/commit_module_sequences.json"
             head_registry = json.loads(
                 subprocess.run(
                     ["git", "show", f"HEAD:{registry_path}"],
