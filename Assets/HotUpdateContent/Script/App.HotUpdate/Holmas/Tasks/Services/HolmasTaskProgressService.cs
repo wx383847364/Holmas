@@ -222,7 +222,7 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             HolmasTaskBarState taskBarState,
             int slotIndex,
             int playerLevel,
-            bool refillEmptySlotImmediately = true)
+            bool refillEmptySlotImmediately = false)
         {
             var result = new HolmasTaskClaimResult
             {
@@ -235,6 +235,19 @@ namespace App.HotUpdate.Holmas.Tasks.Services
                 return result;
             }
 
+            var slot = taskBarState.GetSlot(slotIndex);
+            if (slot == null)
+            {
+                result.FailureReason = "槽位索引无效。";
+                return result;
+            }
+
+            if (!slot.IsUnlocked)
+            {
+                result.FailureReason = "当前槽位未解锁。";
+                return result;
+            }
+
             var runtimeTask = taskBarState.GetTaskBySlot(slotIndex);
             if (runtimeTask == null)
             {
@@ -244,7 +257,9 @@ namespace App.HotUpdate.Holmas.Tasks.Services
 
             if (!runtimeTask.CanClaimReward)
             {
-                result.FailureReason = "任务尚未完成，不能领奖。";
+                result.FailureReason = runtimeTask.IsRewardClaimed
+                    ? "任务奖励已经领取。"
+                    : "任务尚未完成，不能领奖。";
                 return result;
             }
 
@@ -254,7 +269,6 @@ namespace App.HotUpdate.Holmas.Tasks.Services
 
             taskBarState.ClearSlot(slotIndex, true);
 
-            var slot = taskBarState.GetSlot(slotIndex);
             bool shouldRelockAfterClaim = slot != null && slot.PendingRelockAfterTaskCompletion;
             if (shouldRelockAfterClaim)
             {

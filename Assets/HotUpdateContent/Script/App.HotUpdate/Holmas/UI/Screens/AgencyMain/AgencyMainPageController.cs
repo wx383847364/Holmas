@@ -206,11 +206,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             switch (reason)
             {
                 case HolmasGameplayRuntimeStateChangeReason.TasksRefilled:
-                case HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed:
                 case HolmasGameplayRuntimeStateChangeReason.LevelCompleted:
                 case HolmasGameplayRuntimeStateChangeReason.PromotionUpgraded:
                 case HolmasGameplayRuntimeStateChangeReason.CurrentLevelSessionEnded:
                     Refresh(null);
+                    break;
+                case HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed:
+                    Refresh(_runtime != null && !string.IsNullOrWhiteSpace(_runtime.LastTaskRewardTip)
+                        ? _runtime.LastTaskRewardTip
+                        : null);
                     break;
             }
         }

@@ -17,6 +17,17 @@ using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgenc
 
 namespace App.HotUpdate.Holmas.Application
 {
+    [Serializable]
+    public sealed class HolmasTaskSettlementResult
+    {
+        public readonly List<int> ClaimedSlotIndices = new List<int>();
+        public int TotalReward;
+        public int RefilledTaskCount;
+        public HolmasTaskRefillResult RefillResult;
+
+        public int ClaimedTaskCount => ClaimedSlotIndices.Count;
+    }
+
     public enum HolmasGameplayRuntimeStateChangeReason
     {
         TasksRefilled,
@@ -154,6 +165,13 @@ namespace App.HotUpdate.Holmas.Application
         public string EnergyLabel => $"{CurrentEnergy}/{EnergyRecoveryLimit}";
 
         /// <summary>
+        /// 最近一次任务领奖提示，只作为 UI 即时状态文案，不写入存档。
+        /// </summary>
+        public string LastTaskRewardTip { get; private set; } = string.Empty;
+
+        public int LastTaskRewardTipVersion { get; private set; }
+
+        /// <summary>
         /// 当前关卡模板。
         /// </summary>
         public BoardTemplate CurrentBoardTemplate { get; private set; }
@@ -188,6 +206,66 @@ namespace App.HotUpdate.Holmas.Application
         public HolmasTaskRefillResult RefillAvailableTasks()
         {
             return RefillAvailableTasks(CurrentPlayerLevel);
+        }
+
+        public HolmasTaskSettlementResult SettleClaimableTasksAndRefill(int playerLevel)
+        {
+            var result = new HolmasTaskSettlementResult();
+            var claimableSlotIndices = new List<int>();
+            if (TaskBarState != null && TaskBarState.Tasks != null)
+            {
+                for (int i = 0; i < TaskBarState.Tasks.Count; i++)
+                {
+                    HolmasTaskRuntimeInstance runtimeTask = TaskBarState.Tasks[i];
+                    if (runtimeTask != null && runtimeTask.Task != null && runtimeTask.CanClaimReward)
+                    {
+                        claimableSlotIndices.Add(runtimeTask.Task.SlotIndex);
+                    }
+                }
+            }
+
+            foreach (int slotIndex in claimableSlotIndices.Distinct())
+            {
+                HolmasTaskRuntimeInstance taskBeforeClaim = TaskBarState.GetTaskBySlot(slotIndex);
+                if (taskBeforeClaim == null || !taskBeforeClaim.CanClaimReward)
+                {
+                    continue;
+                }
+
+                HolmasTaskClaimResult claimResult = _taskProgressService.ClaimTaskReward(
+                    TaskBarState,
+                    slotIndex,
+                    playerLevel,
+                    refillEmptySlotImmediately: false);
+                if (claimResult == null || !claimResult.Success)
+                {
+                    continue;
+                }
+
+                _progressionCoordinator.ApplyTaskClaim(taskBeforeClaim, MetaProgressionState);
+                result.TotalReward += claimResult.Reward;
+                result.ClaimedSlotIndices.Add(slotIndex);
+                _logger?.LogInfo(
+                    "HolmasGameplayRuntime: 任务槽位 {0} 兜底自动领奖成功，金币 +{1}。",
+                    slotIndex,
+                    claimResult.Reward);
+            }
+
+            result.RefillResult = RefillAvailableTasks(playerLevel);
+            result.RefilledTaskCount = CountSuccessfulTaskGeneration(result.RefillResult);
+            if (result.ClaimedTaskCount > 0)
+            {
+                SetLastTaskRewardTip(BuildTaskRewardTip(result.ClaimedSlotIndices, result.TotalReward, result.RefilledTaskCount));
+                _logger?.LogInfo("HolmasGameplayRuntime: {0}", LastTaskRewardTip);
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed);
+            }
+
+            return result;
+        }
+
+        public HolmasTaskSettlementResult SettleClaimableTasksAndRefill()
+        {
+            return SettleClaimableTasksAndRefill(CurrentPlayerLevel);
         }
 
         /// <summary>
@@ -565,6 +643,8 @@ namespace App.HotUpdate.Holmas.Application
                 return;
             }
 
+            int totalReward = 0;
+            var claimedSlotIndices = new List<int>();
             for (int i = 0; i < progressResult.NewlyCompletedSlotIndices.Count; i++)
             {
                 int slotIndex = progressResult.NewlyCompletedSlotIndices[i];
@@ -578,18 +658,28 @@ namespace App.HotUpdate.Holmas.Application
                     TaskBarState,
                     slotIndex,
                     CurrentPlayerLevel,
-                    refillEmptySlotImmediately: true);
+                    refillEmptySlotImmediately: false);
                 if (claimResult == null || !claimResult.Success)
                 {
                     continue;
                 }
 
                 _progressionCoordinator.ApplyTaskClaim(taskBeforeClaim, MetaProgressionState);
+                totalReward += claimResult.Reward;
+                claimedSlotIndices.Add(slotIndex);
                 _logger?.LogInfo(
-                    "HolmasGameplayRuntime: 任务槽位 {0} 自动领奖成功，金币 +{1}，补新任务={2}。",
+                    "HolmasGameplayRuntime: 任务槽位 {0} 自动领奖成功，金币 +{1}。",
                     slotIndex,
-                    claimResult.Reward,
-                    claimResult.RefilledTask != null);
+                    claimResult.Reward);
+            }
+
+            if (claimedSlotIndices.Count > 0)
+            {
+                HolmasTaskRefillResult refillResult = RefillAvailableTasks(CurrentPlayerLevel);
+                int generatedCount = CountSuccessfulTaskGeneration(refillResult);
+                SetLastTaskRewardTip(BuildTaskRewardTip(claimedSlotIndices, totalReward, generatedCount));
+                _logger?.LogInfo("HolmasGameplayRuntime: {0}", LastTaskRewardTip);
+                NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed);
             }
 
             _logger?.LogInfo(
@@ -619,10 +709,13 @@ namespace App.HotUpdate.Holmas.Application
         public HolmasTaskClaimResult ClaimTaskReward(int slotIndex, int playerLevel)
         {
             HolmasTaskRuntimeInstance taskBeforeClaim = TaskBarState.GetTaskBySlot(slotIndex);
-            HolmasTaskClaimResult result = _taskProgressService.ClaimTaskReward(TaskBarState, slotIndex, playerLevel, refillEmptySlotImmediately: true);
+            HolmasTaskClaimResult result = _taskProgressService.ClaimTaskReward(TaskBarState, slotIndex, playerLevel, refillEmptySlotImmediately: false);
             if (result.Success && taskBeforeClaim != null)
             {
                 _progressionCoordinator.ApplyTaskClaim(taskBeforeClaim, MetaProgressionState);
+                HolmasTaskRefillResult refillResult = RefillAvailableTasks(playerLevel);
+                result.RefilledTask = GetGeneratedTaskForSlot(refillResult, slotIndex);
+                SetLastTaskRewardTip(BuildTaskRewardTip(new[] { slotIndex }, result.Reward, CountSuccessfulTaskGeneration(refillResult)));
             }
 
             _logger?.LogInfo("HolmasGameplayRuntime: 尝试领取槽位 {0} 任务奖励，成功={1}，金币 +{2}。", slotIndex, result.Success, result.Reward);
@@ -693,6 +786,62 @@ namespace App.HotUpdate.Holmas.Application
             return false;
         }
 
+        private static int CountSuccessfulTaskGeneration(HolmasTaskRefillResult result)
+        {
+            if (result == null || result.GeneratedTasks == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int i = 0; i < result.GeneratedTasks.Count; i++)
+            {
+                if (result.GeneratedTasks[i] != null && result.GeneratedTasks[i].Success)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static TaskInstanceData GetGeneratedTaskForSlot(HolmasTaskRefillResult result, int slotIndex)
+        {
+            if (result == null || result.GeneratedTasks == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < result.GeneratedTasks.Count; i++)
+            {
+                HolmasTaskGenerationResult generation = result.GeneratedTasks[i];
+                if (generation != null && generation.Success && generation.SlotIndex == slotIndex)
+                {
+                    return generation.Task;
+                }
+            }
+
+            return null;
+        }
+
+        private static string BuildTaskRewardTip(IReadOnlyCollection<int> slotIndices, int totalReward, int generatedTaskCount)
+        {
+            int claimedCount = slotIndices != null ? slotIndices.Count : 0;
+            string rewardText = $"金币 +{Math.Max(0, totalReward)}";
+            string refillText = generatedTaskCount > 0
+                ? $"已刷新 {generatedTaskCount} 个新任务。"
+                : "对应任务栏已清空。";
+            if (claimedCount <= 1)
+            {
+                int slotIndex = slotIndices != null && slotIndices.Count > 0 ? slotIndices.First() + 1 : 0;
+                return slotIndex > 0
+                    ? $"任务槽 {slotIndex} 完成，{rewardText}。{refillText}"
+                    : $"任务完成，{rewardText}。{refillText}";
+            }
+
+            return $"完成 {claimedCount} 个任务，{rewardText}。{refillText}";
+        }
+
         private static LevelSnapshot CloneLevelSnapshot(LevelSnapshot snapshot)
         {
             if (snapshot == null)
@@ -725,6 +874,12 @@ namespace App.HotUpdate.Holmas.Application
         private void NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason reason)
         {
             StateChanged?.Invoke(reason);
+        }
+
+        private void SetLastTaskRewardTip(string tip)
+        {
+            LastTaskRewardTip = tip ?? string.Empty;
+            LastTaskRewardTipVersion++;
         }
 
         private void EnsureEnergyState(long nowUtcMilliseconds)

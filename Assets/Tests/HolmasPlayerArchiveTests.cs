@@ -8,6 +8,7 @@ using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.PlayerData;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Config;
+using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.Shared.Contracts;
 using App.Shared.Holmas.PlayerData;
@@ -418,10 +419,10 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasFlowCoordinator_PrepareStartupHomeStatus_DoesNotRefillTasksWhenLevelIsActive()
+        public void HolmasFlowCoordinator_PrepareStartupHomeStatus_SettlesClaimableTasksWhenLevelIsActive()
         {
             var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
-            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1, 0, 0, 1);
             var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
             var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
             var metaService = new HolmasMetaProgressionService(
@@ -433,6 +434,12 @@ namespace Holmas.Tests
             var terrain = HolmasTestSupport.CreateTerrain(1, 2);
             var assetsRuntime = new ArchiveFakeAssetsRuntime(terrain);
             var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            runtime.RefillAvailableTasks(1);
+            HolmasTaskRuntimeInstance taskBeforeStartup = runtime.TaskBarState.GetTaskBySlot(0);
+            Assert.That(taskBeforeStartup, Is.Not.Null);
+            string taskInstanceId = taskBeforeStartup.Task.TaskInstanceId;
+            int expectedReward = taskBeforeStartup.Task.Reward;
+            taskBeforeStartup.Task.CurrentCount = taskBeforeStartup.Task.TargetCount;
             LevelGenerationRequest request = HolmasTestSupport.CreateRequest(
                 "map-startup",
                 TerrainAssetPathUtility.BuildAssetPath("startup"),
@@ -443,7 +450,6 @@ namespace Holmas.Tests
 
             runtime.StartLevelAsync(request).GetAwaiter().GetResult();
             Assert.That(runtime.HasActiveUncompletedLevel, Is.True);
-            Assert.That(runtime.TaskBarState.Tasks, Is.Empty);
 
             var context = new HolmasApplicationContext(null, new NullLogger(), null, null, assetsRuntime, runtime);
             var rootObject = new GameObject("UiRootStartupRecoveryTest");
@@ -461,7 +467,13 @@ namespace Holmas.Tests
                 Assert.That(method, Is.Not.Null);
                 string status = method.Invoke(flowCoordinator, null) as string;
 
-                Assert.That(runtime.TaskBarState.Tasks, Is.Empty);
+                Assert.That(runtime.HasActiveUncompletedLevel, Is.True);
+                Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(expectedReward));
+                Assert.That(runtime.MetaProgressionState.ClaimedTaskCount, Is.EqualTo(1));
+                Assert.That(runtime.TaskBarState.GetTaskBySlot(0), Is.Not.Null);
+                Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.TaskInstanceId, Is.Not.EqualTo(taskInstanceId));
+                Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(0));
+                StringAssert.Contains("金币 +", status);
                 StringAssert.Contains("已恢复未完成棋盘", status);
             }
             finally

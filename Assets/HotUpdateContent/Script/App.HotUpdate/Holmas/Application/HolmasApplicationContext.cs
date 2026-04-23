@@ -134,6 +134,16 @@ namespace App.HotUpdate.Holmas.Application
             return GameplayRuntime.RefillAvailableTasks();
         }
 
+        public HolmasTaskSettlementResult SettleClaimableTasksAndRefill()
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.SettleClaimableTasksAndRefill();
+        }
+
         /// <summary>
         /// 使用当前玩家等级与当前成长配置解锁一个广告槽位。
         /// </summary>

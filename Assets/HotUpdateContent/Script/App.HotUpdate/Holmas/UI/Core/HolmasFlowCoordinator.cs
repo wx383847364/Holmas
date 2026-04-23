@@ -74,6 +74,10 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
 
             context.GameplayRuntime.RefreshExpiredAdSlots();
+            HolmasTaskSettlementResult settlementResult = context.SettleClaimableTasksAndRefill();
+            string rewardTip = settlementResult != null && settlementResult.ClaimedTaskCount > 0
+                ? context.GameplayRuntime.LastTaskRewardTip
+                : string.Empty;
 
             if (context.GameplayRuntime.HasActiveUncompletedLevel)
             {
@@ -81,39 +85,26 @@ namespace App.HotUpdate.Holmas.UI.Core
                                        context.GameplayRuntime.TaskBarState.Tasks != null
                     ? context.GameplayRuntime.TaskBarState.Tasks.Count
                     : 0;
-                return resumedTaskCount > 0
+                string resumeStatus = resumedTaskCount > 0
                     ? $"侦探社已就绪。已恢复未完成棋盘，任务栏 {resumedTaskCount} 条已准备。"
                     : "侦探社已就绪。已恢复未完成棋盘。";
+                return MergeRewardTip(rewardTip, resumeStatus);
             }
 
             int activeTaskCount = context.GameplayRuntime.TaskBarState != null &&
                                   context.GameplayRuntime.TaskBarState.Tasks != null
                 ? context.GameplayRuntime.TaskBarState.Tasks.Count
                 : 0;
-            int unlockedEmptySlotCount = context.GameplayRuntime.TaskBarState != null
-                ? context.GameplayRuntime.TaskBarState.GetUnlockedEmptySlotCount()
-                : 0;
-            int generatedTaskCount = 0;
-            if (unlockedEmptySlotCount > 0)
-            {
-                var refillResult = context.RefillAvailableTasks();
-                generatedTaskCount = refillResult != null
-                    ? refillResult.GeneratedTasks.Count(item => item != null && item.Success)
-                    : 0;
-                activeTaskCount = context.GameplayRuntime.TaskBarState != null &&
-                                  context.GameplayRuntime.TaskBarState.Tasks != null
-                    ? context.GameplayRuntime.TaskBarState.Tasks.Count
-                    : 0;
-            }
 
             context.Logger?.LogInfo(
                 "HolmasFlowCoordinator: 启动阶段完成任务栏整理，新增 {0} 条任务，当前活跃 {1} 条。",
-                generatedTaskCount,
+                settlementResult != null ? settlementResult.RefilledTaskCount : 0,
                 activeTaskCount);
 
-            return activeTaskCount > 0
+            string readyStatus = activeTaskCount > 0
                 ? $"侦探社已就绪。任务栏 {activeTaskCount} 条已准备。"
                 : "侦探社已就绪。当前没有活跃任务。";
+            return MergeRewardTip(rewardTip, readyStatus);
         }
 
         /// <summary>
@@ -441,6 +432,18 @@ namespace App.HotUpdate.Holmas.UI.Core
                 ? nextSnapshot.SpawnedCats.Count
                 : 0;
             return $"已完成 {completedMapId}，推进任务 {progressed} 条，新完成 {completed} 条。已进入下一关 {nextMapId}，猫 {nextCatCount} 只，seed={seed}";
+        }
+
+        private static string MergeRewardTip(string rewardTip, string status)
+        {
+            if (string.IsNullOrWhiteSpace(rewardTip))
+            {
+                return status;
+            }
+
+            return string.IsNullOrWhiteSpace(status)
+                ? rewardTip
+                : $"{rewardTip} {status}";
         }
     }
 }

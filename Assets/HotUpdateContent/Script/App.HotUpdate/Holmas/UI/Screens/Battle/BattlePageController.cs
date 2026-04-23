@@ -92,16 +92,18 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _isProcessing = true;
             try
             {
+                int rewardTipVersionBeforeReveal = runtime.LastTaskRewardTipVersion;
                 HolmasProgressionAdvanceResult progressionResult;
                 HolmasBoardInteractionMode mode = isFlagAction
                     ? HolmasBoardInteractionMode.Find
                     : HolmasBoardInteractionMode.Walk;
                 BoardRevealResult revealResult = runtime.RevealCell(cellIndex, mode, out progressionResult);
                 string revealStatus = BuildRevealStatus(revealResult, progressionResult, mode);
+                revealStatus = BuildStatusWithNewRewardTip(runtime, rewardTipVersionBeforeReveal, revealStatus);
                 Refresh(revealStatus);
                 if (revealResult != null && revealResult.IsValidAction && revealResult.Completed)
                 {
-                    await AdvanceToNextLevelAsync(progressionResult, revealStatus);
+                    await AdvanceToNextLevelAsync(progressionResult, revealStatus, rewardTipVersionBeforeReveal);
                 }
             }
             catch (Exception ex)
@@ -115,7 +117,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
         }
 
-        private async Task AdvanceToNextLevelAsync(HolmasProgressionAdvanceResult progressionResult, string fallbackStatus)
+        private async Task AdvanceToNextLevelAsync(
+            HolmasProgressionAdvanceResult progressionResult,
+            string fallbackStatus,
+            int rewardTipVersionBeforeReveal = -1)
         {
             HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
             if (flowCoordinator == null)
@@ -127,6 +132,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             try
             {
                 await flowCoordinator.AdvanceToNextBattleAsync(progressionResult);
+                HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
+                Refresh(BuildStatusWithNewRewardTip(runtime, rewardTipVersionBeforeReveal, fallbackStatus));
             }
             catch (Exception ex)
             {
@@ -246,6 +253,32 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             {
                 Refresh(null);
             }
+            else if (reason == HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed)
+            {
+                Refresh(GetCurrentRewardTip(_runtime));
+            }
+        }
+
+        private static string BuildStatusWithNewRewardTip(HolmasGameplayRuntime runtime, int previousTipVersion, string fallbackStatus)
+        {
+            if (runtime != null &&
+                previousTipVersion >= 0 &&
+                runtime.LastTaskRewardTipVersion != previousTipVersion &&
+                !string.IsNullOrWhiteSpace(runtime.LastTaskRewardTip))
+            {
+                return string.IsNullOrWhiteSpace(fallbackStatus)
+                    ? runtime.LastTaskRewardTip
+                    : $"{runtime.LastTaskRewardTip} {fallbackStatus}";
+            }
+
+            return fallbackStatus;
+        }
+
+        private static string GetCurrentRewardTip(HolmasGameplayRuntime runtime)
+        {
+            return runtime != null && !string.IsNullOrWhiteSpace(runtime.LastTaskRewardTip)
+                ? runtime.LastTaskRewardTip
+                : null;
         }
     }
 }

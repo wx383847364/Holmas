@@ -306,12 +306,7 @@ public static class HolmasCoreValidationMenu
             runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
             if (runtimeTask == null || runtimeTask.Task == null)
             {
-                throw new InvalidOperationException($"Holmas smoke test lost the active task from slot {slotIndex} before claim.");
-            }
-
-            if (runtimeTask.CanClaimReward)
-            {
-                return finalReveal ?? new BoardRevealResult(-1) { IsValidAction = true, Completed = true };
+                throw new InvalidOperationException($"Holmas smoke test lost the active task from slot {slotIndex} before completion.");
             }
 
             string taskInstanceId = runtimeTask.Task.TaskInstanceId;

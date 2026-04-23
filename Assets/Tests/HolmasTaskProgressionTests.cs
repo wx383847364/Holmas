@@ -78,7 +78,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasTaskProgressService_ClaimReward_RefillsTheSlot()
+        public void HolmasTaskProgressService_ClaimReward_ClearsTheSlotWithoutRefilling()
         {
             var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
             var service = new HolmasTaskProgressService(
@@ -100,9 +100,14 @@ namespace Holmas.Tests
 
             Assert.That(claim.Success, Is.True);
             Assert.That(claim.Reward, Is.EqualTo(20));
-            Assert.That(claim.RefilledTask, Is.Not.Null);
-            Assert.That(taskBarState.GetTaskBySlot(0), Is.Not.Null);
-            Assert.That(taskBarState.GetTaskBySlot(0).Task.CatId, Is.EqualTo("cat-b"));
+            Assert.That(claim.RefilledTask, Is.Null);
+            Assert.That(taskBarState.GetTaskBySlot(0), Is.Null);
+            Assert.That(taskBarState.GetSlot(0).TaskInstanceId, Is.Empty);
+
+            var secondClaim = service.ClaimTaskReward(taskBarState, 0, 1);
+
+            Assert.That(secondClaim.Success, Is.False);
+            Assert.That(secondClaim.Reward, Is.EqualTo(0));
         }
 
         [Test]
@@ -187,6 +192,23 @@ namespace Holmas.Tests
             Assert.That(claim.FailureReason, Is.EqualTo("任务尚未完成，不能领奖。"));
             Assert.That(claim.Reward, Is.EqualTo(0));
             Assert.That(taskBarState.GetTaskBySlot(0), Is.SameAs(taskBeforeClaim));
+        }
+
+        [Test]
+        public void HolmasTaskProgressService_ClaimReward_LockedSlot_Fails()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var service = new HolmasTaskProgressService(
+                catalog,
+                new ScriptedRandomSource(0, 0, 1),
+                new FixedUtcClock { UtcNowMilliseconds = 1000 });
+
+            var taskBarState = new HolmasTaskBarState(1, 0);
+            var claim = service.ClaimTaskReward(taskBarState, 0, 1);
+
+            Assert.That(claim.Success, Is.False);
+            Assert.That(claim.FailureReason, Is.EqualTo("当前槽位未解锁。"));
+            Assert.That(taskBarState.GetSlot(0).TaskInstanceId, Is.Empty);
         }
 
         [Test]
