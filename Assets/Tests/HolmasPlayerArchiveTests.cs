@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
@@ -517,6 +518,60 @@ namespace Holmas.Tests
             Assert.That(restoredRuntime.CurrentBoardRuntime.IsRevealed(1), Is.True);
             Assert.That(restoredRuntime.CurrentBoardRuntime.IsFlagged(0), Is.False);
             Assert.That(restoredRuntime.CurrentLevelSnapshot.RevealedCells[1], Is.True);
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RestoreLevelAsync_PreservesResolvedAndUnresolvedBlindBoxCats()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var randomSource = new ScriptedRandomSource(0, 0, 1, 0, 1, 1);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, randomSource, clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var terrain = HolmasTestSupport.CreateTerrain(1, 2);
+            var assetsRuntime = new ArchiveFakeAssetsRuntime(terrain);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), assetsRuntime);
+            runtime.RefillAvailableTasks(1);
+            HolmasTaskRuntimeInstance task = runtime.TaskBarState.GetTaskBySlot(0);
+            runtime.TaskBarState.ClearSlot(1, true);
+            task.Task.TargetCount = 2;
+            task.Task.Reward = 20;
+            LevelGenerationRequest request = HolmasTestSupport.CreateRequest(
+                "map-blind-box-restore",
+                TerrainAssetPathUtility.BuildAssetPath("restore"),
+                7,
+                2,
+                2);
+
+            runtime.StartLevelAsync(request).GetAwaiter().GetResult();
+            int firstCellIndex = runtime.CurrentLevelSnapshot.SpawnedCats[0].CellIndex;
+            int secondCellIndex = runtime.CurrentLevelSnapshot.SpawnedCats[1].CellIndex;
+            runtime.RevealCell(firstCellIndex, out _);
+            LevelSnapshot savedSnapshot = new HolmasPlayerArchiveMapper().CloneLevelSnapshot(runtime.CurrentLevelSnapshot);
+
+            Assert.That(savedSnapshot.SpawnedCats.Single(item => item.CellIndex == firstCellIndex).CatId, Is.EqualTo(task.Task.CatId));
+            Assert.That(savedSnapshot.SpawnedCats.Single(item => item.CellIndex == secondCellIndex).CatId, Is.Empty);
+
+            var restoredRuntime = new HolmasGameplayRuntime(
+                taskService,
+                metaService,
+                coordinator,
+                null,
+                new NullLogger(),
+                assetsRuntime,
+                runtime.TaskBarState,
+                runtime.MetaProgressionState,
+                clock);
+            restoredRuntime.RestoreLevelAsync(savedSnapshot).GetAwaiter().GetResult();
+            restoredRuntime.RevealCell(secondCellIndex, out _);
+
+            Assert.That(restoredRuntime.CurrentLevelSnapshot.SpawnedCats.Single(item => item.CellIndex == firstCellIndex).CatId, Is.EqualTo(task.Task.CatId));
+            Assert.That(restoredRuntime.CurrentLevelSnapshot.SpawnedCats.Single(item => item.CellIndex == secondCellIndex).CatId, Is.EqualTo(task.Task.CatId));
         }
 
         private static HolmasGameplayRuntime CreateArchiveEnergyRuntime(

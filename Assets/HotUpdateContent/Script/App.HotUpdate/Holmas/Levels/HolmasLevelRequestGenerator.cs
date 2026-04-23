@@ -75,7 +75,7 @@ namespace App.HotUpdate.Holmas.Levels
                 Seed = seed,
                 CatCountMin = selected.Definition.CatCountMin,
                 CatCountMax = selected.Definition.CatCountMax,
-                CatPool = NormalizeCatPool(catPool),
+                CatPool = Array.Empty<BoardSpawnEntry>(),
             };
             return result;
         }
@@ -179,32 +179,6 @@ namespace App.HotUpdate.Holmas.Levels
             }
 
             return true;
-        }
-
-        private static IReadOnlyList<BoardSpawnEntry> NormalizeCatPool(IReadOnlyList<BoardSpawnEntry> catPool)
-        {
-            if (catPool == null || catPool.Count == 0)
-            {
-                return Array.Empty<BoardSpawnEntry>();
-            }
-
-            var normalized = new List<BoardSpawnEntry>(catPool.Count);
-            for (int i = 0; i < catPool.Count; i++)
-            {
-                var entry = catPool[i];
-                if (entry == null || string.IsNullOrWhiteSpace(entry.CatId) || entry.Weight <= 0)
-                {
-                    continue;
-                }
-
-                normalized.Add(new BoardSpawnEntry
-                {
-                    CatId = entry.CatId,
-                    Weight = entry.Weight,
-                });
-            }
-
-            return normalized;
         }
 
         private static HolmasLevelRequestGenerationResult Fail(string reason)

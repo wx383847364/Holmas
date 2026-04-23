@@ -34,11 +34,12 @@ namespace Holmas.Tests
             Assert.That(snapshot.SpawnedCats, Has.Count.EqualTo(2));
             Assert.That(snapshot.SpawnedCats.Select(item => item.CellIndex).Distinct().Count(), Is.EqualTo(2));
             Assert.That(snapshot.SpawnedCats.Select(item => item.CellIndex), Is.All.LessThan(2));
+            Assert.That(snapshot.SpawnedCats.Select(item => item.CatId), Is.All.Empty);
             Assert.That(snapshot.Completed, Is.False);
         }
 
         [Test]
-        public void LevelSnapshotFactory_InvalidOrEmptyPool_ReturnsCompletedEmptySnapshot()
+        public void LevelSnapshotFactory_InvalidOrEmptyPool_StillCreatesBlindBoxCatPositions()
         {
             var template = HolmasTestSupport.CreateBoardTemplate(2, 2);
             var request = HolmasTestSupport.CreateRequest(
@@ -54,8 +55,9 @@ namespace Holmas.Tests
             var snapshot = LevelSnapshotFactory.Create(template, request);
 
             Assert.That(snapshot.MapId, Is.EqualTo("map-invalid-pool"));
-            Assert.That(snapshot.SpawnedCats, Is.Empty);
-            Assert.That(snapshot.Completed, Is.True);
+            Assert.That(snapshot.SpawnedCats.Count, Is.InRange(1, 3));
+            Assert.That(snapshot.SpawnedCats.Select(item => item.CatId), Is.All.Empty);
+            Assert.That(snapshot.Completed, Is.False);
             Assert.That(snapshot.RevealedCells, Has.Length.EqualTo(4));
         }
 
@@ -79,7 +81,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void LevelSnapshotFactory_WhenCatCountCoversTaskPool_IncludesEveryActiveCatAtLeastOnce()
+        public void LevelSnapshotFactory_WhenCatCountCoversTaskPool_LeavesCatKindsUnresolved()
         {
             var template = HolmasTestSupport.CreateBoardTemplate(2, 3);
             var request = HolmasTestSupport.CreateRequest(
@@ -92,11 +94,10 @@ namespace Holmas.Tests
                 new BoardSpawnEntry { CatId = "cat-b", Weight = 1 });
 
             var snapshot = LevelSnapshotFactory.Create(template, request);
-            string[] spawnedCatIds = snapshot.SpawnedCats.Select(item => item.CatId).Distinct().ToArray();
 
             Assert.That(snapshot.SpawnedCats, Has.Count.EqualTo(4));
-            Assert.That(spawnedCatIds, Does.Contain("cat-a"));
-            Assert.That(spawnedCatIds, Does.Contain("cat-b"));
+            Assert.That(snapshot.SpawnedCats.Select(item => item.CatId), Is.All.Empty);
+            Assert.That(snapshot.SpawnedCats.Select(item => item.CellIndex).Distinct().Count(), Is.EqualTo(4));
         }
 
         [Test]
@@ -150,7 +151,7 @@ namespace Holmas.Tests
             Assert.That(result.Request.TerrainPath, Is.EqualTo("Assets/HotUpdateContent/Res/Map/2.asset"));
             Assert.That(result.Request.CatCountMin, Is.EqualTo(3));
             Assert.That(result.Request.CatCountMax, Is.EqualTo(4));
-            Assert.That(result.Request.CatPool, Has.Count.EqualTo(2));
+            Assert.That(result.Request.CatPool, Is.Empty);
         }
 
         [Test]
@@ -342,6 +343,48 @@ namespace Holmas.Tests
             Assert.That(found.Completed, Is.True);
             Assert.That(runtime.Completed, Is.True);
             Assert.That(runtime.GetCellState(8).IsFoundCat, Is.True);
+        }
+
+        [Test]
+        public void BoardRuntime_TryAssignCatIdAt_SyncsRuntimeAndSnapshot()
+        {
+            var template = HolmasTestSupport.CreateBoardTemplate(1, 3, (_, col) => col != 2);
+            var snapshot = new LevelSnapshot
+            {
+                MapId = "map",
+                TerrainPath = "terrain",
+                Seed = 1,
+                SpawnedCats = new List<SpawnedCatData>
+                {
+                    new SpawnedCatData
+                    {
+                        CellIndex = 0,
+                    }
+                },
+                RevealedCells = new bool[3],
+            };
+
+            var runtime = new BoardRuntime(template, snapshot);
+
+            Assert.That(runtime.TryGetCatIdAt(0, out _), Is.False);
+            Assert.That(runtime.TryAssignCatIdAt(-1, "cat-a"), Is.False);
+            Assert.That(runtime.TryAssignCatIdAt(1, "cat-a"), Is.False);
+            Assert.That(runtime.TryAssignCatIdAt(2, "cat-a"), Is.False);
+            Assert.That(runtime.TryAssignCatIdAt(0, string.Empty), Is.False);
+
+            Assert.That(runtime.TryAssignCatIdAt(0, "cat-a"), Is.True);
+            Assert.That(runtime.TryGetCatIdAt(0, out string catId), Is.True);
+            Assert.That(catId, Is.EqualTo("cat-a"));
+            Assert.That(snapshot.SpawnedCats[0].CatId, Is.EqualTo("cat-a"));
+
+            Assert.That(runtime.TryAssignCatIdAt(0, "cat-a"), Is.True);
+            Assert.That(runtime.TryAssignCatIdAt(0, "cat-b"), Is.False);
+            Assert.That(snapshot.SpawnedCats[0].CatId, Is.EqualTo("cat-a"));
+
+            Assert.That(runtime.TryAssignCatIdAt(0, "cat-b", overwriteExisting: true), Is.True);
+            Assert.That(runtime.TryGetCatIdAt(0, out catId), Is.True);
+            Assert.That(catId, Is.EqualTo("cat-b"));
+            Assert.That(snapshot.SpawnedCats[0].CatId, Is.EqualTo("cat-b"));
         }
 
         [Test]

@@ -148,6 +148,56 @@ namespace App.HotUpdate.Holmas.Board
             return true;
         }
 
+        public bool TryAssignCatIdAt(int cellIndex, string catId, bool overwriteExisting = false)
+        {
+            string normalizedCatId = catId ?? string.Empty;
+            if (!IsCellIndexValid(cellIndex) ||
+                !_validMask[cellIndex] ||
+                !_catCells[cellIndex] ||
+                string.IsNullOrWhiteSpace(normalizedCatId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_catIds[cellIndex]))
+            {
+                if (string.Equals(_catIds[cellIndex], normalizedCatId, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                if (!overwriteExisting)
+                {
+                    return false;
+                }
+            }
+
+            bool updatedSnapshot = false;
+            if (_snapshot.SpawnedCats != null)
+            {
+                for (int i = 0; i < _snapshot.SpawnedCats.Count; i++)
+                {
+                    SpawnedCatData cat = _snapshot.SpawnedCats[i];
+                    if (cat == null || cat.CellIndex != cellIndex)
+                    {
+                        continue;
+                    }
+
+                    cat.CatId = normalizedCatId;
+                    _catIds[cellIndex] = normalizedCatId;
+                    updatedSnapshot = true;
+                    break;
+                }
+            }
+
+            if (updatedSnapshot)
+            {
+                SyncSnapshot();
+            }
+
+            return updatedSnapshot;
+        }
+
         public IReadOnlyList<SpawnedCatData> GetFoundCats(IReadOnlyList<int> cellIndices)
         {
             if (cellIndices == null || cellIndices.Count == 0)

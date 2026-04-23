@@ -10,8 +10,8 @@ namespace App.Shared.Holmas.RuntimeData
     public sealed class SpawnedCatData
     {
         /// <summary>
-        /// 本次生成出来的猫种类标识。
-        /// 对应配置表里的 catId。
+        /// 已解析的猫种类标识，对应配置表里的 catId。
+        /// 普通棋盘生成时可以为空，表示该猫位尚未揭示，猫种仍是盲盒。
         /// </summary>
         public string CatId = string.Empty;
 

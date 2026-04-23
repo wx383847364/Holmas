@@ -43,9 +43,8 @@ namespace Holmas.Tests
             HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
             HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
             var requestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0));
-            var catPool = BuildSpawnPool(tables.Cats.Take(4));
 
-            HolmasLevelRequestGenerationResult requestResult = requestGenerator.TryGenerateForPlayerLevel(1, 99, catPool);
+            HolmasLevelRequestGenerationResult requestResult = requestGenerator.TryGenerateForPlayerLevel(1, 99);
 
             Assert.That(requestResult.Success, Is.True, requestResult.FailureReason);
             Assert.That(requestResult.SelectedMapId, Is.EqualTo("map_001"));
@@ -60,7 +59,7 @@ namespace Holmas.Tests
             Assert.That(snapshot.MapId, Is.EqualTo("map_001"));
             Assert.That(snapshot.TerrainPath, Is.EqualTo(selectedMap.TerrainPath));
             Assert.That(snapshot.SpawnedCats.Count, Is.InRange(selectedMap.CatCountMin, selectedMap.CatCountMax));
-            Assert.That(snapshot.SpawnedCats.Select(item => item.CatId).All(catId => catPool.Any(pool => pool.CatId == catId)), Is.True);
+            Assert.That(snapshot.SpawnedCats.Select(item => item.CatId), Is.All.Empty);
 
             var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
             HolmasTaskBarState taskBar = taskService.CreateDefaultTaskBarState();
@@ -285,7 +284,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasExportedTables_CurrentTaskPoolCanDriveMapSpawnPool()
+        public void HolmasExportedTables_CurrentTaskPoolCanResolveBlindBoxCats()
         {
             ExportConfigTables tables = LoadSampleTables();
             HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
@@ -317,7 +316,9 @@ namespace Holmas.Tests
             LevelSnapshot snapshot = LevelSnapshotFactory.CreateFromTerrain(terrain, requestResult.Request);
 
             Assert.That(snapshot.SpawnedCats, Is.Not.Empty);
-            Assert.That(snapshot.SpawnedCats.Select(item => item.CatId).All(activeCatIds.Contains), Is.True, "地图生成应优先使用当前任务栏的猫种池。");
+            Assert.That(snapshot.SpawnedCats.Select(item => item.CatId), Is.All.Empty, "普通地图生成只布猫位，猫种应留到揭示时解析。");
+            Assert.That(taskService.TryPickUncompletedTaskCatId(taskBar, out string pickedCatId), Is.True);
+            Assert.That(activeCatIds.Contains(pickedCatId), Is.True, "揭示时应从当前未完成任务猫池中解析猫种。");
         }
 
         [Test]
@@ -540,15 +541,6 @@ namespace Holmas.Tests
                     CatCountMin = item.CatCountMin,
                     CatCountMax = item.CatCountMax,
                 }));
-        }
-
-        private static IReadOnlyList<BoardSpawnEntry> BuildSpawnPool(IEnumerable<ExportCatRow> cats)
-        {
-            return cats.Select(item => new BoardSpawnEntry
-            {
-                CatId = item.CatId,
-                Weight = item.Weight,
-            }).ToArray();
         }
 
         private static void AssertBundlePlayerLevelsMatchTables(HolmasConfigCatalogBundle bundle, IReadOnlyList<ExportLevelRow> expectedLevels)

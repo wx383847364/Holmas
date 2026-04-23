@@ -35,7 +35,8 @@ namespace App.HotUpdate.Holmas.Levels
         public int CatCountMax;
 
         /// <summary>
-        /// 当前可用于布点的猫种权重池。
+        /// 兼容旧调用的猫种权重池。
+        /// 普通棋盘生成不再读取这个字段，猫种会在揭示猫格时从当前未完成任务池解析。
         /// </summary>
         public IReadOnlyList<BoardSpawnEntry> CatPool = Array.Empty<BoardSpawnEntry>();
     }

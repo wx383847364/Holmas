@@ -3,8 +3,8 @@ using System;
 namespace App.HotUpdate.Holmas.Levels
 {
     /// <summary>
-    /// 关卡生成时的猫种权重项。
-    /// 这只描述生成输入，不描述运行时状态。
+    /// 旧关卡生成入口兼容的猫种权重项。
+    /// 普通棋盘不再用它预分配猫种，猫种会在揭示时从未完成任务池解析。
     /// </summary>
     [Serializable]
     public sealed class BoardSpawnEntry

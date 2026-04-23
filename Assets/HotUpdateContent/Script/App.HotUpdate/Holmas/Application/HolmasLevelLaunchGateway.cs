@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
-using App.HotUpdate.Holmas.Tasks.Config;
 
 namespace App.HotUpdate.Holmas.Application
 {
@@ -46,13 +45,13 @@ namespace App.HotUpdate.Holmas.Application
                 throw new InvalidOperationException("HolmasLevelLaunchGateway: 当前没有可用的关卡请求生成器。");
             }
 
-            IReadOnlyList<BoardSpawnEntry> effectiveCatPool = ResolveCatPoolForLaunch(playerLevel, catPool);
+            IReadOnlyList<BoardSpawnEntry> effectiveCatPool = ResolveCatPoolForLaunch(catPool);
             if (effectiveCatPool == null || effectiveCatPool.Count == 0)
             {
-                throw new InvalidOperationException("HolmasLevelLaunchGateway: 当前任务栏没有可用于地图生成的猫种池。");
+                throw new InvalidOperationException("HolmasLevelLaunchGateway: 当前没有可用于启动地图的任务猫。");
             }
 
-            LevelGenerationRequest request = _requestGenerator.GenerateForPlayerLevel(playerLevel, seed, effectiveCatPool);
+            LevelGenerationRequest request = _requestGenerator.GenerateForPlayerLevel(playerLevel, seed);
             return StartLevelAsync(request);
         }
 
@@ -66,7 +65,7 @@ namespace App.HotUpdate.Holmas.Application
             return StartLevelForPlayerAsync(_context.CurrentPlayerLevel, seed, catPool);
         }
 
-        private IReadOnlyList<BoardSpawnEntry> ResolveCatPoolForLaunch(int playerLevel, IReadOnlyList<BoardSpawnEntry> explicitCatPool)
+        private IReadOnlyList<BoardSpawnEntry> ResolveCatPoolForLaunch(IReadOnlyList<BoardSpawnEntry> explicitCatPool)
         {
             IReadOnlyList<BoardSpawnEntry> normalizedExplicit = NormalizeCatPool(explicitCatPool);
             if (normalizedExplicit.Count > 0)
@@ -81,24 +80,35 @@ namespace App.HotUpdate.Holmas.Application
                 return Array.Empty<BoardSpawnEntry>();
             }
 
-            IReadOnlyCollection<string> activeCatIds = _context.GameplayRuntime.TaskBarState.GetActiveCatIds();
-            if (activeCatIds == null || activeCatIds.Count == 0)
+            var taskBar = _context.GameplayRuntime.TaskBarState;
+            if (taskBar.Tasks == null || taskBar.Tasks.Count == 0)
             {
                 return Array.Empty<BoardSpawnEntry>();
             }
 
-            IHolmasTaskCatalog taskCatalog = _context.ServiceContainer != null
-                ? _context.ServiceContainer.Get<IHolmasTaskCatalog>()
-                : null;
-
-            return activeCatIds
-                .Where(catId => !string.IsNullOrWhiteSpace(catId))
-                .Select(catId => new BoardSpawnEntry
+            var entries = new List<BoardSpawnEntry>();
+            var seenCatIds = new HashSet<string>(StringComparer.Ordinal);
+            for (int i = 0; i < taskBar.Tasks.Count; i++)
+            {
+                var runtimeTask = taskBar.Tasks[i];
+                if (runtimeTask == null ||
+                    runtimeTask.Task == null ||
+                    runtimeTask.IsRewardClaimed ||
+                    runtimeTask.Task.CurrentCount >= runtimeTask.Task.TargetCount ||
+                    string.IsNullOrWhiteSpace(runtimeTask.Task.CatId) ||
+                    !seenCatIds.Add(runtimeTask.Task.CatId))
                 {
-                    CatId = catId,
-                    Weight = ResolveCatWeight(taskCatalog, catId),
-                })
-                .ToList();
+                    continue;
+                }
+
+                entries.Add(new BoardSpawnEntry
+                {
+                    CatId = runtimeTask.Task.CatId,
+                    Weight = 1,
+                });
+            }
+
+            return entries;
         }
 
         private static IReadOnlyList<BoardSpawnEntry> NormalizeCatPool(IReadOnlyList<BoardSpawnEntry> catPool)
@@ -116,19 +126,6 @@ namespace App.HotUpdate.Holmas.Application
                     Weight = entry.Weight,
                 })
                 .ToList();
-        }
-
-        private static int ResolveCatWeight(IHolmasTaskCatalog taskCatalog, string catId)
-        {
-            if (taskCatalog != null &&
-                taskCatalog.TryGetCat(catId, out HolmasCatDefinition catDefinition) &&
-                catDefinition != null &&
-                catDefinition.Weight > 0)
-            {
-                return catDefinition.Weight;
-            }
-
-            return 1;
         }
     }
 }

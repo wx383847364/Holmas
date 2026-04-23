@@ -55,6 +55,7 @@ namespace App.HotUpdate.Holmas.Application
         public const int WalkCatEnergyCost = 2;
         public const int FindRevealEnergyCost = 1;
         public const long EnergyRecoveryIntervalMilliseconds = 12L * 60L * 1000L;
+        private const string CoreFindCatTutorialMapId = "tutorial_core_find_cat_v1";
 
         private readonly HolmasTaskProgressService _taskProgressService;
         private readonly HolmasMetaProgressionService _metaProgressionService;
@@ -320,6 +321,7 @@ namespace App.HotUpdate.Holmas.Application
             CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
             _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已基于现有模板与快照恢复关卡，地图={0}。", CurrentLevelSnapshot.MapId);
+            NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.LevelStarted);
             return CurrentBoardRuntime;
         }
 
@@ -476,6 +478,11 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             BoardRevealResult revealResult = CurrentBoardRuntime.Reveal(cellIndex, ignoreFlag: true);
+            if (revealResult.IsValidAction && revealResult.FoundCat)
+            {
+                AssignCatIdsForRevealedBlindBoxes(revealResult);
+            }
+
             if (revealResult.IsValidAction && revealResult.Completed)
             {
                 ApplyFoundCatProgress(revealResult);
@@ -643,6 +650,14 @@ namespace App.HotUpdate.Holmas.Application
                 return;
             }
 
+            if (progressResult.ProgressedTaskIds.Count == 0)
+            {
+                _logger?.LogWarning(
+                    "HolmasGameplayRuntime: 本次翻格猫种 [{0}] 未推进任何任务；当前未完成任务猫池 [{1}]。请检查是否没有可推进任务猫或处于教程固定猫位。",
+                    FormatFoundCatIds(foundCats),
+                    FormatUncompletedTaskCatIds(TaskBarState));
+            }
+
             int totalReward = 0;
             var claimedSlotIndices = new List<int>();
             for (int i = 0; i < progressResult.NewlyCompletedSlotIndices.Count; i++)
@@ -766,6 +781,86 @@ namespace App.HotUpdate.Holmas.Application
             }
 
             return result;
+        }
+
+        private void AssignCatIdsForRevealedBlindBoxes(BoardRevealResult revealResult)
+        {
+            if (revealResult == null ||
+                revealResult.FoundCatCellIndices == null ||
+                revealResult.FoundCatCellIndices.Count == 0 ||
+                CurrentBoardRuntime == null)
+            {
+                return;
+            }
+
+            bool isTutorialLevel = IsCoreFindCatTutorialLevel(CurrentLevelSnapshot);
+            for (int i = 0; i < revealResult.FoundCatCellIndices.Count; i++)
+            {
+                int foundCellIndex = revealResult.FoundCatCellIndices[i];
+                bool hasExistingCatId = CurrentBoardRuntime.TryGetCatIdAt(foundCellIndex, out _);
+                if (hasExistingCatId && isTutorialLevel)
+                {
+                    continue;
+                }
+
+                if (!_taskProgressService.TryPickUncompletedTaskCatId(TaskBarState, out string catId))
+                {
+                    _logger?.LogWarning(
+                        "HolmasGameplayRuntime: 猫位 {0} 已揭示，但当前没有未完成任务猫可用于解析猫种。",
+                        foundCellIndex);
+                    continue;
+                }
+
+                bool allowOverwriteExisting = hasExistingCatId && !isTutorialLevel;
+                if (!CurrentBoardRuntime.TryAssignCatIdAt(foundCellIndex, catId, overwriteExisting: allowOverwriteExisting))
+                {
+                    _logger?.LogWarning(
+                        "HolmasGameplayRuntime: 猫位 {0} 解析猫种 {1} 失败。",
+                        foundCellIndex,
+                        catId);
+                    continue;
+                }
+            }
+        }
+
+        private static string FormatFoundCatIds(IReadOnlyList<SpawnedCatData> foundCats)
+        {
+            if (foundCats == null || foundCats.Count == 0)
+            {
+                return "none";
+            }
+
+            string summary = string.Join(
+                ",",
+                foundCats
+                    .Where(item => item != null && !string.IsNullOrWhiteSpace(item.CatId))
+                    .Select(item => $"{item.CellIndex}:{item.CatId}"));
+            return string.IsNullOrWhiteSpace(summary) ? "none" : summary;
+        }
+
+        private static bool IsCoreFindCatTutorialLevel(LevelSnapshot snapshot)
+        {
+            return snapshot != null &&
+                   string.Equals(snapshot.MapId, CoreFindCatTutorialMapId, StringComparison.Ordinal);
+        }
+
+        private static string FormatUncompletedTaskCatIds(HolmasTaskBarState taskBarState)
+        {
+            if (taskBarState == null || taskBarState.Tasks == null || taskBarState.Tasks.Count == 0)
+            {
+                return "none";
+            }
+
+            string[] catIds = taskBarState.Tasks
+                .Where(item => item != null &&
+                               item.Task != null &&
+                               !item.IsRewardClaimed &&
+                               item.Task.CurrentCount < item.Task.TargetCount &&
+                               !string.IsNullOrWhiteSpace(item.Task.CatId))
+                .Select(item => $"slot{item.Task.SlotIndex}:{item.Task.CatId}:{item.Task.CurrentCount}/{item.Task.TargetCount}")
+                .ToArray();
+
+            return catIds.Length > 0 ? string.Join(",", catIds) : "none";
         }
 
         private static bool HasSuccessfulTaskGeneration(HolmasTaskRefillResult result)

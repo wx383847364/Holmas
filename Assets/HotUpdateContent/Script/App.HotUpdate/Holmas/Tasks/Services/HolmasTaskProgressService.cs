@@ -342,6 +342,26 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             return ApplyFoundCats(taskBarState, spawnedCats);
         }
 
+        public bool TryPickUncompletedTaskCatId(HolmasTaskBarState taskBarState, out string catId)
+        {
+            catId = string.Empty;
+            IReadOnlyList<TaskCatPickCandidate> candidates = BuildUncompletedTaskCatPool(taskBarState);
+            if (candidates.Count == 0)
+            {
+                return false;
+            }
+
+            int[] weights = candidates.Select(item => Math.Max(1, item.Weight)).ToArray();
+            int pickedIndex = HolmasWeightedPicker.PickIndex(weights, _randomSource);
+            if (pickedIndex < 0 || pickedIndex >= candidates.Count)
+            {
+                pickedIndex = 0;
+            }
+
+            catId = candidates[pickedIndex].CatId ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(catId);
+        }
+
         public IReadOnlyList<HolmasTaskRuntimeInstance> GetClaimableTasks(HolmasTaskBarState taskBarState)
         {
             if (taskBarState == null)
@@ -350,6 +370,65 @@ namespace App.HotUpdate.Holmas.Tasks.Services
             }
 
             return taskBarState.GetClaimableTasks();
+        }
+
+        private IReadOnlyList<TaskCatPickCandidate> BuildUncompletedTaskCatPool(HolmasTaskBarState taskBarState)
+        {
+            if (taskBarState == null || taskBarState.Tasks == null || taskBarState.Tasks.Count == 0)
+            {
+                return Array.Empty<TaskCatPickCandidate>();
+            }
+
+            var candidates = new List<TaskCatPickCandidate>();
+            var indexByCatId = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int i = 0; i < taskBarState.Tasks.Count; i++)
+            {
+                HolmasTaskRuntimeInstance runtimeTask = taskBarState.Tasks[i];
+                if (runtimeTask == null ||
+                    runtimeTask.Task == null ||
+                    runtimeTask.IsRewardClaimed ||
+                    runtimeTask.Task.CurrentCount >= runtimeTask.Task.TargetCount ||
+                    string.IsNullOrWhiteSpace(runtimeTask.Task.CatId))
+                {
+                    continue;
+                }
+
+                string taskCatId = runtimeTask.Task.CatId;
+                int weight = ResolveCatWeight(taskCatId);
+                if (indexByCatId.TryGetValue(taskCatId, out int existingIndex))
+                {
+                    candidates[existingIndex].Weight += weight;
+                    continue;
+                }
+
+                indexByCatId[taskCatId] = candidates.Count;
+                candidates.Add(new TaskCatPickCandidate
+                {
+                    CatId = taskCatId,
+                    Weight = weight,
+                });
+            }
+
+            return candidates;
+        }
+
+        private int ResolveCatWeight(string catId)
+        {
+            if (!string.IsNullOrWhiteSpace(catId) &&
+                _catalog.TryGetCat(catId, out HolmasCatDefinition catDefinition) &&
+                catDefinition != null &&
+                catDefinition.Weight > 0)
+            {
+                return catDefinition.Weight;
+            }
+
+            return 1;
+        }
+
+        private sealed class TaskCatPickCandidate
+        {
+            public string CatId = string.Empty;
+            public int Weight = 1;
         }
 
         private HolmasTaskGenerationResult TryGenerateTask(
