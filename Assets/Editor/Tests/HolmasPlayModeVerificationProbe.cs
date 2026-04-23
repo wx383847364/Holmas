@@ -75,7 +75,6 @@ public static class HolmasPlayModeVerificationProbe
         public string GoldText = string.Empty;
         public string SummaryText = string.Empty;
         public string StatusText = string.Empty;
-        public string StartButtonLabel = string.Empty;
         public string PromotionButtonLabel = string.Empty;
         public int PlayerLevel;
         public long Experience;
@@ -275,15 +274,20 @@ public static class HolmasPlayModeVerificationProbe
 
             CaptureMainSnapshot("startup_main");
             CaptureScreenshot("startup_main.png");
+            if (root.Context == null ||
+                root.Context.GameplayRuntime == null ||
+                root.Context.GameplayRuntime.CurrentBoardRuntime == null)
+            {
+                throw new InvalidOperationException("Holmas probe: Main page did not auto-start an embedded board.");
+            }
 
-            ClaimAllClaimableTasks(root.Context);
             root.Context.RefillAvailableTasks();
             await DelayFramesAsync(4);
-            CaptureMainSnapshot("after_claim_and_refill");
+            CaptureMainSnapshot("after_refill");
 
-            string trackedCatId = CompleteOneTaskAndClaim(root);
+            string trackedCatId = CompleteOneTaskAndVerifyAutoClaim(root);
             await DelayFramesAsync(4);
-            CaptureMainSnapshot("after_task_complete_and_claim");
+            CaptureMainSnapshot("after_task_auto_claim");
 
             await UpgradePromotionsUntilAsync(root.Context, 6);
             CaptureMainSnapshot("after_reach_level_6");
@@ -326,32 +330,7 @@ public static class HolmasPlayModeVerificationProbe
             return root;
         }
 
-        private void ClaimAllClaimableTasks(HolmasApplicationContext context)
-        {
-            if (context == null || context.GameplayRuntime == null || context.GameplayRuntime.TaskBarState == null)
-            {
-                throw new InvalidOperationException("Holmas probe: task bar unavailable.");
-            }
-
-            for (int i = 0; i < context.GameplayRuntime.TaskBarState.Slots.Count; i++)
-            {
-                var runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(i);
-                if (runtimeTask == null || !runtimeTask.CanClaimReward)
-                {
-                    continue;
-                }
-
-                var claim = context.ClaimTaskReward(i);
-                if (!claim.Success)
-                {
-                    throw new InvalidOperationException($"Holmas probe: claim failed for slot {i + 1}: {claim.FailureReason}");
-                }
-
-                Log($"Claimed slot {i + 1}, gold +{claim.Reward}.");
-            }
-        }
-
-        private string CompleteOneTaskAndClaim(UiRoot root)
+        private string CompleteOneTaskAndVerifyAutoClaim(UiRoot root)
         {
             HolmasApplicationContext context = root != null ? root.Context : null;
             if (context == null || context.GameplayRuntime == null || context.GameplayRuntime.TaskBarState == null)
@@ -368,7 +347,11 @@ public static class HolmasPlayModeVerificationProbe
 
             string catId = firstTask.Task.CatId;
             int slotIndex = firstTask.Task.SlotIndex;
+            string taskInstanceId = firstTask.Task.TaskInstanceId;
             int progressBefore = firstTask.Task.CurrentCount;
+            long goldBefore = context.CurrentGoldBalance;
+            int claimedCountBefore = context.GameplayRuntime.MetaProgressionState.ClaimedTaskCount;
+            int rewardTipVersionBefore = context.GameplayRuntime.LastTaskRewardTipVersion;
             Log($"Starting embedded main board for task slot {slotIndex + 1}, cat {catId}.");
 
             root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(
@@ -401,36 +384,51 @@ public static class HolmasPlayModeVerificationProbe
                 throw new InvalidOperationException("Holmas probe: battle did not complete after revealing all cats.");
             }
 
-            CaptureMainSnapshot("after_battle_before_claim");
+            MainSnapshot afterBattleSnapshot = CaptureMainSnapshot("after_battle_after_auto_claim");
 
             var taskAfterBattle = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
-            if (taskAfterBattle == null || taskAfterBattle.Task == null)
-            {
-                throw new InvalidOperationException($"Holmas probe: slot {slotIndex + 1} lost its task after battle.");
-            }
 
             if (completionResult == null)
             {
                 throw new InvalidOperationException("Holmas probe: battle completion did not return a progression result.");
             }
 
-            if (taskAfterBattle.Task.CurrentCount <= progressBefore)
+            if (context.CurrentGoldBalance <= goldBefore)
             {
-                throw new InvalidOperationException("Holmas probe: battle completion did not increase task progress.");
+                throw new InvalidOperationException("Holmas probe: task completion did not auto-claim gold.");
             }
 
-            if (!taskAfterBattle.CanClaimReward)
+            if (context.GameplayRuntime.MetaProgressionState.ClaimedTaskCount <= claimedCountBefore)
             {
-                throw new InvalidOperationException($"Holmas probe: slot {slotIndex + 1} not claimable after battle.");
+                throw new InvalidOperationException("Holmas probe: automatic task claim was not recorded.");
             }
 
-            var claim = context.ClaimTaskReward(slotIndex);
-            if (!claim.Success)
+            if (context.GameplayRuntime.LastTaskRewardTipVersion <= rewardTipVersionBefore ||
+                string.IsNullOrWhiteSpace(context.GameplayRuntime.LastTaskRewardTip) ||
+                !context.GameplayRuntime.LastTaskRewardTip.Contains("金币 +"))
             {
-                throw new InvalidOperationException($"Holmas probe: post-battle claim failed: {claim.FailureReason}");
+                throw new InvalidOperationException("Holmas probe: automatic task claim tip was not generated.");
             }
 
-            Log($"Claimed post-battle reward from slot {slotIndex + 1}, gold +{claim.Reward}.");
+            if (string.IsNullOrWhiteSpace(afterBattleSnapshot.StatusText) ||
+                !afterBattleSnapshot.StatusText.Contains("金币 +"))
+            {
+                throw new InvalidOperationException("Holmas probe: Main status text did not show the automatic reward tip.");
+            }
+
+            if (taskAfterBattle != null &&
+                taskAfterBattle.Task != null &&
+                string.Equals(taskAfterBattle.Task.TaskInstanceId, taskInstanceId, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Holmas probe: completed task remained in the original slot after automatic claim.");
+            }
+
+            if (taskAfterBattle != null && taskAfterBattle.Task != null && taskAfterBattle.Task.CurrentCount != 0)
+            {
+                throw new InvalidOperationException("Holmas probe: refilled task did not start from zero progress.");
+            }
+
+            Log($"Auto-claimed task slot {slotIndex + 1}, gold {goldBefore}->{context.CurrentGoldBalance}, previous progress {progressBefore}.");
             return catId;
         }
 
@@ -522,7 +520,6 @@ public static class HolmasPlayModeVerificationProbe
                 GoldText = ReadText(view.transform, "GoldText"),
                 SummaryText = ReadText(view.transform, "SummaryText"),
                 StatusText = ReadText(view.transform, "StatusText"),
-                StartButtonLabel = ReadButtonText(view.transform, "StartButton"),
                 PromotionButtonLabel = ReadButtonText(view.transform, "PromotionButton"),
                 PlayerLevel = context != null ? context.CurrentPlayerLevel : 0,
                 Experience = context != null && context.GameplayRuntime != null ? context.GameplayRuntime.MetaProgressionState.Experience : 0L,

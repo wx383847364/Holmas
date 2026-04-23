@@ -27,8 +27,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public string EnergyLabel = string.Empty;
         public string Summary = string.Empty;
         public string Status = string.Empty;
-        public string StartButtonLabel = "开始找猫";
-        public bool StartButtonEnabled;
         public string PromotionButtonLabel = "宣传升级";
         public bool PromotionButtonEnabled;
         public string PromotionId = string.Empty;

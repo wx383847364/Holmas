@@ -26,13 +26,6 @@ namespace App.HotUpdate.Holmas.UI.Generated
             manifest.AddEntry(MainBindings.SummaryTextKey, "TextMeshProUGUI", MainBindings.SummaryTextNodePath, notes: "runtime_summary");
             manifest.AddEntry(MainBindings.StatusTextKey, "TextMeshProUGUI", MainBindings.StatusTextNodePath, notes: "runtime_status");
             manifest.AddEntry(
-                MainBindings.StartButtonKey,
-                "Button",
-                MainBindings.StartButtonNodePath,
-                MainBindings.ButtonClickEvent,
-                requiresManualWiring: true,
-                notes: "controller_wires_start");
-            manifest.AddEntry(
                 MainBindings.PromotionButtonKey,
                 "Button",
                 MainBindings.PromotionButtonNodePath,

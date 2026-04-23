@@ -28,9 +28,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             HolmasAgencyBuildingDefinition promotion = GetPrimaryPromotionDefinition();
             string promotionId = promotion != null ? promotion.PromotionId : string.Empty;
             bool hasConfiguredPromotions = HasConfiguredPromotionsForCurrentStage();
-            bool hasUncompletedLevel = _context != null &&
-                                       _context.GameplayRuntime != null &&
-                                       _context.GameplayRuntime.HasActiveUncompletedLevel;
             return new MainVm
             {
                 LevelLabel = $"Lv {_context?.CurrentPlayerLevel ?? 1}",
@@ -38,8 +35,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 EnergyLabel = _context?.EnergyLabel ?? "50/50",
                 Summary = BuildSummary(),
                 Status = string.IsNullOrWhiteSpace(status) ? "主界面已就绪。" : status,
-                StartButtonLabel = hasUncompletedLevel ? "继续找猫" : "开始找猫",
-                StartButtonEnabled = _context != null && _context.GameplayRuntime != null,
                 PromotionButtonLabel = string.IsNullOrWhiteSpace(promotionId)
                     ? (hasConfiguredPromotions ? "宣传已满级" : "宣传待开放")
                     : BuildPromotionButtonLabel(promotion),
@@ -253,7 +248,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return System.Array.Empty<MainTaskItemVm>();
             }
 
-            int count = System.Math.Min(taskBar.Slots.Count, 4);
+            int count = taskBar.Slots.Count;
             var items = new List<MainTaskItemVm>(count);
             for (int i = 0; i < count; i++)
             {

@@ -676,8 +676,18 @@ namespace Holmas.Tests
                 clock);
             var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
             var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            int rewardClaimEventCount = 0;
+            runtime.StateChanged += reason =>
+            {
+                if (reason == HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed)
+                {
+                    rewardClaimEventCount++;
+                }
+            };
 
             runtime.RefillAvailableTasks(1);
+            HolmasTaskRuntimeInstance originalTask = runtime.TaskBarState.GetTaskBySlot(0);
+            Assert.That(originalTask, Is.Not.Null);
             runtime.StartLevel(
                 HolmasTestSupport.CreateTerrain(1, 3),
                 HolmasTestSupport.CreateRequest(
@@ -693,9 +703,203 @@ namespace Holmas.Tests
             Assert.That(reveal.IsValidAction, Is.True);
             Assert.That(runtime.HasActiveUncompletedLevel, Is.True);
             Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(10));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
+            Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(1));
+            Assert.That(runtime.MetaProgressionState.ClaimedTaskCount, Is.EqualTo(1));
+            Assert.That(rewardClaimEventCount, Is.EqualTo(1));
+            Assert.That(runtime.LastTaskRewardTip, Does.Contain("金币 +10"));
             Assert.That(runtime.TaskBarState.GetTaskBySlot(0), Is.Not.Null);
             Assert.That(runtime.TaskBarState.GetUnlockedEmptySlotCount(), Is.EqualTo(0));
             Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(0));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.TaskInstanceId, Is.Not.EqualTo(originalTask.Task.TaskInstanceId));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_ApplyFoundCatProgress_MultipleCompletedTasks_EmitsOneRewardTip()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b", "cat-c", "cat-d");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0, 0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            int rewardClaimEventCount = 0;
+            runtime.StateChanged += reason =>
+            {
+                if (reason == HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed)
+                {
+                    rewardClaimEventCount++;
+                }
+            };
+
+            runtime.RefillAvailableTasks(1);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CatId, Is.EqualTo("cat-a"));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(1).Task.CatId, Is.EqualTo("cat-b"));
+            runtime.StartLevel(
+                HolmasTestSupport.CreateBoardTemplate(1, 2),
+                new LevelSnapshot
+                {
+                    MapId = "multi-claim",
+                    TerrainPath = "multi-claim",
+                    RevealedCells = new bool[2],
+                    SpawnedCats = new List<SpawnedCatData>
+                    {
+                        new SpawnedCatData { CatId = "cat-a", CellIndex = 0 },
+                        new SpawnedCatData { CatId = "cat-b", CellIndex = 1 },
+                    },
+                });
+
+            var revealResult = new BoardRevealResult(0)
+            {
+                IsValidAction = true,
+                FoundCat = true,
+            };
+            revealResult.FoundCatCellIndices.Add(0);
+            revealResult.FoundCatCellIndices.Add(1);
+
+            MethodInfo applyFoundCatProgress = typeof(HolmasGameplayRuntime)
+                .GetMethod("ApplyFoundCatProgress", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(applyFoundCatProgress, Is.Not.Null);
+            applyFoundCatProgress.Invoke(runtime, new object[] { revealResult });
+
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(21));
+            Assert.That(runtime.MetaProgressionState.ClaimedTaskCount, Is.EqualTo(2));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
+            Assert.That(rewardClaimEventCount, Is.EqualTo(1));
+            Assert.That(runtime.LastTaskRewardTip, Does.Contain("完成 2 个任务"));
+            Assert.That(runtime.LastTaskRewardTip, Does.Contain("金币 +21"));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(0));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(1).Task.CurrentCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_SettleClaimableTasksAndRefill_ClaimsExistingFullTasks()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b", "cat-c", "cat-d");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0, 0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            int rewardClaimEventCount = 0;
+            runtime.StateChanged += reason =>
+            {
+                if (reason == HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed)
+                {
+                    rewardClaimEventCount++;
+                }
+            };
+
+            runtime.RefillAvailableTasks(1);
+            HolmasTaskRuntimeInstance firstTask = runtime.TaskBarState.GetTaskBySlot(0);
+            HolmasTaskRuntimeInstance secondTask = runtime.TaskBarState.GetTaskBySlot(1);
+            string firstTaskId = firstTask.Task.TaskInstanceId;
+            string secondTaskId = secondTask.Task.TaskInstanceId;
+            int expectedReward = firstTask.Task.Reward + secondTask.Task.Reward;
+            firstTask.Task.CurrentCount = firstTask.Task.TargetCount;
+            secondTask.Task.CurrentCount = secondTask.Task.TargetCount;
+
+            HolmasTaskSettlementResult result = runtime.SettleClaimableTasksAndRefill(1);
+
+            Assert.That(result.ClaimedTaskCount, Is.EqualTo(2));
+            Assert.That(result.TotalReward, Is.EqualTo(expectedReward));
+            Assert.That(result.RefilledTaskCount, Is.EqualTo(2));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(expectedReward));
+            Assert.That(runtime.MetaProgressionState.ClaimedTaskCount, Is.EqualTo(2));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
+            Assert.That(runtime.CurrentPlayerLevel, Is.EqualTo(1));
+            Assert.That(rewardClaimEventCount, Is.EqualTo(1));
+            Assert.That(runtime.LastTaskRewardTip, Does.Contain("完成 2 个任务"));
+            Assert.That(runtime.LastTaskRewardTip, Does.Contain($"金币 +{expectedReward}"));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.TaskInstanceId, Is.Not.EqualTo(firstTaskId));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(1).Task.TaskInstanceId, Is.Not.EqualTo(secondTaskId));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(0));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(1).Task.CurrentCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_SettleClaimableTasksAndRefill_PendingRelockSlotLocksAfterClaim()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+
+            HolmasTaskSlotUnlockResult unlock = runtime.UnlockAdSlot(2, 1, 2000);
+            HolmasTaskRuntimeInstance task = runtime.TaskBarState.GetTaskBySlot(2);
+            Assert.That(unlock.Success, Is.True);
+            Assert.That(task, Is.Not.Null);
+            task.Task.CurrentCount = task.Task.TargetCount;
+            runtime.TaskBarState.MarkPendingRelockAfterTaskCompletion(2);
+
+            HolmasTaskSettlementResult result = runtime.SettleClaimableTasksAndRefill(1);
+
+            Assert.That(result.ClaimedTaskCount, Is.EqualTo(1));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(task.Task.Reward));
+            Assert.That(runtime.MetaProgressionState.ClaimedTaskCount, Is.EqualTo(1));
+            Assert.That(runtime.MetaProgressionState.Experience, Is.EqualTo(0));
+            Assert.That(runtime.TaskBarState.GetSlot(2).IsUnlocked, Is.False);
+            Assert.That(runtime.TaskBarState.GetSlot(2).PendingRelockAfterTaskCompletion, Is.False);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(2), Is.Null);
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_RevealCell_AutoClaimPendingRelockSlot_LocksAfterReward()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+
+            var unlock = runtime.UnlockAdSlot(2, 1, 2000);
+            HolmasTaskRuntimeInstance task = runtime.TaskBarState.GetTaskBySlot(2);
+            Assert.That(unlock.Success, Is.True);
+            Assert.That(task, Is.Not.Null);
+
+            taskService.RefreshExpiredAdSlots(runtime.TaskBarState, 3000);
+            Assert.That(runtime.TaskBarState.GetSlot(2).PendingRelockAfterTaskCompletion, Is.True);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateTerrain(1, 1),
+                HolmasTestSupport.CreateRequest(
+                    "map-pending-relock-auto-claim",
+                    TerrainAssetPathUtility.BuildAssetPath("1"),
+                    41,
+                    1,
+                    1,
+                    new BoardSpawnEntry { CatId = task.Task.CatId, Weight = 1 }));
+
+            BoardRevealResult reveal = runtime.RevealCell(runtime.CurrentLevelSnapshot.SpawnedCats[0].CellIndex, out _);
+
+            Assert.That(reveal.IsValidAction, Is.True);
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(task.Task.Reward));
+            Assert.That(runtime.TaskBarState.GetSlot(2).IsUnlocked, Is.False);
+            Assert.That(runtime.TaskBarState.GetSlot(2).PendingRelockAfterTaskCompletion, Is.False);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(2), Is.Null);
+            Assert.That(runtime.LastTaskRewardTip, Does.Contain("金币 +"));
         }
 
         [Test]
@@ -772,7 +976,8 @@ namespace Holmas.Tests
                 CreateTaskSlot(root.transform, "Task1");
                 CreateTaskSlot(root.transform, "Task2");
                 CreateTaskSlot(root.transform, "Task3");
-                TextMeshProUGUI legacyTask4Text = CreateTaskSlot(root.transform, "Task4", withLegacyProgressText: true);
+                CreateTaskSlot(root.transform, "Task4", withLegacyProgressText: true);
+                TextMeshProUGUI legacyTask5Text = CreateTaskSlot(root.transform, "Task5", withLegacyProgressText: true);
 
                 MainView view = root.GetComponent<MainView>();
                 view.Render(new MainVm
@@ -783,15 +988,50 @@ namespace Holmas.Tests
                         new MainTaskItemVm { Title = "B", Progress = "0/2", Reward = "R2", ProgressNormalized = 0f },
                         new MainTaskItemVm { Title = "C", Progress = "未解锁", Reward = "广告位后续接入", ProgressNormalized = 0f, IsLocked = true, ButtonEnabled = false },
                         new MainTaskItemVm { Title = "D", Progress = "未解锁", Reward = "广告位后续接入", ProgressNormalized = 0f, IsLocked = true, ButtonEnabled = false },
+                        new MainTaskItemVm { Title = "E", Progress = "未解锁", Reward = "广告位后续接入", ProgressNormalized = 0f, IsLocked = true, ButtonEnabled = false },
                     }
                 });
 
-                Assert.That(legacyTask4Text.text, Is.EqualTo(string.Empty));
+                Assert.That(legacyTask5Text.text, Is.EqualTo(string.Empty));
             }
             finally
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        [Test]
+        public void MainPresenter_BuildTaskItems_IncludesFifthLockedSlot()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0, 0, 0, 0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            runtime.RefillAvailableTasks(1);
+
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            MainVm viewModel = new MainPresenter(context).Build();
+
+            Assert.That(viewModel.TaskItems, Has.Length.EqualTo(5));
+            Assert.That(viewModel.TaskItems[4].SlotIndex, Is.EqualTo(4));
+            Assert.That(viewModel.TaskItems[4].IsLocked, Is.True);
+            Assert.That(viewModel.TaskItems[4].Progress, Is.EqualTo("未解锁"));
         }
 
         [Test]

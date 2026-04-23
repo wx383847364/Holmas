@@ -16,6 +16,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private MainView _view;
         private MainBindings _bindings;
         private bool _isBusy;
+        private bool _autoStartInProgress;
         private HolmasGameplayRuntime _runtime;
         private HolmasBoardInteractionMode _interactionMode = HolmasBoardInteractionMode.Walk;
 
@@ -41,7 +42,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _bindings = MainBindings.Resolve(BindingResolver);
             _view?.Bind(_bindings);
             _view?.SetAssetsRuntime(Root != null && Root.Context != null ? Root.Context.AssetsRuntime : null);
-            _view?.SetStartAction(OnStartClicked);
             _view?.SetPromotionAction(OnPromotionClicked);
             _view?.SetAddEnergyAction(OnAddEnergyClicked);
             _view?.SetModeToggleActions(OnWalkToggleChanged, OnFindToggleChanged);
@@ -52,18 +52,21 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         protected override void OnOpen(object payload)
         {
             string repairedStatus = RepairIncompatibleLevelSession();
-            Refresh(repairedStatus ?? payload as string);
+            string status = SettleClaimableTasksAndRefill(repairedStatus ?? payload as string);
+            Refresh(status);
+            RequestAutoStartInMain();
         }
 
         protected override void OnResume()
         {
             string repairedStatus = RepairIncompatibleLevelSession();
-            Refresh(repairedStatus ?? "已返回主界面。");
+            string status = SettleClaimableTasksAndRefill(repairedStatus ?? "已返回主界面。");
+            Refresh(status);
+            RequestAutoStartInMain();
         }
 
         protected override void OnDestroy()
         {
-            _view?.SetStartAction(null);
             _view?.SetPromotionAction(null);
             _view?.SetAddEnergyAction(null);
             _view?.SetModeToggleActions(null, null);
@@ -75,14 +78,41 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
         }
 
-        private void OnStartClicked()
-        {
-            _ = HandleStartAsync();
-        }
-
         private string RepairIncompatibleLevelSession()
         {
             return null;
+        }
+
+        private string SettleClaimableTasksAndRefill(string fallbackStatus)
+        {
+            HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : _runtime;
+            if (runtime == null)
+            {
+                return fallbackStatus;
+            }
+
+            int rewardTipVersionBeforeSettlement = runtime.LastTaskRewardTipVersion;
+            HolmasTaskSettlementResult settlement = runtime.SettleClaimableTasksAndRefill();
+            return settlement != null && settlement.ClaimedTaskCount > 0
+                ? BuildStatusWithNewRewardTip(runtime, rewardTipVersionBeforeSettlement, fallbackStatus)
+                : fallbackStatus;
+        }
+
+        private void RequestAutoStartInMain()
+        {
+            if (_autoStartInProgress || _isBusy)
+            {
+                return;
+            }
+
+            HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : _runtime;
+            if (runtime != null && runtime.HasActiveUncompletedLevel && runtime.CurrentBoardRuntime != null)
+            {
+                return;
+            }
+
+            _autoStartInProgress = true;
+            _ = HandleStartAsync();
         }
 
         private void OnPromotionClicked()
@@ -166,12 +196,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         {
             if (_isBusy)
             {
+                _autoStartInProgress = false;
                 return;
             }
 
             HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
             if (flowCoordinator == null)
             {
+                _autoStartInProgress = false;
                 Refresh("界面流转协调器不可用。");
                 return;
             }
@@ -192,6 +224,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             finally
             {
                 _isBusy = false;
+                _autoStartInProgress = false;
                 if (ScreenService != null &&
                     ReferenceEquals(ScreenService.NavigationState.CurrentPage, this))
                 {
@@ -222,14 +255,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             string finalStatus = null;
             try
             {
+                int rewardTipVersionBeforeReveal = runtime.LastTaskRewardTipVersion;
                 HolmasProgressionAdvanceResult progressionResult;
                 BoardRevealResult revealResult = runtime.RevealCell(cellIndex, mode, out progressionResult);
                 string revealStatus = BuildRevealStatus(revealResult, progressionResult, mode);
-                finalStatus = revealStatus;
-                Refresh(revealStatus);
+                finalStatus = BuildStatusWithNewRewardTip(runtime, rewardTipVersionBeforeReveal, revealStatus);
+                Refresh(finalStatus);
                 if (revealResult != null && revealResult.IsValidAction && revealResult.Completed)
                 {
-                    finalStatus = await AdvanceToNextLevelAsync(progressionResult, revealStatus);
+                    finalStatus = await AdvanceToNextLevelAsync(progressionResult, finalStatus, rewardTipVersionBeforeReveal);
                 }
             }
             catch (Exception ex)
@@ -245,7 +279,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
         }
 
-        private async Task<string> AdvanceToNextLevelAsync(HolmasProgressionAdvanceResult progressionResult, string fallbackStatus)
+        private async Task<string> AdvanceToNextLevelAsync(
+            HolmasProgressionAdvanceResult progressionResult,
+            string fallbackStatus,
+            int rewardTipVersionBeforeReveal)
         {
             HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
             if (flowCoordinator == null)
@@ -257,6 +294,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             try
             {
                 string status = await flowCoordinator.AdvanceToNextBattleInMainAsync(progressionResult);
+                status = BuildStatusWithNewRewardTip(_runtime, rewardTipVersionBeforeReveal, status);
                 Refresh(status);
                 return status;
             }
@@ -355,7 +393,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private void Refresh(string status = null)
         {
             MainVm viewModel = _presenter != null ? _presenter.Build(status) : new MainVm();
-            viewModel.StartButtonEnabled = !_isBusy && viewModel.StartButtonEnabled;
             viewModel.WalkToggleIsOn = _interactionMode == HolmasBoardInteractionMode.Walk;
             viewModel.FindToggleIsOn = _interactionMode == HolmasBoardInteractionMode.Find;
             if (viewModel.TaskItems != null)
@@ -382,7 +419,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             switch (reason)
             {
                 case HolmasGameplayRuntimeStateChangeReason.TasksRefilled:
-                case HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed:
                 case HolmasGameplayRuntimeStateChangeReason.PromotionUpgraded:
                 case HolmasGameplayRuntimeStateChangeReason.EnergyChanged:
                 case HolmasGameplayRuntimeStateChangeReason.LevelStarted:
@@ -391,7 +427,31 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 case HolmasGameplayRuntimeStateChangeReason.CurrentLevelSessionEnded:
                     Refresh(null);
                     break;
+                case HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed:
+                    Refresh(GetCurrentRewardTip(_runtime));
+                    break;
             }
+        }
+
+        private static string BuildStatusWithNewRewardTip(HolmasGameplayRuntime runtime, int previousTipVersion, string fallbackStatus)
+        {
+            if (runtime != null &&
+                runtime.LastTaskRewardTipVersion != previousTipVersion &&
+                !string.IsNullOrWhiteSpace(runtime.LastTaskRewardTip))
+            {
+                return string.IsNullOrWhiteSpace(fallbackStatus)
+                    ? runtime.LastTaskRewardTip
+                    : $"{runtime.LastTaskRewardTip} {fallbackStatus}";
+            }
+
+            return fallbackStatus;
+        }
+
+        private static string GetCurrentRewardTip(HolmasGameplayRuntime runtime)
+        {
+            return runtime != null && !string.IsNullOrWhiteSpace(runtime.LastTaskRewardTip)
+                ? runtime.LastTaskRewardTip
+                : null;
         }
 
         private static string BuildRevealStatus(

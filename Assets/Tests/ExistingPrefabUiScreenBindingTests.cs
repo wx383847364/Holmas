@@ -32,6 +32,7 @@ namespace Holmas.Tests
                 Assert.That(bindings.MinesGroup.name, Is.EqualTo("MinesGroup"));
                 Assert.That(bindings.BoardContainer.name, Is.EqualTo("BoardContainer"));
                 Assert.That(bindings.BoardContainer.IsChildOf(bindings.MinesGroup), Is.True, "Main 内嵌棋盘必须挂在 MinesGroup 下。");
+                Assert.That(instance.transform.Find("RuntimeOverlay/StartButton"), Is.Null, "MainPanel 不应再创建开始/继续找猫按钮。");
                 Assert.That(bindings.AddEnergyButton.name, Is.EqualTo("AddEnergyButton"), "加体力按钮应在 Main RuntimeOverlay 上独立创建，不能复用 Energy_btn。");
                 Assert.That(bindings.WalkToggle.isOn, Is.True, "WalkToggle 应作为默认行走模式。");
                 Assert.That(bindings.FindToggle, Is.Not.Null, "FindToggle 缺失。");

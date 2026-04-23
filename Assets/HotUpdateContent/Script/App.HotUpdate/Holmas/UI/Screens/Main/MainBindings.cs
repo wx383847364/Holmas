@@ -13,7 +13,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string EnergyTextKey = "main/energy_text";
         public const string SummaryTextKey = "main/summary_text";
         public const string StatusTextKey = "main/status_text";
-        public const string StartButtonKey = "main/start_button";
         public const string PromotionButtonKey = "main/promotion_button";
         public const string AddEnergyButtonKey = "main/add_energy_button";
         public const string MinesGroupKey = "main/mines_group";
@@ -31,7 +30,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string EnergyTextNodePath = RuntimeOverlayNodePath + "/EnergyText";
         public const string SummaryTextNodePath = RuntimeOverlayNodePath + "/SummaryText";
         public const string StatusTextNodePath = RuntimeOverlayNodePath + "/StatusText";
-        public const string StartButtonNodePath = RuntimeOverlayNodePath + "/StartButton";
         public const string PromotionButtonNodePath = RuntimeOverlayNodePath + "/PromotionButton";
         public const string AddEnergyButtonNodePath = RuntimeOverlayNodePath + "/AddEnergyButton";
         public const string MinesGroupNodePath = "MainPanel/MinesGroup";
@@ -45,7 +43,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public TextMeshProUGUI EnergyText;
         public TextMeshProUGUI SummaryText;
         public TextMeshProUGUI StatusText;
-        public Button StartButton;
         public Button PromotionButton;
         public Button AddEnergyButton;
         public RectTransform MinesGroup;
@@ -60,7 +57,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             EnergyText != null &&
             SummaryText != null &&
             StatusText != null &&
-            StartButton != null &&
             PromotionButton != null &&
             AddEnergyButton != null &&
             MinesGroup != null &&
@@ -81,7 +77,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                    resolver.HasExplicitBinding<TextMeshProUGUI>(EnergyTextKey, nodePath: EnergyTextNodePath) &&
                    resolver.HasExplicitBinding<TextMeshProUGUI>(SummaryTextKey, nodePath: SummaryTextNodePath) &&
                    resolver.HasExplicitBinding<TextMeshProUGUI>(StatusTextKey, nodePath: StatusTextNodePath) &&
-                   resolver.HasExplicitBinding<Button>(StartButtonKey, ButtonClickEvent, StartButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(AddEnergyButtonKey, ButtonClickEvent, AddEnergyButtonNodePath) &&
                    resolver.HasExplicitBinding<RectTransform>(MinesGroupKey, nodePath: MinesGroupNodePath) &&
@@ -104,7 +99,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             resolver.TryResolve(EnergyTextKey, out bindings.EnergyText, nodePath: EnergyTextNodePath);
             resolver.TryResolve(SummaryTextKey, out bindings.SummaryText, nodePath: SummaryTextNodePath);
             resolver.TryResolve(StatusTextKey, out bindings.StatusText, nodePath: StatusTextNodePath);
-            resolver.TryResolve(StartButtonKey, out bindings.StartButton, ButtonClickEvent, StartButtonNodePath);
             resolver.TryResolve(PromotionButtonKey, out bindings.PromotionButton, ButtonClickEvent, PromotionButtonNodePath);
             resolver.TryResolve(AddEnergyButtonKey, out bindings.AddEnergyButton, ButtonClickEvent, AddEnergyButtonNodePath);
             resolver.TryResolve(MinesGroupKey, out bindings.MinesGroup, nodePath: MinesGroupNodePath);

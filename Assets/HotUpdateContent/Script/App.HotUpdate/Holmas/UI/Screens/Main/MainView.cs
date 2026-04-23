@@ -19,13 +19,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             "Task2",
             "Task3",
             "Task4",
+            "Task5",
         };
 
         private readonly List<MainTaskSlotView> _taskSlotViews = new List<MainTaskSlotView>();
 
         private MainBindings _bindings;
         private FindCatBoardView _boardView;
-        private UnityAction _currentStartAction;
         private UnityAction _currentPromotionAction;
         private UnityAction _currentAddEnergyAction;
         private UnityAction<bool> _currentWalkToggleAction;
@@ -79,16 +79,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new Vector2(-120f, 160f),
                 28f,
                 TextAlignmentOptions.TopLeft);
-            Button startButton = GetOrCreateRuntimeButton(
-                overlay,
-                "StartButton",
-                "开始找猫",
-                new Vector2(0.5f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, 96f),
-                new Vector2(320f, 108f),
-                new Color(0.96f, 0.57f, 0.16f, 0.96f));
+            RemoveStartButton(overlay);
             Button promotionButton = ResolvePromotionButton(overlay);
             Button addEnergyButton = ResolveAddEnergyButton(overlay);
             RectTransform minesGroup = ResolveMinesGroup(overlay);
@@ -102,11 +93,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             collector.RegisterOrReplace(MainBindings.EnergyTextKey, energyText, nodePath: MainBindings.EnergyTextNodePath);
             collector.RegisterOrReplace(MainBindings.SummaryTextKey, summaryText, nodePath: MainBindings.SummaryTextNodePath);
             collector.RegisterOrReplace(MainBindings.StatusTextKey, statusText, nodePath: MainBindings.StatusTextNodePath);
-            collector.RegisterOrReplace(
-                MainBindings.StartButtonKey,
-                startButton,
-                MainBindings.ButtonClickEvent,
-                MainBindings.StartButtonNodePath);
             collector.RegisterOrReplace(
                 MainBindings.PromotionButtonKey,
                 promotionButton,
@@ -136,26 +122,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public void Bind(MainBindings bindings)
         {
             _bindings = bindings ?? new MainBindings();
-        }
-
-        public void SetStartAction(UnityAction action)
-        {
-            if (_bindings?.StartButton == null)
-            {
-                _currentStartAction = action;
-                return;
-            }
-
-            if (_currentStartAction != null)
-            {
-                _bindings.StartButton.onClick.RemoveListener(_currentStartAction);
-            }
-
-            _currentStartAction = action;
-            if (_currentStartAction != null)
-            {
-                _bindings.StartButton.onClick.AddListener(_currentStartAction);
-            }
         }
 
         public void SetPromotionAction(UnityAction action)
@@ -291,12 +257,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
             }
 
-            if (_bindings?.StartButton != null)
-            {
-                _bindings.StartButton.interactable = viewModel.StartButtonEnabled;
-                SetButtonLabel(_bindings.StartButton, viewModel.StartButtonLabel);
-            }
-
             if (_bindings?.PromotionButton != null)
             {
                 _bindings.PromotionButton.interactable = viewModel.PromotionButtonEnabled;
@@ -328,6 +288,24 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             background.color = new Color(0.12f, 0.17f, 0.22f, 0.95f);
+        }
+
+        private static void RemoveStartButton(Transform overlay)
+        {
+            Transform startButton = overlay != null ? overlay.Find("StartButton") : null;
+            if (startButton == null)
+            {
+                return;
+            }
+
+            if (UnityEngine.Application.isPlaying)
+            {
+                Destroy(startButton.gameObject);
+            }
+            else
+            {
+                DestroyImmediate(startButton.gameObject);
+            }
         }
 
         private void EnsureTaskSlotViews()
