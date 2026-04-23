@@ -15,6 +15,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string StatusTextKey = "main/status_text";
         public const string PromotionButtonKey = "main/promotion_button";
         public const string AddEnergyButtonKey = "main/add_energy_button";
+        public const string HelpButtonKey = "main/help_button";
+        public const string StartTutorialButtonKey = "main/start_tutorial_button";
+        public const string TutorialStepInputKey = "main/tutorial_step_input";
         public const string MinesGroupKey = "main/mines_group";
         public const string BoardContainerKey = "main/board_container";
         public const string WalkToggleKey = "main/walk_toggle";
@@ -32,6 +35,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string StatusTextNodePath = RuntimeOverlayNodePath + "/StatusText";
         public const string PromotionButtonNodePath = RuntimeOverlayNodePath + "/PromotionButton";
         public const string AddEnergyButtonNodePath = RuntimeOverlayNodePath + "/AddEnergyButton";
+        public const string HelpButtonNodePath = RuntimeOverlayNodePath + "/HelpButton";
+        public const string StartTutorialButtonNodePath = RuntimeOverlayNodePath + "/StartTutorialButton";
+        public const string TutorialStepInputNodePath = RuntimeOverlayNodePath + "/TutorialStepInput";
         public const string MinesGroupNodePath = "MainPanel/MinesGroup";
         public const string BoardContainerNodePath = MinesGroupNodePath + "/BoardContainer";
         public const string WalkToggleNodePath = "MainPanel/WalkToggle";
@@ -45,6 +51,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public TextMeshProUGUI StatusText;
         public Button PromotionButton;
         public Button AddEnergyButton;
+        public Button HelpButton;
+        public Button StartTutorialButton;
+        public TMP_InputField TutorialStepInput;
         public RectTransform MinesGroup;
         public RectTransform BoardContainer;
         public Toggle WalkToggle;
@@ -59,6 +68,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             StatusText != null &&
             PromotionButton != null &&
             AddEnergyButton != null &&
+            HelpButton != null &&
+            StartTutorialButton != null &&
+            TutorialStepInput != null &&
             MinesGroup != null &&
             BoardContainer != null &&
             WalkToggle != null &&
@@ -79,6 +91,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                    resolver.HasExplicitBinding<TextMeshProUGUI>(StatusTextKey, nodePath: StatusTextNodePath) &&
                    resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(AddEnergyButtonKey, ButtonClickEvent, AddEnergyButtonNodePath) &&
+                   resolver.HasExplicitBinding<Button>(HelpButtonKey, ButtonClickEvent, HelpButtonNodePath) &&
+                   resolver.HasExplicitBinding<Button>(StartTutorialButtonKey, ButtonClickEvent, StartTutorialButtonNodePath) &&
+                   resolver.HasExplicitBinding<TMP_InputField>(TutorialStepInputKey, nodePath: TutorialStepInputNodePath) &&
                    resolver.HasExplicitBinding<RectTransform>(MinesGroupKey, nodePath: MinesGroupNodePath) &&
                    resolver.HasExplicitBinding<RectTransform>(BoardContainerKey, nodePath: BoardContainerNodePath) &&
                    resolver.HasExplicitBinding<Toggle>(WalkToggleKey, ToggleChangedEvent, WalkToggleNodePath) &&
@@ -101,6 +116,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             resolver.TryResolve(StatusTextKey, out bindings.StatusText, nodePath: StatusTextNodePath);
             resolver.TryResolve(PromotionButtonKey, out bindings.PromotionButton, ButtonClickEvent, PromotionButtonNodePath);
             resolver.TryResolve(AddEnergyButtonKey, out bindings.AddEnergyButton, ButtonClickEvent, AddEnergyButtonNodePath);
+            resolver.TryResolve(HelpButtonKey, out bindings.HelpButton, ButtonClickEvent, HelpButtonNodePath);
+            resolver.TryResolve(StartTutorialButtonKey, out bindings.StartTutorialButton, ButtonClickEvent, StartTutorialButtonNodePath);
+            resolver.TryResolve(TutorialStepInputKey, out bindings.TutorialStepInput, nodePath: TutorialStepInputNodePath);
             resolver.TryResolve(MinesGroupKey, out bindings.MinesGroup, nodePath: MinesGroupNodePath);
             resolver.TryResolve(BoardContainerKey, out bindings.BoardContainer, nodePath: BoardContainerNodePath);
             resolver.TryResolve(WalkToggleKey, out bindings.WalkToggle, ToggleChangedEvent, WalkToggleNodePath);

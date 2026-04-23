@@ -304,6 +304,7 @@ namespace App.HotUpdate.Holmas.Application
 
             CurrentBoardTemplate = TerrainBoardTemplateConverter.Convert(terrainAsset);
             CurrentLevelSnapshot = LevelSnapshotFactory.Create(CurrentBoardTemplate, request);
+            NormalizeOrdinaryBlindBoxCatIds(CurrentLevelSnapshot);
             CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
             _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已启动地图 {0}，本局猫数量={1}。", CurrentLevelSnapshot.MapId, CurrentBoardRuntime.TotalCatCount);
@@ -318,6 +319,7 @@ namespace App.HotUpdate.Holmas.Application
         {
             CurrentBoardTemplate = template ?? throw new ArgumentNullException(nameof(template));
             CurrentLevelSnapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
+            NormalizeOrdinaryBlindBoxCatIds(CurrentLevelSnapshot);
             CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
             _currentLevelCompletionApplied = false;
             _logger?.LogInfo("HolmasGameplayRuntime: 已基于现有模板与快照恢复关卡，地图={0}。", CurrentLevelSnapshot.MapId);
@@ -344,6 +346,7 @@ namespace App.HotUpdate.Holmas.Application
             BoardTemplate template = await HolmasTerrainAssetLoader.LoadBoardTemplateAsync(_assetsRuntime, snapshot.TerrainPath);
             CurrentBoardTemplate = template ?? throw new InvalidOperationException("HolmasGameplayRuntime: 恢复关卡时未能得到有效 BoardTemplate。");
             CurrentLevelSnapshot = CloneLevelSnapshot(snapshot);
+            NormalizeOrdinaryBlindBoxCatIds(CurrentLevelSnapshot);
             CurrentBoardRuntime = new BoardRuntime(CurrentBoardTemplate, CurrentLevelSnapshot);
             _currentLevelCompletionApplied = CurrentBoardRuntime.Completed;
             _logger?.LogInfo("HolmasGameplayRuntime: 已恢复未完成关卡，地图={0}。", CurrentLevelSnapshot.MapId);
@@ -842,6 +845,35 @@ namespace App.HotUpdate.Holmas.Application
         {
             return snapshot != null &&
                    string.Equals(snapshot.MapId, CoreFindCatTutorialMapId, StringComparison.Ordinal);
+        }
+
+        private static void NormalizeOrdinaryBlindBoxCatIds(LevelSnapshot snapshot)
+        {
+            if (snapshot == null ||
+                IsCoreFindCatTutorialLevel(snapshot) ||
+                snapshot.SpawnedCats == null ||
+                snapshot.SpawnedCats.Count == 0)
+            {
+                return;
+            }
+
+            bool[] revealedCells = snapshot.RevealedCells ?? Array.Empty<bool>();
+            for (int i = 0; i < snapshot.SpawnedCats.Count; i++)
+            {
+                SpawnedCatData spawnedCat = snapshot.SpawnedCats[i];
+                if (spawnedCat == null)
+                {
+                    continue;
+                }
+
+                bool isRevealed = spawnedCat.CellIndex >= 0 &&
+                                  spawnedCat.CellIndex < revealedCells.Length &&
+                                  revealedCells[spawnedCat.CellIndex];
+                if (!isRevealed)
+                {
+                    spawnedCat.CatId = string.Empty;
+                }
+            }
         }
 
         private static string FormatUncompletedTaskCatIds(HolmasTaskBarState taskBarState)

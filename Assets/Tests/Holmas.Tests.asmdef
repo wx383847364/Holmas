@@ -4,6 +4,7 @@
     "references": [
         "App.Shared",
         "App.HotUpdate",
+        "App.AOT",
         "Unity.TextMeshPro"
     ],
     "includePlatforms": [

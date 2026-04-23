@@ -4,6 +4,7 @@ using App.HotUpdate.Holmas.UI.Screens.AgencyMain;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
 using App.HotUpdate.Holmas.UI.Screens.Main;
+using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 
 namespace App.HotUpdate.Holmas.UI
 {
@@ -27,6 +28,7 @@ namespace App.HotUpdate.Holmas.UI
             screenService.RegisterDefinition(MainScreenRegistration.CreateDefinition());
             screenService.RegisterDefinition(BattleScreenRegistration.CreateDefinition());
             screenService.RegisterDefinition(AgencyMainScreenRegistration.CreateDefinition());
+            screenService.RegisterDefinition(TutorialScreenRegistration.CreateDefinition());
         }
     }
 }

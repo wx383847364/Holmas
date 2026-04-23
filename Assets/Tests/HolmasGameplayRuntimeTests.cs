@@ -766,7 +766,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasGameplayRuntime_RevealCell_OverwritesLegacyUnrevealedCatIdFromCurrentTaskPool()
+        public void HolmasGameplayRuntime_StartLevel_ClearsUnrevealedOrdinaryCatIdBeforeReveal()
         {
             var catalog = CreateSingleCatTaskCatalog(targetCount: 2);
             var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
@@ -798,11 +798,59 @@ namespace Holmas.Tests
             };
 
             runtime.StartLevel(HolmasTestSupport.CreateBoardTemplate(1, 1), snapshot);
+            Assert.That(runtime.CurrentLevelSnapshot.SpawnedCats[0].CatId, Is.Empty);
+            Assert.That(runtime.CurrentBoardRuntime.GetCellState(0).CatId, Is.Empty);
+
             BoardRevealResult reveal = runtime.RevealCell(0, out _);
 
             Assert.That(reveal.IsValidAction, Is.True);
             Assert.That(runtime.CurrentLevelSnapshot.SpawnedCats[0].CatId, Is.EqualTo("cat-a"));
+            Assert.That(runtime.CurrentBoardRuntime.GetCellState(0).CatId, Is.EqualTo("cat-a"));
             Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.CurrentCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_StartLevel_KeepsRevealedOrdinaryCatIdForDisplay()
+        {
+            var catalog = CreateSingleCatTaskCatalog(targetCount: 2);
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+
+            var snapshot = new LevelSnapshot
+            {
+                MapId = "map-restored-revealed-cat",
+                TerrainPath = TerrainAssetPathUtility.BuildAssetPath("legacy"),
+                Seed = 1,
+                RevealedCells = new[] { true, false },
+                SpawnedCats = new List<SpawnedCatData>
+                {
+                    new SpawnedCatData
+                    {
+                        CellIndex = 0,
+                        CatId = "cat-shown",
+                    },
+                    new SpawnedCatData
+                    {
+                        CellIndex = 1,
+                        CatId = "cat-unrevealed-legacy",
+                    },
+                },
+            };
+
+            runtime.StartLevel(HolmasTestSupport.CreateBoardTemplate(1, 2), snapshot);
+
+            Assert.That(runtime.CurrentLevelSnapshot.SpawnedCats[0].CatId, Is.EqualTo("cat-shown"));
+            Assert.That(runtime.CurrentBoardRuntime.GetCellState(0).CatId, Is.EqualTo("cat-shown"));
+            Assert.That(runtime.CurrentLevelSnapshot.SpawnedCats[1].CatId, Is.Empty);
+            Assert.That(runtime.CurrentBoardRuntime.GetCellState(1).CatId, Is.Empty);
         }
 
         [Test]
@@ -871,7 +919,7 @@ namespace Holmas.Tests
                 {
                     MapId = "multi-claim",
                     TerrainPath = "multi-claim",
-                    RevealedCells = new bool[2],
+                    RevealedCells = new[] { true, true },
                     SpawnedCats = new List<SpawnedCatData>
                     {
                         new SpawnedCatData { CatId = "cat-a", CellIndex = 0 },

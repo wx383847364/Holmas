@@ -18,6 +18,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
             _catSpriteLoader = catSpriteLoader;
         }
 
+        public RectTransform GetCellRectTransform(int cellIndex)
+        {
+            if (cellIndex < 0 || cellIndex >= _cells.Count)
+            {
+                return null;
+            }
+
+            BattleCellView cell = _cells[cellIndex];
+            return cell != null && cell.gameObject.activeInHierarchy
+                ? cell.transform as RectTransform
+                : null;
+        }
+
         public void Render(
             int rows,
             int cols,

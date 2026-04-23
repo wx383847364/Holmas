@@ -28,6 +28,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private FindCatBoardView _boardView;
         private UnityAction _currentPromotionAction;
         private UnityAction _currentAddEnergyAction;
+        private UnityAction _currentHelpAction;
+        private UnityAction _currentStartTutorialAction;
         private UnityAction<bool> _currentWalkToggleAction;
         private UnityAction<bool> _currentFindToggleAction;
         private Action<int> _currentTaskSlotAction;
@@ -82,6 +84,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             RemoveStartButton(overlay);
             Button promotionButton = ResolvePromotionButton(overlay);
             Button addEnergyButton = ResolveAddEnergyButton(overlay);
+            Button helpButton = ResolveHelpButton(overlay);
+            Button startTutorialButton = ResolveStartTutorialButton(overlay);
+            TMP_InputField tutorialStepInput = ResolveTutorialStepInput(overlay);
             RectTransform minesGroup = ResolveMinesGroup(overlay);
             RectTransform boardContainer = GetOrCreateBoardContainer(minesGroup);
             Toggle walkToggle = ResolveModeToggle("WalkToggle", true);
@@ -103,6 +108,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 addEnergyButton,
                 MainBindings.ButtonClickEvent,
                 MainBindings.AddEnergyButtonNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.HelpButtonKey,
+                helpButton,
+                MainBindings.ButtonClickEvent,
+                MainBindings.HelpButtonNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.StartTutorialButtonKey,
+                startTutorialButton,
+                MainBindings.ButtonClickEvent,
+                MainBindings.StartTutorialButtonNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.TutorialStepInputKey,
+                tutorialStepInput,
+                nodePath: MainBindings.TutorialStepInputNodePath);
             collector.RegisterOrReplace(MainBindings.MinesGroupKey, minesGroup, nodePath: MainBindings.MinesGroupNodePath);
             collector.RegisterOrReplace(MainBindings.BoardContainerKey, boardContainer, nodePath: MainBindings.BoardContainerNodePath);
             collector.RegisterOrReplace(
@@ -161,6 +180,46 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (_currentAddEnergyAction != null)
             {
                 _bindings.AddEnergyButton.onClick.AddListener(_currentAddEnergyAction);
+            }
+        }
+
+        public void SetHelpAction(UnityAction action)
+        {
+            if (_bindings?.HelpButton == null)
+            {
+                _currentHelpAction = action;
+                return;
+            }
+
+            if (_currentHelpAction != null)
+            {
+                _bindings.HelpButton.onClick.RemoveListener(_currentHelpAction);
+            }
+
+            _currentHelpAction = action;
+            if (_currentHelpAction != null)
+            {
+                _bindings.HelpButton.onClick.AddListener(_currentHelpAction);
+            }
+        }
+
+        public void SetStartTutorialAction(UnityAction action)
+        {
+            if (_bindings?.StartTutorialButton == null)
+            {
+                _currentStartTutorialAction = action;
+                return;
+            }
+
+            if (_currentStartTutorialAction != null)
+            {
+                _bindings.StartTutorialButton.onClick.RemoveListener(_currentStartTutorialAction);
+            }
+
+            _currentStartTutorialAction = action;
+            if (_currentStartTutorialAction != null)
+            {
+                _bindings.StartTutorialButton.onClick.AddListener(_currentStartTutorialAction);
             }
         }
 
@@ -225,6 +284,35 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         public bool IsSyncingToggles => _isSyncingToggles;
 
+        public void SetTutorialDebugControlsVisible(bool isVisible)
+        {
+            if (_bindings?.TutorialStepInput != null)
+            {
+                _bindings.TutorialStepInput.gameObject.SetActive(isVisible);
+                if (string.IsNullOrWhiteSpace(_bindings.TutorialStepInput.text))
+                {
+                    _bindings.TutorialStepInput.text = "0";
+                }
+            }
+
+            if (_bindings?.AddEnergyButton != null)
+            {
+                _bindings.AddEnergyButton.gameObject.SetActive(isVisible);
+            }
+        }
+
+        public int GetTutorialStartStepIndex()
+        {
+            if (_bindings?.TutorialStepInput == null ||
+                !_bindings.TutorialStepInput.gameObject.activeInHierarchy ||
+                !int.TryParse(_bindings.TutorialStepInput.text, out int value))
+            {
+                return 0;
+            }
+
+            return Math.Max(0, value);
+        }
+
         public void Render(MainVm viewModel)
         {
             if (viewModel == null)
@@ -267,6 +355,18 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             {
                 _bindings.AddEnergyButton.interactable = viewModel.AddEnergyButtonEnabled;
                 SetButtonLabel(_bindings.AddEnergyButton, viewModel.AddEnergyButtonLabel);
+            }
+
+            if (_bindings?.HelpButton != null)
+            {
+                _bindings.HelpButton.interactable = true;
+                SetButtonLabel(_bindings.HelpButton, "?");
+            }
+
+            if (_bindings?.StartTutorialButton != null)
+            {
+                _bindings.StartTutorialButton.interactable = true;
+                SetButtonLabel(_bindings.StartTutorialButton, "开始引导");
             }
 
             SyncModeToggles(viewModel);
@@ -654,6 +754,84 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new Color(0.95f, 0.58f, 0.16f, 0.95f));
         }
 
+        private Button ResolveHelpButton(Transform overlay)
+        {
+            return GetOrCreateRuntimeButton(
+                overlay,
+                "HelpButton",
+                "?",
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(60f, 96f),
+                new Vector2(72f, 72f),
+                new Color(0.26f, 0.34f, 0.42f, 0.95f));
+        }
+
+        private Button ResolveStartTutorialButton(Transform overlay)
+        {
+            return GetOrCreateRuntimeButton(
+                overlay,
+                "StartTutorialButton",
+                "开始引导",
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(178f, 96f),
+                new Vector2(180f, 72f),
+                new Color(0.22f, 0.56f, 0.36f, 0.95f));
+        }
+
+        private TMP_InputField ResolveTutorialStepInput(Transform overlay)
+        {
+            GameObject inputObject = GetOrCreateChild(overlay, "TutorialStepInput");
+            RectTransform inputRect = inputObject.GetComponent<RectTransform>();
+            if (inputRect == null)
+            {
+                inputRect = inputObject.AddComponent<RectTransform>();
+            }
+
+            ConfigureRect(
+                inputRect,
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(314f, 96f),
+                new Vector2(86f, 72f));
+
+            Image background = inputObject.GetComponent<Image>();
+            if (background == null)
+            {
+                background = inputObject.AddComponent<Image>();
+            }
+
+            background.color = new Color(0.08f, 0.1f, 0.12f, 0.9f);
+            TMP_InputField input = inputObject.GetComponent<TMP_InputField>();
+            if (input == null)
+            {
+                input = inputObject.AddComponent<TMP_InputField>();
+            }
+
+            TextMeshProUGUI text = GetOrCreateRuntimeText(
+                inputObject.transform,
+                "Text",
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(-16f, 0f),
+                28f,
+                TextAlignmentOptions.Center);
+            input.textComponent = text;
+            input.contentType = TMP_InputField.ContentType.IntegerNumber;
+            if (string.IsNullOrWhiteSpace(input.text))
+            {
+                input.text = "0";
+            }
+
+            return input;
+        }
+
         private RectTransform ResolveMinesGroup(Transform overlay)
         {
             RectTransform existing = FindFirstDescendantByName<RectTransform>("MinesGroup");
@@ -782,6 +960,41 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _boardView = boardView;
             boardView.SetCatSpriteLoader(_catSpriteLoader);
             boardView.Render(viewModel.Rows, viewModel.Cols, viewModel.Cells, viewModel.CatVisuals, _currentCellAction);
+        }
+
+        public RectTransform ResolveTutorialTarget(string targetKey)
+        {
+            if (string.IsNullOrWhiteSpace(targetKey))
+            {
+                return null;
+            }
+
+            if (targetKey.StartsWith("BoardCell:", StringComparison.Ordinal))
+            {
+                string rawIndex = targetKey.Substring("BoardCell:".Length);
+                return int.TryParse(rawIndex, out int cellIndex) && _boardView != null
+                    ? _boardView.GetCellRectTransform(cellIndex)
+                    : _bindings?.BoardContainer;
+            }
+
+            switch (targetKey)
+            {
+                case "TaskBar":
+                    EnsureTaskSlotViews();
+                    return _taskSlotViews.Count > 0 ? _taskSlotViews[0].Root : null;
+                case "WalkToggle":
+                    return _bindings?.WalkToggle != null ? _bindings.WalkToggle.transform as RectTransform : null;
+                case "FindToggle":
+                    return _bindings?.FindToggle != null ? _bindings.FindToggle.transform as RectTransform : null;
+                case "EnergyArea":
+                    return _bindings?.EnergyText != null ? _bindings.EnergyText.transform as RectTransform : null;
+                case "PromotionButton":
+                    return _bindings?.PromotionButton != null ? _bindings.PromotionButton.transform as RectTransform : null;
+                case "HelpButton":
+                    return _bindings?.HelpButton != null ? _bindings.HelpButton.transform as RectTransform : null;
+                default:
+                    return null;
+            }
         }
 
         private void OnDestroy()

@@ -5,7 +5,10 @@ using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
+using App.HotUpdate.Holmas.UI.Screens.Tutorial;
+using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Main
@@ -17,13 +20,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private MainBindings _bindings;
         private bool _isBusy;
         private bool _autoStartInProgress;
+        private bool _tutorialCheckInProgress;
         private HolmasGameplayRuntime _runtime;
         private HolmasBoardInteractionMode _interactionMode = HolmasBoardInteractionMode.Walk;
+        private CoreFindCatTutorialProgressStore _tutorialProgressStore;
+        private CoreFindCatTutorialProgressService _tutorialProgressService;
+        private CoreFindCatTutorialCoordinator _tutorialCoordinator;
+
+        private static bool IsTutorialDebugEnabled =>
+            UnityEngine.Application.isEditor || UnityEngine.Debug.isDebugBuild;
 
         protected override void OnCreate()
         {
             _runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
             _presenter = new MainPresenter(Root != null ? Root.Context : null);
+            IPersistence persistence = Root?.Context?.ServiceContainer != null
+                ? Root.Context.ServiceContainer.Get<IPersistence>()
+                : null;
+            _tutorialProgressStore = new CoreFindCatTutorialProgressStore(persistence);
+            _tutorialProgressService = new CoreFindCatTutorialProgressService(_tutorialProgressStore);
+            _tutorialCoordinator = new CoreFindCatTutorialCoordinator(
+                _tutorialProgressService,
+                new CoreFindCatTutorialLevelService());
             _view = RootObject != null ? RootObject.GetComponent<MainView>() : null;
             if (_view == null && RootObject != null)
             {
@@ -43,7 +61,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _view?.Bind(_bindings);
             _view?.SetAssetsRuntime(Root != null && Root.Context != null ? Root.Context.AssetsRuntime : null);
             _view?.SetPromotionAction(OnPromotionClicked);
-            _view?.SetAddEnergyAction(OnAddEnergyClicked);
+            _view?.SetAddEnergyAction(IsTutorialDebugEnabled ? OnAddEnergyClicked : null);
+            _view?.SetHelpAction(OnHelpClicked);
+            _view?.SetStartTutorialAction(OnStartTutorialClicked);
+            _view?.SetTutorialDebugControlsVisible(IsTutorialDebugEnabled);
             _view?.SetModeToggleActions(OnWalkToggleChanged, OnFindToggleChanged);
             _view?.SetTaskSlotAction(OnTaskSlotClicked);
             _view?.SetCellAction(OnCellClicked);
@@ -54,7 +75,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             string repairedStatus = RepairIncompatibleLevelSession();
             string status = SettleClaimableTasksAndRefill(repairedStatus ?? payload as string);
             Refresh(status);
-            RequestAutoStartInMain();
+            RequestTutorialOrAutoStartInMain();
         }
 
         protected override void OnResume()
@@ -62,13 +83,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             string repairedStatus = RepairIncompatibleLevelSession();
             string status = SettleClaimableTasksAndRefill(repairedStatus ?? "已返回主界面。");
             Refresh(status);
-            RequestAutoStartInMain();
+            RequestTutorialOrAutoStartInMain();
         }
 
         protected override void OnDestroy()
         {
             _view?.SetPromotionAction(null);
             _view?.SetAddEnergyAction(null);
+            _view?.SetHelpAction(null);
+            _view?.SetStartTutorialAction(null);
             _view?.SetModeToggleActions(null, null);
             _view?.SetTaskSlotAction(null);
             _view?.SetCellAction(null);
@@ -76,6 +99,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             {
                 _runtime.StateChanged -= OnRuntimeStateChanged;
             }
+
+            _tutorialCoordinator?.Dispose();
         }
 
         private string RepairIncompatibleLevelSession()
@@ -115,6 +140,84 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _ = HandleStartAsync();
         }
 
+        private void RequestTutorialOrAutoStartInMain()
+        {
+            if (_tutorialCheckInProgress)
+            {
+                return;
+            }
+
+            _tutorialCheckInProgress = true;
+            _ = HandleTutorialOrAutoStartAsync();
+        }
+
+        private async Task HandleTutorialOrAutoStartAsync()
+        {
+            try
+            {
+                CoreFindCatTutorialLaunchResult result = _tutorialCoordinator != null
+                    ? await _tutorialCoordinator.PrepareAutoStartAsync(Root != null ? Root.Context : null)
+                    : CoreFindCatTutorialLaunchResult.AutoStartNormal();
+                if (result != null && result.ShouldAutoStartNormal)
+                {
+                    RequestAutoStartInMain();
+                    return;
+                }
+
+                if (result != null && result.ShouldShowOverlay)
+                {
+                    await ShowTutorialOverlayAsync(result.Payload);
+                }
+            }
+            catch (Exception ex)
+            {
+                Refresh($"新手引导检查失败：{ex.Message}");
+                RequestAutoStartInMain();
+            }
+            finally
+            {
+                _tutorialCheckInProgress = false;
+            }
+        }
+
+        private async Task HandleManualTutorialStartAsync(int stepIndex, bool debugForceStep)
+        {
+            if (_isBusy || _tutorialCoordinator == null)
+            {
+                return;
+            }
+
+            HolmasApplicationContext context = Root != null ? Root.Context : null;
+            if (context == null)
+            {
+                Refresh("应用上下文不可用，无法启动引导。");
+                return;
+            }
+
+            _isBusy = true;
+            Refresh("正在准备新手引导...");
+            try
+            {
+                CoreFindCatTutorialLaunchResult result = await _tutorialCoordinator.PrepareManualStartAsync(
+                    context,
+                    stepIndex,
+                    debugForceStep);
+                if (result != null && result.ShouldShowOverlay)
+                {
+                    await ShowTutorialOverlayAsync(result.Payload);
+                }
+            }
+            catch (Exception ex)
+            {
+                Refresh($"新手引导启动失败：{ex.Message}");
+            }
+            finally
+            {
+                _isBusy = false;
+                Refresh(null);
+            }
+        }
+
         private void OnPromotionClicked()
         {
             string promotionId = _presenter != null ? _presenter.GetPrimaryPromotionId() : string.Empty;
@@ -148,6 +251,52 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             context.AddEnergy();
             Refresh($"体力 +{HolmasGameplayRuntime.DebugEnergyGrantAmount}。");
+        }
+
+        private void OnHelpClicked()
+        {
+            int stepIndex = CoreFindCatTutorialLevelService.IsTutorialLevel(_runtime?.CurrentLevelSnapshot)
+                ? 0
+                : CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
+            _ = HandleReplayTutorialAsync(stepIndex);
+        }
+
+        private void OnStartTutorialClicked()
+        {
+            int stepIndex = IsTutorialDebugEnabled && _view != null ? _view.GetTutorialStartStepIndex() : 0;
+            _ = HandleManualTutorialStartAsync(stepIndex, IsTutorialDebugEnabled);
+        }
+
+        private async Task HandleReplayTutorialAsync(int stepIndex)
+        {
+            if (ScreenService == null || _tutorialCoordinator == null)
+            {
+                return;
+            }
+
+            TutorialOverlayPayload payload = await _tutorialCoordinator.CreateReplayPayloadAsync(
+                Root != null ? Root.Context : null,
+                stepIndex);
+            await ShowTutorialOverlayAsync(payload);
+        }
+
+        private Task ShowTutorialOverlayAsync(TutorialOverlayPayload payload)
+        {
+            if (ScreenService == null)
+            {
+                return Task.CompletedTask;
+            }
+
+            if (payload == null)
+            {
+                payload = new TutorialOverlayPayload();
+            }
+
+            payload.MainView = _view;
+
+            return ScreenService.ShowOverlayAsync(
+                TutorialScreenRegistration.ScreenId,
+                payload);
         }
 
         private void OnWalkToggleChanged(bool isOn)

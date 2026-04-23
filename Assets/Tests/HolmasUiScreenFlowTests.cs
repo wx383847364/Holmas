@@ -2,6 +2,7 @@ using App.HotUpdate.Holmas.UI;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Generated;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
+using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using NUnit.Framework;
 
 namespace Holmas.Tests
@@ -35,6 +36,19 @@ namespace Holmas.Tests
             Assert.That(transitionDefinition.CachePolicy, Is.EqualTo(UiCachePolicy.KeepInstance));
             Assert.That(transitionDefinition.AssetAddress, Is.EqualTo(startupDefinition.AssetAddress));
             Assert.That(transitionDefinition.BindingManifest, Is.SameAs(LoadingGeneratedBindings.Manifest));
+        }
+
+        [Test]
+        public void TutorialScreenRegistration_ExposesNonBlockingOverlay()
+        {
+            UiScreenDefinition definition = TutorialScreenRegistration.CreateDefinition();
+
+            Assert.That(definition.Id, Is.EqualTo(TutorialScreenRegistration.ScreenId));
+            Assert.That(definition.Kind, Is.EqualTo(UiScreenKind.Overlay));
+            Assert.That(definition.ControllerType, Is.EqualTo(typeof(TutorialOverlayController)));
+            Assert.That(definition.CachePolicy, Is.EqualTo(UiCachePolicy.KeepInstance));
+            Assert.That(definition.BlockInputDuringTransition, Is.False);
+            Assert.That(definition.AssetAddress, Is.Empty);
         }
     }
 }

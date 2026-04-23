@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c3c8c7f41244e1ab47a14af37559a91, type: 3}
+  m_Name: CoreFindCatTutorialVisualConfig
+  m_EditorClassIdentifier: 
+  steps:
+  - StepId: find_first_cat
+    MainImagePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    DialogBackgroundPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    TipsIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    FingerIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    HighlightSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    ArrowSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+  - StepId: task_bar
+    MainImagePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    DialogBackgroundPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    TipsIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    FingerIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    HighlightSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    ArrowSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+  - StepId: mode
+    MainImagePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    DialogBackgroundPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    TipsIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    FingerIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    HighlightSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    ArrowSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+  - StepId: continue_find
+    MainImagePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    DialogBackgroundPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    TipsIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    FingerIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    HighlightSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    ArrowSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+  - StepId: energy
+    MainImagePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    DialogBackgroundPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    TipsIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    FingerIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    HighlightSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    ArrowSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+  - StepId: promotion
+    MainImagePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    DialogBackgroundPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    TipsIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    FingerIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    HighlightSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    ArrowSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+  - StepId: help
+    MainImagePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    DialogBackgroundPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    TipsIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    FingerIconPath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    HighlightSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
+    ArrowSpritePath: Assets/HotUpdateContent/Res/Tutorial/Placeholder/tutorial_placeholder.png
