@@ -10,6 +10,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
     public sealed class TutorialOverlayView : MonoBehaviour
     {
         private RectTransform _root;
+        private RectTransform _dimMask;
         private RectTransform _highlight;
         private RectTransform _card;
         private TextMeshProUGUI _title;
@@ -35,9 +36,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
 
             Stretch(_root);
 
+            _dimMask = GetOrCreateRect("DimMask");
+            Stretch(_dimMask);
+            Image dimMaskImage = GetOrCreateImage(_dimMask.gameObject);
+            dimMaskImage.color = new Color(0f, 0f, 0f, 0.5f);
+            dimMaskImage.raycastTarget = false;
+
             _highlight = GetOrCreateRect("Highlight");
             Image highlightImage = GetOrCreateImage(_highlight.gameObject);
-            highlightImage.color = new Color(1f, 0.88f, 0.25f, 0.32f);
+            highlightImage.color = new Color(1f, 0.88f, 0.25f, 0.52f);
             highlightImage.raycastTarget = false;
 
             _card = GetOrCreateRect("TutorialCard");
@@ -62,6 +69,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             _collapseButton = GetOrCreateButton(_card, "CollapseButton", new Vector2(0.28f, 0.06f), new Vector2(0.48f, 0.25f), "收起");
             _nextButton = GetOrCreateButton(_card, "NextButton", new Vector2(0.67f, 0.06f), new Vector2(0.95f, 0.25f), "下一步");
             DestroyChildIfExists(_root, "CollapsedButton");
+            ApplyLayerOrder();
         }
 
         public void SetAssetsRuntime(IAssetsRuntime assetsRuntime)
@@ -92,6 +100,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             EnsureSurface();
 
             bool isCollapsed = viewModel.IsCollapsed;
+            if (_dimMask != null)
+            {
+                _dimMask.gameObject.SetActive(!isCollapsed);
+            }
+
             if (_card != null)
             {
                 _card.gameObject.SetActive(!isCollapsed);
@@ -156,7 +169,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             _highlight.pivot = new Vector2(0.5f, 0.5f);
             _highlight.anchoredPosition = (min + max) * 0.5f;
             _highlight.sizeDelta = (max - min) + new Vector2(24f, 24f);
-            _highlight.SetAsFirstSibling();
             if (_fingerIcon != null)
             {
                 _fingerIcon.gameObject.SetActive(true);
@@ -169,6 +181,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                     fingerRect.anchoredPosition = _highlight.anchoredPosition + new Vector2(_highlight.sizeDelta.x * 0.45f, -_highlight.sizeDelta.y * 0.45f);
                 }
             }
+
+            ApplyLayerOrder();
         }
 
         private void UpdateVisuals(TutorialOverlayVm viewModel)
@@ -181,6 +195,30 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             _spriteLoader.Bind(_mainImage, viewModel.MainImagePath, new Color(0.2f, 0.32f, 0.42f, 0.95f));
             _spriteLoader.Bind(_tipsIcon, viewModel.TipsIconPath, new Color(0.96f, 0.72f, 0.2f, 0.95f));
             _spriteLoader.Bind(_fingerIcon, viewModel.FingerIconPath, new Color(1f, 0.92f, 0.4f, 0.92f));
+        }
+
+        private void ApplyLayerOrder()
+        {
+            if (_dimMask != null)
+            {
+                _dimMask.SetAsFirstSibling();
+            }
+
+            if (_highlight != null)
+            {
+                int highlightIndex = _dimMask != null ? _dimMask.GetSiblingIndex() + 1 : 0;
+                _highlight.SetSiblingIndex(highlightIndex);
+            }
+
+            if (_fingerIcon != null)
+            {
+                _fingerIcon.transform.SetAsLastSibling();
+            }
+
+            if (_card != null)
+            {
+                _card.SetAsLastSibling();
+            }
         }
 
         private RectTransform GetOrCreateRect(string objectName)
@@ -198,6 +236,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
 
         private static TextMeshProUGUI GetOrCreateText(RectTransform parent, string objectName, Vector2 anchorMin, Vector2 anchorMax, float fontSize, TextAlignmentOptions alignment)
         {
+            if (parent == null)
+            {
+                return null;
+            }
+
             GameObject textObject = GetOrCreateChild(parent, objectName);
             RectTransform rect = textObject.GetComponent<RectTransform>() ?? textObject.AddComponent<RectTransform>();
             ConfigureRect(rect, anchorMin, anchorMax, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
@@ -212,13 +255,22 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
 
         private static Button GetOrCreateButton(RectTransform parent, string objectName, Vector2 anchorMin, Vector2 anchorMax, string label)
         {
+            if (parent == null)
+            {
+                return null;
+            }
+
             GameObject buttonObject = GetOrCreateChild(parent, objectName);
             RectTransform rect = buttonObject.GetComponent<RectTransform>() ?? buttonObject.AddComponent<RectTransform>();
             ConfigureRect(rect, anchorMin, anchorMax, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             GetOrCreateImage(buttonObject).color = new Color(0.18f, 0.44f, 0.72f, 0.98f);
             Button button = buttonObject.GetComponent<Button>() ?? buttonObject.AddComponent<Button>();
             TextMeshProUGUI labelText = GetOrCreateText(rect, "Label", Vector2.zero, Vector2.one, 24f, TextAlignmentOptions.Center);
-            TmpGlyphCoverageReporter.SetText(labelText, label);
+            if (labelText != null)
+            {
+                TmpGlyphCoverageReporter.SetText(labelText, label);
+            }
+
             return button;
         }
 
@@ -235,12 +287,32 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
 
         private static GameObject GetOrCreateChild(RectTransform parent, string objectName)
         {
-            Transform child = parent != null ? parent.Find(objectName) : null;
-            GameObject childObject = child != null ? child.gameObject : new GameObject(objectName);
-            if (parent != null)
+            if (parent == null)
             {
-                childObject.transform.SetParent(parent, false);
+                return null;
             }
+
+            Transform child = parent.Find(objectName);
+            if (child != null && !(child is RectTransform))
+            {
+                child.gameObject.name = objectName + "_LegacyTransform";
+                GameObject replacement = new GameObject(objectName, typeof(RectTransform));
+                replacement.transform.SetParent(parent, false);
+                replacement.transform.SetSiblingIndex(child.GetSiblingIndex());
+                if (UnityEngine.Application.isPlaying)
+                {
+                    UnityEngine.Object.Destroy(child.gameObject);
+                }
+                else
+                {
+                    UnityEngine.Object.DestroyImmediate(child.gameObject);
+                }
+
+                return replacement;
+            }
+
+            GameObject childObject = child != null ? child.gameObject : new GameObject(objectName, typeof(RectTransform));
+            childObject.transform.SetParent(parent, false);
             return childObject;
         }
 

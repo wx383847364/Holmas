@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.UI.Screens.GmTool;
+using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Holmas.Tests
 {
@@ -46,6 +48,58 @@ namespace Holmas.Tests
                 Assert.That(root.transform.Find("Panel"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/Header"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content"), Is.TypeOf<RectTransform>());
+                Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/QuickActionsCard/QuickActionsRow/StartTutorialButton"), Is.Null);
+                Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/TutorialCard/StepInputRow/StartAtStepButton"), Is.TypeOf<RectTransform>());
+                Assert.That(root.transform.Find("Label"), Is.Null, "GM 工具不应创建根级游离 Label。");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void TutorialOverlayView_EnsureSurface_DoesNotCreateRootLevelButtonLabels()
+        {
+            var root = new GameObject("TutorialOverlayViewTestRoot", typeof(RectTransform), typeof(TutorialOverlayView));
+            try
+            {
+                TutorialOverlayView view = root.GetComponent<TutorialOverlayView>();
+
+                Assert.DoesNotThrow(() => view.EnsureSurface());
+                Assert.That(root.transform.Find("Label"), Is.Null, "教程 Overlay 不应创建根级游离 Label。");
+                Assert.That(root.transform.Find("TutorialCard/NextButton/Label"), Is.TypeOf<RectTransform>());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void TutorialOverlayView_EnsureSurface_CreatesPassthroughDimMaskBehindGuidance()
+        {
+            var root = new GameObject("TutorialOverlayViewMaskTestRoot", typeof(RectTransform), typeof(TutorialOverlayView));
+            try
+            {
+                TutorialOverlayView view = root.GetComponent<TutorialOverlayView>();
+
+                Assert.DoesNotThrow(() => view.EnsureSurface());
+                Transform dimMask = root.transform.Find("DimMask");
+                Transform highlight = root.transform.Find("Highlight");
+                Transform card = root.transform.Find("TutorialCard");
+                Image dimMaskImage = dimMask != null ? dimMask.GetComponent<Image>() : null;
+                Image nextButtonImage = root.transform.Find("TutorialCard/NextButton")?.GetComponent<Image>();
+
+                Assert.That(dimMask, Is.TypeOf<RectTransform>());
+                Assert.That(dimMaskImage, Is.Not.Null);
+                Assert.That(dimMaskImage.color.a, Is.GreaterThanOrEqualTo(0.45f));
+                Assert.That(dimMaskImage.raycastTarget, Is.False, "教程蒙板必须点击穿透，避免手机/编辑器输入被卡死。");
+                Assert.That(nextButtonImage, Is.Not.Null);
+                Assert.That(nextButtonImage.raycastTarget, Is.True, "教程按钮仍需可点击。");
+                Assert.That(dimMask.GetSiblingIndex(), Is.LessThan(highlight.GetSiblingIndex()));
+                Assert.That(dimMask.GetSiblingIndex(), Is.LessThan(card.GetSiblingIndex()));
+                Assert.That(root.transform.Find("TutorialCard/NextButton/Label"), Is.TypeOf<RectTransform>());
             }
             finally
             {
