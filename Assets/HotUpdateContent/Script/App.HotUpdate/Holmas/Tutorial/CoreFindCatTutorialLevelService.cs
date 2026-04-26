@@ -83,7 +83,15 @@ namespace App.HotUpdate.Holmas.Tutorial
                 }
 
                 HolmasTaskRuntimeInstance runtimeTask = taskBarState.GetTaskBySlot(slot.SlotIndex);
-                string catId = runtimeTask?.Task?.CatId;
+                if (runtimeTask == null ||
+                    runtimeTask.Task == null ||
+                    runtimeTask.IsRewardClaimed ||
+                    runtimeTask.Task.CurrentCount >= runtimeTask.Task.TargetCount)
+                {
+                    continue;
+                }
+
+                string catId = runtimeTask.Task.CatId;
                 if (string.IsNullOrWhiteSpace(catId))
                 {
                     continue;

@@ -65,7 +65,7 @@ namespace App.HotUpdate.Holmas.Tutorial
 
         public Task<bool> SaveAsync(CoreFindCatTutorialProgress progress)
         {
-            return SaveInternalAsync(CoreFindCatTutorialProgressService.Normalize(progress));
+            return SaveMergedAsync(CoreFindCatTutorialProgressService.Normalize(progress));
         }
 
         public Task<bool> SaveLastStepAsync(string stepId)
@@ -97,6 +97,56 @@ namespace App.HotUpdate.Holmas.Tutorial
             {
                 return false;
             }
+        }
+
+        private async Task<bool> SaveMergedAsync(CoreFindCatTutorialProgress progress)
+        {
+            if (_persistence == null)
+            {
+                return false;
+            }
+
+            CoreFindCatTutorialProgress existing = await LoadAsync();
+            CoreFindCatTutorialProgress merged = MergeMonotonic(existing, progress);
+            return await SaveInternalAsync(merged);
+        }
+
+        private static CoreFindCatTutorialProgress MergeMonotonic(
+            CoreFindCatTutorialProgress existing,
+            CoreFindCatTutorialProgress incoming)
+        {
+            existing = CoreFindCatTutorialProgressService.Normalize(existing);
+            incoming = CoreFindCatTutorialProgressService.Normalize(incoming);
+
+            if (existing.completed && !incoming.completed)
+            {
+                incoming.completed = true;
+                incoming.completedAtUtcMilliseconds = Math.Max(
+                    existing.completedAtUtcMilliseconds,
+                    incoming.completedAtUtcMilliseconds);
+                incoming.completedStepIndex = Math.Max(existing.completedStepIndex, incoming.completedStepIndex);
+                incoming.completedStepId = string.IsNullOrWhiteSpace(incoming.completedStepId)
+                    ? existing.completedStepId
+                    : incoming.completedStepId;
+                if (incoming.currentStepIndex < existing.currentStepIndex ||
+                    !string.Equals(incoming.currentStepId, incoming.completedStepId, StringComparison.Ordinal))
+                {
+                    incoming.currentStepIndex = Math.Max(existing.currentStepIndex, incoming.completedStepIndex);
+                    incoming.currentStepId = string.IsNullOrWhiteSpace(incoming.completedStepId)
+                        ? existing.currentStepId
+                        : incoming.completedStepId;
+                    incoming.lastStepId = incoming.currentStepId;
+                }
+            }
+
+            incoming.started = incoming.started || existing.started || incoming.completed;
+            incoming.skipped = incoming.skipped || existing.skipped;
+            incoming.dismissedNormalBoardHint = incoming.dismissedNormalBoardHint || existing.dismissedNormalBoardHint;
+            incoming.startedAtUtcMilliseconds = incoming.startedAtUtcMilliseconds > 0L
+                ? incoming.startedAtUtcMilliseconds
+                : existing.startedAtUtcMilliseconds;
+            incoming.updatedAtUtcMilliseconds = Math.Max(existing.updatedAtUtcMilliseconds, incoming.updatedAtUtcMilliseconds);
+            return CoreFindCatTutorialProgressService.Normalize(incoming);
         }
     }
 

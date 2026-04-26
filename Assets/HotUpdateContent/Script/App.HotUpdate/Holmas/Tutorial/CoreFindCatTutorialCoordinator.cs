@@ -50,6 +50,21 @@ namespace App.HotUpdate.Holmas.Tutorial
                         context != null ? context.AssetsRuntime : null));
                 }
 
+                if (ShouldResumePostTutorialBoardSteps(progress))
+                {
+                    int stepIndex = ResolveProgressStepIndex(
+                        progress,
+                        CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId));
+                    TutorialOverlayPayload payload = BuildPayload(
+                        TutorialRunMode.FullTutorial,
+                        stepIndex,
+                        canWriteCompletion: true,
+                        await LoadVisualConfigAsync(context),
+                        context != null ? context.AssetsRuntime : null);
+                    payload.TutorialBoardObjectiveSatisfied = true;
+                    return CoreFindCatTutorialLaunchResult.ShowOverlay(payload);
+                }
+
                 return CoreFindCatTutorialLaunchResult.ShowOverlay(BuildPayload(
                     TutorialRunMode.NormalBoardHint,
                     CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId),
@@ -113,6 +128,37 @@ namespace App.HotUpdate.Holmas.Tutorial
                 context != null ? context.AssetsRuntime : null);
         }
 
+        public async Task<TutorialOverlayPayload> CreateResumePayloadAsync(HolmasApplicationContext context, int minimumStepIndex)
+        {
+            CoreFindCatTutorialProgress progress = _progressService != null
+                ? await _progressService.LoadAsync()
+                : new CoreFindCatTutorialProgress();
+            int stepIndex = Math.Max(
+                CoreFindCatTutorialSteps.ClampIndex(minimumStepIndex),
+                ResolveProgressStepIndex(progress, minimumStepIndex));
+
+            TutorialOverlayPayload payload = BuildPayload(
+                TutorialRunMode.FullTutorial,
+                stepIndex,
+                canWriteCompletion: true,
+                await LoadVisualConfigAsync(context),
+                context != null ? context.AssetsRuntime : null);
+            payload.TutorialBoardObjectiveSatisfied = stepIndex > CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.ContinueFindStepId);
+            return payload;
+        }
+
+        public static bool ShouldEndTutorialLevelAfterExit(HolmasGameplayRuntime runtime)
+        {
+            return runtime != null &&
+                   IsActiveTutorialLevel(runtime);
+        }
+
+        private static bool IsActiveTutorialLevel(HolmasGameplayRuntime runtime)
+        {
+            return runtime.CurrentBoardRuntime != null &&
+                   CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot);
+        }
+
         public void Dispose()
         {
             _visualConfigHandle?.Release();
@@ -158,6 +204,41 @@ namespace App.HotUpdate.Holmas.Tutorial
             }
 
             return fromId >= 0 ? fromId : CoreFindCatTutorialSteps.ClampIndex(fallback);
+        }
+
+        private static bool ShouldResumePostTutorialBoardSteps(CoreFindCatTutorialProgress progress)
+        {
+            if (progress == null || progress.completed)
+            {
+                return false;
+            }
+
+            int energyStepIndex = CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId);
+            int continueFindStepIndex = CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.ContinueFindStepId);
+            int progressStepIndex = ResolveRawProgressStepIndex(progress);
+            return progressStepIndex >= energyStepIndex ||
+                   progress.completedStepIndex >= continueFindStepIndex;
+        }
+
+        private static int ResolveRawProgressStepIndex(CoreFindCatTutorialProgress progress)
+        {
+            if (progress == null)
+            {
+                return -1;
+            }
+
+            if (progress.currentStepIndex >= 0)
+            {
+                return progress.currentStepIndex;
+            }
+
+            int fromId = CoreFindCatTutorialSteps.IndexOf(progress.currentStepId);
+            if (fromId < 0)
+            {
+                fromId = CoreFindCatTutorialSteps.IndexOf(progress.lastStepId);
+            }
+
+            return fromId;
         }
 
         private TutorialOverlayPayload BuildPayload(
