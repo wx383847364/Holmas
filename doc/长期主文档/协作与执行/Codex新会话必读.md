@@ -110,6 +110,7 @@
   - `主线程 + 真实 subagent`
 - 这个判断默认由主线程自己完成，不要把决定丢回给用户
 - 如果启用真实 `subagent`，再按 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 的细则执行
+- 等待真实 `subagent` 结果时，`wait_agent` 快速探测也至少等 30 秒；排查、验证、审查类默认按 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 的等待时间规则执行
 
 本页不展开：
 
