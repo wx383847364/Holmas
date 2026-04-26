@@ -71,7 +71,7 @@ namespace App.HotUpdate.Holmas.UI.Core
         public static UiLoadedPrefabHandle CreatePlaceholder(string assetAddress)
         {
             string objectName = string.IsNullOrWhiteSpace(assetAddress) ? "UiPlaceholder" : assetAddress.Replace('/', '_');
-            var instanceRoot = new GameObject(objectName);
+            var instanceRoot = new GameObject(objectName, typeof(RectTransform));
             return new UiLoadedPrefabHandle(assetAddress, null, null, instanceRoot);
         }
     }

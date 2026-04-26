@@ -33,6 +33,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public string AddEnergyButtonLabel = "+5体力";
         public bool AddEnergyButtonEnabled;
         public bool BoardVisible;
+        public bool UseTutorialBoardLayer;
         public bool WalkToggleIsOn = true;
         public bool FindToggleIsOn;
         public int Rows;

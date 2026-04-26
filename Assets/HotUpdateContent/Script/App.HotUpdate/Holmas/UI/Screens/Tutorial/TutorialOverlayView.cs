@@ -20,11 +20,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
         private Button _nextButton;
         private Button _skipButton;
         private Button _collapseButton;
-        private Button _collapsedButton;
         private UnityAction _nextAction;
         private UnityAction _skipAction;
         private UnityAction _collapseAction;
-        private UnityAction _expandAction;
         private TutorialVisualSpriteLoader _spriteLoader;
 
         public void EnsureSurface()
@@ -52,7 +50,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 new Vector2(0f, 300f));
             Image cardImage = GetOrCreateImage(_card.gameObject);
             cardImage.color = new Color(0.08f, 0.1f, 0.12f, 0.9f);
-            cardImage.raycastTarget = true;
+            cardImage.raycastTarget = false;
 
             _mainImage = GetOrCreateVisualImage(_card, "MainImage", new Vector2(0.05f, 0.36f), new Vector2(0.24f, 0.91f));
             _tipsIcon = GetOrCreateVisualImage(_card, "TipsIcon", new Vector2(0.26f, 0.75f), new Vector2(0.34f, 0.93f));
@@ -63,20 +61,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             _skipButton = GetOrCreateButton(_card, "SkipButton", new Vector2(0.05f, 0.06f), new Vector2(0.25f, 0.25f), "跳过");
             _collapseButton = GetOrCreateButton(_card, "CollapseButton", new Vector2(0.28f, 0.06f), new Vector2(0.48f, 0.25f), "收起");
             _nextButton = GetOrCreateButton(_card, "NextButton", new Vector2(0.67f, 0.06f), new Vector2(0.95f, 0.25f), "下一步");
-
-            _collapsedButton = GetOrCreateButton(
-                _root,
-                "CollapsedButton",
-                new Vector2(1f, 0f),
-                new Vector2(1f, 0f),
-                "引导");
-            ConfigureRect(
-                _collapsedButton.transform as RectTransform,
-                new Vector2(1f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(-36f, 36f),
-                new Vector2(150f, 64f));
+            DestroyChildIfExists(_root, "CollapsedButton");
         }
 
         public void SetAssetsRuntime(IAssetsRuntime assetsRuntime)
@@ -90,12 +75,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             _spriteLoader.SetAssetsRuntime(assetsRuntime);
         }
 
-        public void SetActions(UnityAction nextAction, UnityAction skipAction, UnityAction collapseAction, UnityAction expandAction)
+        public void SetActions(UnityAction nextAction, UnityAction skipAction, UnityAction collapseAction)
         {
             ReplaceButtonAction(_nextButton, ref _nextAction, nextAction);
             ReplaceButtonAction(_skipButton, ref _skipAction, skipAction);
             ReplaceButtonAction(_collapseButton, ref _collapseAction, collapseAction);
-            ReplaceButtonAction(_collapsedButton, ref _expandAction, expandAction);
         }
 
         public void Render(TutorialOverlayVm viewModel)
@@ -111,12 +95,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             if (_card != null)
             {
                 _card.gameObject.SetActive(!isCollapsed);
-            }
-
-            if (_collapsedButton != null)
-            {
-                _collapsedButton.gameObject.SetActive(isCollapsed);
-                SetButtonLabel(_collapsedButton, viewModel.CollapsedHintText);
             }
 
             if (isCollapsed)
@@ -264,6 +242,24 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 childObject.transform.SetParent(parent, false);
             }
             return childObject;
+        }
+
+        private static void DestroyChildIfExists(RectTransform parent, string objectName)
+        {
+            Transform child = parent != null ? parent.Find(objectName) : null;
+            if (child == null)
+            {
+                return;
+            }
+
+            if (UnityEngine.Application.isPlaying)
+            {
+                Destroy(child.gameObject);
+            }
+            else
+            {
+                DestroyImmediate(child.gameObject);
+            }
         }
 
         private static Image GetOrCreateImage(GameObject target)

@@ -48,8 +48,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             _runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
             _view?.SetAssetsRuntime(_payload.AssetsRuntime);
             _openedRewardTipVersion = _runtime != null ? _runtime.LastTaskRewardTipVersion : 0;
-            _tutorialBoardObjectiveSatisfied = _payload.RunMode == TutorialRunMode.DebugStartAtStep &&
-                                               _payload.InitialStepIndex > CoreFindCatTutorialSteps.IndexOf(ContinueFindStepId);
+            _tutorialBoardObjectiveSatisfied = _payload.TutorialBoardObjectiveSatisfied ||
+                                               (_payload.RunMode == TutorialRunMode.DebugStartAtStep &&
+                                                _payload.InitialStepIndex > CoreFindCatTutorialSteps.IndexOf(ContinueFindStepId));
             if (_runtime != null)
             {
                 _runtime.StateChanged += OnRuntimeStateChanged;
@@ -134,7 +135,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 await _payload.ProgressService.MarkSkippedAsync(step.StepIndex, step.StepId);
             }
 
-            CloseOverlay();
+            await CloseAndNotifyTutorialExitedAsync(ShouldNotifyTutorialExited());
         }
 
         private void OnCollapseClicked()
@@ -149,6 +150,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             RenderCurrentStep();
         }
 
+        public bool HandleHelpButtonClicked()
+        {
+            if (_isCollapsed)
+            {
+                OnExpandClicked();
+            }
+
+            return true;
+        }
+
         private async System.Threading.Tasks.Task CompleteTutorialAsync()
         {
             TutorialStepDefinition step = CurrentStep;
@@ -160,7 +171,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 await _payload.ProgressService.MarkCompletedAsync(step.StepIndex, step.StepId);
             }
 
-            CloseOverlay();
+            await CloseAndNotifyTutorialExitedAsync(ShouldNotifyTutorialExited());
         }
 
         private bool CanWriteCompletedProgress()
@@ -184,6 +195,27 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             if (ScreenService != null)
             {
                 _ = ScreenService.CloseAsync(TutorialScreenRegistration.ScreenId);
+            }
+        }
+
+        private bool ShouldNotifyTutorialExited()
+        {
+            return _payload != null &&
+                   _payload.CanWriteCompletion &&
+                   _payload.RunMode != TutorialRunMode.Replay &&
+                   _payload.RunMode != TutorialRunMode.NormalBoardHint;
+        }
+
+        private async System.Threading.Tasks.Task CloseAndNotifyTutorialExitedAsync(bool notifyTutorialExited)
+        {
+            if (ScreenService != null)
+            {
+                await ScreenService.CloseAsync(TutorialScreenRegistration.ScreenId);
+            }
+
+            if (notifyTutorialExited && _payload?.OnTutorialExitedAsync != null)
+            {
+                await _payload.OnTutorialExitedAsync();
             }
         }
 
@@ -283,7 +315,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 FingerIconPath = visual != null ? visual.FingerIconPath : string.Empty,
             };
 
-            _view.SetActions(OnNextClicked, OnSkipClicked, OnCollapseClicked, OnExpandClicked);
+            _view.SetActions(OnNextClicked, OnSkipClicked, OnCollapseClicked);
             _view.Render(viewModel);
         }
 

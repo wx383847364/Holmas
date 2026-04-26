@@ -16,10 +16,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string PromotionButtonKey = "main/promotion_button";
         public const string AddEnergyButtonKey = "main/add_energy_button";
         public const string HelpButtonKey = "main/help_button";
+        public const string GmButtonKey = "main/gm_button";
         public const string StartTutorialButtonKey = "main/start_tutorial_button";
         public const string TutorialStepInputKey = "main/tutorial_step_input";
         public const string MinesGroupKey = "main/mines_group";
         public const string BoardContainerKey = "main/board_container";
+        public const string TutorialBoardContainerKey = "main/tutorial_board_container";
         public const string WalkToggleKey = "main/walk_toggle";
         public const string FindToggleKey = "main/find_toggle";
         public const string ButtonClickEvent = "on_click";
@@ -28,6 +30,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string RootNodePath = "MainPanel";
         public const string RuntimeOverlayNodeName = "RuntimeOverlay";
         public const string RuntimeOverlayNodePath = RootNodePath + "/" + RuntimeOverlayNodeName;
+        public const string BottomToolsNodeName = "BottomTools";
+        public const string BottomToolsNodePath = RuntimeOverlayNodePath + "/" + BottomToolsNodeName;
         public const string LevelTextNodePath = RuntimeOverlayNodePath + "/LevelText";
         public const string GoldTextNodePath = RuntimeOverlayNodePath + "/GoldText";
         public const string EnergyTextNodePath = RuntimeOverlayNodePath + "/EnergyText";
@@ -35,11 +39,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string StatusTextNodePath = RuntimeOverlayNodePath + "/StatusText";
         public const string PromotionButtonNodePath = RuntimeOverlayNodePath + "/PromotionButton";
         public const string AddEnergyButtonNodePath = RuntimeOverlayNodePath + "/AddEnergyButton";
-        public const string HelpButtonNodePath = RuntimeOverlayNodePath + "/HelpButton";
-        public const string StartTutorialButtonNodePath = RuntimeOverlayNodePath + "/StartTutorialButton";
+        public const string HelpButtonNodePath = BottomToolsNodePath + "/HelpButton";
+        public const string GmButtonNodePath = BottomToolsNodePath + "/GmButton";
+        public const string StartTutorialButtonNodePath = BottomToolsNodePath + "/StartTutorialButton";
         public const string TutorialStepInputNodePath = RuntimeOverlayNodePath + "/TutorialStepInput";
         public const string MinesGroupNodePath = "MainPanel/MinesGroup";
         public const string BoardContainerNodePath = MinesGroupNodePath + "/BoardContainer";
+        public const string TutorialBoardContainerNodePath = MinesGroupNodePath + "/TutorialBoardContainer";
         public const string WalkToggleNodePath = "MainPanel/WalkToggle";
         public const string FindToggleNodePath = "MainPanel/FindToggle";
 
@@ -52,10 +58,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public Button PromotionButton;
         public Button AddEnergyButton;
         public Button HelpButton;
+        public Button GmButton;
         public Button StartTutorialButton;
         public TMP_InputField TutorialStepInput;
         public RectTransform MinesGroup;
         public RectTransform BoardContainer;
+        public RectTransform TutorialBoardContainer;
         public Toggle WalkToggle;
         public Toggle FindToggle;
 
@@ -64,15 +72,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             LevelText != null &&
             GoldText != null &&
             EnergyText != null &&
-            SummaryText != null &&
             StatusText != null &&
             PromotionButton != null &&
-            AddEnergyButton != null &&
             HelpButton != null &&
+            GmButton != null &&
             StartTutorialButton != null &&
-            TutorialStepInput != null &&
             MinesGroup != null &&
             BoardContainer != null &&
+            TutorialBoardContainer != null &&
             WalkToggle != null &&
             FindToggle != null;
 
@@ -87,15 +94,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                    resolver.HasExplicitBinding<TextMeshProUGUI>(LevelTextKey, nodePath: LevelTextNodePath) &&
                    resolver.HasExplicitBinding<TextMeshProUGUI>(GoldTextKey, nodePath: GoldTextNodePath) &&
                    resolver.HasExplicitBinding<TextMeshProUGUI>(EnergyTextKey, nodePath: EnergyTextNodePath) &&
-                   resolver.HasExplicitBinding<TextMeshProUGUI>(SummaryTextKey, nodePath: SummaryTextNodePath) &&
                    resolver.HasExplicitBinding<TextMeshProUGUI>(StatusTextKey, nodePath: StatusTextNodePath) &&
                    resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath) &&
-                   resolver.HasExplicitBinding<Button>(AddEnergyButtonKey, ButtonClickEvent, AddEnergyButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(HelpButtonKey, ButtonClickEvent, HelpButtonNodePath) &&
+                   resolver.HasExplicitBinding<Button>(GmButtonKey, ButtonClickEvent, GmButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(StartTutorialButtonKey, ButtonClickEvent, StartTutorialButtonNodePath) &&
-                   resolver.HasExplicitBinding<TMP_InputField>(TutorialStepInputKey, nodePath: TutorialStepInputNodePath) &&
                    resolver.HasExplicitBinding<RectTransform>(MinesGroupKey, nodePath: MinesGroupNodePath) &&
                    resolver.HasExplicitBinding<RectTransform>(BoardContainerKey, nodePath: BoardContainerNodePath) &&
+                   resolver.HasExplicitBinding<RectTransform>(TutorialBoardContainerKey, nodePath: TutorialBoardContainerNodePath) &&
                    resolver.HasExplicitBinding<Toggle>(WalkToggleKey, ToggleChangedEvent, WalkToggleNodePath) &&
                    resolver.HasExplicitBinding<Toggle>(FindToggleKey, ToggleChangedEvent, FindToggleNodePath);
         }
@@ -117,10 +123,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             resolver.TryResolve(PromotionButtonKey, out bindings.PromotionButton, ButtonClickEvent, PromotionButtonNodePath);
             resolver.TryResolve(AddEnergyButtonKey, out bindings.AddEnergyButton, ButtonClickEvent, AddEnergyButtonNodePath);
             resolver.TryResolve(HelpButtonKey, out bindings.HelpButton, ButtonClickEvent, HelpButtonNodePath);
+            resolver.TryResolve(GmButtonKey, out bindings.GmButton, ButtonClickEvent, GmButtonNodePath);
             resolver.TryResolve(StartTutorialButtonKey, out bindings.StartTutorialButton, ButtonClickEvent, StartTutorialButtonNodePath);
             resolver.TryResolve(TutorialStepInputKey, out bindings.TutorialStepInput, nodePath: TutorialStepInputNodePath);
             resolver.TryResolve(MinesGroupKey, out bindings.MinesGroup, nodePath: MinesGroupNodePath);
             resolver.TryResolve(BoardContainerKey, out bindings.BoardContainer, nodePath: BoardContainerNodePath);
+            resolver.TryResolve(TutorialBoardContainerKey, out bindings.TutorialBoardContainer, nodePath: TutorialBoardContainerNodePath);
             resolver.TryResolve(WalkToggleKey, out bindings.WalkToggle, ToggleChangedEvent, WalkToggleNodePath);
             resolver.TryResolve(FindToggleKey, out bindings.FindToggle, ToggleChangedEvent, FindToggleNodePath);
             return bindings;

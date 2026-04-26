@@ -117,6 +117,11 @@ namespace App.HotUpdate.Holmas.UI.Core
         {
             // 先校验“调用者想怎么打开”和“这个 screen 自己声明成什么类型”是否一致。
             UiScreenDefinition definition = GetDefinition(screenId);
+            _root.Context?.Logger?.LogInfo(
+                "UiScreenService: 请求打开界面。screenId={0}, expectedKind={1}, declaredKind={2}",
+                screenId,
+                expectedKind,
+                definition.Kind);
             if (definition.Kind != expectedKind)
             {
                 throw new InvalidOperationException(
@@ -150,6 +155,11 @@ namespace App.HotUpdate.Holmas.UI.Core
                         break;
                 }
 
+                _root.Context?.Logger?.LogInfo(
+                    "UiScreenService: 界面已打开。screenId={0}, kind={1}, payloadType={2}",
+                    screenId,
+                    expectedKind,
+                    payload != null ? payload.GetType().Name : "null");
                 return runtime;
             }
             finally
@@ -165,6 +175,10 @@ namespace App.HotUpdate.Holmas.UI.Core
         {
             if (_runtimes.TryGetValue(definition.Id, out UiScreenRuntime runtime))
             {
+                _root.Context?.Logger?.LogInfo(
+                    "UiScreenService: 复用已有 runtime。screenId={0}, isOpen={1}",
+                    definition.Id,
+                    runtime.IsOpen);
                 return runtime;
             }
 
@@ -174,6 +188,12 @@ namespace App.HotUpdate.Holmas.UI.Core
             {
                 throw new InvalidOperationException($"UiScreenService: 无法加载界面 {definition.Id}。");
             }
+
+            _root.Context?.Logger?.LogInfo(
+                "UiScreenService: 已创建 runtime 句柄。screenId={0}, assetAddress={1}, isPlaceholder={2}",
+                definition.Id,
+                definition.AssetAddress,
+                loadedHandle.IsPlaceholder);
 
             loadedHandle.SetParent(ResolveLayer(definition.Kind));
             loadedHandle.SetActive(false);
@@ -204,6 +224,10 @@ namespace App.HotUpdate.Holmas.UI.Core
         private void OpenPopupRuntime(UiScreenRuntime runtime, object payload)
         {
             // Popup 允许叠加，所以这里是 push 栈，而不是替换当前 page。
+            _root.Context?.Logger?.LogInfo(
+                "UiScreenService: 打开 Popup runtime。screenId={0}, payloadType={1}",
+                runtime != null ? runtime.Definition.Id : "null",
+                payload != null ? payload.GetType().Name : "null");
             runtime.BringToFront();
             runtime.Open(payload);
             _navigationState.PushPopup(runtime.Controller as UiPopupController);

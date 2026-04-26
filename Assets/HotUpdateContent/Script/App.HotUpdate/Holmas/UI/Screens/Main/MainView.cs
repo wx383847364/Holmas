@@ -8,6 +8,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Main
 {
@@ -26,9 +27,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private MainBindings _bindings;
         private FindCatBoardView _boardView;
+        private FindCatBoardView _tutorialBoardView;
         private UnityAction _currentPromotionAction;
         private UnityAction _currentAddEnergyAction;
         private UnityAction _currentHelpAction;
+        private UnityAction _currentGmAction;
         private UnityAction _currentStartTutorialAction;
         private UnityAction<bool> _currentWalkToggleAction;
         private UnityAction<bool> _currentFindToggleAction;
@@ -58,19 +61,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             collector.RegisterOrReplace(MainBindings.RootPanelKey, rootRect, nodePath: MainBindings.RootNodePath);
 
             RectTransform overlay = GetOrCreateOverlayRoot();
+            DestroyChildIfExists(overlay, "SummaryText");
+            DestroyChildIfExists(overlay, "AddEnergyButton");
+            DestroyChildIfExists(overlay, "TutorialStepInput");
             TextMeshProUGUI levelText = ResolveLevelText(overlay);
             TextMeshProUGUI goldText = ResolveGoldText(overlay);
             TextMeshProUGUI energyText = ResolveEnergyText(overlay);
-            TextMeshProUGUI summaryText = GetOrCreateRuntimeText(
-                overlay,
-                "SummaryText",
-                new Vector2(0f, 1f),
-                new Vector2(1f, 1f),
-                new Vector2(0.5f, 1f),
-                new Vector2(0f, -280f),
-                new Vector2(-120f, 120f),
-                34f,
-                TextAlignmentOptions.TopLeft);
             TextMeshProUGUI statusText = GetOrCreateRuntimeText(
                 overlay,
                 "StatusText",
@@ -83,12 +79,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 TextAlignmentOptions.TopLeft);
             RemoveStartButton(overlay);
             Button promotionButton = ResolvePromotionButton(overlay);
-            Button addEnergyButton = ResolveAddEnergyButton(overlay);
-            Button helpButton = ResolveHelpButton(overlay);
-            Button startTutorialButton = ResolveStartTutorialButton(overlay);
-            TMP_InputField tutorialStepInput = ResolveTutorialStepInput(overlay);
+            RectTransform bottomTools = ResolveBottomToolsGroup(overlay);
+            Button helpButton = ResolveHelpButton(bottomTools);
+            ReparentToolButton(helpButton, bottomTools, 72f);
+            Button gmButton = ResolveGmButton(bottomTools);
+            ReparentToolButton(gmButton, bottomTools, 120f);
+            gmButton.gameObject.SetActive(false);
+            Button startTutorialButton = ResolveStartTutorialButton(bottomTools);
+            ReparentToolButton(startTutorialButton, bottomTools, 180f);
             RectTransform minesGroup = ResolveMinesGroup(overlay);
             RectTransform boardContainer = GetOrCreateBoardContainer(minesGroup);
+            RectTransform tutorialBoardContainer = GetOrCreateTutorialBoardContainer(minesGroup);
             Toggle walkToggle = ResolveModeToggle("WalkToggle", true);
             Toggle findToggle = ResolveModeToggle("FindToggle", false);
             EnsureExclusiveModeToggles(walkToggle, findToggle);
@@ -96,7 +97,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             collector.RegisterOrReplace(MainBindings.LevelTextKey, levelText, nodePath: MainBindings.LevelTextNodePath);
             collector.RegisterOrReplace(MainBindings.GoldTextKey, goldText, nodePath: MainBindings.GoldTextNodePath);
             collector.RegisterOrReplace(MainBindings.EnergyTextKey, energyText, nodePath: MainBindings.EnergyTextNodePath);
-            collector.RegisterOrReplace(MainBindings.SummaryTextKey, summaryText, nodePath: MainBindings.SummaryTextNodePath);
             collector.RegisterOrReplace(MainBindings.StatusTextKey, statusText, nodePath: MainBindings.StatusTextNodePath);
             collector.RegisterOrReplace(
                 MainBindings.PromotionButtonKey,
@@ -104,26 +104,23 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 MainBindings.ButtonClickEvent,
                 MainBindings.PromotionButtonNodePath);
             collector.RegisterOrReplace(
-                MainBindings.AddEnergyButtonKey,
-                addEnergyButton,
-                MainBindings.ButtonClickEvent,
-                MainBindings.AddEnergyButtonNodePath);
-            collector.RegisterOrReplace(
                 MainBindings.HelpButtonKey,
                 helpButton,
                 MainBindings.ButtonClickEvent,
                 MainBindings.HelpButtonNodePath);
             collector.RegisterOrReplace(
+                MainBindings.GmButtonKey,
+                gmButton,
+                MainBindings.ButtonClickEvent,
+                MainBindings.GmButtonNodePath);
+            collector.RegisterOrReplace(
                 MainBindings.StartTutorialButtonKey,
                 startTutorialButton,
                 MainBindings.ButtonClickEvent,
                 MainBindings.StartTutorialButtonNodePath);
-            collector.RegisterOrReplace(
-                MainBindings.TutorialStepInputKey,
-                tutorialStepInput,
-                nodePath: MainBindings.TutorialStepInputNodePath);
             collector.RegisterOrReplace(MainBindings.MinesGroupKey, minesGroup, nodePath: MainBindings.MinesGroupNodePath);
             collector.RegisterOrReplace(MainBindings.BoardContainerKey, boardContainer, nodePath: MainBindings.BoardContainerNodePath);
+            collector.RegisterOrReplace(MainBindings.TutorialBoardContainerKey, tutorialBoardContainer, nodePath: MainBindings.TutorialBoardContainerNodePath);
             collector.RegisterOrReplace(
                 MainBindings.WalkToggleKey,
                 walkToggle,
@@ -200,6 +197,26 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (_currentHelpAction != null)
             {
                 _bindings.HelpButton.onClick.AddListener(_currentHelpAction);
+            }
+        }
+
+        public void SetGmAction(UnityAction action)
+        {
+            if (_bindings?.GmButton == null)
+            {
+                _currentGmAction = action;
+                return;
+            }
+
+            if (_currentGmAction != null)
+            {
+                _bindings.GmButton.onClick.RemoveListener(_currentGmAction);
+            }
+
+            _currentGmAction = action;
+            if (_currentGmAction != null)
+            {
+                _bindings.GmButton.onClick.AddListener(_currentGmAction);
             }
         }
 
@@ -286,31 +303,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         public void SetTutorialDebugControlsVisible(bool isVisible)
         {
-            if (_bindings?.TutorialStepInput != null)
+            if (_bindings?.GmButton != null)
             {
-                _bindings.TutorialStepInput.gameObject.SetActive(isVisible);
-                if (string.IsNullOrWhiteSpace(_bindings.TutorialStepInput.text))
-                {
-                    _bindings.TutorialStepInput.text = "0";
-                }
-            }
-
-            if (_bindings?.AddEnergyButton != null)
-            {
-                _bindings.AddEnergyButton.gameObject.SetActive(isVisible);
+                _bindings.GmButton.gameObject.SetActive(isVisible);
             }
         }
 
         public int GetTutorialStartStepIndex()
         {
-            if (_bindings?.TutorialStepInput == null ||
-                !_bindings.TutorialStepInput.gameObject.activeInHierarchy ||
-                !int.TryParse(_bindings.TutorialStepInput.text, out int value))
-            {
-                return 0;
-            }
-
-            return Math.Max(0, value);
+            return 0;
         }
 
         public void Render(MainVm viewModel)
@@ -335,11 +336,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 TmpGlyphCoverageReporter.SetText(_bindings.EnergyText, viewModel.EnergyLabel);
             }
 
-            if (_bindings?.SummaryText != null)
-            {
-                TmpGlyphCoverageReporter.SetText(_bindings.SummaryText, viewModel.Summary);
-            }
-
             if (_bindings?.StatusText != null)
             {
                 TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
@@ -351,16 +347,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 SetButtonLabel(_bindings.PromotionButton, viewModel.PromotionButtonLabel);
             }
 
-            if (_bindings?.AddEnergyButton != null)
-            {
-                _bindings.AddEnergyButton.interactable = viewModel.AddEnergyButtonEnabled;
-                SetButtonLabel(_bindings.AddEnergyButton, viewModel.AddEnergyButtonLabel);
-            }
-
             if (_bindings?.HelpButton != null)
             {
                 _bindings.HelpButton.interactable = true;
                 SetButtonLabel(_bindings.HelpButton, "?");
+            }
+
+            if (_bindings?.GmButton != null)
+            {
+                _bindings.GmButton.interactable = true;
+                SetButtonLabel(_bindings.GmButton, "GM");
             }
 
             if (_bindings?.StartTutorialButton != null)
@@ -740,18 +736,87 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new Color(0.28f, 0.63f, 0.89f, 0.96f));
         }
 
-        private Button ResolveAddEnergyButton(Transform overlay)
+        private RectTransform ResolveBottomToolsGroup(Transform overlay)
+        {
+            GameObject groupObject = GetOrCreateChild(overlay, "BottomTools");
+            RectTransform rect = groupObject.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                rect = groupObject.AddComponent<RectTransform>();
+            }
+
+            ConfigureRect(
+                rect,
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(0f, 0f),
+                new Vector2(40f, 96f),
+                new Vector2(420f, 84f));
+
+            HorizontalLayoutGroup layout = groupObject.GetComponent<HorizontalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = groupObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = false;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.spacing = 12f;
+
+            ContentSizeFitter fitter = groupObject.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = groupObject.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+            return rect;
+        }
+
+        private static void ReparentToolButton(Button button, RectTransform parent, float width)
+        {
+            if (button == null || parent == null)
+            {
+                return;
+            }
+
+            button.transform.SetParent(parent, false);
+            RectTransform rect = button.transform as RectTransform;
+            if (rect != null)
+            {
+                ConfigureRect(rect, Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(width, 72f));
+            }
+
+            LayoutElement layoutElement = button.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = button.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minWidth = width;
+            layoutElement.preferredWidth = width;
+            layoutElement.minHeight = 72f;
+            layoutElement.preferredHeight = 72f;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+        }
+
+        private Button ResolveGmButton(Transform overlay)
         {
             return GetOrCreateRuntimeButton(
                 overlay,
-                "AddEnergyButton",
-                "+5体力",
-                new Vector2(1f, 1f),
-                new Vector2(1f, 1f),
-                new Vector2(1f, 1f),
-                new Vector2(-64f, -190f),
-                new Vector2(180f, 64f),
-                new Color(0.95f, 0.58f, 0.16f, 0.95f));
+                "GmButton",
+                "GM",
+                Vector2.zero,
+                Vector2.zero,
+                new Vector2(0f, 0.5f),
+                Vector2.zero,
+                new Vector2(120f, 72f),
+                new Color(0.58f, 0.3f, 0.78f, 0.96f));
         }
 
         private Button ResolveHelpButton(Transform overlay)
@@ -760,10 +825,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 overlay,
                 "HelpButton",
                 "?",
-                new Vector2(0f, 0f),
-                new Vector2(0f, 0f),
-                new Vector2(0f, 0f),
-                new Vector2(60f, 96f),
+                Vector2.zero,
+                Vector2.zero,
+                new Vector2(0f, 0.5f),
+                Vector2.zero,
                 new Vector2(72f, 72f),
                 new Color(0.26f, 0.34f, 0.42f, 0.95f));
         }
@@ -774,62 +839,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 overlay,
                 "StartTutorialButton",
                 "开始引导",
-                new Vector2(0f, 0f),
-                new Vector2(0f, 0f),
-                new Vector2(0f, 0f),
-                new Vector2(178f, 96f),
+                Vector2.zero,
+                Vector2.zero,
+                new Vector2(0f, 0.5f),
+                Vector2.zero,
                 new Vector2(180f, 72f),
                 new Color(0.22f, 0.56f, 0.36f, 0.95f));
-        }
-
-        private TMP_InputField ResolveTutorialStepInput(Transform overlay)
-        {
-            GameObject inputObject = GetOrCreateChild(overlay, "TutorialStepInput");
-            RectTransform inputRect = inputObject.GetComponent<RectTransform>();
-            if (inputRect == null)
-            {
-                inputRect = inputObject.AddComponent<RectTransform>();
-            }
-
-            ConfigureRect(
-                inputRect,
-                new Vector2(0f, 0f),
-                new Vector2(0f, 0f),
-                new Vector2(0f, 0f),
-                new Vector2(314f, 96f),
-                new Vector2(86f, 72f));
-
-            Image background = inputObject.GetComponent<Image>();
-            if (background == null)
-            {
-                background = inputObject.AddComponent<Image>();
-            }
-
-            background.color = new Color(0.08f, 0.1f, 0.12f, 0.9f);
-            TMP_InputField input = inputObject.GetComponent<TMP_InputField>();
-            if (input == null)
-            {
-                input = inputObject.AddComponent<TMP_InputField>();
-            }
-
-            TextMeshProUGUI text = GetOrCreateRuntimeText(
-                inputObject.transform,
-                "Text",
-                Vector2.zero,
-                Vector2.one,
-                new Vector2(0.5f, 0.5f),
-                Vector2.zero,
-                new Vector2(-16f, 0f),
-                28f,
-                TextAlignmentOptions.Center);
-            input.textComponent = text;
-            input.contentType = TMP_InputField.ContentType.IntegerNumber;
-            if (string.IsNullOrWhiteSpace(input.text))
-            {
-                input.text = "0";
-            }
-
-            return input;
         }
 
         private RectTransform ResolveMinesGroup(Transform overlay)
@@ -840,7 +855,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return existing;
             }
 
-            GameObject minesGroupObject = GetOrCreateChild(overlay, "MinesGroup");
+            GameObject minesGroupObject = GetOrCreateChild(transform, "MinesGroup");
             RectTransform minesGroup = minesGroupObject.GetComponent<RectTransform>();
             if (minesGroup == null)
             {
@@ -883,6 +898,37 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             background.raycastTarget = false;
             _boardView = boardObject.GetComponent<FindCatBoardView>() ?? boardObject.AddComponent<FindCatBoardView>();
             _boardView.SetCatSpriteLoader(_catSpriteLoader);
+            return boardContainer;
+        }
+
+        private RectTransform GetOrCreateTutorialBoardContainer(RectTransform minesGroup)
+        {
+            if (minesGroup == null)
+            {
+                return null;
+            }
+
+            GameObject boardObject = GetOrCreateChild(minesGroup, "TutorialBoardContainer");
+            RectTransform boardContainer = boardObject.GetComponent<RectTransform>();
+            if (boardContainer == null)
+            {
+                boardContainer = boardObject.AddComponent<RectTransform>();
+            }
+
+            Stretch(boardContainer);
+
+            Image background = boardObject.GetComponent<Image>();
+            if (background == null)
+            {
+                background = boardObject.AddComponent<Image>();
+            }
+
+            background.color = new Color(0f, 0f, 0f, 0f);
+            background.raycastTarget = false;
+            boardObject.transform.SetAsLastSibling();
+            _tutorialBoardView = boardObject.GetComponent<FindCatBoardView>() ?? boardObject.AddComponent<FindCatBoardView>();
+            _tutorialBoardView.SetCatSpriteLoader(_catSpriteLoader);
+            boardObject.SetActive(false);
             return boardContainer;
         }
 
@@ -950,14 +996,37 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             SetMinesGroupPlaceholderVisible(false);
             _bindings.BoardContainer.gameObject.SetActive(viewModel.BoardVisible);
+            if (_bindings.TutorialBoardContainer != null)
+            {
+                _bindings.TutorialBoardContainer.gameObject.SetActive(viewModel.BoardVisible && viewModel.UseTutorialBoardLayer);
+            }
+
+            if (viewModel.UseTutorialBoardLayer && _bindings.TutorialBoardContainer != null)
+            {
+                _bindings.BoardContainer.gameObject.SetActive(false);
+            }
             if (!viewModel.BoardVisible)
             {
                 _boardView?.Render(0, 0, null, null, _currentCellAction);
+                _tutorialBoardView?.Render(0, 0, null, null, _currentCellAction);
                 return;
             }
 
-            FindCatBoardView boardView = _boardView ?? _bindings.BoardContainer.GetComponent<FindCatBoardView>() ?? _bindings.BoardContainer.gameObject.AddComponent<FindCatBoardView>();
-            _boardView = boardView;
+            RectTransform activeContainer = viewModel.UseTutorialBoardLayer && _bindings.TutorialBoardContainer != null
+                ? _bindings.TutorialBoardContainer
+                : _bindings.BoardContainer;
+            FindCatBoardView boardView = activeContainer.GetComponent<FindCatBoardView>() ?? activeContainer.gameObject.AddComponent<FindCatBoardView>();
+            if (viewModel.UseTutorialBoardLayer)
+            {
+                _tutorialBoardView = boardView;
+                _boardView?.Render(0, 0, null, null, _currentCellAction);
+            }
+            else
+            {
+                _boardView = boardView;
+                _tutorialBoardView?.Render(0, 0, null, null, _currentCellAction);
+            }
+
             boardView.SetCatSpriteLoader(_catSpriteLoader);
             boardView.Render(viewModel.Rows, viewModel.Cols, viewModel.Cells, viewModel.CatVisuals, _currentCellAction);
         }
@@ -972,8 +1041,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (targetKey.StartsWith("BoardCell:", StringComparison.Ordinal))
             {
                 string rawIndex = targetKey.Substring("BoardCell:".Length);
-                return int.TryParse(rawIndex, out int cellIndex) && _boardView != null
-                    ? _boardView.GetCellRectTransform(cellIndex)
+                FindCatBoardView activeBoard = _tutorialBoardView != null &&
+                                               _tutorialBoardView.gameObject.activeInHierarchy
+                    ? _tutorialBoardView
+                    : _boardView;
+                return int.TryParse(rawIndex, out int cellIndex) && activeBoard != null
+                    ? activeBoard.GetCellRectTransform(cellIndex)
                     : _bindings?.BoardContainer;
             }
 
@@ -1019,7 +1092,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             for (int i = 0; i < _bindings.MinesGroup.childCount; i++)
             {
                 Transform child = _bindings.MinesGroup.GetChild(i);
-                if (child != null && child.name != "BoardContainer")
+                if (child != null && child.name != "BoardContainer" && child.name != "TutorialBoardContainer")
                 {
                     child.gameObject.SetActive(isVisible);
                 }
@@ -1205,6 +1278,29 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             var childObject = new GameObject(objectName);
             childObject.transform.SetParent(parent, false);
             return childObject;
+        }
+
+        private static void DestroyChildIfExists(Transform parent, string objectName)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            Transform child = parent.Find(objectName);
+            if (child == null)
+            {
+                return;
+            }
+
+            if (UnityEngine.Application.isPlaying)
+            {
+                Object.Destroy(child.gameObject);
+            }
+            else
+            {
+                Object.DestroyImmediate(child.gameObject);
+            }
         }
 
         private static void Stretch(RectTransform rectTransform)

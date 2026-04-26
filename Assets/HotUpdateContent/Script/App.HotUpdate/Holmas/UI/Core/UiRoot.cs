@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.UI;
+using App.HotUpdate.Holmas.UI.Screens.GmTool;
 using App.Shared.Contracts;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,6 +32,8 @@ namespace App.HotUpdate.Holmas.UI.Core
         private Action _popupBackdropClickAction;
         private bool _built;
         private bool _bootstrapStarted;
+        private bool _gmToggleInProgress;
+        private GmGestureRecognizer _gmGestureRecognizer;
 
         public HolmasApplicationContext Context => _context;
 
@@ -54,6 +57,8 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         public RectTransform DebugLayer => _debugLayer;
 
+        private static bool IsGmDebugEnabled => UnityEngine.Application.isEditor || Debug.isDebugBuild;
+
         public void Initialize(HolmasApplicationContext context, IHolmasLevelLaunchGateway levelLaunchGateway)
         {
             // UiRoot 只做一次真实搭建；之后再次初始化只更新上下文引用，不重复造层级。
@@ -70,6 +75,11 @@ namespace App.HotUpdate.Holmas.UI.Core
                 _built = true;
             }
 
+            if (_gmGestureRecognizer == null)
+            {
+                _gmGestureRecognizer = new GmGestureRecognizer();
+            }
+
             if (!_bootstrapStarted)
             {
                 _bootstrapStarted = true;
@@ -82,6 +92,50 @@ namespace App.HotUpdate.Holmas.UI.Core
             if (_inputBlocker != null)
             {
                 _inputBlocker.SetActive(isBlocked);
+            }
+        }
+
+        public async Task ToggleGmToolAsync(GmToggleRequestSource source)
+        {
+            if (!IsGmDebugEnabled || _screenService == null || _gmToggleInProgress)
+            {
+                _context?.Logger?.LogInfo(
+                    "UiRoot: 忽略 GM 切换请求。source={0}, debugEnabled={1}, screenServiceReady={2}, toggleInProgress={3}",
+                    source,
+                    IsGmDebugEnabled,
+                    _screenService != null,
+                    _gmToggleInProgress);
+                return;
+            }
+
+            _gmToggleInProgress = true;
+            try
+            {
+                bool isOpen = _screenService.IsOpen(GmToolScreenRegistration.ScreenId);
+                _context?.Logger?.LogInfo(
+                    "UiRoot: 开始切换 GM 工具。source={0}, currentlyOpen={1}",
+                    source,
+                    isOpen);
+
+                if (isOpen)
+                {
+                    await _screenService.CloseAsync(GmToolScreenRegistration.ScreenId);
+                    _context?.Logger?.LogInfo("UiRoot: GM 工具已关闭。source={0}", source);
+                }
+                else
+                {
+                    await _screenService.OpenPopupAsync(GmToolScreenRegistration.ScreenId, source);
+                    _context?.Logger?.LogInfo("UiRoot: GM 工具已请求打开。source={0}", source);
+                }
+            }
+            catch (Exception ex)
+            {
+                _context?.Logger?.LogError("UiRoot: 切换 GM 工具失败。source={0}, error={1}", source, ex);
+                throw;
+            }
+            finally
+            {
+                _gmToggleInProgress = false;
             }
         }
 
@@ -210,6 +264,67 @@ namespace App.HotUpdate.Holmas.UI.Core
                 ? _context.ServiceContainer.Get<IWeChatBridge>()
                 : null;
             UiSafeAreaRuntime.Configure(weChatBridge);
+        }
+
+        private void Update()
+        {
+            if (!IsGmDebugEnabled || _screenService == null || _gmGestureRecognizer == null)
+            {
+                return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.BackQuote))
+            {
+                _context?.Logger?.LogInfo("UiRoot: 侦测到 BackQuote，准备切换 GM 工具。");
+                _ = ToggleGmToolAsync(GmToggleRequestSource.Keyboard);
+            }
+
+            HandleGestureToggleInput();
+        }
+
+        private void HandleGestureToggleInput()
+        {
+            float now = Time.unscaledTime;
+            if (Input.touchCount > 0)
+            {
+                Touch touch = Input.GetTouch(0);
+                switch (touch.phase)
+                {
+                    case TouchPhase.Began:
+                        _gmGestureRecognizer.BeginStroke(now, touch.position);
+                        break;
+                    case TouchPhase.Moved:
+                    case TouchPhase.Stationary:
+                        _gmGestureRecognizer.AppendPoint(now, touch.position);
+                        break;
+                    case TouchPhase.Ended:
+                    case TouchPhase.Canceled:
+                        if (_gmGestureRecognizer.EndStroke(now, touch.position))
+                        {
+                            _context?.Logger?.LogInfo("UiRoot: 侦测到双五角星触摸手势，准备切换 GM 工具。");
+                            _ = ToggleGmToolAsync(GmToggleRequestSource.Gesture);
+                        }
+
+                        break;
+                }
+
+                return;
+            }
+
+            Vector2 mousePosition = Input.mousePosition;
+            if (Input.GetMouseButtonDown(0))
+            {
+                _gmGestureRecognizer.BeginStroke(now, mousePosition);
+            }
+            else if (Input.GetMouseButton(0))
+            {
+                _gmGestureRecognizer.AppendPoint(now, mousePosition);
+            }
+            else if (Input.GetMouseButtonUp(0) && _gmGestureRecognizer.EndStroke(now, mousePosition))
+            {
+                _context?.Logger?.LogInfo("UiRoot: 侦测到双五角星鼠标手势，准备切换 GM 工具。");
+                _ = ToggleGmToolAsync(GmToggleRequestSource.Gesture);
+            }
         }
 
         private RectTransform CreateLayer(string name, Transform parent)

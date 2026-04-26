@@ -5,6 +5,7 @@ using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
 using App.Shared.Holmas.RuntimeData;
 
@@ -43,6 +44,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 AddEnergyButtonLabel = "+5体力",
                 AddEnergyButtonEnabled = _context != null && _context.GameplayRuntime != null,
                 BoardVisible = board != null,
+                UseTutorialBoardLayer = CoreFindCatTutorialLevelService.IsTutorialLevel(_context?.GameplayRuntime?.CurrentLevelSnapshot),
                 Rows = board != null ? board.Rows : 0,
                 Cols = board != null ? board.Cols : 0,
                 Cells = cells,

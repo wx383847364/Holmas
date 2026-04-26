@@ -7,6 +7,7 @@ using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
+using App.HotUpdate.Holmas.UI.Screens.GmTool;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
@@ -61,8 +62,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _view?.Bind(_bindings);
             _view?.SetAssetsRuntime(Root != null && Root.Context != null ? Root.Context.AssetsRuntime : null);
             _view?.SetPromotionAction(OnPromotionClicked);
-            _view?.SetAddEnergyAction(IsTutorialDebugEnabled ? OnAddEnergyClicked : null);
             _view?.SetHelpAction(OnHelpClicked);
+            _view?.SetGmAction(IsTutorialDebugEnabled ? OnGmClicked : null);
             _view?.SetStartTutorialAction(OnStartTutorialClicked);
             _view?.SetTutorialDebugControlsVisible(IsTutorialDebugEnabled);
             _view?.SetModeToggleActions(OnWalkToggleChanged, OnFindToggleChanged);
@@ -89,8 +90,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         protected override void OnDestroy()
         {
             _view?.SetPromotionAction(null);
-            _view?.SetAddEnergyAction(null);
             _view?.SetHelpAction(null);
+            _view?.SetGmAction(null);
             _view?.SetStartTutorialAction(null);
             _view?.SetModeToggleActions(null, null);
             _view?.SetTaskSlotAction(null);
@@ -255,6 +256,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private void OnHelpClicked()
         {
+            if (ScreenService?.NavigationState?.CurrentOverlay is TutorialOverlayController tutorialOverlay &&
+                tutorialOverlay.HandleHelpButtonClicked())
+            {
+                return;
+            }
+
             int stepIndex = CoreFindCatTutorialLevelService.IsTutorialLevel(_runtime?.CurrentLevelSnapshot)
                 ? 0
                 : CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
@@ -263,8 +270,21 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private void OnStartTutorialClicked()
         {
-            int stepIndex = IsTutorialDebugEnabled && _view != null ? _view.GetTutorialStartStepIndex() : 0;
-            _ = HandleManualTutorialStartAsync(stepIndex, IsTutorialDebugEnabled);
+            _ = HandleManualTutorialStartAsync(0, false);
+        }
+
+        private void OnGmClicked()
+        {
+            if (Root == null)
+            {
+                return;
+            }
+
+            Root.Context?.Logger?.LogInfo(
+                "MainPageController: 收到 GM 按钮点击。debugEnabled={0}, screenServiceReady={1}",
+                IsTutorialDebugEnabled,
+                Root.ScreenService != null);
+            _ = Root.ToggleGmToolAsync(GmToggleRequestSource.Button);
         }
 
         private async Task HandleReplayTutorialAsync(int stepIndex)
@@ -293,10 +313,25 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             payload.MainView = _view;
+            payload.OnTutorialExitedAsync = HandleTutorialExitedAsync;
 
             return ScreenService.ShowOverlayAsync(
                 TutorialScreenRegistration.ScreenId,
                 payload);
+        }
+
+        private async Task HandleTutorialExitedAsync()
+        {
+            HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : _runtime;
+            if (!CoreFindCatTutorialCoordinator.ShouldEndTutorialLevelAfterExit(runtime))
+            {
+                Refresh(null);
+                return;
+            }
+
+            runtime.EndCurrentLevelSession();
+            Refresh("新手引导已结束，正在准备正式棋盘...");
+            await StartFormalBoardAfterTutorialAsync("新手引导已结束，正式棋盘已准备。");
         }
 
         private void OnWalkToggleChanged(bool isOn)
@@ -410,9 +445,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 string revealStatus = BuildRevealStatus(revealResult, progressionResult, mode);
                 finalStatus = BuildStatusWithNewRewardTip(runtime, rewardTipVersionBeforeReveal, revealStatus);
                 Refresh(finalStatus);
+                bool completedTutorialLevel = CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot);
+                bool shouldRestoreTutorialOverlay = completedTutorialLevel &&
+                                                    ScreenService != null &&
+                                                    ScreenService.IsOpen(TutorialScreenRegistration.ScreenId);
                 if (revealResult != null && revealResult.IsValidAction && revealResult.Completed)
                 {
                     finalStatus = await AdvanceToNextLevelAsync(progressionResult, finalStatus, rewardTipVersionBeforeReveal);
+                    if (shouldRestoreTutorialOverlay)
+                    {
+                        await RestoreTutorialAfterTutorialBoardAsync();
+                    }
                 }
             }
             catch (Exception ex)
@@ -452,6 +495,53 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 string status = $"本局完成，但进入下一关失败：{ex.Message}";
                 Refresh(status);
                 return status;
+            }
+        }
+
+        private async Task RestoreTutorialAfterTutorialBoardAsync()
+        {
+            if (_tutorialCoordinator == null || ScreenService == null)
+            {
+                return;
+            }
+
+            TutorialOverlayPayload payload = await _tutorialCoordinator.CreateResumePayloadAsync(
+                Root != null ? Root.Context : null,
+                CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId));
+            await ShowTutorialOverlayAsync(payload);
+        }
+
+        private async Task StartFormalBoardAfterTutorialAsync(string fallbackStatus)
+        {
+            if (_isBusy)
+            {
+                Refresh(fallbackStatus);
+                return;
+            }
+
+            HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
+            if (flowCoordinator == null)
+            {
+                Refresh(fallbackStatus);
+                return;
+            }
+
+            _isBusy = true;
+            string finalStatus = fallbackStatus;
+            try
+            {
+                finalStatus = await flowCoordinator.StartBattleInMainAsync();
+                Refresh(string.IsNullOrWhiteSpace(finalStatus) ? fallbackStatus : finalStatus);
+            }
+            catch (Exception ex)
+            {
+                finalStatus = $"新手引导已结束，但正式棋盘启动失败：{ex.Message}";
+                Refresh(finalStatus);
+            }
+            finally
+            {
+                _isBusy = false;
+                Refresh(finalStatus);
             }
         }
 
