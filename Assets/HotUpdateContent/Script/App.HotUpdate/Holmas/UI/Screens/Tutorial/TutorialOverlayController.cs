@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
+using App.HotUpdate.Holmas.UI.Screens.Main;
 using UnityEngine;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
@@ -208,6 +209,18 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
 
         private async System.Threading.Tasks.Task CloseAndNotifyTutorialExitedAsync(bool notifyTutorialExited)
         {
+            Root?.Context?.Logger?.LogInfo(
+                "TutorialOverlayController: CloseAndNotifyTutorialExitedAsync begin. notify={0}, runMode={1}, canWriteCompletion={2}, hasCallback={3}, currentPage={4}, stepIndex={5}, stepId={6}",
+                notifyTutorialExited,
+                _payload != null ? _payload.RunMode.ToString() : "null",
+                _payload != null && _payload.CanWriteCompletion,
+                _payload?.OnTutorialExitedAsync != null,
+                ScreenService?.NavigationState?.CurrentPage != null
+                    ? ScreenService.NavigationState.CurrentPage.GetType().Name
+                    : "null",
+                _stepIndex,
+                CurrentStep != null ? CurrentStep.StepId : "null");
+
             if (ScreenService != null)
             {
                 await ScreenService.CloseAsync(TutorialScreenRegistration.ScreenId);
@@ -215,8 +228,26 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
 
             if (notifyTutorialExited && _payload?.OnTutorialExitedAsync != null)
             {
+                Root?.Context?.Logger?.LogInfo("TutorialOverlayController: notifying tutorial exit through payload callback.");
                 await _payload.OnTutorialExitedAsync();
+                return;
             }
+
+            if (notifyTutorialExited &&
+                ScreenService?.NavigationState?.CurrentPage is MainPageController mainPageController)
+            {
+                Root?.Context?.Logger?.LogInfo("TutorialOverlayController: notifying tutorial exit through MainPageController fallback.");
+                await mainPageController.HandleTutorialExitedAsync();
+                return;
+            }
+
+            Root?.Context?.Logger?.LogInfo(
+                "TutorialOverlayController: tutorial exit notification skipped. notify={0}, hasCallback={1}, currentPage={2}",
+                notifyTutorialExited,
+                _payload?.OnTutorialExitedAsync != null,
+                ScreenService?.NavigationState?.CurrentPage != null
+                    ? ScreenService.NavigationState.CurrentPage.GetType().Name
+                    : "null");
         }
 
         private TutorialStepDefinition CurrentStep =>

@@ -276,11 +276,21 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 payload);
         }
 
-        private async Task HandleTutorialExitedAsync()
+        public async Task HandleTutorialExitedAsync()
         {
             HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : _runtime;
+            Root?.Context?.Logger?.LogInfo(
+                "MainPageController: HandleTutorialExitedAsync begin. isBusy={0}, hasRuntime={1}, mapId={2}, hasBoard={3}, hasActiveUncompleted={4}, isTutorialLevel={5}",
+                _isBusy,
+                runtime != null,
+                runtime?.CurrentLevelSnapshot?.MapId ?? "null",
+                runtime?.CurrentBoardRuntime != null,
+                runtime != null && runtime.HasActiveUncompletedLevel,
+                CoreFindCatTutorialLevelService.IsTutorialLevel(runtime?.CurrentLevelSnapshot));
+
             if (HasActiveFormalBoard(runtime))
             {
+                Root?.Context?.Logger?.LogInfo("MainPageController: tutorial exit ignored because an active formal board already exists.");
                 Refresh(null);
                 return;
             }
@@ -289,6 +299,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 (runtime.CurrentBoardRuntime != null ||
                  CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot)))
             {
+                Root?.Context?.Logger?.LogInfo(
+                    "MainPageController: ending current tutorial/former level session. mapId={0}",
+                    runtime.CurrentLevelSnapshot?.MapId ?? "null");
                 runtime.EndCurrentLevelSession();
             }
 
@@ -486,6 +499,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         {
             if (_isBusy)
             {
+                Root?.Context?.Logger?.LogInfo("MainPageController: StartFormalBoardAfterTutorialAsync skipped because page is busy.");
                 Refresh(fallbackStatus);
                 return;
             }
@@ -493,6 +507,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
             if (flowCoordinator == null)
             {
+                Root?.Context?.Logger?.LogInfo("MainPageController: StartFormalBoardAfterTutorialAsync skipped because flow coordinator is null.");
                 Refresh(fallbackStatus);
                 return;
             }
@@ -501,17 +516,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             string finalStatus = fallbackStatus;
             try
             {
+                Root?.Context?.Logger?.LogInfo("MainPageController: starting formal board after tutorial.");
                 finalStatus = await flowCoordinator.StartBattleInMainAsync();
+                Root?.Context?.Logger?.LogInfo(
+                    "MainPageController: formal board start finished. status={0}, mapId={1}, isTutorialLevel={2}",
+                    finalStatus ?? "null",
+                    _runtime?.CurrentLevelSnapshot?.MapId ?? Root?.Context?.GameplayRuntime?.CurrentLevelSnapshot?.MapId ?? "null",
+                    CoreFindCatTutorialLevelService.IsTutorialLevel(
+                        _runtime?.CurrentLevelSnapshot ?? Root?.Context?.GameplayRuntime?.CurrentLevelSnapshot));
                 Refresh(string.IsNullOrWhiteSpace(finalStatus) ? fallbackStatus : finalStatus);
             }
             catch (Exception ex)
             {
+                Root?.Context?.Logger?.LogInfo(
+                    "MainPageController: formal board start failed after tutorial. error={0}",
+                    ex.Message);
                 finalStatus = $"新手引导已结束，但正式棋盘启动失败：{ex.Message}";
                 Refresh(finalStatus);
             }
             finally
             {
                 _isBusy = false;
+                Root?.Context?.Logger?.LogInfo("MainPageController: StartFormalBoardAfterTutorialAsync end. finalStatus={0}", finalStatus ?? "null");
                 Refresh(finalStatus);
             }
         }

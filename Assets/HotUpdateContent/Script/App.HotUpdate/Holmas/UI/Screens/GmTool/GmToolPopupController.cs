@@ -168,7 +168,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 {
                     keepOpen = false;
                     TutorialOverlayPayload payload = result.Payload ?? new TutorialOverlayPayload();
-                    payload.MainView = mainView;
+                    ConfigureMainTutorialPayload(payload, mainView);
                     await ScreenService.CloseAsync(GmToolScreenRegistration.ScreenId);
                     await ScreenService.ShowOverlayAsync(TutorialScreenRegistration.ScreenId, payload);
                 }
@@ -220,7 +220,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                     ? 0
                     : CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
                 TutorialOverlayPayload payload = await _tutorialCoordinator.CreateReplayPayloadAsync(context, stepIndex);
-                payload.MainView = mainView;
+                ConfigureMainTutorialPayload(payload, mainView);
                 keepOpen = false;
                 await ScreenService.CloseAsync(GmToolScreenRegistration.ScreenId);
                 await ScreenService.ShowOverlayAsync(TutorialScreenRegistration.ScreenId, payload);
@@ -279,6 +279,32 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             }
 
             return currentPage.RootObject.GetComponent<MainView>();
+        }
+
+        private void ConfigureMainTutorialPayload(TutorialOverlayPayload payload, MainView mainView)
+        {
+            if (payload == null)
+            {
+                return;
+            }
+
+            payload.MainView = mainView;
+            MainPageController mainController = ResolveCurrentMainPageController();
+            Root?.Context?.Logger?.LogInfo(
+                "GmToolPopupController: ConfigureMainTutorialPayload. hasMainView={0}, hasMainController={1}, runMode={2}, canWriteCompletion={3}",
+                mainView != null,
+                mainController != null,
+                payload.RunMode,
+                payload.CanWriteCompletion);
+            if (mainController != null)
+            {
+                payload.OnTutorialExitedAsync = mainController.HandleTutorialExitedAsync;
+            }
+        }
+
+        private MainPageController ResolveCurrentMainPageController()
+        {
+            return ScreenService != null ? ScreenService.NavigationState.CurrentPage as MainPageController : null;
         }
 
         private static string BuildTutorialProgressSummary(CoreFindCatTutorialProgress progress)
