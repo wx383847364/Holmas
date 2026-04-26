@@ -56,7 +56,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _view?.SetActions(
                 OnCloseClicked,
                 OnAddEnergyClicked,
-                OnStartTutorialClicked,
                 OnReplayHelpClicked,
                 OnStartTutorialAtStepClicked);
             _ = RefreshAsync();
@@ -115,11 +114,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _ = RefreshAsync();
         }
 
-        private void OnStartTutorialClicked()
-        {
-            _ = StartTutorialAsync(0, false);
-        }
-
         private void OnReplayHelpClicked()
         {
             _ = ReplayHelpAsync();
@@ -134,7 +128,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             }
 
             stepIndex = Math.Max(0, stepIndex);
-            _ = StartTutorialAsync(stepIndex, true);
+            _ = StartTutorialAsync(stepIndex, stepIndex > 0);
         }
 
         private async Task StartTutorialAsync(int stepIndex, bool debugForceStep)
@@ -271,7 +265,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 RuntimeSummary = string.IsNullOrWhiteSpace(runtimeSummary) ? "暂无运行时信息。" : runtimeSummary,
                 StepInputText = _view.GetRequestedStepTextOrDefault("0"),
                 AddEnergyEnabled = !_isBusy && Root?.Context?.GameplayRuntime != null,
-                StartTutorialEnabled = !_isBusy && tutorialAvailable,
                 ReplayHelpEnabled = !_isBusy && tutorialAvailable,
                 StartAtStepEnabled = !_isBusy && tutorialAvailable,
             });

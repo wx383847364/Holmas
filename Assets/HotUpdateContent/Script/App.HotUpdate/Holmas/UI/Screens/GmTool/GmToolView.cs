@@ -27,12 +27,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
         private TMP_InputField _stepInput;
         private Button _closeButton;
         private Button _addEnergyButton;
-        private Button _startTutorialButton;
         private Button _replayHelpButton;
         private Button _startAtStepButton;
         private UnityAction _closeAction;
         private UnityAction _addEnergyAction;
-        private UnityAction _startTutorialAction;
         private UnityAction _replayHelpAction;
         private UnityAction _startAtStepAction;
 
@@ -64,8 +62,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _quickCard = GetOrCreateCard(_content, "QuickActionsCard");
             CreateCardTitle(_quickCard, "快捷操作");
             _quickActionsRow = GetOrCreateRow(_quickCard, "QuickActionsRow");
+            DestroyChildIfExists(_quickActionsRow, "StartTutorialButton");
             _addEnergyButton = GetOrCreateButton(_quickActionsRow, "AddEnergyButton", "+5体力");
-            _startTutorialButton = GetOrCreateButton(_quickActionsRow, "StartTutorialButton", "开始引导");
             _replayHelpButton = GetOrCreateButton(_quickActionsRow, "ReplayHelpButton", "重看帮助");
 
             _tutorialCard = GetOrCreateCard(_content, "TutorialCard");
@@ -74,7 +72,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _tutorialHintText = CreateCardHint(_tutorialCard, "TutorialHintText");
             _inputRow = GetOrCreateRow(_tutorialCard, "StepInputRow");
             _stepInput = GetOrCreateInputField(_inputRow, "StepInput", "0");
-            _startAtStepButton = GetOrCreateButton(_inputRow, "StartAtStepButton", "从该步骤启动引导");
+            _startAtStepButton = GetOrCreateButton(_inputRow, "StartAtStepButton", "启动/跳步引导");
 
             _runtimeCard = GetOrCreateCard(_content, "RuntimeCard");
             CreateCardTitle(_runtimeCard, "Runtime 信息");
@@ -88,13 +86,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
         public void SetActions(
             UnityAction closeAction,
             UnityAction addEnergyAction,
-            UnityAction startTutorialAction,
             UnityAction replayHelpAction,
             UnityAction startAtStepAction)
         {
             ReplaceAction(_closeButton, ref _closeAction, closeAction);
             ReplaceAction(_addEnergyButton, ref _addEnergyAction, addEnergyAction);
-            ReplaceAction(_startTutorialButton, ref _startTutorialAction, startTutorialAction);
             ReplaceAction(_replayHelpButton, ref _replayHelpAction, replayHelpAction);
             ReplaceAction(_startAtStepButton, ref _startAtStepAction, startAtStepAction);
         }
@@ -104,7 +100,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             EnsureSurface();
             GmToolResponsiveMetrics metrics = ComputeResponsiveMetrics();
             _addEnergyButton.interactable = viewModel != null && viewModel.AddEnergyEnabled;
-            _startTutorialButton.interactable = viewModel != null && viewModel.StartTutorialEnabled;
             _replayHelpButton.interactable = viewModel != null && viewModel.ReplayHelpEnabled;
             _startAtStepButton.interactable = viewModel != null && viewModel.StartAtStepEnabled;
             TmpGlyphCoverageReporter.SetText(_statusText, viewModel != null ? viewModel.Status : string.Empty);
@@ -313,13 +308,22 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
 
         private static Button GetOrCreateButton(RectTransform parent, string objectName, string label)
         {
+            if (parent == null)
+            {
+                return null;
+            }
+
             GameObject buttonObject = GetOrCreateChild(parent, objectName);
             RectTransform rect = buttonObject.GetComponent<RectTransform>() ?? buttonObject.AddComponent<RectTransform>();
             Image background = GetOrCreateImage(buttonObject);
             background.color = new Color(0.24f, 0.46f, 0.76f, 0.98f);
             Button button = buttonObject.GetComponent<Button>() ?? buttonObject.AddComponent<Button>();
             TextMeshProUGUI labelText = GetOrCreateText(rect, "Label", label, 24f, TextAlignmentOptions.Center);
-            ConfigureRect(labelText.rectTransform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            if (labelText != null)
+            {
+                ConfigureRect(labelText.rectTransform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            }
+
             return button;
         }
 
@@ -380,10 +384,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             ApplyCardLayout(_quickCard, metrics, metrics.QuickCardHeight);
             ApplyCardLayout(_tutorialCard, metrics, metrics.TutorialCardHeight);
             ApplyCardLayout(_runtimeCard, metrics, metrics.RuntimeCardHeight);
-            ApplyGridLayout(_quickActionsRow, metrics.ActionColumns, metrics.ActionCellWidth, metrics.ButtonHeight, metrics.SectionSpacing, 3);
+            ApplyGridLayout(_quickActionsRow, metrics.ActionColumns, metrics.ActionCellWidth, metrics.ButtonHeight, metrics.SectionSpacing, 2);
             ApplyGridLayout(_inputRow, metrics.InputColumns, metrics.InputCellWidth, metrics.ButtonHeight, metrics.SectionSpacing, 2);
             ApplyButtonLayout(_addEnergyButton, metrics.ButtonHeight, metrics.ButtonFontSize);
-            ApplyButtonLayout(_startTutorialButton, metrics.ButtonHeight, metrics.ButtonFontSize);
             ApplyButtonLayout(_replayHelpButton, metrics.ButtonHeight, metrics.ButtonFontSize);
             ConfigureInputLayout(_stepInput, metrics.ButtonHeight, metrics.BodyFontSize);
             ApplyButtonLayout(_startAtStepButton, metrics.ButtonHeight, metrics.ButtonFontSize);
@@ -501,7 +504,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             float hintFontSize = Mathf.Clamp(panelWidth * 0.022f, 16f, 21f);
             float buttonFontSize = Mathf.Clamp(panelWidth * 0.026f, 18f, 24f);
             float titleLineHeight = Mathf.Clamp(titleFontSize * 1.35f, 38f, 50f);
-            float quickRows = Mathf.CeilToInt(3f / actionColumns);
+            float quickRows = Mathf.CeilToInt(2f / actionColumns);
             float inputRows = Mathf.CeilToInt(2f / inputColumns);
             float progressTextHeight = Mathf.Clamp(bodyFontSize * 5.8f, 112f, 142f);
             float hintTextHeight = Mathf.Clamp(hintFontSize * 3.2f, 58f, 76f);
@@ -539,6 +542,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
 
         private static TextMeshProUGUI GetOrCreateText(RectTransform parent, string objectName, string textValue, float fontSize, TextAlignmentOptions alignment)
         {
+            if (parent == null)
+            {
+                return null;
+            }
+
             GameObject textObject = GetOrCreateChild(parent, objectName);
             RectTransform rect = textObject.GetComponent<RectTransform>() ?? textObject.AddComponent<RectTransform>();
             TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>() ?? textObject.AddComponent<TextMeshProUGUI>();
@@ -554,6 +562,24 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             }
 
             return text;
+        }
+
+        private static void DestroyChildIfExists(RectTransform parent, string objectName)
+        {
+            Transform child = parent != null ? parent.Find(objectName) : null;
+            if (child == null)
+            {
+                return;
+            }
+
+            if (UnityEngine.Application.isPlaying)
+            {
+                Object.Destroy(child.gameObject);
+            }
+            else
+            {
+                Object.DestroyImmediate(child.gameObject);
+            }
         }
 
         private static RectTransform GetOrCreateRect(string objectName, Transform parent)
