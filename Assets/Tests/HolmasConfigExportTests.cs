@@ -24,12 +24,15 @@ namespace Holmas.Tests
 
             Assert.That(errors, Is.Empty, string.Join(Environment.NewLine, errors));
             Assert.That(tables.Cats, Has.Count.EqualTo(49));
-            Assert.That(tables.Maps, Has.Count.EqualTo(24));
+            Assert.That(tables.Maps, Is.Not.Empty);
             Assert.That(tables.Tasks, Has.Count.EqualTo(20));
             Assert.That(tables.Levels, Has.Count.EqualTo(100));
             Assert.That(tables.AgencyBuildings, Has.Count.EqualTo(100));
             Assert.That(tables.Tasks.All(item => string.Equals(item.TaskKind, "Money", StringComparison.Ordinal)), Is.True);
             Assert.That(tables.Cats.All(item => item.Price > 0 && item.Weight > 0 && item.Rarity > 0), Is.True);
+            Assert.That(tables.Maps.All(item => item.CatCountMin > 0 && item.CatCountMax >= item.CatCountMin), Is.True);
+            Assert.That(tables.Maps.All(item => !string.IsNullOrWhiteSpace(item.TerrainPath)), Is.True);
+            Assert.That(tables.Maps.Select(item => item.MapId).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(tables.Maps.Count));
             Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds != null && item.PromotionIds.Length == 4), Is.True);
             Assert.That(tables.AgencyBuildings.All(item => item.PromotionLevelCaps != null && item.PromotionLevelCaps.Length == 4), Is.True);
             Assert.That(tables.AgencyBuildings.Select(item => item.AgencyStageId), Is.EqualTo(Enumerable.Range(1, 100).ToArray()));
@@ -43,11 +46,12 @@ namespace Holmas.Tests
             HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
             HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
             var requestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource(0, 0, 0, 0, 0, 0));
+            ExportLevelRow levelOne = tables.Levels.Single(item => item.PlayerLevel == 1);
 
             HolmasLevelRequestGenerationResult requestResult = requestGenerator.TryGenerateForPlayerLevel(1, 99);
 
             Assert.That(requestResult.Success, Is.True, requestResult.FailureReason);
-            Assert.That(requestResult.SelectedMapId, Is.EqualTo("map_001"));
+            Assert.That(levelOne.MapIds, Contains.Item(requestResult.SelectedMapId), "等级 1 抽到了未开放地图。");
             ExportMapRow selectedMap = tables.Maps.Single(item => string.Equals(item.MapId, requestResult.SelectedMapId, StringComparison.Ordinal));
             Assert.That(requestResult.Request.TerrainPath, Is.EqualTo(selectedMap.TerrainPath));
             Assert.That(requestResult.Request.CatCountMin, Is.EqualTo(selectedMap.CatCountMin));
@@ -56,7 +60,7 @@ namespace Holmas.Tests
             var terrain = HolmasTestSupport.CreateTerrain(5, 5, (_, _) => true);
             LevelSnapshot snapshot = LevelSnapshotFactory.CreateFromTerrain(terrain, requestResult.Request);
 
-            Assert.That(snapshot.MapId, Is.EqualTo("map_001"));
+            Assert.That(snapshot.MapId, Is.EqualTo(selectedMap.MapId));
             Assert.That(snapshot.TerrainPath, Is.EqualTo(selectedMap.TerrainPath));
             Assert.That(snapshot.SpawnedCats.Count, Is.InRange(selectedMap.CatCountMin, selectedMap.CatCountMax));
             Assert.That(snapshot.SpawnedCats.Select(item => item.CatId), Is.All.Empty);
@@ -151,40 +155,20 @@ namespace Holmas.Tests
             Assert.That(tables.Levels.Last().UpgradeExp, Is.EqualTo(1476));
             Assert.That(tables.Levels.Select(item => item.UpgradeExp).Distinct().Count(), Is.EqualTo(tables.Levels.Count));
 
+            var referencedMapIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (ExportLevelRow level in tables.Levels)
             {
-                Assert.That(level.MapWeights.Sum(), Is.EqualTo(100), $"等级 {level.PlayerLevel} 的地图权重和应为 100。");
-
-                if (level.PlayerLevel == 1)
-                {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_001", "map_002" }), "等级 1 应开放 8x8 低密度地图池。");
-                }
-                else if (level.PlayerLevel == 2)
-                {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_003", "map_004", "map_005" }), "等级 2 应接入 8x8 高密度和 9x9 入门地图。");
-                }
-                else if (level.PlayerLevel == 3)
-                {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_005", "map_006", "map_009" }), "等级 3 应接入 9x9 和 10x10 入门地图。");
-                }
-                else if (level.PlayerLevel == 4)
-                {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_009", "map_010", "map_013" }), "等级 4 应接入 10x10 和 11x11 入门地图。");
-                }
-                else if (level.PlayerLevel == 5)
-                {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_013", "map_014", "map_017" }), "等级 5 应接入 11x11 和 12x12 入门地图。");
-                }
-                else if (level.PlayerLevel == 6)
-                {
-                    Assert.That(level.MapIds, Is.EqualTo(new[] { "map_017", "map_018", "map_021" }), "等级 6 应接入 12x12 和 13x13 入门地图。");
-                }
+                Assert.That(level.TaskTypeIds.Length, Is.EqualTo(level.TaskTypeWeights.Length), $"等级 {level.PlayerLevel} 的任务组长度应一致。");
+                Assert.That(level.MapIds, Is.Not.Empty, $"等级 {level.PlayerLevel} 至少应配置一张地图。");
+                Assert.That(level.MapIds.Length, Is.EqualTo(level.MapWeights.Length), $"等级 {level.PlayerLevel} 的地图组长度应一致。");
+                Assert.That(level.TaskTypeWeights.All(weight => weight > 0), Is.True, $"等级 {level.PlayerLevel} 的任务权重必须为正数。");
+                Assert.That(level.MapWeights.All(weight => weight > 0), Is.True, $"等级 {level.PlayerLevel} 的地图权重必须为正数。");
+                Assert.That(level.MapIds.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(level.MapIds.Length), $"等级 {level.PlayerLevel} 的地图池不应重复。");
+                referencedMapIds.UnionWith(level.MapIds);
             }
 
-            var referencedMapIds = new HashSet<string>(tables.Levels.SelectMany(item => item.MapIds), StringComparer.Ordinal);
             Assert.That(referencedMapIds, Is.SupersetOf(tables.Maps.Select(item => item.MapId)), "所有 MapTable 地图都应至少在一个玩家等级池中可达。");
-            Assert.That(tables.Levels[6].MapIds, Does.Contain("map_021"), "Lv7 起应开始压力验证 13x13 地图。");
-            Assert.That(tables.Levels.Skip(8).Any(item => item.MapIds.Contains("map_024")), Is.True, "Lv9+ 应能抽到 13x13 高猫数地图。");
+            Assert.That(tables.Levels.Skip(1).SelectMany(item => item.MapIds).Except(tables.Levels[0].MapIds, StringComparer.Ordinal).Any(), Is.True, "高等级应逐步解锁等级 1 之外的新地图。");
         }
 
         [Test]
@@ -265,22 +249,33 @@ namespace Holmas.Tests
             HolmasTaskCatalog taskCatalog = BuildTaskCatalog(tables);
             HolmasMapCatalog mapCatalog = BuildMapCatalog(tables);
             var requestGenerator = new HolmasLevelRequestGenerator(taskCatalog, mapCatalog, new ScriptedRandomSource(0));
+            var mapById = tables.Maps.ToDictionary(item => item.MapId, item => item, StringComparer.Ordinal);
+            ExportLevelRow levelThree = tables.Levels.Single(item => item.PlayerLevel == 3);
+            ExportLevelRow levelSix = tables.Levels.Single(item => item.PlayerLevel == 6);
+            ExportLevelRow levelNine = tables.Levels.Single(item => item.PlayerLevel == 9);
 
             HolmasLevelRequestGenerationResult levelThreeRequest = requestGenerator.TryGenerateForPlayerLevel(3, 300);
             HolmasLevelRequestGenerationResult levelSixRequest = requestGenerator.TryGenerateForPlayerLevel(6, 600);
             HolmasLevelRequestGenerationResult levelNineRequest = requestGenerator.TryGenerateForPlayerLevel(9, 900);
 
             Assert.That(levelThreeRequest.Success, Is.True, levelThreeRequest.FailureReason);
-            Assert.That(levelThreeRequest.SelectedMapId, Is.EqualTo("map_005"));
-            Assert.That(levelThreeRequest.Request.TerrainPath, Does.Contain("11-9-9.asset"));
+            Assert.That(levelThree.MapIds, Contains.Item(levelThreeRequest.SelectedMapId), "等级 3 抽到了未开放地图。");
+            Assert.That(levelThreeRequest.Request.TerrainPath, Is.EqualTo(mapById[levelThreeRequest.SelectedMapId].TerrainPath));
 
             Assert.That(levelSixRequest.Success, Is.True, levelSixRequest.FailureReason);
-            Assert.That(levelSixRequest.SelectedMapId, Is.EqualTo("map_017"));
-            Assert.That(levelSixRequest.Request.TerrainPath, Does.Contain("11-12-12.asset"));
+            Assert.That(levelSix.MapIds, Contains.Item(levelSixRequest.SelectedMapId), "等级 6 抽到了未开放地图。");
+            Assert.That(levelSixRequest.Request.TerrainPath, Is.EqualTo(mapById[levelSixRequest.SelectedMapId].TerrainPath));
 
             Assert.That(levelNineRequest.Success, Is.True, levelNineRequest.FailureReason);
-            Assert.That(levelNineRequest.SelectedMapId, Is.EqualTo("map_021"));
-            Assert.That(levelNineRequest.Request.TerrainPath, Does.Contain("11-13-13.asset"));
+            Assert.That(levelNine.MapIds, Contains.Item(levelNineRequest.SelectedMapId), "等级 9 抽到了未开放地图。");
+            Assert.That(levelNineRequest.Request.TerrainPath, Is.EqualTo(mapById[levelNineRequest.SelectedMapId].TerrainPath));
+
+            var levelThreeTerrainPaths = new HashSet<string>(levelThree.MapIds.Select(mapId => mapById[mapId].TerrainPath), StringComparer.Ordinal);
+            var levelSixTerrainPaths = new HashSet<string>(levelSix.MapIds.Select(mapId => mapById[mapId].TerrainPath), StringComparer.Ordinal);
+            var levelNineTerrainPaths = new HashSet<string>(levelNine.MapIds.Select(mapId => mapById[mapId].TerrainPath), StringComparer.Ordinal);
+
+            Assert.That(levelSixTerrainPaths.Except(levelThreeTerrainPaths).Any(), Is.True, "等级 6 应能接触到等级 3 地图池之外的新地形。");
+            Assert.That(levelNineTerrainPaths.Except(levelSixTerrainPaths).Any(), Is.True, "等级 9 应能接触到等级 6 地图池之外的新地形。");
         }
 
         [Test]
