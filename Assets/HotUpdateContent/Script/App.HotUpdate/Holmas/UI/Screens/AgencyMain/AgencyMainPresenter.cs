@@ -120,8 +120,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 item.Progress = "未解锁";
                 item.Reward = "观看广告后开启";
                 item.IsLocked = true;
-                item.ClaimButtonEnabled = false;
-                item.ClaimButtonLabel = "未开启";
+                item.ClaimButtonEnabled = true;
+                item.ClaimButtonLabel = "观看广告";
                 return item;
             }
 

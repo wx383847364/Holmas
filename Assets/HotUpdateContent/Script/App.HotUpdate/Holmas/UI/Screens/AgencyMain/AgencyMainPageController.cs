@@ -174,7 +174,26 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 var runtimeTask = context.GameplayRuntime != null && context.GameplayRuntime.TaskBarState != null
                     ? context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex)
                     : null;
-                finalStatus = BuildTaskStatus(slotIndex, slot, runtimeTask);
+                if (slot != null && !slot.IsUnlocked)
+                {
+                    HolmasTaskSlotUnlockResult unlock = context.UnlockAdSlot(slotIndex);
+                    if (!unlock.Success)
+                    {
+                        finalStatus = $"任务槽 {slotIndex + 1} 解锁失败：{unlock.FailureReason}";
+                    }
+                    else
+                    {
+                        slot = context.GameplayRuntime.TaskBarState.GetSlot(slotIndex);
+                        runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
+                        finalStatus = runtimeTask != null && runtimeTask.Task != null
+                            ? $"任务槽 {slotIndex + 1} 已解锁并补入任务。{BuildTaskStatus(slotIndex, slot, runtimeTask)}"
+                            : $"任务槽 {slotIndex + 1} 已解锁；当前等级暂无可补任务。";
+                    }
+                }
+                else
+                {
+                    finalStatus = BuildTaskStatus(slotIndex, slot, runtimeTask);
+                }
                 Refresh(finalStatus);
             }
             catch (Exception ex)

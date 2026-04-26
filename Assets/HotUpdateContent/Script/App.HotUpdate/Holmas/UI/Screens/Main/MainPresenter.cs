@@ -371,7 +371,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 item.Reward = "观看广告后开启";
                 item.ProgressNormalized = 0f;
                 item.IsLocked = true;
-                item.ButtonEnabled = false;
+                item.ButtonEnabled = true;
                 return item;
             }
 

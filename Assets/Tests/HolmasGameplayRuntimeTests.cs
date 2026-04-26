@@ -1076,6 +1076,61 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasGameplayRuntime_UnlockFourthAndFifthAdSlots_RefillsImmediately()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b", "cat-c", "cat-d", "cat-e");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, null, new NullLogger(), null, null, null, clock);
+
+            runtime.RefillAvailableTasks(1);
+            runtime.UnlockAdSlot(2);
+            HolmasTaskSlotUnlockResult fourthSlot = runtime.UnlockAdSlot(3);
+            HolmasTaskSlotUnlockResult fifthSlot = runtime.UnlockAdSlot(4);
+
+            Assert.That(fourthSlot.Success, Is.True);
+            Assert.That(fourthSlot.GeneratedTask, Is.Not.Null);
+            Assert.That(fourthSlot.GeneratedTask.Success, Is.True, fourthSlot.GeneratedTask?.FailureReason);
+            Assert.That(fifthSlot.Success, Is.True);
+            Assert.That(fifthSlot.GeneratedTask, Is.Not.Null);
+            Assert.That(fifthSlot.GeneratedTask.Success, Is.True, fifthSlot.GeneratedTask?.FailureReason);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(3), Is.Not.Null);
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(4), Is.Not.Null);
+            Assert.That(runtime.TaskBarState.Tasks, Has.Count.EqualTo(5));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_UnlockAdSlot_UsesCurrentPlayerLevelAdUnlockHours()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b", "cat-c");
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1234 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(), clock);
+            var metaService = new HolmasMetaProgressionService(
+                CreateGrowthMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, null, new NullLogger(), null, null, null, clock);
+            runtime.MetaProgressionState.PlayerLevel = 2;
+
+            HolmasTaskSlotUnlockResult unlock = runtime.UnlockAdSlot(2);
+
+            Assert.That(unlock.Success, Is.True);
+            Assert.That(unlock.UnlockExpireAt, Is.EqualTo(1234 + 12L * 60L * 60L * 1000L));
+            Assert.That(runtime.TaskBarState.GetSlot(2).UnlockExpireAt, Is.EqualTo(unlock.UnlockExpireAt));
+            Assert.That(runtime.TaskBarState.GetTaskBySlot(2), Is.Not.Null);
+        }
+
+        [Test]
         public void HolmasGameplayRuntime_IsCurrentLevelCompatibleWithTaskBar_AllowsUnlockedEmptySlotSession()
         {
             var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
@@ -1205,6 +1260,7 @@ namespace Holmas.Tests
             Assert.That(viewModel.TaskItems[4].SlotIndex, Is.EqualTo(4));
             Assert.That(viewModel.TaskItems[4].IsLocked, Is.True);
             Assert.That(viewModel.TaskItems[4].Progress, Is.EqualTo("未解锁"));
+            Assert.That(viewModel.TaskItems[4].ButtonEnabled, Is.True);
         }
 
         [Test]
@@ -2109,6 +2165,15 @@ namespace Holmas.Tests
                     new HolmasPlayerLevelDefinition
                     {
                         PlayerLevel = 1,
+                        UpgradeExp = 0,
+                        TaskTypeIds = new[] { "task-multi" },
+                        TaskTypeWeights = new[] { 1 },
+                        MapIds = new[] { "map-active-claim" },
+                        MapWeights = new[] { 1 },
+                    },
+                    new HolmasPlayerLevelDefinition
+                    {
+                        PlayerLevel = 2,
                         UpgradeExp = 0,
                         TaskTypeIds = new[] { "task-multi" },
                         TaskTypeWeights = new[] { 1 },

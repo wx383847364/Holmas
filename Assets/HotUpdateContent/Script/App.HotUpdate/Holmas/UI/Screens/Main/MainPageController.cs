@@ -5,6 +5,7 @@ using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Screens.GmTool;
@@ -575,7 +576,18 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 bool hasActiveLevel = context.GameplayRuntime.HasActiveUncompletedLevel;
                 if (!slot.IsUnlocked)
                 {
-                    finalStatus = $"任务槽 {slotIndex + 1} 尚未解锁。";
+                    HolmasTaskSlotUnlockResult unlock = context.UnlockAdSlot(slotIndex);
+                    if (!unlock.Success)
+                    {
+                        finalStatus = $"任务槽 {slotIndex + 1} 解锁失败：{unlock.FailureReason}";
+                    }
+                    else
+                    {
+                        runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
+                        finalStatus = runtimeTask != null && runtimeTask.Task != null
+                            ? $"任务槽 {slotIndex + 1} 已解锁并补入任务。{BuildTaskSlotStatus(slotIndex, slot, runtimeTask, hasActiveLevel)}"
+                            : $"任务槽 {slotIndex + 1} 已解锁；当前等级暂无可补任务。";
+                    }
                 }
                 else if (runtimeTask != null && runtimeTask.Task != null)
                 {

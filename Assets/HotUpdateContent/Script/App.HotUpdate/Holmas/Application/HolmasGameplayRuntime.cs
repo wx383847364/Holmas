@@ -293,6 +293,14 @@ namespace App.HotUpdate.Holmas.Application
         }
 
         /// <summary>
+        /// 使用当前运行时时钟、玩家等级与成长配置解锁一个广告槽位。
+        /// </summary>
+        public HolmasTaskSlotUnlockResult UnlockAdSlot(int slotIndex)
+        {
+            return UnlockAdSlot(slotIndex, _clock.UtcNowMilliseconds);
+        }
+
+        /// <summary>
         /// 用地形资产和关卡生成请求启动一局新关卡。
         /// </summary>
         public BoardRuntime StartLevel(UnityEngine.Object terrainAsset, LevelGenerationRequest request)

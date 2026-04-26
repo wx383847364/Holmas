@@ -364,19 +364,40 @@ public static class HolmasCoreValidationMenu
             throw new InvalidOperationException("Holmas smoke test could not recover the current level snapshot.");
         }
 
-        if (context.GameplayRuntime.CurrentLevelSnapshot.SpawnedCats.Count == 0)
+        BoardRuntime boardRuntime = context.GameplayRuntime.CurrentBoardRuntime;
+        if (boardRuntime == null)
+        {
+            throw new InvalidOperationException("Holmas smoke test could not recover the current board runtime.");
+        }
+
+        List<SpawnedCatData> spawnedCats = context.GameplayRuntime.CurrentLevelSnapshot.SpawnedCats
+            .Where(item => item != null)
+            .OrderBy(item => item.CellIndex)
+            .ToList();
+        if (spawnedCats.Count == 0)
         {
             throw new InvalidOperationException("Holmas smoke test generated an empty cat snapshot and cannot validate task progression.");
         }
 
         progressionResult = null;
         BoardRevealResult finalReveal = null;
-        foreach (SpawnedCatData spawnedCat in context.GameplayRuntime.CurrentLevelSnapshot.SpawnedCats.OrderBy(item => item.CellIndex))
+        foreach (SpawnedCatData spawnedCat in spawnedCats)
         {
-            finalReveal = context.GameplayRuntime.RevealCell(spawnedCat.CellIndex, out HolmasProgressionAdvanceResult revealProgressionResult);
+            BoardCellState cellState = boardRuntime.GetCellState(spawnedCat.CellIndex);
+            if (!cellState.IsValid || !cellState.HasCat)
+            {
+                throw new InvalidOperationException(
+                    $"Holmas smoke test found snapshot/board cat mismatch at cell {spawnedCat.CellIndex}. map={context.GameplayRuntime.CurrentLevelSnapshot.MapId}, cellCount={boardRuntime.CellCount}, totalCats={boardRuntime.TotalCatCount}, valid={cellState.IsValid}, hasCat={cellState.HasCat}.");
+            }
+
+            finalReveal = context.GameplayRuntime.RevealCell(
+                spawnedCat.CellIndex,
+                HolmasBoardInteractionMode.Find,
+                out HolmasProgressionAdvanceResult revealProgressionResult);
             if (!finalReveal.IsValidAction || !finalReveal.FoundCat)
             {
-                throw new InvalidOperationException($"Holmas smoke test failed to reveal spawned cat at cell {spawnedCat.CellIndex}.");
+                throw new InvalidOperationException(
+                    $"Holmas smoke test failed to reveal spawned cat at cell {spawnedCat.CellIndex}. map={context.GameplayRuntime.CurrentLevelSnapshot.MapId}, totalCats={boardRuntime.TotalCatCount}, foundCats={boardRuntime.FoundCatCount}, energy={context.CurrentEnergy}/{context.EnergyRecoveryLimit}, validAction={finalReveal.IsValidAction}, foundCat={finalReveal.FoundCat}, ignored={finalReveal.IsIgnored}, reason={finalReveal.FailureReason}");
             }
 
             if (revealProgressionResult != null)

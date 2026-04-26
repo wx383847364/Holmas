@@ -158,6 +158,19 @@ namespace App.HotUpdate.Holmas.Application
         }
 
         /// <summary>
+        /// 使用当前运行时时钟、玩家等级与成长配置解锁一个广告槽位。
+        /// </summary>
+        public HolmasTaskSlotUnlockResult UnlockAdSlot(int slotIndex)
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            return GameplayRuntime.UnlockAdSlot(slotIndex);
+        }
+
+        /// <summary>
         /// 按当前玩家等级领取任务奖励。
         /// </summary>
         public HolmasTaskClaimResult ClaimTaskReward(int slotIndex)
