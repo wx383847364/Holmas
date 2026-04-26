@@ -229,10 +229,12 @@ namespace App.HotUpdate.Holmas.UI.Core
         {
             try
             {
-                // 先预热声明为 PreloadOnBootstrap 的界面，再进入正式启动流程。
+                // 只先确保 Loading 自身可用；其他启动预加载必须在 Loading 可见后执行。
                 foreach (UiScreenDefinition definition in _screenService.Definitions)
                 {
-                    if (definition != null && definition.PreloadOnBootstrap)
+                    if (definition != null &&
+                        definition.PreloadOnBootstrap &&
+                        definition.Id == HolmasUiScreenCatalog.DefaultStartupScreenId)
                     {
                         await _screenService.PreloadAsync(definition.Id);
                     }

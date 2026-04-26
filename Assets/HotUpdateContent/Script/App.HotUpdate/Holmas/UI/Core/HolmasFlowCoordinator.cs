@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Progression;
@@ -7,6 +6,7 @@ using App.HotUpdate.Holmas.UI.Screens.Battle;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.Shared.Holmas.RuntimeData;
+using UnityEngine;
 
 namespace App.HotUpdate.Holmas.UI.Core
 {
@@ -15,6 +15,10 @@ namespace App.HotUpdate.Holmas.UI.Core
     /// </summary>
     public sealed class HolmasFlowCoordinator
     {
+        public const float MinimumLoadingVisibleSeconds = 2f;
+        private const float ProgressStepAnimationSeconds = 0.25f;
+        private const float CompletionHoldSeconds = 0.18f;
+
         private readonly UiRoot _root;
         private readonly IBattleWorldHost _battleWorldHost;
         private bool _startupCompleted;
@@ -39,27 +43,25 @@ namespace App.HotUpdate.Holmas.UI.Core
 
             await RunExclusiveAsync(async () =>
             {
-                // 先让加载页真正显示一帧，再去预加载主页，避免肉眼上像“没有经过 loading”。
-                await _root.ScreenService.OpenPageAsync(
-                    LoadingScreenRegistration.StartupPageScreenId,
-                    CreateLoadingVm("正在进入侦探社...", 0.12f, true));
-                await Task.Yield();
+                string loadingScreenId = LoadingScreenRegistration.StartupPageScreenId;
+                float loadingStartedAt = await OpenStartupLoadingAsync("正在进入侦探社...", 0.08f);
 
                 try
                 {
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在加载界面资源...", 0.18f, 0.55f);
+                    await PreloadStartupScreensAsync();
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在整理侦探社状态...", 0.55f, 0.72f);
                     string startupStatus = PrepareStartupHomeStatus();
-
-                    // 首页显式预加载，避免启动阶段把 loading 直接挤没。
-                    await _root.ScreenService.PreloadAsync(MainScreenRegistration.ScreenId);
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在准备进入侦探社...", 0.72f, 0.95f);
+                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
+                    await CompleteLoadingAsync(loadingScreenId, "侦探社已就绪。");
+                    await _root.ScreenService.CloseAsync(loadingScreenId);
                     await _root.ScreenService.OpenPageAsync(MainScreenRegistration.ScreenId, startupStatus);
-                    await _root.ScreenService.CloseAsync(LoadingScreenRegistration.StartupPageScreenId);
                     _startupCompleted = true;
                 }
                 catch (Exception ex)
                 {
-                    await _root.ScreenService.OpenPageAsync(
-                        LoadingScreenRegistration.StartupPageScreenId,
-                        CreateLoadingVm("启动失败：" + ex.Message, 0f, false));
+                    await ShowStartupFailureAsync(ex.Message);
                     throw;
                 }
             });
@@ -121,18 +123,19 @@ namespace App.HotUpdate.Holmas.UI.Core
                 }
 
                 bool sessionStarted = false;
-                await _root.ScreenService.ShowOverlayAsync(
-                    LoadingScreenRegistration.TransitionOverlayScreenId,
-                    CreateLoadingVm("正在准备棋盘...", 0.15f, true));
+                string loadingScreenId = LoadingScreenRegistration.TransitionOverlayScreenId;
+                float loadingStartedAt = await OpenTransitionLoadingAsync("正在准备棋盘...", 0.08f);
 
                 try
                 {
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在读取关卡状态...", 0.08f, 0.2f);
                     HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
                     bool continueExistingLevel = runtime != null && runtime.HasActiveUncompletedLevel;
                     string battleStatus;
                     if (continueExistingLevel)
                     {
                         battleStatus = $"已恢复未完成关卡，map={runtime.CurrentLevelSnapshot?.MapId ?? "unknown"}";
+                        await UpdateLoadingProgressAsync(loadingScreenId, "正在恢复未完成棋盘...", 0.2f, 0.45f);
                     }
                     else
                     {
@@ -141,14 +144,19 @@ namespace App.HotUpdate.Holmas.UI.Core
                         await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
                         sessionStarted = true;
                         battleStatus = $"关卡已启动，seed={seed}";
+                        await UpdateLoadingProgressAsync(loadingScreenId, "正在生成关卡数据...", 0.2f, 0.45f);
                     }
 
                     await _battleWorldHost.PrepareAsync(_root.Context != null && _root.Context.GameplayRuntime != null
                         ? _root.Context.GameplayRuntime.CurrentLevelSnapshot
                         : null);
                     _battleWorldHost.Show();
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在摆放棋盘...", 0.45f, 0.82f);
 
                     await _root.ScreenService.OpenPageAsync(BattleScreenRegistration.ScreenId, battleStatus);
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在打开棋盘界面...", 0.82f, 0.95f);
+                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
+                    await CompleteLoadingAsync(loadingScreenId, "棋盘已准备。");
                 }
                 catch
                 {
@@ -182,17 +190,18 @@ namespace App.HotUpdate.Holmas.UI.Core
                 }
 
                 bool sessionStarted = false;
-                await _root.ScreenService.ShowOverlayAsync(
-                    LoadingScreenRegistration.TransitionOverlayScreenId,
-                    CreateLoadingVm("正在准备棋盘...", 0.15f, true));
+                string loadingScreenId = LoadingScreenRegistration.TransitionOverlayScreenId;
+                float loadingStartedAt = await OpenTransitionLoadingAsync("正在准备棋盘...", 0.08f);
 
                 try
                 {
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在读取关卡状态...", 0.08f, 0.2f);
                     HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
                     bool continueExistingLevel = runtime != null && runtime.HasActiveUncompletedLevel;
                     if (continueExistingLevel)
                     {
                         finalStatus = $"已恢复未完成关卡，map={runtime.CurrentLevelSnapshot?.MapId ?? "unknown"}";
+                        await UpdateLoadingProgressAsync(loadingScreenId, "正在恢复未完成棋盘...", 0.2f, 0.45f);
                     }
                     else
                     {
@@ -200,6 +209,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                         await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
                         sessionStarted = true;
                         finalStatus = $"关卡已启动，seed={seed}";
+                        await UpdateLoadingProgressAsync(loadingScreenId, "正在生成关卡数据...", 0.2f, 0.45f);
                     }
 
                     runtime = _root.Context != null ? _root.Context.GameplayRuntime : runtime;
@@ -209,6 +219,9 @@ namespace App.HotUpdate.Holmas.UI.Core
                         ? _root.Context.GameplayRuntime.CurrentLevelSnapshot
                         : null);
                     _battleWorldHost.Show();
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在摆放棋盘...", 0.45f, 0.95f);
+                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
+                    await CompleteLoadingAsync(loadingScreenId, "棋盘已准备。");
                 }
                 catch
                 {
@@ -250,23 +263,28 @@ namespace App.HotUpdate.Holmas.UI.Core
 
                 string completedMapId = runtime.CurrentLevelSnapshot.MapId ?? "unknown";
                 bool sessionStarted = false;
-                await _root.ScreenService.ShowOverlayAsync(
-                    LoadingScreenRegistration.TransitionOverlayScreenId,
-                    CreateLoadingVm("正在进入下一关...", 0.2f, true));
+                string loadingScreenId = LoadingScreenRegistration.TransitionOverlayScreenId;
+                float loadingStartedAt = await OpenTransitionLoadingAsync("正在进入下一关...", 0.08f);
 
                 try
                 {
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在生成下一关...", 0.08f, 0.35f);
                     int seed = Environment.TickCount;
                     await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
                     sessionStarted = true;
 
                     LevelSnapshot nextSnapshot = runtime.CurrentLevelSnapshot;
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在加载下一关棋盘...", 0.35f, 0.62f);
                     await _battleWorldHost.PrepareAsync(nextSnapshot);
                     _battleWorldHost.Show();
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在刷新棋盘界面...", 0.62f, 0.82f);
 
                     await _root.ScreenService.OpenPageAsync(
                         BattleScreenRegistration.ScreenId,
                         BuildNextBattleStatus(completedMapId, nextSnapshot, seed, progressionResult));
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在完成切换...", 0.82f, 0.95f);
+                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
+                    await CompleteLoadingAsync(loadingScreenId, "下一关已准备。");
                 }
                 catch
                 {
@@ -306,21 +324,25 @@ namespace App.HotUpdate.Holmas.UI.Core
 
                 string completedMapId = runtime.CurrentLevelSnapshot.MapId ?? "unknown";
                 bool sessionStarted = false;
-                await _root.ScreenService.ShowOverlayAsync(
-                    LoadingScreenRegistration.TransitionOverlayScreenId,
-                    CreateLoadingVm("正在进入下一关...", 0.2f, true));
+                string loadingScreenId = LoadingScreenRegistration.TransitionOverlayScreenId;
+                float loadingStartedAt = await OpenTransitionLoadingAsync("正在进入下一关...", 0.08f);
 
                 try
                 {
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在生成下一关...", 0.08f, 0.35f);
                     int seed = Environment.TickCount;
                     await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
                     sessionStarted = true;
 
                     LevelSnapshot nextSnapshot = runtime.CurrentLevelSnapshot;
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在加载下一关棋盘...", 0.35f, 0.68f);
                     await _battleWorldHost.PrepareAsync(nextSnapshot);
                     _battleWorldHost.Show();
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在刷新棋盘界面...", 0.68f, 0.95f);
 
                     finalStatus = BuildNextBattleStatus(completedMapId, nextSnapshot, seed, progressionResult);
+                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
+                    await CompleteLoadingAsync(loadingScreenId, "下一关已准备。");
                 }
                 catch
                 {
@@ -349,12 +371,12 @@ namespace App.HotUpdate.Holmas.UI.Core
         {
             await RunExclusiveAsync(async () =>
             {
-                await _root.ScreenService.ShowOverlayAsync(
-                    LoadingScreenRegistration.TransitionOverlayScreenId,
-                        CreateLoadingVm("正在返回侦探社...", 0.1f, true));
+                string loadingScreenId = LoadingScreenRegistration.TransitionOverlayScreenId;
+                float loadingStartedAt = await OpenTransitionLoadingAsync("正在返回侦探社...", 0.08f);
 
                 try
                 {
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在收起棋盘...", 0.08f, 0.28f);
                     HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
                     bool shouldClearSession = runtime != null &&
                                               runtime.CurrentLevelSnapshot != null &&
@@ -364,6 +386,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                     {
                         await _root.ScreenService.CloseAsync(BattleScreenRegistration.ScreenId);
                     }
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在恢复侦探社界面...", 0.28f, 0.62f);
 
                     if (!_root.ScreenService.IsOpen(MainScreenRegistration.ScreenId) ||
                         _root.ScreenService.NavigationState.CurrentPage == null)
@@ -379,6 +402,9 @@ namespace App.HotUpdate.Holmas.UI.Core
                     }
 
                     _battleWorldHost.Release();
+                    await UpdateLoadingProgressAsync(loadingScreenId, "正在完成返回...", 0.62f, 0.95f);
+                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
+                    await CompleteLoadingAsync(loadingScreenId, "侦探社已准备。");
                 }
                 finally
                 {
@@ -406,13 +432,110 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
         }
 
-        private static LoadingVm CreateLoadingVm(string status, float progress, bool animate)
+        public static float CalculateRemainingLoadingVisibleSeconds(
+            float elapsedSeconds,
+            float minimumVisibleSeconds = MinimumLoadingVisibleSeconds)
         {
-            // LoadingVm 只是纯展示数据，不承载真正的异步任务逻辑。
+            if (minimumVisibleSeconds <= 0f)
+            {
+                return 0f;
+            }
+
+            return Math.Max(0f, minimumVisibleSeconds - Math.Max(0f, elapsedSeconds));
+        }
+
+        private async Task<float> OpenStartupLoadingAsync(string status, float progress)
+        {
+            await _root.ScreenService.OpenPageAsync(
+                LoadingScreenRegistration.StartupPageScreenId,
+                CreateLoadingVm(status, 0f, progress, ProgressStepAnimationSeconds, true));
+            await Task.Yield();
+            return Time.realtimeSinceStartup;
+        }
+
+        private async Task<float> OpenTransitionLoadingAsync(string status, float progress)
+        {
+            await _root.ScreenService.ShowOverlayAsync(
+                LoadingScreenRegistration.TransitionOverlayScreenId,
+                CreateLoadingVm(status, 0f, progress, ProgressStepAnimationSeconds, true));
+            await Task.Yield();
+            return Time.realtimeSinceStartup;
+        }
+
+        private async Task PreloadStartupScreensAsync()
+        {
+            foreach (UiScreenDefinition definition in _root.ScreenService.Definitions)
+            {
+                if (definition != null &&
+                    definition.PreloadOnBootstrap &&
+                    definition.Id != LoadingScreenRegistration.StartupPageScreenId)
+                {
+                    await _root.ScreenService.PreloadAsync(definition.Id);
+                }
+            }
+        }
+
+        private async Task WaitForMinimumLoadingVisibleSecondsAsync(float loadingStartedAt)
+        {
+            float elapsedSeconds = Time.realtimeSinceStartup - loadingStartedAt;
+            float remainingSeconds = CalculateRemainingLoadingVisibleSeconds(elapsedSeconds);
+            if (remainingSeconds <= 0f)
+            {
+                return;
+            }
+
+            await Task.Delay(Mathf.CeilToInt(remainingSeconds * 1000f));
+        }
+
+        private async Task CompleteLoadingAsync(string screenId, string status)
+        {
+            await _root.ScreenService.RefreshAsync(screenId, CreateLoadingVm(status, 0.95f, 1f, CompletionHoldSeconds, true));
+            await Task.Delay(Mathf.CeilToInt(CompletionHoldSeconds * 1000f));
+            await Task.Yield();
+        }
+
+        private async Task UpdateLoadingProgressAsync(
+            string screenId,
+            string status,
+            float currentProgress,
+            float targetProgress)
+        {
+            await _root.ScreenService.RefreshAsync(
+                screenId,
+                CreateLoadingVm(
+                    status,
+                    currentProgress,
+                    targetProgress,
+                    ProgressStepAnimationSeconds,
+                    true));
+            await Task.Yield();
+        }
+
+        private async Task ShowStartupFailureAsync(string message)
+        {
+            LoadingVm failureVm = CreateLoadingVm("启动失败：" + message, 0f, 0f, MinimumLoadingVisibleSeconds, false);
+            if (_root.ScreenService.IsOpen(LoadingScreenRegistration.StartupPageScreenId))
+            {
+                await _root.ScreenService.RefreshAsync(LoadingScreenRegistration.StartupPageScreenId, failureVm);
+                return;
+            }
+
+            await _root.ScreenService.OpenPageAsync(LoadingScreenRegistration.StartupPageScreenId, failureVm);
+        }
+
+        private static LoadingVm CreateLoadingVm(
+            string status,
+            float progress,
+            float targetProgress,
+            float animationDurationSeconds,
+            bool animate)
+        {
             return new LoadingVm
             {
                 Status = status,
                 Progress = progress,
+                TargetProgress = targetProgress,
+                AnimationDurationSeconds = animationDurationSeconds,
                 Animate = animate,
             };
         }

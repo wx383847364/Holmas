@@ -114,6 +114,18 @@ namespace Holmas.Tests
                 var resolver = new UiBindingResolver(collector, LoadingGeneratedBindings.Manifest);
                 LoadingBindings bindings = LoadingBindings.Resolve(resolver);
                 Assert.That(bindings.HasRequiredBindings, Is.True, "LoadingBindings 未能解析最小运行时 binding。");
+
+                view.Bind(bindings);
+                bindings.LoadingBar.value = 1f;
+                view.Render(new LoadingVm
+                {
+                    Status = "Loading...",
+                    Progress = 0f,
+                    TargetProgress = 0.5f,
+                    AnimationDurationSeconds = 2f,
+                    Animate = true,
+                });
+                Assert.That(bindings.LoadingBar.value, Is.EqualTo(0f), "LoadingPanel 每次打开时必须从传入进度开始，不能沿用 prefab 默认满格。");
             }
             finally
             {

@@ -67,7 +67,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _view?.SetAssetsRuntime(Root != null && Root.Context != null ? Root.Context.AssetsRuntime : null);
             _view?.SetPromotionAction(OnPromotionClicked);
             _view?.SetHelpAction(OnHelpClicked);
-            _view?.SetGmAction(IsTutorialDebugEnabled ? OnGmClicked : null);
+            _view?.SetGmAction(IsTutorialDebugEnabled ? (UnityEngine.Events.UnityAction)OnGmClicked : null);
             _view?.SetTutorialDebugControlsVisible(IsTutorialDebugEnabled);
             _view?.SetModeToggleActions(OnWalkToggleChanged, OnFindToggleChanged);
             _view?.SetTaskSlotAction(OnTaskSlotClicked);

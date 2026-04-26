@@ -102,6 +102,17 @@ namespace App.HotUpdate.Holmas.UI.Core
             return CloseRuntimeAsync(runtime);
         }
 
+        public Task RefreshAsync(string screenId, object payload = null)
+        {
+            if (!_runtimes.TryGetValue(screenId, out UiScreenRuntime runtime) || runtime == null || !runtime.IsOpen)
+            {
+                return Task.CompletedTask;
+            }
+
+            runtime.Refresh(payload);
+            return Task.CompletedTask;
+        }
+
         public async Task PreloadAsync(string screenId)
         {
             UiScreenDefinition definition = GetDefinition(screenId);
@@ -433,6 +444,11 @@ namespace App.HotUpdate.Holmas.UI.Core
             public void Open(object payload)
             {
                 IsOpen = true;
+                Controller.OpenInternal(payload);
+            }
+
+            public void Refresh(object payload)
+            {
                 Controller.OpenInternal(payload);
             }
 

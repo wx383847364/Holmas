@@ -3,6 +3,7 @@ using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Generated;
 using App.HotUpdate.Holmas.UI.Screens.GmTool;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
+using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using NUnit.Framework;
 
@@ -37,6 +38,45 @@ namespace Holmas.Tests
             Assert.That(transitionDefinition.CachePolicy, Is.EqualTo(UiCachePolicy.KeepInstance));
             Assert.That(transitionDefinition.AssetAddress, Is.EqualTo(startupDefinition.AssetAddress));
             Assert.That(transitionDefinition.BindingManifest, Is.SameAs(LoadingGeneratedBindings.Manifest));
+        }
+
+        [Test]
+        public void HolmasFlowCoordinator_CalculatesRemainingMinimumLoadingDuration()
+        {
+            Assert.That(
+                HolmasFlowCoordinator.CalculateRemainingLoadingVisibleSeconds(0f),
+                Is.EqualTo(HolmasFlowCoordinator.MinimumLoadingVisibleSeconds));
+            Assert.That(
+                HolmasFlowCoordinator.CalculateRemainingLoadingVisibleSeconds(1.2f),
+                Is.EqualTo(0.8f).Within(0.001f));
+            Assert.That(
+                HolmasFlowCoordinator.CalculateRemainingLoadingVisibleSeconds(2f),
+                Is.EqualTo(0f));
+            Assert.That(
+                HolmasFlowCoordinator.CalculateRemainingLoadingVisibleSeconds(3.5f),
+                Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void StartupPreloadDefinitions_KeepLoadingAndMainInBootstrapSet()
+        {
+            UiScreenDefinition loadingDefinition = LoadingScreenRegistration.CreateStartupPageDefinition();
+            UiScreenDefinition mainDefinition = MainScreenRegistration.CreateDefinition();
+
+            Assert.That(HolmasUiScreenCatalog.DefaultStartupScreenId, Is.EqualTo(loadingDefinition.Id));
+            Assert.That(loadingDefinition.PreloadOnBootstrap, Is.True);
+            Assert.That(mainDefinition.PreloadOnBootstrap, Is.True);
+            Assert.That(mainDefinition.AssetAddress, Is.Not.EqualTo(loadingDefinition.AssetAddress));
+        }
+
+        [Test]
+        public void LoadingVm_DefaultsAnimateTowardTwoSecondNearlyCompleteProgress()
+        {
+            var viewModel = new LoadingVm();
+
+            Assert.That(viewModel.Animate, Is.True);
+            Assert.That(viewModel.TargetProgress, Is.EqualTo(0.95f));
+            Assert.That(viewModel.AnimationDurationSeconds, Is.EqualTo(HolmasFlowCoordinator.MinimumLoadingVisibleSeconds));
         }
 
         [Test]

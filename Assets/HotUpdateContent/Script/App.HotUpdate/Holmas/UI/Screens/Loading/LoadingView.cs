@@ -11,6 +11,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
         private LoadingBindings _bindings;
         private bool _animate;
         private float _animationTime;
+        private float _animationStartProgress;
+        private float _animationTargetProgress = 0.95f;
+        private float _animationDurationSeconds = 2f;
 
         private void Update()
         {
@@ -19,8 +22,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
                 return;
             }
 
-            _animationTime += Time.unscaledDeltaTime * 0.9f;
-            _bindings.LoadingBar.value = Mathf.PingPong(_animationTime, 0.8f) + 0.1f;
+            _animationTime += Time.unscaledDeltaTime;
+            float normalizedTime = _animationDurationSeconds <= 0f
+                ? 1f
+                : Mathf.Clamp01(_animationTime / _animationDurationSeconds);
+            float easedTime = Mathf.SmoothStep(0f, 1f, normalizedTime);
+            _bindings.LoadingBar.value = Mathf.Lerp(_animationStartProgress, _animationTargetProgress, easedTime);
+
+            if (normalizedTime >= 1f)
+            {
+                _animate = false;
+            }
         }
 
         public void EnsureBindingSurface()
@@ -70,7 +82,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 
             if (_bindings?.LoadingBar != null)
             {
-                _bindings.LoadingBar.value = Mathf.Clamp01(viewModel.Progress);
+                float progress = Mathf.Clamp01(viewModel.Progress);
+                if (viewModel.Animate)
+                {
+                    _animationStartProgress = progress;
+                    _animationTargetProgress = Mathf.Clamp01(Mathf.Max(progress, viewModel.TargetProgress));
+                    _animationDurationSeconds = Mathf.Max(0.01f, viewModel.AnimationDurationSeconds);
+                    _animationTime = 0f;
+                    _bindings.LoadingBar.value = _animationStartProgress;
+                }
+                else
+                {
+                    _bindings.LoadingBar.value = progress;
+                }
             }
 
             _animate = viewModel.Animate;
