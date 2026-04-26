@@ -32,11 +32,15 @@ namespace Holmas.Tests
                 Assert.That(bindings.MinesGroup.name, Is.EqualTo("MinesGroup"));
                 Assert.That(bindings.BoardContainer.name, Is.EqualTo("BoardContainer"));
                 Assert.That(bindings.BoardContainer.IsChildOf(bindings.MinesGroup), Is.True, "Main 内嵌棋盘必须挂在 MinesGroup 下。");
+                Assert.That(bindings.TutorialBoardContainer.name, Is.EqualTo("TutorialBoardContainer"));
+                Assert.That(bindings.TutorialBoardContainer.IsChildOf(bindings.MinesGroup), Is.True, "教程棋盘容器必须挂在 MinesGroup 下。");
                 Assert.That(instance.transform.Find("RuntimeOverlay/StartButton"), Is.Null, "MainPanel 不应再创建开始/继续找猫按钮。");
-                Assert.That(bindings.AddEnergyButton.name, Is.EqualTo("AddEnergyButton"), "加体力按钮应在 Main RuntimeOverlay 上独立创建，不能复用 Energy_btn。");
                 Assert.That(bindings.HelpButton.name, Is.EqualTo("HelpButton"), "MainPanel 应创建可重看教程的帮助按钮。");
+                Assert.That(bindings.GmButton.name, Is.EqualTo("GmButton"), "MainPanel 应创建独立 GM 调试入口。");
                 Assert.That(bindings.StartTutorialButton.name, Is.EqualTo("StartTutorialButton"), "MainPanel 应创建正式可用的新手引导入口。");
-                Assert.That(bindings.TutorialStepInput.name, Is.EqualTo("TutorialStepInput"), "MainPanel 应创建开发模式步骤输入框。");
+                Assert.That(bindings.AddEnergyButton, Is.Null, "MainPanel 不应再常驻创建加体力按钮。");
+                Assert.That(bindings.TutorialStepInput, Is.Null, "MainPanel 不应再常驻创建开发模式步骤输入框。");
+                Assert.That(bindings.SummaryText, Is.Null, "MainPanel 不应再常驻展示 RuntimeOverlay 调试信息。");
                 Assert.That(bindings.WalkToggle.isOn, Is.True, "WalkToggle 应作为默认行走模式。");
                 Assert.That(bindings.FindToggle, Is.Not.Null, "FindToggle 缺失。");
                 Assert.That(bindings.FindToggle.isOn, Is.False, "FindToggle 默认不应选中。");

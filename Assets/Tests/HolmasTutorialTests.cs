@@ -1,7 +1,11 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.Meta;
+using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tutorial;
+using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using App.Shared.Contracts;
@@ -59,6 +63,22 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void CoreFindCatTutorialLevelService_ResolveTutorialCatIds_UsesOnlyUncompletedUnclaimedTasks()
+        {
+            var taskBar = new HolmasTaskBarState();
+            taskBar.BindTask(0, CreateTask("task-completed", "cat-done", slotIndex: 0, currentCount: 1, targetCount: 1));
+            HolmasTaskRuntimeInstance claimedTask = CreateTask("task-claimed", "cat-claimed", slotIndex: 1, currentCount: 1, targetCount: 1);
+            claimedTask.ClaimReward();
+            taskBar.BindTask(1, claimedTask);
+            taskBar.BindTask(2, CreateTask("task-active", "cat-active", slotIndex: 2));
+
+            taskBar.UnlockSlot(2, 1000L);
+            IReadOnlyList<string> catIds = CoreFindCatTutorialLevelService.ResolveTutorialCatIds(taskBar);
+
+            Assert.That(catIds, Is.EqualTo(new[] { "cat-active" }));
+        }
+
+        [Test]
         public void CoreFindCatTutorialProgressStore_BrokenDataLoadsAsIncomplete()
         {
             var persistence = new InMemoryPersistence();
@@ -110,6 +130,29 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void CoreFindCatTutorialProgressStore_SaveAsync_DoesNotDowngradeExistingCompletedProgress()
+        {
+            var persistence = new InMemoryPersistence();
+            var store = new CoreFindCatTutorialProgressStore(persistence);
+
+            store.SaveCompletedAsync(200L, CoreFindCatTutorialSteps.HelpStepId)
+                .GetAwaiter()
+                .GetResult();
+            store.SaveAsync(new CoreFindCatTutorialProgress
+            {
+                started = true,
+                completed = false,
+                currentStepIndex = 0,
+                currentStepId = CoreFindCatTutorialSteps.FindFirstCatStepId,
+            }).GetAwaiter().GetResult();
+
+            CoreFindCatTutorialProgress progress = store.LoadAsync().GetAwaiter().GetResult();
+            Assert.That(progress.completed, Is.True);
+            Assert.That(progress.currentStepId, Is.EqualTo(CoreFindCatTutorialSteps.HelpStepId));
+            Assert.That(progress.completedAtUtcMilliseconds, Is.EqualTo(200L));
+        }
+
+        [Test]
         public void CoreFindCatTutorialProgressService_StepIndexOnlyMovesForwardUnlessForced()
         {
             var persistence = new InMemoryPersistence();
@@ -145,6 +188,37 @@ namespace Holmas.Tests
             Assert.That(progress.dismissedNormalBoardHint, Is.True);
             Assert.That(progress.completed, Is.False);
             Assert.That(progress.skipped, Is.False);
+        }
+
+        [Test]
+        public void CoreFindCatTutorialCoordinator_PrepareAutoStart_ResumesPostTutorialBoardStepsOnNormalBoard()
+        {
+            var persistence = new InMemoryPersistence();
+            var store = new CoreFindCatTutorialProgressStore(persistence);
+            var service = new CoreFindCatTutorialProgressService(store);
+            service.MarkCurrentStepAsync(
+                    CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId),
+                    CoreFindCatTutorialSteps.EnergyStepId)
+                .GetAwaiter()
+                .GetResult();
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            var context = new HolmasApplicationContext(
+                null,
+                new NullLogger(),
+                null,
+                null,
+                null,
+                runtime);
+            var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+
+            CoreFindCatTutorialLaunchResult result = coordinator.PrepareAutoStartAsync(context).GetAwaiter().GetResult();
+
+            Assert.That(result.ShouldShowOverlay, Is.True);
+            Assert.That(result.ShouldAutoStartNormal, Is.False);
+            Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.FullTutorial));
+            Assert.That(result.Payload.CanWriteCompletion, Is.True);
+            Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId)));
+            Assert.That(result.Payload.TutorialBoardObjectiveSatisfied, Is.True);
         }
 
         [Test]
@@ -189,7 +263,12 @@ namespace Holmas.Tests
             }
         }
 
-        private static HolmasTaskRuntimeInstance CreateTask(string taskId, string catId, int slotIndex)
+        private static HolmasTaskRuntimeInstance CreateTask(
+            string taskId,
+            string catId,
+            int slotIndex,
+            int currentCount = 0,
+            int targetCount = 1)
         {
             return new HolmasTaskRuntimeInstance(new TaskInstanceData
             {
@@ -197,10 +276,49 @@ namespace Holmas.Tests
                 SourceTaskTypeId = "task-normal",
                 CatId = catId,
                 SlotIndex = slotIndex,
-                TargetCount = 1,
-                CurrentCount = 0,
+                TargetCount = targetCount,
+                CurrentCount = currentCount,
                 Reward = 10,
             });
+        }
+
+        private static HolmasGameplayRuntime CreateRuntimeWithNormalBoard()
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var progressionCoordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(
+                taskService,
+                metaService,
+                progressionCoordinator,
+                new NullLogger(),
+                null);
+            runtime.StartLevel(
+                HolmasTestSupport.CreateBoardTemplate(1, 1),
+                new LevelSnapshot
+                {
+                    MapId = "normal-map",
+                    TerrainPath = "normal-terrain",
+                    Seed = 1,
+                    RevealedCells = new bool[1],
+                    Completed = false,
+                    SpawnedCats = new List<SpawnedCatData>
+                    {
+                        new SpawnedCatData
+                        {
+                            CatId = "cat-a",
+                            CellIndex = 0,
+                        },
+                    },
+                });
+            return runtime;
         }
 
         private sealed class InMemoryPersistence : IPersistence

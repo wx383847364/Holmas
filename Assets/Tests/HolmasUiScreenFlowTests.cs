@@ -1,6 +1,7 @@
 using App.HotUpdate.Holmas.UI;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Generated;
+using App.HotUpdate.Holmas.UI.Screens.GmTool;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using NUnit.Framework;
@@ -48,6 +49,19 @@ namespace Holmas.Tests
             Assert.That(definition.ControllerType, Is.EqualTo(typeof(TutorialOverlayController)));
             Assert.That(definition.CachePolicy, Is.EqualTo(UiCachePolicy.KeepInstance));
             Assert.That(definition.BlockInputDuringTransition, Is.False);
+            Assert.That(definition.AssetAddress, Is.Empty);
+        }
+
+        [Test]
+        public void GmToolScreenRegistration_ExposesDebugPopup()
+        {
+            UiScreenDefinition definition = GmToolScreenRegistration.CreateDefinition();
+
+            Assert.That(definition.Id, Is.EqualTo(GmToolScreenRegistration.ScreenId));
+            Assert.That(definition.Kind, Is.EqualTo(UiScreenKind.Popup));
+            Assert.That(definition.ControllerType, Is.EqualTo(typeof(GmToolPopupController)));
+            Assert.That(definition.CachePolicy, Is.EqualTo(UiCachePolicy.KeepInstance));
+            Assert.That(definition.ClickOutsideToClose, Is.True);
             Assert.That(definition.AssetAddress, Is.Empty);
         }
     }

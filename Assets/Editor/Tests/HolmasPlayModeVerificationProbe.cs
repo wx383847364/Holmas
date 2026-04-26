@@ -518,7 +518,7 @@ public static class HolmasPlayModeVerificationProbe
                 Label = label,
                 LevelText = ReadText(view.transform, "LevelText"),
                 GoldText = ReadText(view.transform, "GoldText"),
-                SummaryText = ReadText(view.transform, "SummaryText"),
+                SummaryText = new MainPresenter(context).Build().Summary,
                 StatusText = ReadText(view.transform, "StatusText"),
                 PromotionButtonLabel = ReadButtonText(view.transform, "PromotionButton"),
                 PlayerLevel = context != null ? context.CurrentPlayerLevel : 0,
@@ -540,10 +540,9 @@ public static class HolmasPlayModeVerificationProbe
                 throw new InvalidOperationException("Holmas probe: MainView not found while capturing embedded board.");
             }
 
-            string summary = ReadText(view.transform, "SummaryText");
-            ParseBattleSummary(summary, out string mapId, out string terrainFile, out int rows, out int cols, out int foundCats, out int totalCats, out int hiddenCats, out string taskProgress);
-
             HolmasApplicationContext context = HolmasGameBootstrap.Context;
+            string summary = new MainPresenter(context).Build().Summary;
+            ParseBattleSummary(summary, out string mapId, out string terrainFile, out int rows, out int cols, out int foundCats, out int totalCats, out int hiddenCats, out string taskProgress);
             var snapshot = new BattleSnapshot
             {
                 Label = label,

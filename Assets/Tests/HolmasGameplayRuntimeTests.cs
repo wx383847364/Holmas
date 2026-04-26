@@ -1239,6 +1239,65 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void MainView_RenderBoard_SwitchesBetweenNormalAndTutorialContainers()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            try
+            {
+                var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
+                minesGroup.transform.SetParent(root.transform, false);
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform));
+                boardContainer.transform.SetParent(minesGroup.transform, false);
+                var tutorialBoardContainer = new GameObject("TutorialBoardContainer", typeof(RectTransform));
+                tutorialBoardContainer.transform.SetParent(minesGroup.transform, false);
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(new MainBindings
+                {
+                    MinesGroup = minesGroup.GetComponent<RectTransform>(),
+                    BoardContainer = boardContainer.GetComponent<RectTransform>(),
+                    TutorialBoardContainer = tutorialBoardContainer.GetComponent<RectTransform>(),
+                });
+
+                var cells = new[]
+                {
+                    new BoardCellState(0, true, false, false, false, string.Empty, 0, new Color32(32, 48, 64, 255)),
+                };
+
+                view.Render(new MainVm { BoardVisible = true, UseTutorialBoardLayer = true, Rows = 1, Cols = 1, Cells = cells });
+                Assert.That(boardContainer.activeSelf, Is.False);
+                Assert.That(tutorialBoardContainer.activeSelf, Is.True);
+
+                view.Render(new MainVm { BoardVisible = true, UseTutorialBoardLayer = false, Rows = 1, Cols = 1, Cells = cells });
+                Assert.That(boardContainer.activeSelf, Is.True);
+                Assert.That(tutorialBoardContainer.activeSelf, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void MainView_EnsureBindingSurface_CreatesMinesGroupAtBindingPath()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            try
+            {
+                MainView view = root.GetComponent<MainView>();
+
+                view.EnsureBindingSurface();
+
+                Assert.That(root.transform.Find("MinesGroup"), Is.Not.Null);
+                Assert.That(root.transform.Find("RuntimeOverlay/MinesGroup"), Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void MainPageController_RepairIncompatibleLevelSession_DoesNotClearActiveBoard()
         {
             var catalog = CreateMultiCatTaskCatalog("cat-a", "cat-b");
