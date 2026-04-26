@@ -65,10 +65,12 @@ namespace App.HotUpdate.Holmas.Tutorial
                     return CoreFindCatTutorialLaunchResult.ShowOverlay(payload);
                 }
 
+                await StartTutorialBoardAsync(context);
+                await MarkStartedAsync(0, force: false);
                 return CoreFindCatTutorialLaunchResult.ShowOverlay(BuildPayload(
-                    TutorialRunMode.NormalBoardHint,
-                    CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId),
-                    canWriteCompletion: false,
+                    TutorialRunMode.FullTutorial,
+                    0,
+                    canWriteCompletion: true,
                     await LoadVisualConfigAsync(context),
                     context != null ? context.AssetsRuntime : null));
             }
@@ -94,17 +96,7 @@ namespace App.HotUpdate.Holmas.Tutorial
             bool hasActiveLevel = runtime != null && runtime.HasActiveUncompletedLevel && runtime.CurrentBoardRuntime != null;
             bool hasTutorialLevel = CoreFindCatTutorialLevelService.IsTutorialLevel(runtime?.CurrentLevelSnapshot);
 
-            if (hasActiveLevel && !hasTutorialLevel && step != null && step.RequiresTutorialBoard)
-            {
-                return CoreFindCatTutorialLaunchResult.ShowOverlay(BuildPayload(
-                    TutorialRunMode.NormalBoardHint,
-                    CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId),
-                    canWriteCompletion: false,
-                    await LoadVisualConfigAsync(context),
-                    context != null ? context.AssetsRuntime : null));
-            }
-
-            if ((!hasActiveLevel || !hasTutorialLevel) && step != null && step.RequiresTutorialBoard)
+            if ((!hasActiveLevel || !hasTutorialLevel) && RequiresTutorialBoardSession(stepIndex, step))
             {
                 await StartTutorialBoardAsync(context);
             }
@@ -218,6 +210,17 @@ namespace App.HotUpdate.Holmas.Tutorial
             int progressStepIndex = ResolveRawProgressStepIndex(progress);
             return progressStepIndex >= energyStepIndex ||
                    progress.completedStepIndex >= continueFindStepIndex;
+        }
+
+        private static bool RequiresTutorialBoardSession(int stepIndex, TutorialStepDefinition step)
+        {
+            if (step != null && step.RequiresTutorialBoard)
+            {
+                return true;
+            }
+
+            int continueFindStepIndex = CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.ContinueFindStepId);
+            return stepIndex >= 0 && continueFindStepIndex >= 0 && stepIndex <= continueFindStepIndex;
         }
 
         private static int ResolveRawProgressStepIndex(CoreFindCatTutorialProgress progress)

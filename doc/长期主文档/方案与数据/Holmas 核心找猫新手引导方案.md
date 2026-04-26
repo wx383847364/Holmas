@@ -23,14 +23,14 @@
   - `HelpButton`
   - `BoardCell:{cellIndex}`
 - 在 `MainPageController.OnOpen/OnResume` 后触发教程检查：
-  - 如果教程未完成且没有正在进行的普通棋盘，直接启动教程棋盘并打开非阻断式 Overlay。
+  - 如果教程未完成，直接启动固定教程棋盘并打开非阻断式 Overlay。
   - 如果已有未完成教程棋盘，恢复棋盘并继续教程。
-  - 如果已有未完成普通棋盘，不覆盖玩家当前棋盘，只显示轻提示引导继续操作。
+  - 如果已有未完成普通棋盘，也强制切到固定教程棋盘；Main 内正式 `BoardContainer` 隐藏，教程 `TutorialBoardContainer` 显示，教程结束后再启动并显示正式棋盘。
 - 新增 HotUpdate UI 层教程进度存储：
   - 使用现有 `IPersistence` 独立 key：`holmas.tutorial.core_find_cat.v1`。
   - 保存 `started/completed/skipped/currentStepIndex/currentStepId/completedStepIndex/completedStepId/updatedAt/completedAt` 等字段。
   - 通过 `CoreFindCatTutorialProgressService` 串行化并单调合并：`completed=true` 后普通步骤保存不能降级，步骤索引默认只能前进。
-  - 普通棋盘轻提示关闭只写 `dismissedNormalBoardHint=true`，不写教程完成。
+  - 旧版普通棋盘轻提示字段 `dismissedNormalBoardHint` 仅做存储兼容，不再驱动未完成教程入口。
   - 不写入任务、地图、奖励、体力等玩法状态。
 - 新增 `CoreFindCatTutorialCoordinator`，负责教程入口判定、教程棋盘启动、Overlay payload 组装和图片配置加载；`MainPageController` 只转发按钮、显示 Overlay、刷新主界面。
 - 在主界面增加两个教程入口：
@@ -121,7 +121,7 @@
 
 - `FullTutorial`：新号或手动开始，进入完整步骤链。
 - `Replay`：帮助入口重看，只显示说明，不写完成进度。
-- `NormalBoardHint`：已有普通未完成棋盘时只显示轻提示，不覆盖棋盘，不写完成。
+- `NormalBoardHint`：旧兼容模式，不再作为未完成教程入口；未完成教程应进入固定教程棋盘。
 - `DebugStartAtStep`：开发/测试环境从指定步骤开始，允许强制重置步骤索引。
 
 ## Tutorial Steps
@@ -174,7 +174,7 @@
 - 玩家提前完成任务或通关教程棋盘时，教程按已满足的完成条件向后推进。
 - 每一步都可以收起或跳过；收起后保留小提示入口，避免长期遮挡操作。
 - 跳过整段教程时，只写入教程完成标记，不回滚或改写当前玩法状态。
-- 已有普通未完成棋盘时，Overlay 只能以 `NormalBoardHint` 模式出现；关闭轻提示不等同于完成教程。
+- 已有普通未完成棋盘时，未完成教程仍强制进入固定教程棋盘；普通棋盘 UI 在教程期间隐藏，教程完成或跳过后再启动并显示正式棋盘。
 - 只有教程棋盘流程完成，或玩家显式点击“跳过教程”，才写 `completed=true`。
 - 图片资源加载失败、目标 Rect 缺失、存储写入失败都不能卡死教程；应降级为纯色/无高亮/仅内存流程提示。
 
@@ -186,7 +186,7 @@
   - 存储损坏、空字节或缺少步骤字段时按未完成处理，不阻塞主流程。
   - `completed=true` 后再保存旧步骤，最终仍保持完成。
   - 步骤索引只能前进；开发强制启动除外。
-  - 普通棋盘轻提示关闭只写 `dismissedNormalBoardHint=true`，不写 `completed=true`。
+  - 旧版 `dismissedNormalBoardHint=true` 不能等同于 `completed=true`。
 - AOT 存储测试：
   - key 安全转换后不生成非法路径。
   - 文件写入失败时 fallback 到 PlayerPrefs。

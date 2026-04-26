@@ -1,9 +1,11 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using App.AOT.Infrastructure.Persistence;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Holmas.Tests
 {
@@ -56,6 +58,9 @@ namespace Holmas.Tests
             {
                 var provider = new FilePersistenceProvider(basePath);
 
+                LogAssert.Expect(
+                    LogType.Warning,
+                    new Regex("FilePersistenceProvider: File save failed.*using PlayerPrefs fallback"));
                 bool saved = provider.SaveAsync(key, expected).GetAwaiter().GetResult();
                 byte[] actual = provider.LoadAsync(key).GetAwaiter().GetResult();
 

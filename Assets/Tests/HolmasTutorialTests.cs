@@ -7,6 +7,7 @@ using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
@@ -222,6 +223,48 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void CoreFindCatTutorialCoordinator_PrepareAutoStart_ForcesTutorialBoardOverActiveNormalBoard()
+        {
+            var persistence = new InMemoryPersistence();
+            var store = new CoreFindCatTutorialProgressStore(persistence);
+            var service = new CoreFindCatTutorialProgressService(store);
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            var context = CreateContext(runtime, new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
+            var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+
+            CoreFindCatTutorialLaunchResult result = coordinator.PrepareAutoStartAsync(context).GetAwaiter().GetResult();
+
+            Assert.That(result.ShouldShowOverlay, Is.True);
+            Assert.That(result.ShouldAutoStartNormal, Is.False);
+            Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.FullTutorial));
+            Assert.That(result.Payload.CanWriteCompletion, Is.True);
+            Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(0));
+            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
+            Assert.That(new MainPresenter(context).Build().UseTutorialBoardLayer, Is.True);
+        }
+
+        [Test]
+        public void CoreFindCatTutorialCoordinator_PrepareManualStart_StartsTutorialBoardForEarlySteps()
+        {
+            var persistence = new InMemoryPersistence();
+            var store = new CoreFindCatTutorialProgressStore(persistence);
+            var service = new CoreFindCatTutorialProgressService(store);
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            var context = CreateContext(runtime, new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
+            var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+            int stepIndex = CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
+
+            CoreFindCatTutorialLaunchResult result = coordinator.PrepareManualStartAsync(context, stepIndex, debugForceStep: true)
+                .GetAwaiter()
+                .GetResult();
+
+            Assert.That(result.ShouldShowOverlay, Is.True);
+            Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.DebugStartAtStep));
+            Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(stepIndex));
+            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
+        }
+
+        [Test]
         public void TutorialVisualConfig_FindReturnsConfiguredStep()
         {
             var config = UnityEngine.ScriptableObject.CreateInstance<TutorialVisualConfig>();
@@ -321,6 +364,19 @@ namespace Holmas.Tests
             return runtime;
         }
 
+        private static HolmasApplicationContext CreateContext(
+            HolmasGameplayRuntime runtime,
+            IAssetsRuntime assetsRuntime)
+        {
+            return new HolmasApplicationContext(
+                null,
+                new NullLogger(),
+                null,
+                null,
+                assetsRuntime,
+                runtime);
+        }
+
         private sealed class InMemoryPersistence : IPersistence
         {
             private readonly Dictionary<string, byte[]> _data = new Dictionary<string, byte[]>();
@@ -346,6 +402,49 @@ namespace Holmas.Tests
             public bool Exists(string key)
             {
                 return _data.ContainsKey(key);
+            }
+        }
+
+        private sealed class FakeAssetsRuntime : IAssetsRuntime
+        {
+            private readonly UnityEngine.Object _asset;
+
+            public FakeAssetsRuntime(UnityEngine.Object asset)
+            {
+                _asset = asset;
+            }
+
+            public Task InitializeAsync()
+            {
+                return Task.CompletedTask;
+            }
+
+            public Task<bool> RunPatchFlowAsync(string packageVersion = null)
+            {
+                return Task.FromResult(true);
+            }
+
+            public Task<IAssetHandle> LoadAssetAsync(string location)
+            {
+                return Task.FromResult<IAssetHandle>(new FakeAssetHandle(_asset));
+            }
+
+            public void Shutdown()
+            {
+            }
+        }
+
+        private sealed class FakeAssetHandle : IAssetHandle
+        {
+            public FakeAssetHandle(UnityEngine.Object asset)
+            {
+                AssetObject = asset;
+            }
+
+            public UnityEngine.Object AssetObject { get; }
+
+            public void Release()
+            {
             }
         }
     }

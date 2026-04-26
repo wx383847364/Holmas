@@ -321,21 +321,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
 
         private string ResolveTitle(TutorialStepDefinition step)
         {
-            if (_payload != null && _payload.RunMode == TutorialRunMode.NormalBoardHint)
-            {
-                return "继续当前棋盘";
-            }
-
             return step.Title;
         }
 
         private string ResolveBody(TutorialStepDefinition step)
         {
-            if (_payload != null && _payload.RunMode == TutorialRunMode.NormalBoardHint)
-            {
-                return "你已经有一局正在进行，先不覆盖当前棋盘。可以继续翻格，之后再点帮助或开始引导重看教程。";
-            }
-
             return step.Body;
         }
 
