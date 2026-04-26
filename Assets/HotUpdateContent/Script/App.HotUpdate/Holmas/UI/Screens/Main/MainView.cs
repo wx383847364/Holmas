@@ -287,6 +287,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             return 0;
         }
 
+        public void HideTutorialBoardLayer()
+        {
+            if (_bindings?.TutorialBoardContainer != null)
+            {
+                _bindings.TutorialBoardContainer.gameObject.SetActive(false);
+            }
+
+            _tutorialBoardView?.Render(0, 0, null, null, _currentCellAction);
+        }
+
         public void Render(MainVm viewModel)
         {
             if (viewModel == null)

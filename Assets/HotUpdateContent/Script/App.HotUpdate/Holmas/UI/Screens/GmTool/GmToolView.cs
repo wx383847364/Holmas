@@ -58,6 +58,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
 
             _scrollRect = GetOrCreateScrollRect(_panel);
             _content = EnsureScrollContent(_scrollRect);
+            DestroyChildIfExists(_panel, "StatusText");
 
             _quickCard = GetOrCreateCard(_content, "QuickActionsCard");
             CreateCardTitle(_quickCard, "快捷操作");
@@ -77,8 +78,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _runtimeCard = GetOrCreateCard(_content, "RuntimeCard");
             CreateCardTitle(_runtimeCard, "Runtime 信息");
             _runtimeSummaryText = CreateCardBody(_runtimeCard, "RuntimeSummaryText");
-
-            _statusText = GetOrCreateText(_panel, "StatusText", string.Empty, 24f, TextAlignmentOptions.TopLeft);
+            _statusText = CreateCardBody(_runtimeCard, "StatusText");
             _statusText.enableWordWrapping = true;
             ApplyResponsiveLayout(metrics);
         }
@@ -372,13 +372,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 scrollRectTransform.anchorMin = Vector2.zero;
                 scrollRectTransform.anchorMax = Vector2.one;
                 scrollRectTransform.pivot = new Vector2(0.5f, 0.5f);
-                scrollRectTransform.offsetMin = new Vector2(metrics.PanelPadding, metrics.StatusHeight + metrics.PanelPadding * 2f);
+                scrollRectTransform.offsetMin = new Vector2(metrics.PanelPadding, metrics.PanelPadding);
                 scrollRectTransform.offsetMax = new Vector2(-metrics.PanelPadding, -(metrics.HeaderHeight + metrics.PanelPadding * 2f));
                 scrollRectTransform.localScale = Vector3.one;
             }
-
-            ConfigureRect(_statusText.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, metrics.PanelPadding), new Vector2(-metrics.PanelPadding * 2f, metrics.StatusHeight));
-            _statusText.fontSize = metrics.HintFontSize;
 
             ApplyContentLayout(metrics);
             ApplyCardLayout(_quickCard, metrics, metrics.QuickCardHeight);
@@ -393,6 +390,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             ApplyTextLayout(_tutorialProgressText, metrics.BodyFontSize, metrics.ProgressTextHeight);
             ApplyTextLayout(_tutorialHintText, metrics.HintFontSize, metrics.HintTextHeight);
             ApplyTextLayout(_runtimeSummaryText, metrics.BodyFontSize, metrics.RuntimeTextHeight);
+            ApplyTextLayout(_statusText, metrics.HintFontSize, metrics.StatusTextHeight);
         }
 
         private void ApplyContentLayout(GmToolResponsiveMetrics metrics)
@@ -492,7 +490,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             float cardPadding = Mathf.Clamp(panelWidth * 0.03f, 18f, 28f);
             float spacing = Mathf.Clamp(panelWidth * 0.018f, 12f, 20f);
             float headerHeight = Mathf.Clamp(panelHeight * 0.062f, 72f, 96f);
-            float statusHeight = Mathf.Clamp(panelHeight * 0.07f, 82f, 112f);
             float contentWidth = Mathf.Max(320f, panelWidth - panelPadding * 2f - cardPadding * 2f);
             int actionColumns = contentWidth >= 760f ? 3 : contentWidth >= 500f ? 2 : 1;
             int inputColumns = contentWidth >= 620f ? 2 : 1;
@@ -509,9 +506,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             float progressTextHeight = Mathf.Clamp(bodyFontSize * 5.8f, 112f, 142f);
             float hintTextHeight = Mathf.Clamp(hintFontSize * 3.2f, 58f, 76f);
             float runtimeTextHeight = Mathf.Clamp(bodyFontSize * 4.8f, 92f, 126f);
+            float statusTextHeight = Mathf.Clamp(hintFontSize * 3.4f, 64f, 88f);
             float quickCardHeight = cardPadding * 2f + titleLineHeight + spacing + quickRows * buttonHeight + Mathf.Max(0f, quickRows - 1f) * spacing;
             float tutorialCardHeight = cardPadding * 2f + titleLineHeight + spacing + progressTextHeight + spacing + hintTextHeight + spacing + inputRows * buttonHeight + Mathf.Max(0f, inputRows - 1f) * spacing;
-            float runtimeCardHeight = cardPadding * 2f + titleLineHeight + spacing + runtimeTextHeight;
+            float runtimeCardHeight = cardPadding * 2f + titleLineHeight + spacing + runtimeTextHeight + spacing + statusTextHeight;
             return new GmToolResponsiveMetrics
             {
                 PanelSize = new Vector2(panelWidth, panelHeight),
@@ -520,7 +518,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 SectionSpacing = spacing,
                 CardSpacing = Mathf.Clamp(spacing * 0.72f, 8f, 14f),
                 HeaderHeight = headerHeight,
-                StatusHeight = statusHeight,
                 CloseButtonWidth = Mathf.Clamp(panelWidth * 0.17f, 112f, 160f),
                 ButtonHeight = buttonHeight,
                 TitleFontSize = titleFontSize,
@@ -537,6 +534,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 ProgressTextHeight = progressTextHeight,
                 HintTextHeight = hintTextHeight,
                 RuntimeTextHeight = runtimeTextHeight,
+                StatusTextHeight = statusTextHeight,
             };
         }
 
@@ -657,7 +655,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             public float SectionSpacing;
             public float CardSpacing;
             public float HeaderHeight;
-            public float StatusHeight;
             public float CloseButtonWidth;
             public float ButtonHeight;
             public float TitleFontSize;
@@ -674,6 +671,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             public float ProgressTextHeight;
             public float HintTextHeight;
             public float RuntimeTextHeight;
+            public float StatusTextHeight;
         }
     }
 }

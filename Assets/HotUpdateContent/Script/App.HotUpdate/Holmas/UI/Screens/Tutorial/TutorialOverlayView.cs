@@ -135,6 +135,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             }
 
             UpdateHighlight(viewModel.TargetRect);
+            UpdateCardPlacement(viewModel.TargetRect);
             UpdateVisuals(viewModel);
         }
 
@@ -151,24 +152,18 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 return;
             }
 
-            Vector3[] corners = new Vector3[4];
-            target.GetWorldCorners(corners);
-            Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
-            Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-            for (int i = 0; i < corners.Length; i++)
+            if (!TryGetRootLocalBounds(target, out Rect bounds))
             {
-                Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(null, corners[i]);
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, screenPoint, null, out Vector2 localPoint);
-                min = Vector2.Min(min, localPoint);
-                max = Vector2.Max(max, localPoint);
+                _highlight.gameObject.SetActive(false);
+                return;
             }
 
             _highlight.gameObject.SetActive(true);
             _highlight.anchorMin = new Vector2(0.5f, 0.5f);
             _highlight.anchorMax = new Vector2(0.5f, 0.5f);
             _highlight.pivot = new Vector2(0.5f, 0.5f);
-            _highlight.anchoredPosition = (min + max) * 0.5f;
-            _highlight.sizeDelta = (max - min) + new Vector2(24f, 24f);
+            _highlight.anchoredPosition = bounds.center;
+            _highlight.sizeDelta = bounds.size + new Vector2(24f, 24f);
             if (_fingerIcon != null)
             {
                 _fingerIcon.gameObject.SetActive(true);
@@ -178,11 +173,150 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                     fingerRect.anchorMin = new Vector2(0.5f, 0.5f);
                     fingerRect.anchorMax = new Vector2(0.5f, 0.5f);
                     fingerRect.pivot = new Vector2(0f, 1f);
-                    fingerRect.anchoredPosition = _highlight.anchoredPosition + new Vector2(_highlight.sizeDelta.x * 0.45f, -_highlight.sizeDelta.y * 0.45f);
+                    fingerRect.anchoredPosition = bounds.center + new Vector2(_highlight.sizeDelta.x * 0.45f, -_highlight.sizeDelta.y * 0.45f);
                 }
             }
 
             ApplyLayerOrder();
+        }
+
+        private void UpdateCardPlacement(RectTransform target)
+        {
+            if (_card == null || _root == null)
+            {
+                return;
+            }
+
+            if (target == null || !TryGetRootLocalBounds(target, out Rect targetBounds))
+            {
+                ApplyDefaultCardLayout();
+                return;
+            }
+
+            Rect rootRect = _root.rect;
+            if (rootRect.width <= 0f || rootRect.height <= 0f)
+            {
+                ApplyDefaultCardLayout();
+                return;
+            }
+
+            float cardHeight = Mathf.Clamp(rootRect.height * 0.3f, 260f, 320f);
+            float safeMargin = Mathf.Clamp(rootRect.height * 0.04f, 24f, 56f);
+            float gap = Mathf.Clamp(rootRect.height * 0.035f, 24f, 48f);
+            float minBottom = rootRect.yMin + safeMargin;
+            float maxBottom = rootRect.yMax - safeMargin - cardHeight;
+            bool preferAbove = targetBounds.center.y < rootRect.center.y;
+            float aboveBottom = targetBounds.yMax + gap;
+            float belowBottom = targetBounds.yMin - gap - cardHeight;
+            float desiredBottom = preferAbove ? aboveBottom : belowBottom;
+            if (desiredBottom < minBottom || desiredBottom > maxBottom)
+            {
+                float alternateBottom = preferAbove ? belowBottom : aboveBottom;
+                if (alternateBottom >= minBottom && alternateBottom <= maxBottom)
+                {
+                    desiredBottom = alternateBottom;
+                }
+            }
+
+            if (maxBottom < minBottom)
+            {
+                desiredBottom = minBottom;
+            }
+            else
+            {
+                desiredBottom = Mathf.Clamp(desiredBottom, minBottom, maxBottom);
+            }
+
+            ConfigureCardLayout(desiredBottom - rootRect.yMin, cardHeight);
+        }
+
+        private void ApplyDefaultCardLayout()
+        {
+            ConfigureCardLayout(42f, 300f);
+        }
+
+        private void ConfigureCardLayout(float anchoredBottom, float height)
+        {
+            ConfigureRect(
+                _card,
+                new Vector2(0.06f, 0f),
+                new Vector2(0.94f, 0f),
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, anchoredBottom),
+                new Vector2(0f, height));
+        }
+
+        private bool TryGetRootLocalBounds(RectTransform target, out Rect bounds)
+        {
+            bounds = new Rect();
+            if (target == null || _root == null)
+            {
+                return false;
+            }
+
+            bool hasBounds = false;
+            Vector2 min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            Vector2 max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+            AccumulateRectBounds(target, ref hasBounds, ref min, ref max);
+            if (!hasBounds)
+            {
+                RectTransform[] descendants = target.GetComponentsInChildren<RectTransform>(true);
+                for (int i = 0; i < descendants.Length; i++)
+                {
+                    RectTransform descendant = descendants[i];
+                    if (descendant == null || ReferenceEquals(descendant, target))
+                    {
+                        continue;
+                    }
+
+                    AccumulateRectBounds(descendant, ref hasBounds, ref min, ref max);
+                }
+            }
+
+            if (!hasBounds)
+            {
+                Vector2 center = _root.InverseTransformPoint(target.position);
+                Vector2 fallbackHalfSize = new Vector2(90f, 42f);
+                min = center - fallbackHalfSize;
+                max = center + fallbackHalfSize;
+                hasBounds = true;
+            }
+
+            if (!hasBounds ||
+                IsInvalid(min.x) ||
+                IsInvalid(min.y) ||
+                IsInvalid(max.x) ||
+                IsInvalid(max.y))
+            {
+                return false;
+            }
+
+            bounds = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+            return bounds.width > 0f && bounds.height > 0f;
+        }
+
+        private void AccumulateRectBounds(RectTransform rectTransform, ref bool hasBounds, ref Vector2 min, ref Vector2 max)
+        {
+            if (rectTransform == null || rectTransform.rect.width <= 0.1f || rectTransform.rect.height <= 0.1f)
+            {
+                return;
+            }
+
+            Vector3[] corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Vector2 localPoint = _root.InverseTransformPoint(corners[i]);
+                min = Vector2.Min(min, localPoint);
+                max = Vector2.Max(max, localPoint);
+            }
+
+            hasBounds = true;
+        }
+
+        private static bool IsInvalid(float value)
+        {
+            return float.IsNaN(value) || float.IsInfinity(value);
         }
 
         private void UpdateVisuals(TutorialOverlayVm viewModel)

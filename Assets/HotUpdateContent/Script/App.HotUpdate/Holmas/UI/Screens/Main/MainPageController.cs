@@ -279,15 +279,30 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private async Task HandleTutorialExitedAsync()
         {
             HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : _runtime;
-            if (!CoreFindCatTutorialCoordinator.ShouldEndTutorialLevelAfterExit(runtime))
+            if (HasActiveFormalBoard(runtime))
             {
                 Refresh(null);
                 return;
             }
 
-            runtime.EndCurrentLevelSession();
+            if (runtime != null &&
+                (runtime.CurrentBoardRuntime != null ||
+                 CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot)))
+            {
+                runtime.EndCurrentLevelSession();
+            }
+
+            _view?.HideTutorialBoardLayer();
             Refresh("新手引导已结束，正在准备正式棋盘...");
             await StartFormalBoardAfterTutorialAsync("新手引导已结束，正式棋盘已准备。");
+        }
+
+        private static bool HasActiveFormalBoard(HolmasGameplayRuntime runtime)
+        {
+            return runtime != null &&
+                   runtime.HasActiveUncompletedLevel &&
+                   runtime.CurrentBoardRuntime != null &&
+                   !CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot);
         }
 
         private void OnWalkToggleChanged(bool isOn)
