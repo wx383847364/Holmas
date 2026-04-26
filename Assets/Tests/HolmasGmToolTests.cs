@@ -52,6 +52,7 @@ namespace Holmas.Tests
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/QuickActionsCard/QuickActionsRow/StartTutorialButton"), Is.Null);
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/TutorialCard/StepInputRow/StartAtStepButton"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/RuntimeCard/RuntimeSummaryText"), Is.TypeOf<RectTransform>());
+                Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/RuntimeCard/MainStatusText"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/RuntimeCard/StatusText"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/StatusText"), Is.Null, "StatusText 应归入 RuntimeCard，不应残留在 Panel 根级。");
                 Assert.That(root.transform.Find("Label"), Is.Null, "GM 工具不应创建根级游离 Label。");
@@ -73,6 +74,7 @@ namespace Holmas.Tests
                 view.Render(new GmToolVm
                 {
                     RuntimeSummary = "runtime summary ok",
+                    MainStatus = "main status ok",
                     Status = "status ok",
                     TutorialProgressSummary = "tutorial ok",
                     TutorialActionHint = "hint ok",
@@ -84,10 +86,15 @@ namespace Holmas.Tests
                 TextMeshProUGUI status = root.transform
                     .Find("Panel/ScrollView/Viewport/Content/RuntimeCard/StatusText")
                     ?.GetComponent<TextMeshProUGUI>();
+                TextMeshProUGUI mainStatus = root.transform
+                    .Find("Panel/ScrollView/Viewport/Content/RuntimeCard/MainStatusText")
+                    ?.GetComponent<TextMeshProUGUI>();
 
                 Assert.That(runtimeSummary, Is.Not.Null);
+                Assert.That(mainStatus, Is.Not.Null);
                 Assert.That(status, Is.Not.Null);
                 Assert.That(runtimeSummary.text, Is.EqualTo("runtime summary ok"));
+                Assert.That(mainStatus.text, Is.EqualTo("main status ok"));
                 Assert.That(status.text, Is.EqualTo("status ok"));
                 Assert.That(root.transform.Find("Panel/StatusText"), Is.Null);
             }

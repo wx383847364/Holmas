@@ -25,12 +25,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private bool _tutorialCheckInProgress;
         private HolmasGameplayRuntime _runtime;
         private HolmasBoardInteractionMode _interactionMode = HolmasBoardInteractionMode.Walk;
+        private string _currentStatus = "主界面已就绪。";
         private CoreFindCatTutorialProgressStore _tutorialProgressStore;
         private CoreFindCatTutorialProgressService _tutorialProgressService;
         private CoreFindCatTutorialCoordinator _tutorialCoordinator;
 
         private static bool IsTutorialDebugEnabled =>
             UnityEngine.Application.isEditor || UnityEngine.Debug.isDebugBuild;
+
+        public string CurrentStatusText => _currentStatus;
 
         protected override void OnCreate()
         {
@@ -640,6 +643,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private void Refresh(string status = null)
         {
             MainVm viewModel = _presenter != null ? _presenter.Build(status) : new MainVm();
+            _currentStatus = viewModel.Status;
             viewModel.WalkToggleIsOn = _interactionMode == HolmasBoardInteractionMode.Walk;
             viewModel.FindToggleIsOn = _interactionMode == HolmasBoardInteractionMode.Find;
             if (viewModel.TaskItems != null)

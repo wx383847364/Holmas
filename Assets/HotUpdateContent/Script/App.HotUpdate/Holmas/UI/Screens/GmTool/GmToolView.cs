@@ -24,6 +24,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
         private TextMeshProUGUI _tutorialProgressText;
         private TextMeshProUGUI _tutorialHintText;
         private TextMeshProUGUI _runtimeSummaryText;
+        private TextMeshProUGUI _mainStatusText;
         private TMP_InputField _stepInput;
         private Button _closeButton;
         private Button _addEnergyButton;
@@ -78,7 +79,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _runtimeCard = GetOrCreateCard(_content, "RuntimeCard");
             CreateCardTitle(_runtimeCard, "Runtime 信息");
             _runtimeSummaryText = CreateCardBody(_runtimeCard, "RuntimeSummaryText");
+            _mainStatusText = CreateCardBody(_runtimeCard, "MainStatusText");
             _statusText = CreateCardBody(_runtimeCard, "StatusText");
+            _mainStatusText.enableWordWrapping = true;
             _statusText.enableWordWrapping = true;
             ApplyResponsiveLayout(metrics);
         }
@@ -106,6 +109,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             TmpGlyphCoverageReporter.SetText(_tutorialProgressText, viewModel != null ? viewModel.TutorialProgressSummary : string.Empty);
             TmpGlyphCoverageReporter.SetText(_tutorialHintText, viewModel != null ? viewModel.TutorialActionHint : string.Empty);
             TmpGlyphCoverageReporter.SetText(_runtimeSummaryText, viewModel != null ? viewModel.RuntimeSummary : string.Empty);
+            TmpGlyphCoverageReporter.SetText(_mainStatusText, viewModel != null ? viewModel.MainStatus : string.Empty);
 
             string stepText = viewModel != null && !string.IsNullOrWhiteSpace(viewModel.StepInputText)
                 ? viewModel.StepInputText
@@ -390,6 +394,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             ApplyTextLayout(_tutorialProgressText, metrics.BodyFontSize, metrics.ProgressTextHeight);
             ApplyTextLayout(_tutorialHintText, metrics.HintFontSize, metrics.HintTextHeight);
             ApplyTextLayout(_runtimeSummaryText, metrics.BodyFontSize, metrics.RuntimeTextHeight);
+            ApplyTextLayout(_mainStatusText, metrics.HintFontSize, metrics.MainStatusTextHeight);
             ApplyTextLayout(_statusText, metrics.HintFontSize, metrics.StatusTextHeight);
         }
 
@@ -506,10 +511,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             float progressTextHeight = Mathf.Clamp(bodyFontSize * 5.8f, 112f, 142f);
             float hintTextHeight = Mathf.Clamp(hintFontSize * 3.2f, 58f, 76f);
             float runtimeTextHeight = Mathf.Clamp(bodyFontSize * 4.8f, 92f, 126f);
+            float mainStatusTextHeight = Mathf.Clamp(hintFontSize * 3.1f, 56f, 82f);
             float statusTextHeight = Mathf.Clamp(hintFontSize * 3.4f, 64f, 88f);
             float quickCardHeight = cardPadding * 2f + titleLineHeight + spacing + quickRows * buttonHeight + Mathf.Max(0f, quickRows - 1f) * spacing;
             float tutorialCardHeight = cardPadding * 2f + titleLineHeight + spacing + progressTextHeight + spacing + hintTextHeight + spacing + inputRows * buttonHeight + Mathf.Max(0f, inputRows - 1f) * spacing;
-            float runtimeCardHeight = cardPadding * 2f + titleLineHeight + spacing + runtimeTextHeight + spacing + statusTextHeight;
+            float runtimeCardHeight = cardPadding * 2f + titleLineHeight + spacing + runtimeTextHeight + spacing + mainStatusTextHeight + spacing + statusTextHeight;
             return new GmToolResponsiveMetrics
             {
                 PanelSize = new Vector2(panelWidth, panelHeight),
@@ -534,6 +540,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 ProgressTextHeight = progressTextHeight,
                 HintTextHeight = hintTextHeight,
                 RuntimeTextHeight = runtimeTextHeight,
+                MainStatusTextHeight = mainStatusTextHeight,
                 StatusTextHeight = statusTextHeight,
             };
         }
@@ -671,6 +678,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             public float ProgressTextHeight;
             public float HintTextHeight;
             public float RuntimeTextHeight;
+            public float MainStatusTextHeight;
             public float StatusTextHeight;
         }
     }

@@ -66,25 +66,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             TextMeshProUGUI levelText = ResolveLevelText(overlay);
             TextMeshProUGUI goldText = ResolveGoldText(overlay);
             TextMeshProUGUI energyText = ResolveEnergyText(overlay);
-            TextMeshProUGUI statusText = GetOrCreateRuntimeText(
-                overlay,
-                "StatusText",
-                new Vector2(0f, 0f),
-                new Vector2(1f, 0f),
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, 220f),
-                new Vector2(-120f, 160f),
-                28f,
-                TextAlignmentOptions.TopLeft);
+            DestroyChildIfExists(overlay, "StatusText");
             RemoveStartButton(overlay);
             Button promotionButton = ResolvePromotionButton(overlay);
             RectTransform bottomTools = ResolveBottomToolsGroup(overlay);
-            Button helpButton = ResolveHelpButton(bottomTools);
-            ReparentToolButton(helpButton, bottomTools, 72f);
-            Button gmButton = ResolveGmButton(bottomTools);
-            ReparentToolButton(gmButton, bottomTools, 120f);
+            RectTransform topTools = ResolveTopToolsGroup(overlay);
+            Button helpButton = ResolveHelpButton(topTools);
+            ReparentToolButton(helpButton, topTools, 72f);
+            Button gmButton = ResolveGmButton(topTools);
+            ReparentToolButton(gmButton, topTools, 120f);
             gmButton.gameObject.SetActive(false);
             DestroyChildIfExists(bottomTools, "StartTutorialButton");
+            DestroyChildIfExists(bottomTools, "HelpButton");
+            DestroyChildIfExists(bottomTools, "GmButton");
             RectTransform minesGroup = ResolveMinesGroup(overlay);
             RectTransform boardContainer = GetOrCreateBoardContainer(minesGroup);
             RectTransform tutorialBoardContainer = GetOrCreateTutorialBoardContainer(minesGroup);
@@ -95,7 +89,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             collector.RegisterOrReplace(MainBindings.LevelTextKey, levelText, nodePath: MainBindings.LevelTextNodePath);
             collector.RegisterOrReplace(MainBindings.GoldTextKey, goldText, nodePath: MainBindings.GoldTextNodePath);
             collector.RegisterOrReplace(MainBindings.EnergyTextKey, energyText, nodePath: MainBindings.EnergyTextNodePath);
-            collector.RegisterOrReplace(MainBindings.StatusTextKey, statusText, nodePath: MainBindings.StatusTextNodePath);
             collector.RegisterOrReplace(
                 MainBindings.PromotionButtonKey,
                 promotionButton,
@@ -317,11 +310,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (_bindings?.EnergyText != null)
             {
                 TmpGlyphCoverageReporter.SetText(_bindings.EnergyText, viewModel.EnergyLabel);
-            }
-
-            if (_bindings?.StatusText != null)
-            {
-                TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
             }
 
             if (_bindings?.PromotionButton != null)
@@ -754,6 +742,47 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             return rect;
         }
 
+        private RectTransform ResolveTopToolsGroup(Transform overlay)
+        {
+            GameObject groupObject = GetOrCreateChild(overlay, MainBindings.TopToolsNodeName);
+            RectTransform rect = groupObject.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                rect = groupObject.AddComponent<RectTransform>();
+            }
+
+            ConfigureRect(
+                rect,
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(-40f, -40f),
+                new Vector2(420f, 84f));
+
+            HorizontalLayoutGroup layout = groupObject.GetComponent<HorizontalLayoutGroup>();
+            if (layout == null)
+            {
+                layout = groupObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            layout.childAlignment = TextAnchor.MiddleRight;
+            layout.childControlWidth = false;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.spacing = 12f;
+
+            ContentSizeFitter fitter = groupObject.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = groupObject.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+            return rect;
+        }
+
         private static void ReparentToolButton(Button button, RectTransform parent, float width)
         {
             if (button == null || parent == null)
@@ -784,30 +813,55 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private Button ResolveGmButton(Transform overlay)
         {
-            return GetOrCreateRuntimeButton(
+            return ResolveToolButton(
                 overlay,
                 "GmButton",
                 "GM",
-                Vector2.zero,
-                Vector2.zero,
-                new Vector2(0f, 0.5f),
-                Vector2.zero,
                 new Vector2(120f, 72f),
                 new Color(0.58f, 0.3f, 0.78f, 0.96f));
         }
 
         private Button ResolveHelpButton(Transform overlay)
         {
-            return GetOrCreateRuntimeButton(
+            return ResolveToolButton(
                 overlay,
                 "HelpButton",
                 "?",
+                new Vector2(72f, 72f),
+                new Color(0.26f, 0.34f, 0.42f, 0.95f));
+        }
+
+        private Button ResolveToolButton(
+            Transform parent,
+            string objectName,
+            string label,
+            Vector2 sizeDelta,
+            Color color)
+        {
+            Button existing = FindFirstDescendantByName<Button>(objectName);
+            if (existing != null)
+            {
+                existing.transform.SetParent(parent, false);
+                Image image = existing.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = color;
+                }
+
+                SetButtonLabel(existing, label);
+                return existing;
+            }
+
+            return GetOrCreateRuntimeButton(
+                parent,
+                objectName,
+                label,
                 Vector2.zero,
                 Vector2.zero,
                 new Vector2(0f, 0.5f),
                 Vector2.zero,
-                new Vector2(72f, 72f),
-                new Color(0.26f, 0.34f, 0.42f, 0.95f));
+                sizeDelta,
+                color);
         }
 
         private RectTransform ResolveMinesGroup(Transform overlay)

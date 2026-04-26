@@ -31,6 +31,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string RuntimeOverlayNodePath = RootNodePath + "/" + RuntimeOverlayNodeName;
         public const string BottomToolsNodeName = "BottomTools";
         public const string BottomToolsNodePath = RuntimeOverlayNodePath + "/" + BottomToolsNodeName;
+        public const string TopToolsNodeName = "TopTools";
+        public const string TopToolsNodePath = RuntimeOverlayNodePath + "/" + TopToolsNodeName;
         public const string LevelTextNodePath = RuntimeOverlayNodePath + "/LevelText";
         public const string GoldTextNodePath = RuntimeOverlayNodePath + "/GoldText";
         public const string EnergyTextNodePath = RuntimeOverlayNodePath + "/EnergyText";
@@ -38,8 +40,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string StatusTextNodePath = RuntimeOverlayNodePath + "/StatusText";
         public const string PromotionButtonNodePath = RuntimeOverlayNodePath + "/PromotionButton";
         public const string AddEnergyButtonNodePath = RuntimeOverlayNodePath + "/AddEnergyButton";
-        public const string HelpButtonNodePath = BottomToolsNodePath + "/HelpButton";
-        public const string GmButtonNodePath = BottomToolsNodePath + "/GmButton";
+        public const string HelpButtonNodePath = TopToolsNodePath + "/HelpButton";
+        public const string GmButtonNodePath = TopToolsNodePath + "/GmButton";
         public const string TutorialStepInputNodePath = RuntimeOverlayNodePath + "/TutorialStepInput";
         public const string MinesGroupNodePath = "MainPanel/MinesGroup";
         public const string BoardContainerNodePath = MinesGroupNodePath + "/BoardContainer";
@@ -69,7 +71,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             LevelText != null &&
             GoldText != null &&
             EnergyText != null &&
-            StatusText != null &&
             PromotionButton != null &&
             HelpButton != null &&
             GmButton != null &&
@@ -90,7 +91,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                    resolver.HasExplicitBinding<TextMeshProUGUI>(LevelTextKey, nodePath: LevelTextNodePath) &&
                    resolver.HasExplicitBinding<TextMeshProUGUI>(GoldTextKey, nodePath: GoldTextNodePath) &&
                    resolver.HasExplicitBinding<TextMeshProUGUI>(EnergyTextKey, nodePath: EnergyTextNodePath) &&
-                   resolver.HasExplicitBinding<TextMeshProUGUI>(StatusTextKey, nodePath: StatusTextNodePath) &&
                    resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(HelpButtonKey, ButtonClickEvent, HelpButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(GmButtonKey, ButtonClickEvent, GmButtonNodePath) &&
@@ -114,7 +114,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             resolver.TryResolve(GoldTextKey, out bindings.GoldText, nodePath: GoldTextNodePath);
             resolver.TryResolve(EnergyTextKey, out bindings.EnergyText, nodePath: EnergyTextNodePath);
             resolver.TryResolve(SummaryTextKey, out bindings.SummaryText, nodePath: SummaryTextNodePath);
-            resolver.TryResolve(StatusTextKey, out bindings.StatusText, nodePath: StatusTextNodePath);
             resolver.TryResolve(PromotionButtonKey, out bindings.PromotionButton, ButtonClickEvent, PromotionButtonNodePath);
             resolver.TryResolve(AddEnergyButtonKey, out bindings.AddEnergyButton, ButtonClickEvent, AddEnergyButtonNodePath);
             resolver.TryResolve(HelpButtonKey, out bindings.HelpButton, ButtonClickEvent, HelpButtonNodePath);

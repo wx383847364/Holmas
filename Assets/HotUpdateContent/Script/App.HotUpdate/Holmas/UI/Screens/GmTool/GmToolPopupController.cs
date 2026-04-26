@@ -251,9 +251,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 : new CoreFindCatTutorialProgress();
 
             bool tutorialAvailable = ResolveCurrentMainView() != null;
-            string runtimeSummary = _mainPresenter != null
-                ? _mainPresenter.Build().Summary
+            MainPageController mainController = ResolveCurrentMainPageController();
+            MainVm mainVm = _mainPresenter != null
+                ? _mainPresenter.Build(mainController?.CurrentStatusText)
+                : null;
+            string runtimeSummary = mainVm != null
+                ? mainVm.Summary
                 : "玩法运行时不可用。";
+            string mainStatus = mainVm != null && !string.IsNullOrWhiteSpace(mainVm.Status)
+                ? mainVm.Status
+                : "主界面状态不可用。";
 
             _view.Render(new GmToolVm
             {
@@ -263,6 +270,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                     ? "当前页面：主界面。教程相关按钮可直接使用。"
                     : "当前不在主界面。教程相关按钮已禁用。",
                 RuntimeSummary = string.IsNullOrWhiteSpace(runtimeSummary) ? "暂无运行时信息。" : runtimeSummary,
+                MainStatus = $"主界面状态：{mainStatus}",
                 StepInputText = _view.GetRequestedStepTextOrDefault("0"),
                 AddEnergyEnabled = !_isBusy && Root?.Context?.GameplayRuntime != null,
                 ReplayHelpEnabled = !_isBusy && tutorialAvailable,

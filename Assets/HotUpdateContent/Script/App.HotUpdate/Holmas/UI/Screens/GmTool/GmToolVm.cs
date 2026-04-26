@@ -6,6 +6,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
         public string TutorialProgressSummary = string.Empty;
         public string TutorialActionHint = string.Empty;
         public string RuntimeSummary = string.Empty;
+        public string MainStatus = string.Empty;
         public string StepInputText = "0";
         public bool AddEnergyEnabled;
         public bool ReplayHelpEnabled;
