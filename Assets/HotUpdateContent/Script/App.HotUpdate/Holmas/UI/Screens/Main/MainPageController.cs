@@ -65,7 +65,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _view?.SetPromotionAction(OnPromotionClicked);
             _view?.SetHelpAction(OnHelpClicked);
             _view?.SetGmAction(IsTutorialDebugEnabled ? OnGmClicked : null);
-            _view?.SetStartTutorialAction(OnStartTutorialClicked);
             _view?.SetTutorialDebugControlsVisible(IsTutorialDebugEnabled);
             _view?.SetModeToggleActions(OnWalkToggleChanged, OnFindToggleChanged);
             _view?.SetTaskSlotAction(OnTaskSlotClicked);
@@ -93,7 +92,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _view?.SetPromotionAction(null);
             _view?.SetHelpAction(null);
             _view?.SetGmAction(null);
-            _view?.SetStartTutorialAction(null);
             _view?.SetModeToggleActions(null, null);
             _view?.SetTaskSlotAction(null);
             _view?.SetCellAction(null);
@@ -182,44 +180,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
         }
 
-        private async Task HandleManualTutorialStartAsync(int stepIndex, bool debugForceStep)
-        {
-            if (_isBusy || _tutorialCoordinator == null)
-            {
-                return;
-            }
-
-            HolmasApplicationContext context = Root != null ? Root.Context : null;
-            if (context == null)
-            {
-                Refresh("应用上下文不可用，无法启动引导。");
-                return;
-            }
-
-            _isBusy = true;
-            Refresh("正在准备新手引导...");
-            try
-            {
-                CoreFindCatTutorialLaunchResult result = await _tutorialCoordinator.PrepareManualStartAsync(
-                    context,
-                    stepIndex,
-                    debugForceStep);
-                if (result != null && result.ShouldShowOverlay)
-                {
-                    await ShowTutorialOverlayAsync(result.Payload);
-                }
-            }
-            catch (Exception ex)
-            {
-                Refresh($"新手引导启动失败：{ex.Message}");
-            }
-            finally
-            {
-                _isBusy = false;
-                Refresh(null);
-            }
-        }
-
         private void OnPromotionClicked()
         {
             string promotionId = _presenter != null ? _presenter.GetPrimaryPromotionId() : string.Empty;
@@ -267,11 +227,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 ? 0
                 : CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
             _ = HandleReplayTutorialAsync(stepIndex);
-        }
-
-        private void OnStartTutorialClicked()
-        {
-            _ = HandleManualTutorialStartAsync(0, false);
         }
 
         private void OnGmClicked()

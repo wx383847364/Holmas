@@ -32,7 +32,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private UnityAction _currentAddEnergyAction;
         private UnityAction _currentHelpAction;
         private UnityAction _currentGmAction;
-        private UnityAction _currentStartTutorialAction;
         private UnityAction<bool> _currentWalkToggleAction;
         private UnityAction<bool> _currentFindToggleAction;
         private Action<int> _currentTaskSlotAction;
@@ -85,8 +84,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             Button gmButton = ResolveGmButton(bottomTools);
             ReparentToolButton(gmButton, bottomTools, 120f);
             gmButton.gameObject.SetActive(false);
-            Button startTutorialButton = ResolveStartTutorialButton(bottomTools);
-            ReparentToolButton(startTutorialButton, bottomTools, 180f);
+            DestroyChildIfExists(bottomTools, "StartTutorialButton");
             RectTransform minesGroup = ResolveMinesGroup(overlay);
             RectTransform boardContainer = GetOrCreateBoardContainer(minesGroup);
             RectTransform tutorialBoardContainer = GetOrCreateTutorialBoardContainer(minesGroup);
@@ -113,11 +111,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 gmButton,
                 MainBindings.ButtonClickEvent,
                 MainBindings.GmButtonNodePath);
-            collector.RegisterOrReplace(
-                MainBindings.StartTutorialButtonKey,
-                startTutorialButton,
-                MainBindings.ButtonClickEvent,
-                MainBindings.StartTutorialButtonNodePath);
             collector.RegisterOrReplace(MainBindings.MinesGroupKey, minesGroup, nodePath: MainBindings.MinesGroupNodePath);
             collector.RegisterOrReplace(MainBindings.BoardContainerKey, boardContainer, nodePath: MainBindings.BoardContainerNodePath);
             collector.RegisterOrReplace(MainBindings.TutorialBoardContainerKey, tutorialBoardContainer, nodePath: MainBindings.TutorialBoardContainerNodePath);
@@ -217,26 +210,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (_currentGmAction != null)
             {
                 _bindings.GmButton.onClick.AddListener(_currentGmAction);
-            }
-        }
-
-        public void SetStartTutorialAction(UnityAction action)
-        {
-            if (_bindings?.StartTutorialButton == null)
-            {
-                _currentStartTutorialAction = action;
-                return;
-            }
-
-            if (_currentStartTutorialAction != null)
-            {
-                _bindings.StartTutorialButton.onClick.RemoveListener(_currentStartTutorialAction);
-            }
-
-            _currentStartTutorialAction = action;
-            if (_currentStartTutorialAction != null)
-            {
-                _bindings.StartTutorialButton.onClick.AddListener(_currentStartTutorialAction);
             }
         }
 
@@ -357,12 +330,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             {
                 _bindings.GmButton.interactable = true;
                 SetButtonLabel(_bindings.GmButton, "GM");
-            }
-
-            if (_bindings?.StartTutorialButton != null)
-            {
-                _bindings.StartTutorialButton.interactable = true;
-                SetButtonLabel(_bindings.StartTutorialButton, "开始引导");
             }
 
             SyncModeToggles(viewModel);
@@ -831,20 +798,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 Vector2.zero,
                 new Vector2(72f, 72f),
                 new Color(0.26f, 0.34f, 0.42f, 0.95f));
-        }
-
-        private Button ResolveStartTutorialButton(Transform overlay)
-        {
-            return GetOrCreateRuntimeButton(
-                overlay,
-                "StartTutorialButton",
-                "开始引导",
-                Vector2.zero,
-                Vector2.zero,
-                new Vector2(0f, 0.5f),
-                Vector2.zero,
-                new Vector2(180f, 72f),
-                new Color(0.22f, 0.56f, 0.36f, 0.95f));
         }
 
         private RectTransform ResolveMinesGroup(Transform overlay)

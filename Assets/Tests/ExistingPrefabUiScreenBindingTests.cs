@@ -37,7 +37,7 @@ namespace Holmas.Tests
                 Assert.That(instance.transform.Find("RuntimeOverlay/StartButton"), Is.Null, "MainPanel 不应再创建开始/继续找猫按钮。");
                 Assert.That(bindings.HelpButton.name, Is.EqualTo("HelpButton"), "MainPanel 应创建可重看教程的帮助按钮。");
                 Assert.That(bindings.GmButton.name, Is.EqualTo("GmButton"), "MainPanel 应创建独立 GM 调试入口。");
-                Assert.That(bindings.StartTutorialButton.name, Is.EqualTo("StartTutorialButton"), "MainPanel 应创建正式可用的新手引导入口。");
+                Assert.That(instance.transform.Find("RuntimeOverlay/BottomTools/StartTutorialButton"), Is.Null, "MainPanel 不应再创建开始引导按钮。");
                 Assert.That(bindings.AddEnergyButton, Is.Null, "MainPanel 不应再常驻创建加体力按钮。");
                 Assert.That(bindings.TutorialStepInput, Is.Null, "MainPanel 不应再常驻创建开发模式步骤输入框。");
                 Assert.That(bindings.SummaryText, Is.Null, "MainPanel 不应再常驻展示 RuntimeOverlay 调试信息。");
