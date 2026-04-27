@@ -2,7 +2,7 @@
 
 ## Summary
 
-采用 Main 内双棋盘容器方案：正式棋盘在 `BoardContainer`，教程棋盘在更高层的 `TutorialBoardContainer`。教程 Overlay 只做提示和高亮，GM Popup 继续高于 Overlay。教程完成或跳过时，统一清掉教程局并自动启动正式棋盘，避免 runtime 还停在教程棋盘。
+采用 Main 内双棋盘容器方案：正式棋盘在 `BoardContainer`，教程棋盘在更高层的 `TutorialBoardContainer`。教程 Overlay 只做提示和高亮，GM Popup 继续高于 Overlay。教程完成或跳过时，统一清掉教程局并直接进入正式棋盘，但不打开 Loading。
 
 ## Key Changes
 
@@ -21,7 +21,7 @@
 - 教程退出流程：
   - 点“完成”或“跳过”都写入教程完成状态。
   - 如果当前仍是教程棋盘，调用现有 runtime/session 清理路径结束教程局。
-  - 随后自动启动一局正式棋盘，并刷新 Main，显示 `BoardContainer`。
+  - 随后通过无 Loading 的正式棋盘启动入口刷新 Main，显示 `BoardContainer`。
   - 不把“教程完成”写进玩法 runtime；教程状态仍只走 `CoreFindCatTutorialProgressService`。
 
 - 服务层修正：
@@ -41,7 +41,7 @@
   - Main bindings 能解析 `TutorialBoardContainer`。
   - 教程局显示教程棋盘并隐藏正式棋盘。
   - 正式局显示正式棋盘并隐藏教程棋盘。
-  - 教程完成/跳过后清理教程局并启动正式局。
+  - 教程完成/跳过后清理教程局并启动正式局，但不显示 Loading。
   - Loading Overlay 不会永久丢失教程后续步骤。
   - Overlay 展示时棋盘、GM 入口、主界面关键按钮仍可响应。
   - 教程猫池排除已完成/已领奖任务。
@@ -50,5 +50,5 @@
 ## Assumptions
 
 - 教程棋盘不新建第二套 gameplay runtime，只新建第二套 UI board view；玩法权威仍是当前 `HolmasGameplayRuntime`。
-- 完成或跳过教程都立即切正式棋盘，这是本轮确认的默认行为。
+- 完成或跳过教程会直接切正式棋盘，但不会走 Loading；这是本轮修正后的默认行为。
 - 当前工作区已有中断前的部分补丁；实施前先审 diff，把不符合本计划的内容修正或移除。

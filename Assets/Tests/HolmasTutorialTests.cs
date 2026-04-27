@@ -223,6 +223,32 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void CoreFindCatTutorialCoordinator_PrepareAutoStart_CompletedTutorialAutoStartsNormalBoard()
+        {
+            var persistence = new InMemoryPersistence();
+            var store = new CoreFindCatTutorialProgressStore(persistence);
+            var service = new CoreFindCatTutorialProgressService(store);
+            service.MarkCompletedAsync(CoreFindCatTutorialSteps.LastIndex, CoreFindCatTutorialSteps.HelpStepId, 300L)
+                .GetAwaiter()
+                .GetResult();
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            var context = new HolmasApplicationContext(
+                null,
+                new NullLogger(),
+                null,
+                null,
+                null,
+                runtime);
+            var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+
+            CoreFindCatTutorialLaunchResult result = coordinator.PrepareAutoStartAsync(context).GetAwaiter().GetResult();
+
+            Assert.That(result.ShouldAutoStartNormal, Is.True);
+            Assert.That(result.ShouldShowOverlay, Is.False);
+            Assert.That(result.Payload, Is.Null);
+        }
+
+        [Test]
         public void CoreFindCatTutorialCoordinator_PrepareAutoStart_ForcesTutorialBoardOverActiveNormalBoard()
         {
             var persistence = new InMemoryPersistence();

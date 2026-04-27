@@ -126,7 +126,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 : fallbackStatus;
         }
 
-        private void RequestAutoStartInMain()
+        private void RequestAutoStartInMain(bool skipLoading = false)
         {
             if (_autoStartInProgress || _isBusy)
             {
@@ -140,7 +140,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             _autoStartInProgress = true;
-            _ = HandleStartAsync();
+            _ = HandleStartAsync(skipLoading);
         }
 
         private void RequestTutorialOrAutoStartInMain()
@@ -163,7 +163,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                     : CoreFindCatTutorialLaunchResult.AutoStartNormal();
                 if (result != null && result.ShouldAutoStartNormal)
                 {
-                    RequestAutoStartInMain();
+                    RequestAutoStartInMain(result.ShouldSkipLoadingForAutoStart);
                     return;
                 }
 
@@ -309,8 +309,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             _view?.HideTutorialBoardLayer();
-            Refresh("新手引导已结束，正在准备正式棋盘...");
-            await StartFormalBoardAfterTutorialAsync("新手引导已结束，正式棋盘已准备。");
+            Refresh("新手引导已结束，正在进入正式棋盘...");
+            await StartFormalBoardAfterTutorialWithoutLoadingAsync("新手引导已结束，正式棋盘已准备。");
         }
 
         private static bool HasActiveFormalBoard(HolmasGameplayRuntime runtime)
@@ -363,7 +363,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _ = HandleCellInteractionAsync(cellIndex, isRightButton);
         }
 
-        private async Task HandleStartAsync()
+        private async Task HandleStartAsync(bool skipLoading = false)
         {
             if (_isBusy)
             {
@@ -385,7 +385,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             try
             {
-                finalStatus = await flowCoordinator.StartBattleInMainAsync();
+                finalStatus = skipLoading
+                    ? await flowCoordinator.StartBattleInMainWithoutLoadingAsync()
+                    : await flowCoordinator.StartBattleInMainAsync();
             }
             catch (Exception ex)
             {
@@ -498,11 +500,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             await ShowTutorialOverlayAsync(payload);
         }
 
-        private async Task StartFormalBoardAfterTutorialAsync(string fallbackStatus)
+        private async Task StartFormalBoardAfterTutorialWithoutLoadingAsync(string fallbackStatus)
         {
             if (_isBusy)
             {
-                Root?.Context?.Logger?.LogInfo("MainPageController: StartFormalBoardAfterTutorialAsync skipped because page is busy.");
+                Root?.Context?.Logger?.LogInfo("MainPageController: StartFormalBoardAfterTutorialWithoutLoadingAsync skipped because page is busy.");
                 Refresh(fallbackStatus);
                 return;
             }
@@ -510,7 +512,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             HolmasFlowCoordinator flowCoordinator = Root != null ? Root.FlowCoordinator : null;
             if (flowCoordinator == null)
             {
-                Root?.Context?.Logger?.LogInfo("MainPageController: StartFormalBoardAfterTutorialAsync skipped because flow coordinator is null.");
+                Root?.Context?.Logger?.LogInfo("MainPageController: StartFormalBoardAfterTutorialWithoutLoadingAsync skipped because flow coordinator is null.");
                 Refresh(fallbackStatus);
                 return;
             }
@@ -519,20 +521,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             string finalStatus = fallbackStatus;
             try
             {
-                Root?.Context?.Logger?.LogInfo("MainPageController: starting formal board after tutorial.");
-                finalStatus = await flowCoordinator.StartBattleInMainAsync();
-                Root?.Context?.Logger?.LogInfo(
-                    "MainPageController: formal board start finished. status={0}, mapId={1}, isTutorialLevel={2}",
-                    finalStatus ?? "null",
-                    _runtime?.CurrentLevelSnapshot?.MapId ?? Root?.Context?.GameplayRuntime?.CurrentLevelSnapshot?.MapId ?? "null",
-                    CoreFindCatTutorialLevelService.IsTutorialLevel(
-                        _runtime?.CurrentLevelSnapshot ?? Root?.Context?.GameplayRuntime?.CurrentLevelSnapshot));
+                Root?.Context?.Logger?.LogInfo("MainPageController: starting formal board after tutorial without loading.");
+                finalStatus = await flowCoordinator.StartBattleInMainWithoutLoadingAsync();
                 Refresh(string.IsNullOrWhiteSpace(finalStatus) ? fallbackStatus : finalStatus);
             }
             catch (Exception ex)
             {
                 Root?.Context?.Logger?.LogInfo(
-                    "MainPageController: formal board start failed after tutorial. error={0}",
+                    "MainPageController: formal board start failed after tutorial without loading. error={0}",
                     ex.Message);
                 finalStatus = $"新手引导已结束，但正式棋盘启动失败：{ex.Message}";
                 Refresh(finalStatus);
@@ -540,7 +536,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             finally
             {
                 _isBusy = false;
-                Root?.Context?.Logger?.LogInfo("MainPageController: StartFormalBoardAfterTutorialAsync end. finalStatus={0}", finalStatus ?? "null");
+                Root?.Context?.Logger?.LogInfo(
+                    "MainPageController: StartFormalBoardAfterTutorialWithoutLoadingAsync end. finalStatus={0}",
+                    finalStatus ?? "null");
                 Refresh(finalStatus);
             }
         }

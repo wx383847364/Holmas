@@ -32,7 +32,7 @@ namespace App.HotUpdate.Holmas.Tutorial
 
             if (progress.completed)
             {
-                return CoreFindCatTutorialLaunchResult.AutoStartNormal();
+                return CoreFindCatTutorialLaunchResult.AutoStartNormal(skipLoading: true);
             }
 
             HolmasGameplayRuntime runtime = context != null ? context.GameplayRuntime : null;
@@ -299,14 +299,16 @@ namespace App.HotUpdate.Holmas.Tutorial
     public sealed class CoreFindCatTutorialLaunchResult
     {
         public bool ShouldAutoStartNormal;
+        public bool ShouldSkipLoadingForAutoStart;
         public bool ShouldShowOverlay;
         public TutorialOverlayPayload Payload;
 
-        public static CoreFindCatTutorialLaunchResult AutoStartNormal()
+        public static CoreFindCatTutorialLaunchResult AutoStartNormal(bool skipLoading = false)
         {
             return new CoreFindCatTutorialLaunchResult
             {
                 ShouldAutoStartNormal = true,
+                ShouldSkipLoadingForAutoStart = skipLoading,
             };
         }
 
