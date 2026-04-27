@@ -139,8 +139,95 @@ class HolmasPythonExporterTests(unittest.TestCase):
                 "\n".join(result.report.warnings),
             )
 
+    def test_validate_all_accepts_variable_promotion_counts(self) -> None:
+        promotion_shapes = [
+            ("poster;stream;event", "1;7;2", "0|10;20;30|-1;40"),
+            ("leaflet;radio;online;tv;expo", "5;5;5;5;1", "100;200|120;240;360|140|160;320;480;640;800|-1"),
+        ]
+        for promotion_ids, promotion_caps, promotion_costs in promotion_shapes:
+            with self.subTest(promotion_ids=promotion_ids):
+                with tempfile.TemporaryDirectory(prefix="holmas_python_export_promotion_count_") as temp_dir:
+                    root = Path(temp_dir)
+                    repo_root = root / "Holmas"
+                    config_root = repo_root / "Assets" / "Config"
+                    json_root = config_root / "json"
+                    binary_root = repo_root / "Assets" / "HotUpdateContent" / "Config"
+                    config_root.mkdir(parents=True, exist_ok=True)
+                    json_root.mkdir(parents=True, exist_ok=True)
+                    binary_root.mkdir(parents=True, exist_ok=True)
 
-def _write_fixture(config_root: Path, growth_mode: str = "min_only", conflict_level: int = -1) -> None:
+                    _write_fixture(
+                        config_root,
+                        promotion_ids=promotion_ids,
+                        promotion_caps=promotion_caps,
+                        promotion_costs=promotion_costs,
+                    )
+
+                    result = validate_all(repo_root, config_root, json_root, binary_root)
+
+                    self.assertTrue(result.report.success, "\n".join(result.report.errors))
+
+    def test_validate_all_rejects_promotion_shape_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="holmas_python_export_promotion_mismatch_") as temp_dir:
+            root = Path(temp_dir)
+            repo_root = root / "Holmas"
+            config_root = repo_root / "Assets" / "Config"
+            json_root = config_root / "json"
+            binary_root = repo_root / "Assets" / "HotUpdateContent" / "Config"
+            config_root.mkdir(parents=True, exist_ok=True)
+            json_root.mkdir(parents=True, exist_ok=True)
+            binary_root.mkdir(parents=True, exist_ok=True)
+
+            _write_fixture(
+                config_root,
+                promotion_ids="poster;stream;event",
+                promotion_caps="1;7",
+                promotion_costs="10|20|30",
+            )
+
+            result = validate_all(repo_root, config_root, json_root, binary_root)
+
+            self.assertFalse(result.report.success)
+            self.assertTrue(
+                any("promotionIds 与 promotionLevelCaps 长度不一致" in error for error in result.report.errors),
+                "\n".join(result.report.errors),
+            )
+
+    def test_validate_all_rejects_empty_promotion_ids(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="holmas_python_export_empty_promotions_") as temp_dir:
+            root = Path(temp_dir)
+            repo_root = root / "Holmas"
+            config_root = repo_root / "Assets" / "Config"
+            json_root = config_root / "json"
+            binary_root = repo_root / "Assets" / "HotUpdateContent" / "Config"
+            config_root.mkdir(parents=True, exist_ok=True)
+            json_root.mkdir(parents=True, exist_ok=True)
+            binary_root.mkdir(parents=True, exist_ok=True)
+
+            _write_fixture(
+                config_root,
+                promotion_ids="",
+                promotion_caps="",
+                promotion_costs="",
+            )
+
+            result = validate_all(repo_root, config_root, json_root, binary_root)
+
+            self.assertFalse(result.report.success)
+            self.assertTrue(
+                any("promotionIds 为空" in error or "缺少 promotionIds" in error for error in result.report.errors),
+                "\n".join(result.report.errors),
+            )
+
+
+def _write_fixture(
+    config_root: Path,
+    growth_mode: str = "min_only",
+    conflict_level: int = -1,
+    promotion_ids: str = "leaflet;radio;online;tv",
+    promotion_caps: str = "5;5;5;5",
+    promotion_costs: str = "100;200;300;400;500|120;240;360;480;600|140;280;420;560;700|160;320;480;640;800",
+) -> None:
     _write_tabular_workbook(
         config_root / "Holmas_MapTable.xlsx",
         "Sheet1",
@@ -216,9 +303,6 @@ def _write_fixture(config_root: Path, growth_mode: str = "min_only", conflict_le
     _write_tabular_workbook(config_root / "Holmas_PlayerLevelTable.xlsx", "Holmas_PlayerLevelTable", player_rows)
 
     agency_rows = [["城市阶段id", "城市名", "宣传功能id数组", "宣传升级级数上限数组", "宣传升级费用数组", "备注"], ["agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes"]]
-    promotion_ids = "leaflet;radio;online;tv"
-    promotion_caps = "5;5;5;5"
-    promotion_costs = "100;200;300;400;500|120;240;360;480;600|140;280;420;560;700|160;320;480;640;800"
     for stage in range(1, 101):
         agency_rows.append([str(stage), f"城市{stage:03d}", promotion_ids, promotion_caps, promotion_costs, ""])
     _write_tabular_workbook(config_root / "Holmas_AgencyBuildingTable.xlsx", "Holmas_AgencyBuildingTable", agency_rows)

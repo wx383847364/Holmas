@@ -148,12 +148,93 @@ namespace Holmas.EditorTests
             }
         }
 
+        [Test]
+        public void HolmasConfigBinaryExporter_AllowsVariablePromotionCounts()
+        {
+            string[][][] agencyRowSets =
+            {
+                BuildAgencyRows(
+                    "poster;stream;event",
+                    "1;7;2",
+                    "0|10;20;30|-1;40"),
+                BuildAgencyRows(
+                    "leaflet;radio;online;tv;expo",
+                    "5;5;5;5;1",
+                    "100;200|120;240;360|140|160;320;480;640;800|-1"),
+            };
+
+            foreach (string[][] agencyRows in agencyRowSets)
+            {
+                using (var fixture = CreateFixture(levelCount: 20, includeMergedGrowthColumns: true, agencyRows: agencyRows))
+                {
+                    HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
+                        fixture.ConfigRoot,
+                        fixture.JsonRoot,
+                        fixture.BinaryRoot,
+                        refreshAssetDatabase: false);
+
+                    Assert.That(report, Is.Not.Null);
+                    Assert.That(report.Success, Is.True, string.Join("\n", report.Errors));
+
+                    bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(
+                        File.ReadAllBytes(Path.Combine(fixture.BinaryRoot, "holmas_core_config.bytes")),
+                        File.ReadAllBytes(Path.Combine(fixture.BinaryRoot, "holmas_cat_meta.bytes")),
+                        out HolmasConfigCatalogBundle bundle,
+                        out HolmasConfigReport runtimeReport);
+
+                    Assert.That(success, Is.True, runtimeReport == null ? "runtime report missing" : string.Join("\n", runtimeReport.Errors));
+                    Assert.That(bundle.AgencyBuildings[0].PromotionIds.Length, Is.EqualTo(agencyRows[2][2].Split(';').Length));
+                }
+            }
+        }
+
+        [Test]
+        public void HolmasConfigBinaryExporter_RejectsPromotionShapeMismatch()
+        {
+            using (var fixture = CreateFixture(
+                levelCount: 20,
+                includeMergedGrowthColumns: true,
+                agencyRows: BuildAgencyRows("poster;stream;event", "1;7", "10|20|30")))
+            {
+                HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
+                    fixture.ConfigRoot,
+                    fixture.JsonRoot,
+                    fixture.BinaryRoot,
+                    refreshAssetDatabase: false);
+
+                Assert.That(report, Is.Not.Null);
+                Assert.That(report.Success, Is.False);
+                Assert.That(report.Errors.Any(item => item.Contains("promotionIds 与 promotionLevelCaps 长度不一致")), Is.True, string.Join("\n", report.Errors));
+            }
+        }
+
+        [Test]
+        public void HolmasConfigBinaryExporter_RejectsEmptyPromotionIds()
+        {
+            using (var fixture = CreateFixture(
+                levelCount: 20,
+                includeMergedGrowthColumns: true,
+                agencyRows: BuildAgencyRows(string.Empty, string.Empty, string.Empty)))
+            {
+                HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
+                    fixture.ConfigRoot,
+                    fixture.JsonRoot,
+                    fixture.BinaryRoot,
+                    refreshAssetDatabase: false);
+
+                Assert.That(report, Is.Not.Null);
+                Assert.That(report.Success, Is.False);
+                Assert.That(report.Errors.Any(item => item.Contains("promotionIds 为空") || item.Contains("缺少 promotionIds")), Is.True, string.Join("\n", report.Errors));
+            }
+        }
+
         private static ExportFixture CreateFixture(
             int levelCount,
             bool includeMergedGrowthColumns,
             bool includeDuplicateGrowthColumns = false,
             int conflictLevel = -1,
-            bool includeUnusedMap = false)
+            bool includeUnusedMap = false,
+            string[][] agencyRows = null)
         {
             string root = Path.Combine(Path.GetTempPath(), "holmas_xlsx_export_test_" + Guid.NewGuid().ToString("N"));
             string configRoot = Path.Combine(root, "Config");
@@ -197,7 +278,7 @@ namespace Holmas.EditorTests
             WriteWorkbook(
                 Path.Combine(configRoot, "Holmas_AgencyBuildingTable.xlsx"),
                 "Holmas_AgencyBuildingTable",
-                BuildAgencyRows());
+                agencyRows ?? BuildAgencyRows());
 
             return new ExportFixture(root, configRoot, jsonRoot, binaryRoot);
         }
@@ -307,13 +388,18 @@ namespace Holmas.EditorTests
 
         private static string[][] BuildAgencyRows()
         {
+            return BuildAgencyRows(
+                "leaflet;radio;online;tv",
+                "5;5;5;5",
+                "100;200;300;400;500|120;240;360;480;600|140;280;420;560;700|160;320;480;640;800");
+        }
+
+        private static string[][] BuildAgencyRows(string promotionIds, string promotionCaps, string promotionCosts)
+        {
             var rows = new string[102][];
             rows[0] = new[] { "城市阶段id", "城市名", "宣传功能id数组", "宣传升级级数上限数组", "宣传升级费用数组", "备注" };
             rows[1] = new[] { "agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes" };
 
-            string promotionIds = "leaflet;radio;online;tv";
-            string promotionCaps = "5;5;5;5";
-            string promotionCosts = "100;200;300;400;500|120;240;360;480;600|140;280;420;560;700|160;320;480;640;800";
             for (int stage = 1; stage <= 100; stage++)
             {
                 rows[stage + 1] = new[]

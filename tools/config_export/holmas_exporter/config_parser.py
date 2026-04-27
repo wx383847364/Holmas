@@ -634,7 +634,6 @@ def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuild
 
     seen_stage_ids: set[int] = set()
     seen_stage_names: set[str] = set()
-    expected_promotion_ids = ["leaflet", "radio", "online", "tv"]
 
     for index, row in enumerate(rows):
         if row.agency_stage_id != index + 1:
@@ -651,36 +650,15 @@ def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuild
             report.errors.append(f"Holmas_AgencyBuildingTable 存在重复 stageName: {row.stage_name}。")
             return
         seen_stage_names.add(row.stage_name)
-        if len(row.promotion_ids) != len(expected_promotion_ids):
-            report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotionIds 数量必须为 4。")
+        if not row.promotion_ids:
+            report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 缺少 promotionIds。")
             return
-        if len(row.promotion_level_caps) != len(expected_promotion_ids):
-            report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotionLevelCaps 数量必须为 4。")
+        if len(row.promotion_level_caps) != len(row.promotion_ids):
+            report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotionIds 与 promotionLevelCaps 长度不一致。")
             return
-        if len(row.promotion_upgrade_costs) != len(expected_promotion_ids):
-            report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotionUpgradeCosts 数量必须为 4。")
+        if len(row.promotion_upgrade_costs) != len(row.promotion_ids):
+            report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotionIds 与 promotionUpgradeCosts 长度不一致。")
             return
-
-        for promotion_index, expected_promotion_id in enumerate(expected_promotion_ids):
-            if row.promotion_ids[promotion_index] != expected_promotion_id:
-                report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotionIds 顺序不正确。")
-                return
-
-            cap = row.promotion_level_caps[promotion_index]
-            if cap != 5:
-                report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotion cap 必须固定为 5: {row.promotion_ids[promotion_index]}。")
-                return
-
-            costs = row.promotion_upgrade_costs[promotion_index].costs if row.promotion_upgrade_costs[promotion_index] else []
-            if len(costs) != cap:
-                report.errors.append(
-                    f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotion {row.promotion_ids[promotion_index]} 成本档位数量与 cap 不一致。"
-                )
-                return
-            for cost in costs:
-                if cost <= 0:
-                    report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotion {row.promotion_ids[promotion_index]} 存在非正费用。")
-                    return
 
 
 def _build_core_package(

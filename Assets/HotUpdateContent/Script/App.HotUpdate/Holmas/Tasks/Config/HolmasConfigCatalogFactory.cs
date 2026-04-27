@@ -538,20 +538,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (row.PromotionIds.Length != 4)
-                {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionIds 数量必须为 4。");
-                    return false;
-                }
-
-                if (row.PromotionLevelCaps.Any(cap => cap != 5))
-                {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionLevelCaps 必须全部为 5。");
-                    return false;
-                }
-
-                var seenPromotionIds = new HashSet<string>(StringComparer.Ordinal);
-                string[] expectedPromotionIds = { "leaflet", "radio", "online", "tv" };
                 for (int promotionIndex = 0; promotionIndex < row.PromotionIds.Length; promotionIndex++)
                 {
                     string promotionId = row.PromotionIds[promotionIndex] ?? string.Empty;
@@ -559,36 +545,6 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     {
                         report.AddError($"AgencyBuildings {row.AgencyStageId} 的第 {promotionIndex + 1} 个 promotionId 为空。");
                         return false;
-                    }
-
-                    if (!seenPromotionIds.Add(promotionId))
-                    {
-                        report.AddError($"AgencyBuildings {row.AgencyStageId} 存在重复 promotionId: {promotionId}。");
-                        return false;
-                    }
-
-                    if (!string.Equals(promotionId, expectedPromotionIds[promotionIndex], StringComparison.Ordinal))
-                    {
-                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionIds 顺序必须固定为 leaflet/radio/online/tv。");
-                        return false;
-                    }
-
-                    int cap = row.PromotionLevelCaps[promotionIndex];
-                    var costRow = row.PromotionUpgradeCosts[promotionIndex];
-                    int[] costs = costRow?.Costs ?? Array.Empty<int>();
-                    if (costs.Length != cap)
-                    {
-                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotion {promotionId} 成本档位数量与 cap 不一致。");
-                        return false;
-                    }
-
-                    for (int costIndex = 0; costIndex < costs.Length; costIndex++)
-                    {
-                        if (costs[costIndex] <= 0)
-                        {
-                            report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotion {promotionId} 存在非正费用。");
-                            return false;
-                        }
                     }
                 }
 

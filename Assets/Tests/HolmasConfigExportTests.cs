@@ -33,8 +33,9 @@ namespace Holmas.Tests
             Assert.That(tables.Maps.All(item => item.CatCountMin > 0 && item.CatCountMax >= item.CatCountMin), Is.True);
             Assert.That(tables.Maps.All(item => !string.IsNullOrWhiteSpace(item.TerrainPath)), Is.True);
             Assert.That(tables.Maps.Select(item => item.MapId).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(tables.Maps.Count));
-            Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds != null && item.PromotionIds.Length == 4), Is.True);
-            Assert.That(tables.AgencyBuildings.All(item => item.PromotionLevelCaps != null && item.PromotionLevelCaps.Length == 4), Is.True);
+            Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds != null && item.PromotionIds.Length > 0), Is.True);
+            Assert.That(tables.AgencyBuildings.All(item => item.PromotionLevelCaps != null && item.PromotionLevelCaps.Length == item.PromotionIds.Length), Is.True);
+            Assert.That(tables.AgencyBuildings.All(item => item.PromotionUpgradeCosts != null && item.PromotionUpgradeCosts.Length == item.PromotionIds.Length), Is.True);
             Assert.That(tables.AgencyBuildings.Select(item => item.AgencyStageId), Is.EqualTo(Enumerable.Range(1, 100).ToArray()));
         }
 
@@ -148,8 +149,8 @@ namespace Holmas.Tests
             Assert.That(tables.Levels, Has.Count.EqualTo(100));
             Assert.That(tables.Levels.Select(item => item.PlayerLevel).ToArray(), Is.EqualTo(Enumerable.Range(1, 100).ToArray()));
             Assert.That(tables.AgencyBuildings.Select(item => item.AgencyStageId), Is.EqualTo(Enumerable.Range(1, 100).ToArray()));
-            Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds.SequenceEqual(new[] { "leaflet", "radio", "online", "tv" })), Is.True);
-            Assert.That(tables.AgencyBuildings.All(item => item.PromotionLevelCaps.SequenceEqual(new[] { 5, 5, 5, 5 })), Is.True);
+            Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds.Length == item.PromotionLevelCaps.Length), Is.True);
+            Assert.That(tables.AgencyBuildings.All(item => item.PromotionIds.Length == item.PromotionUpgradeCosts.Length), Is.True);
             Assert.That(tables.Levels.First().UpgradeExp, Is.EqualTo(0));
             Assert.That(tables.Levels[9].UpgradeExp, Is.EqualTo(126));
             Assert.That(tables.Levels.Last().UpgradeExp, Is.EqualTo(1476));
@@ -169,6 +170,67 @@ namespace Holmas.Tests
 
             Assert.That(referencedMapIds, Is.SupersetOf(tables.Maps.Select(item => item.MapId)), "所有 MapTable 地图都应至少在一个玩家等级池中可达。");
             Assert.That(tables.Levels.Skip(1).SelectMany(item => item.MapIds).Except(tables.Levels[0].MapIds, StringComparer.Ordinal).Any(), Is.True, "高等级应逐步解锁等级 1 之外的新地图。");
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_AllowsVariableAgencyPromotionCounts()
+        {
+            AssertRuntimeAcceptsPromotionShape(
+                new[] { "poster", "stream", "event" },
+                new[] { 1, 7, 2 },
+                new[] { new[] { 0 }, new[] { 10, 20, 30 }, Array.Empty<int>() });
+
+            AssertRuntimeAcceptsPromotionShape(
+                new[] { "leaflet", "radio", "online", "tv", "expo" },
+                new[] { 5, 5, 5, 5, 1 },
+                new[]
+                {
+                    new[] { 100, 200 },
+                    new[] { 120, 240, 360 },
+                    new[] { 140 },
+                    new[] { 160, 320, 480, 640, 800 },
+                    new[] { -1 },
+                });
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_RejectsAgencyPromotionShapeMismatch()
+        {
+            ExportConfigTables tables = LoadSampleTables();
+            SetAgencyPromotions(
+                tables,
+                new[] { "poster", "stream", "event" },
+                new[] { 1, 7 },
+                new[] { new[] { 1 }, new[] { 2 }, new[] { 3 } });
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(
+                HolmasConfigBinaryCodec.WriteCorePackage(corePackage),
+                HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage),
+                out _,
+                out HolmasConfigReport report);
+
+            Assert.That(success, Is.False);
+            Assert.That(report.Errors.Any(item => item.Contains("promotionIds 与 promotionLevelCaps 长度不一致")), Is.True, string.Join(Environment.NewLine, report.Errors));
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_RejectsEmptyAgencyPromotions()
+        {
+            ExportConfigTables tables = LoadSampleTables();
+            SetAgencyPromotions(tables, Array.Empty<string>(), Array.Empty<int>(), Array.Empty<int[]>());
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(
+                HolmasConfigBinaryCodec.WriteCorePackage(corePackage),
+                HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage),
+                out _,
+                out HolmasConfigReport report);
+
+            Assert.That(success, Is.False);
+            Assert.That(report.Errors.Any(item => item.Contains("缺少 promotionIds")), Is.True, string.Join(Environment.NewLine, report.Errors));
         }
 
         [Test]
@@ -353,14 +415,14 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void HolmasExportValidator_RejectsNonPositivePromotionCost()
+        public void HolmasExportValidator_AllowsNonPositivePromotionCost()
         {
             ExportConfigTables tables = LoadSampleTables();
             tables.AgencyBuildings[0].PromotionUpgradeCosts[0][0] = 0;
 
             IReadOnlyList<string> errors = ExportConfigValidator.Validate(tables);
 
-            Assert.That(errors.Any(item => item.Contains("非正费用")), Is.True, string.Join(Environment.NewLine, errors));
+            Assert.That(errors, Is.Empty, string.Join(Environment.NewLine, errors));
         }
 
         [Test]
@@ -649,6 +711,35 @@ namespace Holmas.Tests
                     Price = item.Price,
                 }).ToArray(),
             };
+        }
+
+        private static void AssertRuntimeAcceptsPromotionShape(string[] promotionIds, int[] promotionLevelCaps, int[][] promotionUpgradeCosts)
+        {
+            ExportConfigTables tables = LoadSampleTables();
+            SetAgencyPromotions(tables, promotionIds, promotionLevelCaps, promotionUpgradeCosts);
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(
+                HolmasConfigBinaryCodec.WriteCorePackage(corePackage),
+                HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage),
+                out HolmasConfigCatalogBundle bundle,
+                out HolmasConfigReport report);
+
+            Assert.That(success, Is.True, report == null ? "runtime report missing" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle.AgencyBuildings[0].PromotionIds, Is.EqualTo(promotionIds));
+            Assert.That(bundle.AgencyBuildings[0].PromotionLevelCaps, Is.EqualTo(promotionLevelCaps));
+            Assert.That(bundle.AgencyBuildings[0].PromotionUpgradeCosts.Length, Is.EqualTo(promotionUpgradeCosts.Length));
+        }
+
+        private static void SetAgencyPromotions(ExportConfigTables tables, string[] promotionIds, int[] promotionLevelCaps, int[][] promotionUpgradeCosts)
+        {
+            foreach (ExportAgencyBuildingRow row in tables.AgencyBuildings)
+            {
+                row.PromotionIds = promotionIds.ToArray();
+                row.PromotionLevelCaps = promotionLevelCaps.ToArray();
+                row.PromotionUpgradeCosts = promotionUpgradeCosts.Select(costs => (costs ?? Array.Empty<int>()).ToArray()).ToArray();
+            }
         }
 
         private static HolmasTaskKind ParseTaskKind(string value)
@@ -993,8 +1084,6 @@ namespace Holmas.Tests
                 var seenStages = new HashSet<int>();
                 var seenStageNames = new HashSet<string>(StringComparer.Ordinal);
                 int expectedStage = 1;
-                string[] expectedPromotionIds = { "leaflet", "radio", "online", "tv" };
-                int[] expectedPromotionCaps = { 5, 5, 5, 5 };
 
                 foreach (var buildingRow in buildings ?? Array.Empty<ExportAgencyBuildingRow>())
                 {
@@ -1031,64 +1120,28 @@ namespace Holmas.Tests
                         errors.Add($"宣传表存在重复城市名称: {buildingRow.StageName}");
                     }
 
-                    if (buildingRow.PromotionIds == null || buildingRow.PromotionIds.Length != 4)
+                    int promotionCount = buildingRow.PromotionIds?.Length ?? 0;
+                    if (promotionCount == 0)
                     {
-                        errors.Add($"宣传表的宣传 ID 数量不正确: {buildingRow.AgencyStageId}");
+                        errors.Add($"宣传表缺少宣传 ID: {buildingRow.AgencyStageId}");
                     }
 
-                    if (buildingRow.PromotionLevelCaps == null || buildingRow.PromotionLevelCaps.Length != 4)
+                    if (buildingRow.PromotionLevelCaps == null || buildingRow.PromotionLevelCaps.Length != promotionCount)
                     {
                         errors.Add($"宣传表的宣传 ID 与等级上限数量不一致: {buildingRow.AgencyStageId}");
                     }
 
-                    if (buildingRow.PromotionUpgradeCosts == null || buildingRow.PromotionUpgradeCosts.Length != 4)
+                    if (buildingRow.PromotionUpgradeCosts == null || buildingRow.PromotionUpgradeCosts.Length != promotionCount)
                     {
                         errors.Add($"宣传表的宣传 ID 与升级费用数量不一致: {buildingRow.AgencyStageId}");
                     }
 
-                    int promotionCount = buildingRow.PromotionIds?.Length ?? 0;
-                    int validationCount = Math.Min(promotionCount, expectedPromotionIds.Length);
-                    for (int i = 0; i < validationCount; i++)
+                    for (int i = 0; i < promotionCount; i++)
                     {
                         string promotionId = buildingRow.PromotionIds[i] ?? string.Empty;
                         if (string.IsNullOrWhiteSpace(promotionId))
                         {
                             errors.Add($"宣传表存在空宣传 ID: {buildingRow.AgencyStageId}");
-                            continue;
-                        }
-
-                        if (!string.Equals(promotionId, expectedPromotionIds[i], StringComparison.Ordinal))
-                        {
-                            errors.Add($"宣传表的宣传 ID 顺序不正确: {buildingRow.AgencyStageId}/{promotionId}");
-                        }
-
-                        if (buildingRow.PromotionLevelCaps != null && i < buildingRow.PromotionLevelCaps.Length && buildingRow.PromotionLevelCaps[i] != expectedPromotionCaps[i])
-                        {
-                            errors.Add($"宣传表等级上限非法: {buildingRow.AgencyStageId}/{promotionId}");
-                        }
-
-                        int[] costs = buildingRow.PromotionUpgradeCosts != null && i < buildingRow.PromotionUpgradeCosts.Length
-                            ? buildingRow.PromotionUpgradeCosts[i]
-                            : Array.Empty<int>();
-
-                        int cap = buildingRow.PromotionLevelCaps != null && i < buildingRow.PromotionLevelCaps.Length
-                            ? buildingRow.PromotionLevelCaps[i]
-                            : 0;
-
-                        if (costs == null || costs.Length != cap)
-                        {
-                            errors.Add($"宣传表升级费用数量与等级上限不一致: {buildingRow.AgencyStageId}/{promotionId}");
-                        }
-                        else
-                        {
-                            foreach (int cost in costs)
-                            {
-                                if (cost <= 0)
-                                {
-                                    errors.Add($"宣传表存在非正费用: {buildingRow.AgencyStageId}/{promotionId}");
-                                    break;
-                                }
-                            }
                         }
                     }
 

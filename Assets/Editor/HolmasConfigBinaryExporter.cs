@@ -819,7 +819,6 @@ namespace Holmas.EditorTools
 
             var seenStageIds = new HashSet<int>();
             var seenStageNames = new HashSet<string>(StringComparer.Ordinal);
-            string[] expectedPromotionIds = { "leaflet", "radio", "online", "tv" };
             for (int i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -859,55 +858,22 @@ namespace Holmas.EditorTools
                     return;
                 }
 
-                if (row.PromotionIds == null || row.PromotionIds.Length != expectedPromotionIds.Length)
+                if (row.PromotionIds == null || row.PromotionIds.Length == 0)
                 {
-                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionIds 数量必须为 4。");
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 缺少 promotionIds。");
                     return;
                 }
 
-                if (row.PromotionLevelCaps == null || row.PromotionLevelCaps.Length != expectedPromotionIds.Length)
+                if (row.PromotionLevelCaps == null || row.PromotionLevelCaps.Length != row.PromotionIds.Length)
                 {
-                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionLevelCaps 数量必须为 4。");
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionIds 与 promotionLevelCaps 长度不一致。");
                     return;
                 }
 
-                if (row.PromotionUpgradeCosts == null || row.PromotionUpgradeCosts.Length != expectedPromotionIds.Length)
+                if (row.PromotionUpgradeCosts == null || row.PromotionUpgradeCosts.Length != row.PromotionIds.Length)
                 {
-                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionUpgradeCosts 数量必须为 4。");
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionIds 与 promotionUpgradeCosts 长度不一致。");
                     return;
-                }
-
-                for (int promotionIndex = 0; promotionIndex < expectedPromotionIds.Length; promotionIndex++)
-                {
-                    if (!string.Equals(row.PromotionIds[promotionIndex], expectedPromotionIds[promotionIndex], StringComparison.Ordinal))
-                    {
-                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionIds 顺序不正确。");
-                        return;
-                    }
-
-                    int cap = row.PromotionLevelCaps[promotionIndex];
-                    if (cap != 5)
-                    {
-                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotion cap 必须固定为 5: {row.PromotionIds[promotionIndex]}。");
-                        return;
-                    }
-
-                    HolmasAgencyBuildingCostSheetRow costRow = row.PromotionUpgradeCosts[promotionIndex];
-                    int[] costs = costRow == null ? Array.Empty<int>() : costRow.Costs ?? Array.Empty<int>();
-                    if (costs.Length != cap)
-                    {
-                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotion {row.PromotionIds[promotionIndex]} 成本档位数量与 cap 不一致。");
-                        return;
-                    }
-
-                    for (int costIndex = 0; costIndex < costs.Length; costIndex++)
-                    {
-                        if (costs[costIndex] <= 0)
-                        {
-                            report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotion {row.PromotionIds[promotionIndex]} 存在非正费用。");
-                            return;
-                        }
-                    }
                 }
             }
         }
