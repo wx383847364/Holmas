@@ -35,9 +35,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 : null;
             var progressStore = new CoreFindCatTutorialProgressStore(persistence);
             _progressService = new CoreFindCatTutorialProgressService(progressStore);
+            CoreFindCatTutorialSessionService sessionService = Root?.Context?.ServiceContainer != null
+                ? Root.Context.ServiceContainer.Get<CoreFindCatTutorialSessionService>()
+                : null;
             _tutorialCoordinator = new CoreFindCatTutorialCoordinator(
                 _progressService,
-                new CoreFindCatTutorialLevelService());
+                new CoreFindCatTutorialLevelService(),
+                sessionService);
             _mainPresenter = new MainPresenter(Root != null ? Root.Context : null);
         }
 
@@ -216,7 +220,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             await RefreshAsync();
             try
             {
-                int stepIndex = CoreFindCatTutorialLevelService.IsTutorialLevel(_runtime?.CurrentLevelSnapshot)
+                CoreFindCatTutorialSessionService sessionService = Root?.Context?.ServiceContainer != null
+                    ? Root.Context.ServiceContainer.Get<CoreFindCatTutorialSessionService>()
+                    : null;
+                int stepIndex = sessionService?.ActiveSession != null
                     ? 0
                     : CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
                 TutorialOverlayPayload payload = await _tutorialCoordinator.CreateReplayPayloadAsync(context, stepIndex);
@@ -308,6 +315,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             {
                 payload.OnTutorialExitedAsync = mainController.HandleTutorialExitedAsync;
             }
+
+            payload.TutorialSessionService ??= Root?.Context?.ServiceContainer != null
+                ? Root.Context.ServiceContainer.Get<CoreFindCatTutorialSessionService>()
+                : null;
         }
 
         private MainPageController ResolveCurrentMainPageController()

@@ -14,18 +14,27 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
     public sealed class MainPresenter
     {
         private readonly HolmasApplicationContext _context;
+        private readonly CoreFindCatTutorialSessionService _tutorialSessionService;
 
-        public MainPresenter(HolmasApplicationContext context)
+        public MainPresenter(HolmasApplicationContext context, CoreFindCatTutorialSessionService tutorialSessionService = null)
         {
             _context = context;
+            _tutorialSessionService = tutorialSessionService;
         }
 
         public MainVm Build(string status = null)
         {
-            BoardRuntime board = _context?.GameplayRuntime?.CurrentBoardRuntime;
+            CoreFindCatTutorialSessionService tutorialSessionService = _tutorialSessionService ?? (_context?.ServiceContainer != null
+                ? _context.ServiceContainer.Get<CoreFindCatTutorialSessionService>()
+                : null);
+            CoreFindCatTutorialSession tutorialSession = tutorialSessionService?.ActiveSession;
+            BoardRuntime board = tutorialSession != null
+                ? tutorialSession.BoardRuntime
+                : _context?.GameplayRuntime?.CurrentBoardRuntime;
+            bool isTutorialSessionActive = tutorialSession != null;
             var visualResolver = CreateCatVisualResolver();
             IReadOnlyList<BoardCellState> cells = board != null ? board.GetAllCellStates() : new BoardCellState[0];
-            MainTaskItemVm[] taskItems = BuildTaskItems(visualResolver);
+            MainTaskItemVm[] taskItems = BuildTaskItems(visualResolver, disableInteraction: isTutorialSessionActive);
             HolmasAgencyBuildingDefinition promotion = GetPrimaryPromotionDefinition();
             string promotionId = promotion != null ? promotion.PromotionId : string.Empty;
             bool hasConfiguredPromotions = HasConfiguredPromotionsForCurrentStage();
@@ -39,12 +48,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 PromotionButtonLabel = string.IsNullOrWhiteSpace(promotionId)
                     ? (hasConfiguredPromotions ? "宣传已满级" : "宣传待开放")
                     : BuildPromotionButtonLabel(promotion),
-                PromotionButtonEnabled = !string.IsNullOrWhiteSpace(promotionId),
+                PromotionButtonEnabled = !isTutorialSessionActive && !string.IsNullOrWhiteSpace(promotionId),
                 PromotionId = promotionId ?? string.Empty,
                 AddEnergyButtonLabel = "+5体力",
-                AddEnergyButtonEnabled = _context != null && _context.GameplayRuntime != null,
+                AddEnergyButtonEnabled = !isTutorialSessionActive && _context != null && _context.GameplayRuntime != null,
                 BoardVisible = board != null,
-                UseTutorialBoardLayer = CoreFindCatTutorialLevelService.IsTutorialLevel(_context?.GameplayRuntime?.CurrentLevelSnapshot),
+                UseTutorialBoardLayer = isTutorialSessionActive,
                 Rows = board != null ? board.Rows : 0,
                 Cols = board != null ? board.Cols : 0,
                 Cells = cells,
@@ -237,7 +246,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             return new HolmasCatVisualResolver(taskCatalog);
         }
 
-        private MainTaskItemVm[] BuildTaskItems(HolmasCatVisualResolver visualResolver)
+        private MainTaskItemVm[] BuildTaskItems(HolmasCatVisualResolver visualResolver, bool disableInteraction)
         {
             if (_context == null || _context.GameplayRuntime == null || _context.GameplayRuntime.TaskBarState == null)
             {
@@ -254,7 +263,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             var items = new List<MainTaskItemVm>(count);
             for (int i = 0; i < count; i++)
             {
-                items.Add(BuildTaskItem(taskBar.Slots[i], taskBar.GetTaskBySlot(i), i, visualResolver));
+                MainTaskItemVm item = BuildTaskItem(taskBar.Slots[i], taskBar.GetTaskBySlot(i), i, visualResolver);
+                if (disableInteraction)
+                {
+                    item.ButtonEnabled = false;
+                }
+
+                items.Add(item);
             }
 
             return items.ToArray();

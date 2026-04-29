@@ -18,6 +18,18 @@ namespace App.Shared.Holmas.PlayerData
         public HolmasProgressionArchiveData Progression = new HolmasProgressionArchiveData();
         public HolmasTaskBarArchiveData TaskBar = new HolmasTaskBarArchiveData();
         public LevelSnapshot CurrentLevel;
+        public HolmasTutorialSuspendedSessionArchiveData TutorialSuspendedSession;
+    }
+
+    [Serializable]
+    public sealed class HolmasTutorialSuspendedSessionArchiveData
+    {
+        public string SchemaVersion = string.Empty;
+        public string Reason = string.Empty;
+        public string Source = string.Empty;
+        public long CreatedAtUtcMilliseconds;
+        public HolmasTaskBarArchiveData TaskBar = new HolmasTaskBarArchiveData();
+        public LevelSnapshot CurrentLevel;
     }
 
     /// <summary>

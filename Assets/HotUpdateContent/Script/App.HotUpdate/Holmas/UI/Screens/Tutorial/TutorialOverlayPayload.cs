@@ -17,6 +17,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
         public TutorialRunMode RunMode = TutorialRunMode.FullTutorial;
         public bool CanWriteCompletion = true;
         public bool TutorialBoardObjectiveSatisfied;
+        public CoreFindCatTutorialSessionService TutorialSessionService;
         public TutorialVisualConfig VisualConfig;
         public IAssetsRuntime AssetsRuntime;
         public Func<Task> OnTutorialExitedAsync;

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.PlayerData;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
@@ -11,15 +12,18 @@ namespace App.HotUpdate.Holmas.Tutorial
     {
         private readonly CoreFindCatTutorialProgressService _progressService;
         private readonly CoreFindCatTutorialLevelService _levelService;
+        private readonly CoreFindCatTutorialSessionService _sessionService;
         private IAssetHandle _visualConfigHandle;
         private TutorialVisualConfig _visualConfig;
 
         public CoreFindCatTutorialCoordinator(
             CoreFindCatTutorialProgressService progressService,
-            CoreFindCatTutorialLevelService levelService)
+            CoreFindCatTutorialLevelService levelService,
+            CoreFindCatTutorialSessionService sessionService = null)
         {
             _progressService = progressService;
             _levelService = levelService;
+            _sessionService = sessionService;
         }
 
         public CoreFindCatTutorialProgressService ProgressService => _progressService;
@@ -30,9 +34,29 @@ namespace App.HotUpdate.Holmas.Tutorial
                 ? await _progressService.LoadAsync()
                 : new CoreFindCatTutorialProgress();
 
+            if (_sessionService != null && _sessionService.ConsumeAutoStartSuppression())
+            {
+                return CoreFindCatTutorialLaunchResult.AutoStartNormal(skipLoading: true);
+            }
+
             if (progress.completed)
             {
                 return CoreFindCatTutorialLaunchResult.AutoStartNormal(skipLoading: true);
+            }
+
+            CoreFindCatTutorialSessionService sessionService = ResolveSessionService(context);
+            if (sessionService != null && sessionService.HasActiveSession)
+            {
+                int activeSessionStepIndex = ResolveProgressStepIndex(progress, fallback: 0);
+                await MarkStartedAsync(activeSessionStepIndex, force: false);
+                TutorialOverlayPayload payload = BuildPayload(
+                    TutorialRunMode.FullTutorial,
+                    activeSessionStepIndex,
+                    canWriteCompletion: true,
+                    await LoadVisualConfigAsync(context),
+                    context != null ? context.AssetsRuntime : null);
+                payload.TutorialBoardObjectiveSatisfied = sessionService.ActiveSession.TutorialBoardObjectiveSatisfied;
+                return CoreFindCatTutorialLaunchResult.ShowOverlay(payload);
             }
 
             HolmasGameplayRuntime runtime = context != null ? context.GameplayRuntime : null;
@@ -40,11 +64,11 @@ namespace App.HotUpdate.Holmas.Tutorial
             {
                 if (CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot))
                 {
-                    int stepIndex = ResolveProgressStepIndex(progress, fallback: 0);
-                    await MarkStartedAsync(stepIndex, force: false);
+                    int legacyTutorialStepIndex = ResolveProgressStepIndex(progress, fallback: 0);
+                    await MarkStartedAsync(legacyTutorialStepIndex, force: false);
                     return CoreFindCatTutorialLaunchResult.ShowOverlay(BuildPayload(
                         TutorialRunMode.FullTutorial,
-                        stepIndex,
+                        legacyTutorialStepIndex,
                         canWriteCompletion: true,
                         await LoadVisualConfigAsync(context),
                         context != null ? context.AssetsRuntime : null));
@@ -52,12 +76,12 @@ namespace App.HotUpdate.Holmas.Tutorial
 
                 if (ShouldResumePostTutorialBoardSteps(progress))
                 {
-                    int stepIndex = ResolveProgressStepIndex(
+                    int resumeStepIndex = ResolveProgressStepIndex(
                         progress,
                         CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId));
                     TutorialOverlayPayload payload = BuildPayload(
                         TutorialRunMode.FullTutorial,
-                        stepIndex,
+                        resumeStepIndex,
                         canWriteCompletion: true,
                         await LoadVisualConfigAsync(context),
                         context != null ? context.AssetsRuntime : null);
@@ -93,10 +117,11 @@ namespace App.HotUpdate.Holmas.Tutorial
             int stepIndex = CoreFindCatTutorialSteps.ClampIndex(requestedStepIndex);
             TutorialStepDefinition step = CoreFindCatTutorialSteps.Get(stepIndex);
             HolmasGameplayRuntime runtime = context != null ? context.GameplayRuntime : null;
-            bool hasActiveLevel = runtime != null && runtime.HasActiveUncompletedLevel && runtime.CurrentBoardRuntime != null;
-            bool hasTutorialLevel = CoreFindCatTutorialLevelService.IsTutorialLevel(runtime?.CurrentLevelSnapshot);
+            CoreFindCatTutorialSessionService sessionService = ResolveSessionService(context);
+            bool hasTutorialSession = sessionService != null && sessionService.HasActiveSession;
+            bool hasTutorialLevel = hasTutorialSession || CoreFindCatTutorialLevelService.IsTutorialLevel(runtime?.CurrentLevelSnapshot);
 
-            if ((!hasActiveLevel || !hasTutorialLevel) && RequiresTutorialBoardSession(stepIndex, step))
+            if (!hasTutorialLevel && RequiresTutorialBoardSession(stepIndex, step))
             {
                 await StartTutorialBoardAsync(context);
             }
@@ -160,12 +185,60 @@ namespace App.HotUpdate.Holmas.Tutorial
 
         private async Task StartTutorialBoardAsync(HolmasApplicationContext context)
         {
-            if (_levelService == null)
+            CoreFindCatTutorialSessionService sessionService = ResolveSessionService(context);
+            if (sessionService == null)
             {
-                throw new InvalidOperationException("CoreFindCatTutorialCoordinator: 教程关卡服务不可用。");
+                throw new InvalidOperationException("CoreFindCatTutorialCoordinator: 教程会话服务不可用。");
             }
 
-            await _levelService.StartTutorialBoardAsync(context);
+            await SaveSuspendedFormalSessionIfNeededAsync(context);
+            if (!sessionService.HasActiveSession)
+            {
+                await sessionService.StartSessionAsync(context != null ? context.AssetsRuntime : null);
+            }
+        }
+
+        private CoreFindCatTutorialSessionService ResolveSessionService(HolmasApplicationContext context)
+        {
+            return _sessionService ??
+                   (context != null && context.ServiceContainer != null
+                       ? context.ServiceContainer.Get<CoreFindCatTutorialSessionService>()
+                       : null);
+        }
+
+        private async Task SaveSuspendedFormalSessionIfNeededAsync(HolmasApplicationContext context)
+        {
+            HolmasGameplayRuntime runtime = context != null ? context.GameplayRuntime : null;
+            if (runtime == null ||
+                !runtime.HasActiveUncompletedLevel ||
+                CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot))
+            {
+                return;
+            }
+
+            HolmasPlayerArchiveSyncService syncService = context.ServiceContainer?.Get<HolmasPlayerArchiveSyncService>();
+            if (syncService == null || syncService.TutorialSuspendedSession != null)
+            {
+                return;
+            }
+
+            HolmasPlayerArchiveMapper mapper = context.ServiceContainer?.Get<HolmasPlayerArchiveMapper>() ?? new HolmasPlayerArchiveMapper();
+            var suspendedSession = mapper.CreateTutorialSuspendedSession(
+                runtime,
+                HolmasLocalMockServerGateway.DefaultSchemaVersion,
+                "start_core_find_cat_tutorial",
+                "tutorial",
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            if (suspendedSession == null)
+            {
+                return;
+            }
+
+            bool saved = await syncService.SaveTutorialSuspendedSessionAsync(suspendedSession, "start_core_find_cat_tutorial");
+            if (!saved)
+            {
+                context.Logger?.LogWarning("CoreFindCatTutorialCoordinator: 保存教程挂起正式棋盘失败，异常重启时将回退到普通存档恢复。");
+            }
         }
 
         private async Task MarkStartedAsync(int stepIndex, bool force)
@@ -257,6 +330,7 @@ namespace App.HotUpdate.Holmas.Tutorial
                 RunMode = runMode,
                 InitialStepIndex = CoreFindCatTutorialSteps.ClampIndex(initialStepIndex),
                 CanWriteCompletion = canWriteCompletion,
+                TutorialSessionService = _sessionService,
                 VisualConfig = visualConfig,
                 AssetsRuntime = assetsRuntime,
             };

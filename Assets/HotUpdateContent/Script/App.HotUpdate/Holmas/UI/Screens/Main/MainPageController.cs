@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.PlayerData;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
@@ -29,6 +30,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private CoreFindCatTutorialProgressStore _tutorialProgressStore;
         private CoreFindCatTutorialProgressService _tutorialProgressService;
         private CoreFindCatTutorialCoordinator _tutorialCoordinator;
+        private CoreFindCatTutorialSessionService _tutorialSessionService;
 
         private static bool IsTutorialDebugEnabled =>
             UnityEngine.Application.isEditor || UnityEngine.Debug.isDebugBuild;
@@ -38,15 +40,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         protected override void OnCreate()
         {
             _runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
-            _presenter = new MainPresenter(Root != null ? Root.Context : null);
             IPersistence persistence = Root?.Context?.ServiceContainer != null
                 ? Root.Context.ServiceContainer.Get<IPersistence>()
                 : null;
             _tutorialProgressStore = new CoreFindCatTutorialProgressStore(persistence);
             _tutorialProgressService = new CoreFindCatTutorialProgressService(_tutorialProgressStore);
+            _tutorialSessionService = Root?.Context?.ServiceContainer != null
+                ? Root.Context.ServiceContainer.Get<CoreFindCatTutorialSessionService>()
+                : null;
+            _tutorialSessionService ??= new CoreFindCatTutorialSessionService(Root?.Context?.Logger);
+            _presenter = new MainPresenter(Root != null ? Root.Context : null, _tutorialSessionService);
             _tutorialCoordinator = new CoreFindCatTutorialCoordinator(
                 _tutorialProgressService,
-                new CoreFindCatTutorialLevelService());
+                new CoreFindCatTutorialLevelService(),
+                _tutorialSessionService);
             _view = RootObject != null ? RootObject.GetComponent<MainView>() : null;
             if (_view == null && RootObject != null)
             {
@@ -58,6 +65,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             {
                 _runtime.StateChanged += OnRuntimeStateChanged;
             }
+
+            _tutorialSessionService.StateChanged += OnTutorialSessionStateChanged;
         }
 
         protected override void OnBind()
@@ -103,6 +112,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 _runtime.StateChanged -= OnRuntimeStateChanged;
             }
 
+            if (_tutorialSessionService != null)
+            {
+                _tutorialSessionService.StateChanged -= OnTutorialSessionStateChanged;
+            }
+
             _tutorialCoordinator?.Dispose();
         }
 
@@ -114,7 +128,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private string SettleClaimableTasksAndRefill(string fallbackStatus)
         {
             HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : _runtime;
-            if (runtime == null)
+            if (runtime == null || _tutorialSessionService?.ActiveSession != null)
             {
                 return fallbackStatus;
             }
@@ -128,7 +142,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private void RequestAutoStartInMain(bool skipLoading = false)
         {
-            if (_autoStartInProgress || _isBusy)
+            if (_autoStartInProgress || _isBusy || _tutorialSessionService?.ActiveSession != null)
             {
                 return;
             }
@@ -185,6 +199,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private void OnPromotionClicked()
         {
+            if (_tutorialSessionService?.ActiveSession != null)
+            {
+                Refresh("教程演示期间不能升级正式宣传。");
+                return;
+            }
+
             string promotionId = _presenter != null ? _presenter.GetPrimaryPromotionId() : string.Empty;
             if (string.IsNullOrWhiteSpace(promotionId))
             {
@@ -207,6 +227,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private void OnAddEnergyClicked()
         {
+            if (_tutorialSessionService?.ActiveSession != null)
+            {
+                Refresh("教程演示期间不能修改正式体力。");
+                return;
+            }
+
             HolmasApplicationContext context = Root != null ? Root.Context : null;
             if (context == null)
             {
@@ -226,7 +252,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return;
             }
 
-            int stepIndex = CoreFindCatTutorialLevelService.IsTutorialLevel(_runtime?.CurrentLevelSnapshot)
+            int stepIndex = _tutorialSessionService?.ActiveSession != null
                 ? 0
                 : CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
             _ = HandleReplayTutorialAsync(stepIndex);
@@ -273,6 +299,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
             payload.MainView = _view;
             payload.OnTutorialExitedAsync = HandleTutorialExitedAsync;
+            payload.TutorialSessionService ??= _tutorialSessionService;
 
             return ScreenService.ShowOverlayAsync(
                 TutorialScreenRegistration.ScreenId,
@@ -291,16 +318,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 runtime != null && runtime.HasActiveUncompletedLevel,
                 CoreFindCatTutorialLevelService.IsTutorialLevel(runtime?.CurrentLevelSnapshot));
 
-            if (HasActiveFormalBoard(runtime))
-            {
-                Root?.Context?.Logger?.LogInfo("MainPageController: tutorial exit ignored because an active formal board already exists.");
-                Refresh(null);
-                return;
-            }
+            _tutorialSessionService?.ClearSession();
+            await ClearSuspendedTutorialSessionAsync();
 
             if (runtime != null &&
-                (runtime.CurrentBoardRuntime != null ||
-                 CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot)))
+                CoreFindCatTutorialLevelService.IsTutorialLevel(runtime.CurrentLevelSnapshot))
             {
                 Root?.Context?.Logger?.LogInfo(
                     "MainPageController: ending current tutorial/former level session. mapId={0}",
@@ -309,8 +331,32 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             _view?.HideTutorialBoardLayer();
+            if (HasActiveFormalBoard(runtime))
+            {
+                Refresh("新手引导已结束，正在恢复正式棋盘...");
+                await StartFormalBoardAfterTutorialWithoutLoadingAsync("新手引导已结束，正式棋盘已恢复。");
+                return;
+            }
+
             Refresh("新手引导已结束，正在进入正式棋盘...");
             await StartFormalBoardAfterTutorialWithoutLoadingAsync("新手引导已结束，正式棋盘已准备。");
+        }
+
+        private async Task ClearSuspendedTutorialSessionAsync()
+        {
+            HolmasPlayerArchiveSyncService syncService = Root?.Context?.ServiceContainer != null
+                ? Root.Context.ServiceContainer.Get<HolmasPlayerArchiveSyncService>()
+                : null;
+            if (syncService == null || syncService.TutorialSuspendedSession == null)
+            {
+                return;
+            }
+
+            bool saved = await syncService.ClearTutorialSuspendedSessionAsync("finish_core_find_cat_tutorial");
+            if (!saved)
+            {
+                Root?.Context?.Logger?.LogWarning("MainPageController: 清理教程挂起快照失败，将在后续存档同步中重试。");
+            }
         }
 
         private static bool HasActiveFormalBoard(HolmasGameplayRuntime runtime)
@@ -413,6 +459,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return;
             }
 
+            if (_tutorialSessionService?.ActiveSession != null)
+            {
+                HandleTutorialCellInteraction(cellIndex);
+                await Task.CompletedTask;
+                return;
+            }
+
             HolmasGameplayRuntime runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
             if (runtime == null)
             {
@@ -457,6 +510,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 _isBusy = false;
                 Refresh(finalStatus);
                 await Task.CompletedTask;
+            }
+        }
+
+        private void HandleTutorialCellInteraction(int cellIndex)
+        {
+            CoreFindCatTutorialSession session = _tutorialSessionService?.ActiveSession;
+            if (session == null)
+            {
+                return;
+            }
+
+            try
+            {
+                BoardRevealResult revealResult = _tutorialSessionService.RevealCell(cellIndex);
+                string status = revealResult != null && revealResult.IsValidAction
+                    ? (revealResult.FoundCat ? "教程棋盘：找到演示猫。" : "教程棋盘：已翻开演示格。")
+                    : "教程棋盘：该格无法操作。";
+                Refresh(status);
+            }
+            catch (Exception ex)
+            {
+                Refresh($"教程棋盘操作失败：{ex.Message}");
             }
         }
 
@@ -547,6 +622,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         {
             if (_isBusy)
             {
+                return;
+            }
+
+            if (_tutorialSessionService?.ActiveSession != null)
+            {
+                Refresh("教程演示期间不能操作正式任务栏。");
+                await Task.CompletedTask;
                 return;
             }
 
@@ -680,6 +762,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                     Refresh(GetCurrentRewardTip(_runtime));
                     break;
             }
+        }
+
+        private void OnTutorialSessionStateChanged()
+        {
+            if (ScreenService == null ||
+                !ReferenceEquals(ScreenService.NavigationState.CurrentPage, this))
+            {
+                return;
+            }
+
+            Refresh(null);
         }
 
         private static string BuildStatusWithNewRewardTip(HolmasGameplayRuntime runtime, int previousTipVersion, string fallbackStatus)

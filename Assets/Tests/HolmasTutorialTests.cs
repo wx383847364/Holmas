@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Meta;
+using App.HotUpdate.Holmas.PlayerData;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.Tasks.Services;
-using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using App.Shared.Contracts;
@@ -22,7 +23,7 @@ namespace Holmas.Tests
     public sealed class HolmasTutorialTests
     {
         [Test]
-        public void CoreFindCatTutorialLevelService_CreateTutorialSnapshot_UsesFixedValidCellsAndTaskCats()
+        public void CoreFindCatTutorialLevelService_CreateTutorialSnapshot_UsesFixedValidCellsAndDemoCats()
         {
             BoardTemplate template = HolmasTestSupport.CreateBoardTemplate(8, 8);
 
@@ -55,31 +56,72 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void CoreFindCatTutorialLevelService_ResolveTutorialCatIds_UsesUnlockedSlotOrder()
+        public void CoreFindCatTutorialSession_RevealOnlyMutatesTutorialSnapshot()
         {
-            var taskBar = new HolmasTaskBarState();
-            taskBar.BindTask(1, CreateTask("task-b", "cat-b", slotIndex: 1));
-            taskBar.BindTask(0, CreateTask("task-a", "cat-a", slotIndex: 0));
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            BoardTemplate tutorialTemplate = HolmasTestSupport.CreateBoardTemplate(8, 8);
+            LevelSnapshot tutorialSnapshot = CoreFindCatTutorialLevelService.CreateTutorialSnapshot(
+                tutorialTemplate,
+                new[] { "tutorial-cat-a", "tutorial-cat-b" });
+            var session = new CoreFindCatTutorialSession(tutorialTemplate, tutorialSnapshot);
 
-            IReadOnlyList<string> catIds = CoreFindCatTutorialLevelService.ResolveTutorialCatIds(taskBar);
+            session.RevealCell(CoreFindCatTutorialBoardDefinition.FirstCatCellIndex);
 
-            Assert.That(catIds, Is.EqualTo(new[] { "cat-a", "cat-b" }));
+            Assert.That(session.Snapshot.RevealedCells[CoreFindCatTutorialBoardDefinition.FirstCatCellIndex], Is.True);
+            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo("normal-map"));
+            Assert.That(runtime.CurrentLevelSnapshot.RevealedCells[0], Is.False);
+            Assert.That(runtime.CurrentLevelSnapshot.Completed, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialSessionService_RevealNotifiesAndPresenterUsesInjectedSession()
+        {
+            return RunAsync(async () =>
+            {
+                HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+                var sessionService = new CoreFindCatTutorialSessionService(new NullLogger());
+                await sessionService.StartSessionAsync(new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
+                var presenter = new MainPresenter(CreateContext(runtime, null), sessionService);
+                int changeCount = 0;
+                sessionService.StateChanged += () => changeCount++;
+
+                MainVm vm = presenter.Build();
+                BoardRevealResult reveal = sessionService.RevealCell(CoreFindCatTutorialBoardDefinition.FirstCatCellIndex);
+
+                Assert.That(vm.UseTutorialBoardLayer, Is.True);
+                Assert.That(vm.Rows, Is.EqualTo(8));
+                Assert.That(vm.Cols, Is.EqualTo(8));
+                Assert.That(vm.PromotionButtonEnabled, Is.False);
+                Assert.That(vm.AddEnergyButtonEnabled, Is.False);
+                Assert.That(vm.TaskItems, Is.Not.Null);
+                Assert.That(vm.TaskItems, Is.All.Matches<MainTaskItemVm>(item => item == null || !item.ButtonEnabled));
+                Assert.That(reveal.IsValidAction, Is.True);
+                Assert.That(changeCount, Is.EqualTo(1));
+                Assert.That(sessionService.ActiveSession.IsTutorialCatRevealed(CoreFindCatTutorialBoardDefinition.FirstCatCellIndex), Is.True);
+                Assert.That(runtime.CurrentLevelSnapshot.RevealedCells[0], Is.False);
+            });
         }
 
         [Test]
-        public void CoreFindCatTutorialLevelService_ResolveTutorialCatIds_UsesOnlyUncompletedUnclaimedTasks()
+        public void HolmasPlayerArchiveMapper_CreateTutorialSuspendedSession_ClonesFormalBoard()
         {
-            var taskBar = new HolmasTaskBarState();
-            taskBar.BindTask(0, CreateTask("task-completed", "cat-done", slotIndex: 0, currentCount: 1, targetCount: 1));
-            HolmasTaskRuntimeInstance claimedTask = CreateTask("task-claimed", "cat-claimed", slotIndex: 1, currentCount: 1, targetCount: 1);
-            claimedTask.ClaimReward();
-            taskBar.BindTask(1, claimedTask);
-            taskBar.BindTask(2, CreateTask("task-active", "cat-active", slotIndex: 2));
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            var mapper = new HolmasPlayerArchiveMapper();
 
-            taskBar.UnlockSlot(2, 1000L);
-            IReadOnlyList<string> catIds = CoreFindCatTutorialLevelService.ResolveTutorialCatIds(taskBar);
+            var suspended = mapper.CreateTutorialSuspendedSession(
+                runtime,
+                "schema-test",
+                "reason-test",
+                "source-test",
+                123L);
 
-            Assert.That(catIds, Is.EqualTo(new[] { "cat-active" }));
+            Assert.That(suspended, Is.Not.Null);
+            Assert.That(suspended.CurrentLevel, Is.Not.SameAs(runtime.CurrentLevelSnapshot));
+            Assert.That(suspended.CurrentLevel.MapId, Is.EqualTo("normal-map"));
+            Assert.That(suspended.CurrentLevel.RevealedCells, Is.Not.SameAs(runtime.CurrentLevelSnapshot.RevealedCells));
+            Assert.That(suspended.TaskBar, Is.Not.Null);
+            Assert.That(suspended.SchemaVersion, Is.EqualTo("schema-test"));
+            Assert.That(suspended.CreatedAtUtcMilliseconds, Is.EqualTo(123L));
         }
 
         [UnityTest]
@@ -267,7 +309,9 @@ namespace Holmas.Tests
                 var service = new CoreFindCatTutorialProgressService(store);
                 HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
                 var context = CreateContext(runtime, new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
-                var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+                var sessionService = new CoreFindCatTutorialSessionService(new NullLogger());
+                var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService(), sessionService);
+                string originalMapId = runtime.CurrentLevelSnapshot.MapId;
 
                 CoreFindCatTutorialLaunchResult result = await coordinator.PrepareAutoStartAsync(context);
 
@@ -276,8 +320,9 @@ namespace Holmas.Tests
                 Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.FullTutorial));
                 Assert.That(result.Payload.CanWriteCompletion, Is.True);
                 Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(0));
-                Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
-                Assert.That(new MainPresenter(context).Build().UseTutorialBoardLayer, Is.True);
+                Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(originalMapId));
+                Assert.That(sessionService.ActiveSession, Is.Not.Null);
+                Assert.That(sessionService.ActiveSession.Snapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
             });
         }
 
@@ -291,8 +336,10 @@ namespace Holmas.Tests
                 var service = new CoreFindCatTutorialProgressService(store);
                 HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
                 var context = CreateContext(runtime, new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
-                var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+                var sessionService = new CoreFindCatTutorialSessionService(new NullLogger());
+                var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService(), sessionService);
                 int stepIndex = CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
+                string originalMapId = runtime.CurrentLevelSnapshot.MapId;
 
                 CoreFindCatTutorialLaunchResult result =
                     await coordinator.PrepareManualStartAsync(context, stepIndex, debugForceStep: true);
@@ -300,7 +347,8 @@ namespace Holmas.Tests
                 Assert.That(result.ShouldShowOverlay, Is.True);
                 Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.DebugStartAtStep));
                 Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(stepIndex));
-                Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
+                Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(originalMapId));
+                Assert.That(sessionService.ActiveSession, Is.Not.Null);
             });
         }
 
@@ -363,25 +411,6 @@ namespace Holmas.Tests
             {
                 throw new OperationCanceledException("Async Unity test was canceled.");
             }
-        }
-
-        private static HolmasTaskRuntimeInstance CreateTask(
-            string taskId,
-            string catId,
-            int slotIndex,
-            int currentCount = 0,
-            int targetCount = 1)
-        {
-            return new HolmasTaskRuntimeInstance(new TaskInstanceData
-            {
-                TaskInstanceId = taskId,
-                SourceTaskTypeId = "task-normal",
-                CatId = catId,
-                SlotIndex = slotIndex,
-                TargetCount = targetCount,
-                CurrentCount = currentCount,
-                Reward = 10,
-            });
         }
 
         private static HolmasGameplayRuntime CreateRuntimeWithNormalBoard()

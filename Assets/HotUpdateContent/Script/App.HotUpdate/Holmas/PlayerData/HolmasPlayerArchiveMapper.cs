@@ -116,6 +116,11 @@ namespace App.HotUpdate.Holmas.PlayerData
             HolmasTaskBarArchiveData source = archive != null && archive.TaskBar != null
                 ? archive.TaskBar
                 : null;
+            return TryRestoreTaskBar(source);
+        }
+
+        public HolmasTaskBarRestoreResult TryRestoreTaskBar(HolmasTaskBarArchiveData source)
+        {
             if (source == null)
             {
                 return new HolmasTaskBarRestoreResult
@@ -284,6 +289,49 @@ namespace App.HotUpdate.Holmas.PlayerData
             };
         }
 
+        public HolmasTutorialSuspendedSessionArchiveData CreateTutorialSuspendedSession(
+            HolmasGameplayRuntime runtime,
+            string schemaVersion,
+            string reason,
+            string source,
+            long createdAtUtcMilliseconds)
+        {
+            if (runtime == null ||
+                runtime.CurrentLevelSnapshot == null ||
+                runtime.CurrentLevelSnapshot.Completed)
+            {
+                return null;
+            }
+
+            return new HolmasTutorialSuspendedSessionArchiveData
+            {
+                SchemaVersion = string.IsNullOrWhiteSpace(schemaVersion) ? HolmasLocalMockServerGateway.DefaultSchemaVersion : schemaVersion,
+                Reason = reason ?? string.Empty,
+                Source = source ?? string.Empty,
+                CreatedAtUtcMilliseconds = Math.Max(0L, createdAtUtcMilliseconds),
+                TaskBar = ExportTaskBar(runtime.TaskBarState),
+                CurrentLevel = CloneLevelSnapshot(runtime.CurrentLevelSnapshot),
+            };
+        }
+
+        public HolmasTutorialSuspendedSessionArchiveData CloneTutorialSuspendedSession(HolmasTutorialSuspendedSessionArchiveData source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            return new HolmasTutorialSuspendedSessionArchiveData
+            {
+                SchemaVersion = source.SchemaVersion ?? string.Empty,
+                Reason = source.Reason ?? string.Empty,
+                Source = source.Source ?? string.Empty,
+                CreatedAtUtcMilliseconds = Math.Max(0L, source.CreatedAtUtcMilliseconds),
+                TaskBar = CloneTaskBarArchive(source.TaskBar),
+                CurrentLevel = CloneLevelSnapshot(source.CurrentLevel),
+            };
+        }
+
         private static HolmasProgressionArchiveData ExportProgression(HolmasMetaProgressionState state)
         {
             state ??= new HolmasMetaProgressionState();
@@ -360,7 +408,7 @@ namespace App.HotUpdate.Holmas.PlayerData
             };
         }
 
-        private HolmasTaskBarArchiveData ExportTaskBar(HolmasTaskBarState state)
+        public HolmasTaskBarArchiveData ExportTaskBar(HolmasTaskBarState state)
         {
             state ??= new HolmasTaskBarState();
             return new HolmasTaskBarArchiveData
@@ -372,6 +420,33 @@ namespace App.HotUpdate.Holmas.PlayerData
                     : Array.Empty<TaskSlotState>(),
                 Tasks = state.Tasks != null
                     ? state.Tasks
+                        .Where(item => item != null && item.Task != null)
+                        .Select(item => new HolmasTaskRuntimeArchiveData
+                        {
+                            Task = CloneTaskInstance(item.Task),
+                            IsRewardClaimed = item.IsRewardClaimed,
+                        })
+                        .ToArray()
+                    : Array.Empty<HolmasTaskRuntimeArchiveData>(),
+            };
+        }
+
+        public HolmasTaskBarArchiveData CloneTaskBarArchive(HolmasTaskBarArchiveData source)
+        {
+            if (source == null)
+            {
+                return new HolmasTaskBarArchiveData();
+            }
+
+            return new HolmasTaskBarArchiveData
+            {
+                TotalSlots = source.TotalSlots,
+                DefaultOpenSlots = source.DefaultOpenSlots,
+                Slots = source.Slots != null
+                    ? source.Slots.Select((slot, index) => CloneSlotState(slot, index, source.DefaultOpenSlots)).ToArray()
+                    : Array.Empty<TaskSlotState>(),
+                Tasks = source.Tasks != null
+                    ? source.Tasks
                         .Where(item => item != null && item.Task != null)
                         .Select(item => new HolmasTaskRuntimeArchiveData
                         {

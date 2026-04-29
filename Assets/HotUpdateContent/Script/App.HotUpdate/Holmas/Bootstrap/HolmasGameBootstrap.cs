@@ -9,6 +9,7 @@ using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
+using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI;
 using App.Shared.Contracts;
 using App.Shared.Holmas.PlayerData;
@@ -150,8 +151,31 @@ namespace App.HotUpdate.Holmas.Bootstrap
             serviceContainer.RegisterSingleton(archiveMapper);
             serviceContainer.RegisterSingleton(archiveSyncService);
             serviceContainer.RegisterSingleton<IHolmasPlayerArchiveDrain>(archiveSyncService);
+            archiveSyncService.SetTutorialSuspendedSession(archiveLoadResult.Archive?.TutorialSuspendedSession);
 
-            if (archiveLoadResult.Archive != null &&
+            var tutorialSessionService = new CoreFindCatTutorialSessionService(logger);
+            serviceContainer.RegisterSingleton(tutorialSessionService);
+
+            HolmasTutorialSuspendedSessionArchiveData suspendedSession = archiveLoadResult.Archive?.TutorialSuspendedSession;
+            bool consumedSuspendedSession = suspendedSession != null;
+            if (TryRestoreTutorialSuspendedSession(
+                    suspendedSession,
+                    archiveMapper,
+                    gameplayRuntime,
+                    logger))
+            {
+                tutorialSessionService.SuppressNextAutoStart();
+                archiveSyncService.SetTutorialSuspendedSession(null);
+                archiveNeedsSave = true;
+            }
+            else if (consumedSuspendedSession)
+            {
+                archiveSyncService.SetTutorialSuspendedSession(null);
+                archiveNeedsSave = true;
+            }
+
+            if (gameplayRuntime.CurrentLevelSnapshot == null &&
+                archiveLoadResult.Archive != null &&
                 archiveLoadResult.Archive.CurrentLevel != null &&
                 !archiveLoadResult.Archive.CurrentLevel.Completed)
             {
@@ -246,6 +270,49 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 clock);
         }
 
+        private static bool TryRestoreTutorialSuspendedSession(
+            HolmasTutorialSuspendedSessionArchiveData suspendedSession,
+            HolmasPlayerArchiveMapper archiveMapper,
+            HolmasGameplayRuntime gameplayRuntime,
+            IAppLogger logger)
+        {
+            if (suspendedSession == null)
+            {
+                return false;
+            }
+
+            if (suspendedSession.CurrentLevel == null ||
+                suspendedSession.CurrentLevel.Completed ||
+                CoreFindCatTutorialLevelService.IsTutorialLevel(suspendedSession.CurrentLevel))
+            {
+                logger?.LogWarning("HolmasGameBootstrap: 教程挂起快照无效，已清空。");
+                return false;
+            }
+
+            HolmasTaskBarRestoreResult taskBarRestoreResult = archiveMapper.TryRestoreTaskBar(suspendedSession.TaskBar);
+            if (!taskBarRestoreResult.Success)
+            {
+                logger?.LogWarning(
+                    "HolmasGameBootstrap: 教程挂起任务栏快照损坏，已清空。reason={0}",
+                    taskBarRestoreResult.FailureReason);
+                return false;
+            }
+
+            try
+            {
+                gameplayRuntime.RestoreTaskBarState(taskBarRestoreResult.State);
+                gameplayRuntime.RestoreLevelAsync(suspendedSession.CurrentLevel).GetAwaiter().GetResult();
+                logger?.LogInfo("HolmasGameBootstrap: 已恢复教程前正式棋盘。mapId={0}", suspendedSession.CurrentLevel.MapId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning("HolmasGameBootstrap: 恢复教程挂起正式棋盘失败，已清空。{0}", ex.Message);
+                gameplayRuntime.EndCurrentLevelSession();
+                return false;
+            }
+        }
+
         private static bool ShouldDiscardRestoredCurrentLevel(HolmasTaskBarState taskBarState, LevelSnapshot currentLevel)
         {
             if (currentLevel == null || currentLevel.Completed)
@@ -254,6 +321,11 @@ namespace App.HotUpdate.Holmas.Bootstrap
             }
 
             if (string.IsNullOrWhiteSpace(currentLevel.MapId) || string.IsNullOrWhiteSpace(currentLevel.TerrainPath))
+            {
+                return true;
+            }
+
+            if (CoreFindCatTutorialLevelService.IsTutorialLevel(currentLevel))
             {
                 return true;
             }

@@ -45,7 +45,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 _runtime.StateChanged -= OnRuntimeStateChanged;
             }
 
+            if (_payload?.TutorialSessionService != null)
+            {
+                _payload.TutorialSessionService.StateChanged -= OnTutorialSessionStateChanged;
+            }
+
             _payload = payload as TutorialOverlayPayload ?? new TutorialOverlayPayload();
+            if (_payload.TutorialSessionService == null && Root?.Context?.ServiceContainer != null)
+            {
+                _payload.TutorialSessionService = Root.Context.ServiceContainer.Get<CoreFindCatTutorialSessionService>();
+            }
             _runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
             _view?.SetAssetsRuntime(_payload.AssetsRuntime);
             _openedRewardTipVersion = _runtime != null ? _runtime.LastTaskRewardTipVersion : 0;
@@ -55,6 +64,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             if (_runtime != null)
             {
                 _runtime.StateChanged += OnRuntimeStateChanged;
+            }
+
+            if (_payload.TutorialSessionService != null)
+            {
+                _payload.TutorialSessionService.StateChanged += OnTutorialSessionStateChanged;
             }
 
             _stepIndex = ResolveInitialStepIndex(_payload);
@@ -69,6 +83,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             {
                 _runtime.StateChanged -= OnRuntimeStateChanged;
             }
+
+            if (_payload?.TutorialSessionService != null)
+            {
+                _payload.TutorialSessionService.StateChanged -= OnTutorialSessionStateChanged;
+            }
         }
 
         protected override void OnDestroy()
@@ -76,6 +95,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             if (_runtime != null)
             {
                 _runtime.StateChanged -= OnRuntimeStateChanged;
+            }
+
+            if (_payload?.TutorialSessionService != null)
+            {
+                _payload.TutorialSessionService.StateChanged -= OnTutorialSessionStateChanged;
             }
         }
 
@@ -90,6 +114,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 MarkCurrentStep();
                 RenderCurrentStep();
             }
+        }
+
+        private void OnTutorialSessionStateChanged()
+        {
+            AdvancePastSatisfiedSteps();
+            MarkCurrentStep();
+            RenderCurrentStep();
         }
 
         private async void OnNextClicked()
@@ -188,7 +219,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
             }
 
             return _tutorialBoardObjectiveSatisfied ||
-                   CoreFindCatTutorialLevelService.IsTutorialLevel(_runtime?.CurrentLevelSnapshot);
+                   (_payload.TutorialSessionService?.ActiveSession != null &&
+                    _payload.TutorialSessionService.ActiveSession.TutorialBoardObjectiveSatisfied);
         }
 
         private void CloseOverlay()
@@ -279,8 +311,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                     return IsTutorialCatRevealed(CoreFindCatTutorialBoardDefinition.FirstCatCellIndex) ||
                            IsTutorialCatRevealed(CoreFindCatTutorialBoardDefinition.SecondCatCellIndex);
                 case ContinueFindStepId:
-                    bool completed = _runtime.LastTaskRewardTipVersion > _openedRewardTipVersion ||
-                                     (_runtime.CurrentLevelSnapshot != null && _runtime.CurrentLevelSnapshot.Completed);
+                    CoreFindCatTutorialSession session = _payload?.TutorialSessionService?.ActiveSession;
+                    bool completed = session != null && session.TutorialBoardObjectiveSatisfied;
                     if (completed)
                     {
                         _tutorialBoardObjectiveSatisfied = true;
@@ -294,9 +326,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
 
         private bool IsTutorialCatRevealed(int cellIndex)
         {
-            return CoreFindCatTutorialLevelService.IsTutorialLevel(_runtime?.CurrentLevelSnapshot) &&
-                   _runtime.CurrentBoardRuntime != null &&
-                   _runtime.CurrentBoardRuntime.IsRevealed(cellIndex);
+            CoreFindCatTutorialSession session = _payload?.TutorialSessionService?.ActiveSession;
+            return session != null && session.IsTutorialCatRevealed(cellIndex);
         }
 
         private void MarkCurrentStep()
@@ -401,7 +432,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Tutorial
                 }
             }
 
-            return CoreFindCatTutorialLevelService.IsTutorialLevel(_runtime?.CurrentLevelSnapshot)
+            return _payload?.TutorialSessionService?.ActiveSession != null
                 ? 0
                 : Math.Max(0, CoreFindCatTutorialSteps.IndexOf(TaskBarStepId));
         }

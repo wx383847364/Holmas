@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Terrain;
-using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 
 namespace App.HotUpdate.Holmas.Tutorial
@@ -27,80 +26,31 @@ namespace App.HotUpdate.Holmas.Tutorial
 
     public sealed class CoreFindCatTutorialLevelService
     {
-        public async Task<BoardRuntime> StartTutorialBoardAsync(HolmasApplicationContext context)
+        private static readonly string[] DemoCatIds =
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
+            "tutorial-cat-a",
+            "tutorial-cat-b",
+        };
 
-            if (context.GameplayRuntime == null)
-            {
-                throw new InvalidOperationException("CoreFindCatTutorialLevelService: 玩法运行时不可用。");
-            }
-
-            if (context.AssetsRuntime == null)
+        public static async Task<CoreFindCatTutorialSession> CreateTutorialSessionAsync(IAssetsRuntime assetsRuntime)
+        {
+            if (assetsRuntime == null)
             {
                 throw new InvalidOperationException("CoreFindCatTutorialLevelService: 资源运行时不可用。");
             }
 
-            context.RefillAvailableTasks();
-            IReadOnlyList<string> catIds = ResolveTutorialCatIds(context.GameplayRuntime.TaskBarState);
-            if (catIds.Count == 0)
-            {
-                throw new InvalidOperationException("CoreFindCatTutorialLevelService: 当前任务栏没有可用于教程棋盘的猫。");
-            }
-
             BoardTemplate template = await HolmasTerrainAssetLoader.LoadBoardTemplateAsync(
-                context.AssetsRuntime,
+                assetsRuntime,
                 CoreFindCatTutorialBoardDefinition.TerrainPath);
             ValidateFixedCells(template);
-
-            LevelSnapshot snapshot = CreateTutorialSnapshot(template, catIds);
-            return context.GameplayRuntime.StartLevel(template, snapshot);
+            LevelSnapshot snapshot = CreateTutorialSnapshot(template, DemoCatIds);
+            return new CoreFindCatTutorialSession(template, snapshot);
         }
 
         public static bool IsTutorialLevel(LevelSnapshot snapshot)
         {
             return snapshot != null &&
                    string.Equals(snapshot.MapId, CoreFindCatTutorialBoardDefinition.MapId, StringComparison.Ordinal);
-        }
-
-        public static IReadOnlyList<string> ResolveTutorialCatIds(HolmasTaskBarState taskBarState)
-        {
-            if (taskBarState == null || taskBarState.Slots == null)
-            {
-                return Array.Empty<string>();
-            }
-
-            var catIds = new List<string>();
-            for (int i = 0; i < taskBarState.Slots.Count; i++)
-            {
-                TaskSlotState slot = taskBarState.Slots[i];
-                if (slot == null || !slot.IsUnlocked)
-                {
-                    continue;
-                }
-
-                HolmasTaskRuntimeInstance runtimeTask = taskBarState.GetTaskBySlot(slot.SlotIndex);
-                if (runtimeTask == null ||
-                    runtimeTask.Task == null ||
-                    runtimeTask.IsRewardClaimed ||
-                    runtimeTask.Task.CurrentCount >= runtimeTask.Task.TargetCount)
-                {
-                    continue;
-                }
-
-                string catId = runtimeTask.Task.CatId;
-                if (string.IsNullOrWhiteSpace(catId))
-                {
-                    continue;
-                }
-
-                catIds.Add(catId);
-            }
-
-            return catIds;
         }
 
         public static LevelSnapshot CreateTutorialSnapshot(BoardTemplate template, IReadOnlyList<string> catIds)

@@ -135,7 +135,7 @@ namespace App.HotUpdate.Holmas.Application
         /// <summary>
         /// 当前任务栏运行时状态。
         /// </summary>
-        public HolmasTaskBarState TaskBarState { get; }
+        public HolmasTaskBarState TaskBarState { get; private set; }
 
         /// <summary>
         /// 当前长期进度运行时状态。
@@ -420,6 +420,13 @@ namespace App.HotUpdate.Holmas.Application
             {
                 NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.CurrentLevelSessionEnded);
             }
+        }
+
+        public void RestoreTaskBarState(HolmasTaskBarState state)
+        {
+            TaskBarState = state ?? throw new ArgumentNullException(nameof(state));
+            _logger?.LogInfo("HolmasGameplayRuntime: 已恢复任务栏快照。");
+            NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.TasksRefilled);
         }
 
         public bool HasActiveUncompletedLevel =>

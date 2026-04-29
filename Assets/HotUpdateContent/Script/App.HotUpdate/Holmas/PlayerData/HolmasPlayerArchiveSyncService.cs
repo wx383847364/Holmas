@@ -26,6 +26,7 @@ namespace App.HotUpdate.Holmas.PlayerData
         private bool _disposed;
         private long _lastSavedRevision;
         private Task<bool> _activeFlushTask = Task.FromResult(true);
+        private HolmasTutorialSuspendedSessionArchiveData _tutorialSuspendedSession;
 
         public HolmasPlayerArchiveSyncService(
             HolmasGameplayRuntime runtime,
@@ -52,6 +53,28 @@ namespace App.HotUpdate.Holmas.PlayerData
         public long LastSavedRevision => _lastSavedRevision;
 
         public bool IsDirty => _dirty || _pendingDirty || _saveInFlight;
+
+        public HolmasTutorialSuspendedSessionArchiveData TutorialSuspendedSession =>
+            _mapper.CloneTutorialSuspendedSession(_tutorialSuspendedSession);
+
+        public Task<bool> SaveTutorialSuspendedSessionAsync(HolmasTutorialSuspendedSessionArchiveData session, string reason)
+        {
+            _tutorialSuspendedSession = _mapper.CloneTutorialSuspendedSession(session);
+            MarkDirty(reason);
+            return FlushIfNeededAsync();
+        }
+
+        public Task<bool> ClearTutorialSuspendedSessionAsync(string reason)
+        {
+            _tutorialSuspendedSession = null;
+            MarkDirty(reason);
+            return FlushIfNeededAsync();
+        }
+
+        public void SetTutorialSuspendedSession(HolmasTutorialSuspendedSessionArchiveData session)
+        {
+            _tutorialSuspendedSession = _mapper.CloneTutorialSuspendedSession(session);
+        }
 
         public Task<bool> MarkDirtyAndSaveAsync(string reason)
         {
@@ -107,6 +130,7 @@ namespace App.HotUpdate.Holmas.PlayerData
                         _schemaVersion,
                         _lastSavedRevision + 1,
                         _clock.UtcNowMilliseconds);
+                    archive.TutorialSuspendedSession = _mapper.CloneTutorialSuspendedSession(_tutorialSuspendedSession);
                     HolmasPlayerArchiveSaveResult result = await _gateway.SaveAsync(archive).ConfigureAwait(false);
                     if (result == null || !result.Success)
                     {
