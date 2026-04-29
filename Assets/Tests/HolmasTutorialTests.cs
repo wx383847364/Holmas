@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +15,7 @@ using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine.TestTools;
 
 namespace Holmas.Tests
 {
@@ -79,215 +82,226 @@ namespace Holmas.Tests
             Assert.That(catIds, Is.EqualTo(new[] { "cat-active" }));
         }
 
-        [Test]
-        public void CoreFindCatTutorialProgressStore_BrokenDataLoadsAsIncomplete()
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialProgressStore_BrokenDataLoadsAsIncomplete()
         {
-            var persistence = new InMemoryPersistence();
-            persistence.SaveAsync(CoreFindCatTutorialProgressStore.PersistenceKey, Encoding.UTF8.GetBytes("{bad json"))
-                .GetAwaiter()
-                .GetResult();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-
-            CoreFindCatTutorialProgress progress = store.LoadAsync().GetAwaiter().GetResult();
-
-            Assert.That(progress.completed, Is.False);
-            Assert.That(progress.lastStepId, Is.Empty);
-            Assert.That(progress.currentStepIndex, Is.EqualTo(-1));
-        }
-
-        [Test]
-        public void CoreFindCatTutorialProgressStore_SaveCompletedRoundTrips()
-        {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-
-            store.SaveCompletedAsync(123L, "help").GetAwaiter().GetResult();
-            CoreFindCatTutorialProgress progress = store.LoadAsync().GetAwaiter().GetResult();
-
-            Assert.That(progress.completed, Is.True);
-            Assert.That(progress.completedAtUtcMilliseconds, Is.EqualTo(123L));
-            Assert.That(progress.lastStepId, Is.EqualTo("help"));
-        }
-
-        [Test]
-        public void CoreFindCatTutorialProgressService_CompletedCannotBeDowngradedByLaterStepSave()
-        {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-            var service = new CoreFindCatTutorialProgressService(store);
-
-            service.MarkCompletedAsync(CoreFindCatTutorialSteps.LastIndex, CoreFindCatTutorialSteps.HelpStepId, 200L)
-                .GetAwaiter()
-                .GetResult();
-            service.MarkCurrentStepAsync(0, CoreFindCatTutorialSteps.FindFirstCatStepId)
-                .GetAwaiter()
-                .GetResult();
-
-            CoreFindCatTutorialProgress progress = service.LoadAsync().GetAwaiter().GetResult();
-            Assert.That(progress.completed, Is.True);
-            Assert.That(progress.completedStepIndex, Is.EqualTo(CoreFindCatTutorialSteps.LastIndex));
-            Assert.That(progress.currentStepIndex, Is.EqualTo(CoreFindCatTutorialSteps.LastIndex));
-            Assert.That(progress.currentStepId, Is.EqualTo(CoreFindCatTutorialSteps.HelpStepId));
-        }
-
-        [Test]
-        public void CoreFindCatTutorialProgressStore_SaveAsync_DoesNotDowngradeExistingCompletedProgress()
-        {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-
-            store.SaveCompletedAsync(200L, CoreFindCatTutorialSteps.HelpStepId)
-                .GetAwaiter()
-                .GetResult();
-            store.SaveAsync(new CoreFindCatTutorialProgress
+            return RunAsync(async () =>
             {
-                started = true,
-                completed = false,
-                currentStepIndex = 0,
-                currentStepId = CoreFindCatTutorialSteps.FindFirstCatStepId,
-            }).GetAwaiter().GetResult();
+                var persistence = new InMemoryPersistence();
+                await persistence.SaveAsync(CoreFindCatTutorialProgressStore.PersistenceKey, Encoding.UTF8.GetBytes("{bad json"));
+                var store = new CoreFindCatTutorialProgressStore(persistence);
 
-            CoreFindCatTutorialProgress progress = store.LoadAsync().GetAwaiter().GetResult();
-            Assert.That(progress.completed, Is.True);
-            Assert.That(progress.currentStepId, Is.EqualTo(CoreFindCatTutorialSteps.HelpStepId));
-            Assert.That(progress.completedAtUtcMilliseconds, Is.EqualTo(200L));
+                CoreFindCatTutorialProgress progress = await store.LoadAsync();
+
+                Assert.That(progress.completed, Is.False);
+                Assert.That(progress.lastStepId, Is.Empty);
+                Assert.That(progress.currentStepIndex, Is.EqualTo(-1));
+            });
         }
 
-        [Test]
-        public void CoreFindCatTutorialProgressService_StepIndexOnlyMovesForwardUnlessForced()
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialProgressStore_SaveCompletedRoundTrips()
         {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-            var service = new CoreFindCatTutorialProgressService(store);
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
 
-            service.MarkStartedAsync(4, CoreFindCatTutorialSteps.EnergyStepId, force: false)
-                .GetAwaiter()
-                .GetResult();
-            service.MarkCurrentStepAsync(1, CoreFindCatTutorialSteps.TaskBarStepId)
-                .GetAwaiter()
-                .GetResult();
-            service.MarkStartedAsync(1, CoreFindCatTutorialSteps.TaskBarStepId, force: true)
-                .GetAwaiter()
-                .GetResult();
+                await store.SaveCompletedAsync(123L, "help");
+                CoreFindCatTutorialProgress progress = await store.LoadAsync();
 
-            CoreFindCatTutorialProgress progress = service.LoadAsync().GetAwaiter().GetResult();
-            Assert.That(progress.completed, Is.False);
-            Assert.That(progress.currentStepIndex, Is.EqualTo(1));
-            Assert.That(progress.currentStepId, Is.EqualTo(CoreFindCatTutorialSteps.TaskBarStepId));
+                Assert.That(progress.completed, Is.True);
+                Assert.That(progress.completedAtUtcMilliseconds, Is.EqualTo(123L));
+                Assert.That(progress.lastStepId, Is.EqualTo("help"));
+            });
         }
 
-        [Test]
-        public void CoreFindCatTutorialProgressService_NormalBoardHintDismissDoesNotCompleteTutorial()
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialProgressService_CompletedCannotBeDowngradedByLaterStepSave()
         {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-            var service = new CoreFindCatTutorialProgressService(store);
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
+                var service = new CoreFindCatTutorialProgressService(store);
 
-            service.MarkNormalBoardHintDismissedAsync().GetAwaiter().GetResult();
+                await service.MarkCompletedAsync(CoreFindCatTutorialSteps.LastIndex, CoreFindCatTutorialSteps.HelpStepId, 200L);
+                await service.MarkCurrentStepAsync(0, CoreFindCatTutorialSteps.FindFirstCatStepId);
 
-            CoreFindCatTutorialProgress progress = service.LoadAsync().GetAwaiter().GetResult();
-            Assert.That(progress.dismissedNormalBoardHint, Is.True);
-            Assert.That(progress.completed, Is.False);
-            Assert.That(progress.skipped, Is.False);
+                CoreFindCatTutorialProgress progress = await service.LoadAsync();
+                Assert.That(progress.completed, Is.True);
+                Assert.That(progress.completedStepIndex, Is.EqualTo(CoreFindCatTutorialSteps.LastIndex));
+                Assert.That(progress.currentStepIndex, Is.EqualTo(CoreFindCatTutorialSteps.LastIndex));
+                Assert.That(progress.currentStepId, Is.EqualTo(CoreFindCatTutorialSteps.HelpStepId));
+            });
         }
 
-        [Test]
-        public void CoreFindCatTutorialCoordinator_PrepareAutoStart_ResumesPostTutorialBoardStepsOnNormalBoard()
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialProgressStore_SaveAsync_DoesNotDowngradeExistingCompletedProgress()
         {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-            var service = new CoreFindCatTutorialProgressService(store);
-            service.MarkCurrentStepAsync(
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
+
+                await store.SaveCompletedAsync(200L, CoreFindCatTutorialSteps.HelpStepId);
+                await store.SaveAsync(new CoreFindCatTutorialProgress
+                {
+                    started = true,
+                    completed = false,
+                    currentStepIndex = 0,
+                    currentStepId = CoreFindCatTutorialSteps.FindFirstCatStepId,
+                });
+
+                CoreFindCatTutorialProgress progress = await store.LoadAsync();
+                Assert.That(progress.completed, Is.True);
+                Assert.That(progress.currentStepId, Is.EqualTo(CoreFindCatTutorialSteps.HelpStepId));
+                Assert.That(progress.completedAtUtcMilliseconds, Is.EqualTo(200L));
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialProgressService_StepIndexOnlyMovesForwardUnlessForced()
+        {
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
+                var service = new CoreFindCatTutorialProgressService(store);
+
+                await service.MarkStartedAsync(4, CoreFindCatTutorialSteps.EnergyStepId, force: false);
+                await service.MarkCurrentStepAsync(1, CoreFindCatTutorialSteps.TaskBarStepId);
+                await service.MarkStartedAsync(1, CoreFindCatTutorialSteps.TaskBarStepId, force: true);
+
+                CoreFindCatTutorialProgress progress = await service.LoadAsync();
+                Assert.That(progress.completed, Is.False);
+                Assert.That(progress.currentStepIndex, Is.EqualTo(1));
+                Assert.That(progress.currentStepId, Is.EqualTo(CoreFindCatTutorialSteps.TaskBarStepId));
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialProgressService_NormalBoardHintDismissDoesNotCompleteTutorial()
+        {
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
+                var service = new CoreFindCatTutorialProgressService(store);
+
+                await service.MarkNormalBoardHintDismissedAsync();
+
+                CoreFindCatTutorialProgress progress = await service.LoadAsync();
+                Assert.That(progress.dismissedNormalBoardHint, Is.True);
+                Assert.That(progress.completed, Is.False);
+                Assert.That(progress.skipped, Is.False);
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialCoordinator_PrepareAutoStart_ResumesPostTutorialBoardStepsOnNormalBoard()
+        {
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
+                var service = new CoreFindCatTutorialProgressService(store);
+                await service.MarkCurrentStepAsync(
                     CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId),
-                    CoreFindCatTutorialSteps.EnergyStepId)
-                .GetAwaiter()
-                .GetResult();
-            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
-            var context = new HolmasApplicationContext(
-                null,
-                new NullLogger(),
-                null,
-                null,
-                null,
-                runtime);
-            var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+                    CoreFindCatTutorialSteps.EnergyStepId);
+                HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+                var context = new HolmasApplicationContext(
+                    null,
+                    new NullLogger(),
+                    null,
+                    null,
+                    null,
+                    runtime);
+                var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
 
-            CoreFindCatTutorialLaunchResult result = coordinator.PrepareAutoStartAsync(context).GetAwaiter().GetResult();
+                CoreFindCatTutorialLaunchResult result = await coordinator.PrepareAutoStartAsync(context);
 
-            Assert.That(result.ShouldShowOverlay, Is.True);
-            Assert.That(result.ShouldAutoStartNormal, Is.False);
-            Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.FullTutorial));
-            Assert.That(result.Payload.CanWriteCompletion, Is.True);
-            Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId)));
-            Assert.That(result.Payload.TutorialBoardObjectiveSatisfied, Is.True);
+                Assert.That(result.ShouldShowOverlay, Is.True);
+                Assert.That(result.ShouldAutoStartNormal, Is.False);
+                Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.FullTutorial));
+                Assert.That(result.Payload.CanWriteCompletion, Is.True);
+                Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.EnergyStepId)));
+                Assert.That(result.Payload.TutorialBoardObjectiveSatisfied, Is.True);
+            });
         }
 
-        [Test]
-        public void CoreFindCatTutorialCoordinator_PrepareAutoStart_CompletedTutorialAutoStartsNormalBoard()
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialCoordinator_PrepareAutoStart_CompletedTutorialAutoStartsNormalBoard()
         {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-            var service = new CoreFindCatTutorialProgressService(store);
-            service.MarkCompletedAsync(CoreFindCatTutorialSteps.LastIndex, CoreFindCatTutorialSteps.HelpStepId, 300L)
-                .GetAwaiter()
-                .GetResult();
-            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
-            var context = new HolmasApplicationContext(
-                null,
-                new NullLogger(),
-                null,
-                null,
-                null,
-                runtime);
-            var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
+                var service = new CoreFindCatTutorialProgressService(store);
+                await service.MarkCompletedAsync(CoreFindCatTutorialSteps.LastIndex, CoreFindCatTutorialSteps.HelpStepId, 300L);
+                HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+                var context = new HolmasApplicationContext(
+                    null,
+                    new NullLogger(),
+                    null,
+                    null,
+                    null,
+                    runtime);
+                var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
 
-            CoreFindCatTutorialLaunchResult result = coordinator.PrepareAutoStartAsync(context).GetAwaiter().GetResult();
+                CoreFindCatTutorialLaunchResult result = await coordinator.PrepareAutoStartAsync(context);
 
-            Assert.That(result.ShouldAutoStartNormal, Is.True);
-            Assert.That(result.ShouldShowOverlay, Is.False);
-            Assert.That(result.Payload, Is.Null);
+                Assert.That(result.ShouldAutoStartNormal, Is.True);
+                Assert.That(result.ShouldShowOverlay, Is.False);
+                Assert.That(result.Payload, Is.Null);
+            });
         }
 
-        [Test]
-        public void CoreFindCatTutorialCoordinator_PrepareAutoStart_ForcesTutorialBoardOverActiveNormalBoard()
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialCoordinator_PrepareAutoStart_ForcesTutorialBoardOverActiveNormalBoard()
         {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-            var service = new CoreFindCatTutorialProgressService(store);
-            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
-            var context = CreateContext(runtime, new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
-            var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
+                var service = new CoreFindCatTutorialProgressService(store);
+                HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+                var context = CreateContext(runtime, new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
+                var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
 
-            CoreFindCatTutorialLaunchResult result = coordinator.PrepareAutoStartAsync(context).GetAwaiter().GetResult();
+                CoreFindCatTutorialLaunchResult result = await coordinator.PrepareAutoStartAsync(context);
 
-            Assert.That(result.ShouldShowOverlay, Is.True);
-            Assert.That(result.ShouldAutoStartNormal, Is.False);
-            Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.FullTutorial));
-            Assert.That(result.Payload.CanWriteCompletion, Is.True);
-            Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(0));
-            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
-            Assert.That(new MainPresenter(context).Build().UseTutorialBoardLayer, Is.True);
+                Assert.That(result.ShouldShowOverlay, Is.True);
+                Assert.That(result.ShouldAutoStartNormal, Is.False);
+                Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.FullTutorial));
+                Assert.That(result.Payload.CanWriteCompletion, Is.True);
+                Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(0));
+                Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
+                Assert.That(new MainPresenter(context).Build().UseTutorialBoardLayer, Is.True);
+            });
         }
 
-        [Test]
-        public void CoreFindCatTutorialCoordinator_PrepareManualStart_StartsTutorialBoardForEarlySteps()
+        [UnityTest]
+        public IEnumerator CoreFindCatTutorialCoordinator_PrepareManualStart_StartsTutorialBoardForEarlySteps()
         {
-            var persistence = new InMemoryPersistence();
-            var store = new CoreFindCatTutorialProgressStore(persistence);
-            var service = new CoreFindCatTutorialProgressService(store);
-            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
-            var context = CreateContext(runtime, new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
-            var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
-            int stepIndex = CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
+            return RunAsync(async () =>
+            {
+                var persistence = new InMemoryPersistence();
+                var store = new CoreFindCatTutorialProgressStore(persistence);
+                var service = new CoreFindCatTutorialProgressService(store);
+                HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+                var context = CreateContext(runtime, new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)));
+                var coordinator = new CoreFindCatTutorialCoordinator(service, new CoreFindCatTutorialLevelService());
+                int stepIndex = CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
 
-            CoreFindCatTutorialLaunchResult result = coordinator.PrepareManualStartAsync(context, stepIndex, debugForceStep: true)
-                .GetAwaiter()
-                .GetResult();
+                CoreFindCatTutorialLaunchResult result =
+                    await coordinator.PrepareManualStartAsync(context, stepIndex, debugForceStep: true);
 
-            Assert.That(result.ShouldShowOverlay, Is.True);
-            Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.DebugStartAtStep));
-            Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(stepIndex));
-            Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
+                Assert.That(result.ShouldShowOverlay, Is.True);
+                Assert.That(result.Payload.RunMode, Is.EqualTo(TutorialRunMode.DebugStartAtStep));
+                Assert.That(result.Payload.InitialStepIndex, Is.EqualTo(stepIndex));
+                Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo(CoreFindCatTutorialBoardDefinition.MapId));
+            });
         }
 
         [Test]
@@ -329,6 +343,25 @@ namespace Holmas.Tests
                 Assert.That(visual, Is.Not.Null, $"Missing tutorial visual entry for {step.StepId}.");
                 Assert.That(visual.MainImagePath, Does.StartWith("Assets/HotUpdateContent/Res/"));
                 Assert.That(AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(visual.MainImagePath), Is.Not.Null);
+            }
+        }
+
+        private static IEnumerator RunAsync(Func<Task> action)
+        {
+            Task task = action();
+            while (!task.IsCompleted)
+            {
+                yield return null;
+            }
+
+            if (task.IsFaulted)
+            {
+                throw task.Exception?.GetBaseException() ?? task.Exception;
+            }
+
+            if (task.IsCanceled)
+            {
+                throw new OperationCanceledException("Async Unity test was canceled.");
             }
         }
 

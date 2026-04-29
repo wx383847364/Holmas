@@ -9,11 +9,13 @@ using UnityEngine.TestTools.TestRunner.GUI;
 public static class HolmasEditModeTestRunner
 {
     private static TestRunResult s_LastResult;
+    private static string s_CurrentTestName = string.Empty;
 
     [MenuItem("Holmas/Validation/Run Holmas EditMode Tests")]
     public static void RunHolmasEditModeTests()
     {
         s_LastResult = null;
+        s_CurrentTestName = string.Empty;
 
         var api = ScriptableObject.CreateInstance<TestRunnerApi>();
         api.RegisterCallbacks(new ResultCallbacks());
@@ -54,6 +56,7 @@ public static class HolmasEditModeTestRunner
     {
         public void RunStarted(ITestAdaptor testsToRun)
         {
+            Debug.Log($"Holmas EditMode tests started. total={testsToRun?.TestCaseCount ?? 0}");
         }
 
         public void RunFinished(ITestResultAdaptor result)
@@ -76,10 +79,18 @@ public static class HolmasEditModeTestRunner
 
         public void TestStarted(ITestAdaptor test)
         {
+            s_CurrentTestName = test?.FullName ?? test?.Name ?? string.Empty;
+            Debug.Log($"Holmas EditMode test started: {s_CurrentTestName}");
         }
 
         public void TestFinished(ITestResultAdaptor result)
         {
+            string testName = result?.Test?.FullName ?? result?.Name ?? string.Empty;
+            Debug.Log($"Holmas EditMode test finished: {testName} status={result?.TestStatus}");
+            if (string.Equals(testName, s_CurrentTestName, StringComparison.Ordinal))
+            {
+                s_CurrentTestName = string.Empty;
+            }
         }
     }
 

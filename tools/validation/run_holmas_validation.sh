@@ -153,6 +153,7 @@ fi
 
 EDITMODE_LOG="${LOG_DIR}/${LOG_PREFIX}_editmode.log"
 SMOKE_LOG="${LOG_DIR}/${LOG_PREFIX}_smoke.log"
+BATCHMODE_TIMEOUT_SECONDS="${HOLMAS_VALIDATION_TIMEOUT_SECONDS:-900}"
 
 log "使用编辑器：${EDITOR_PATH}"
 log "准备临时工程：${TEMP_PROJECT_DIR}"
@@ -170,7 +171,24 @@ run_batchmode() {
     local method="$1"
     local log_file="$2"
 
-    env -i \
+    perl -e '
+        my $timeout = shift @ARGV;
+        my $pid = fork();
+        die "fork failed: $!\n" unless defined $pid;
+        if ($pid == 0) {
+            exec @ARGV or die "exec failed: $!\n";
+        }
+        $SIG{ALRM} = sub {
+            kill "TERM", $pid;
+            sleep 2;
+            kill "KILL", $pid;
+            exit 124;
+        };
+        alarm $timeout;
+        waitpid($pid, 0);
+        exit($? >> 8);
+    ' "${BATCHMODE_TIMEOUT_SECONDS}" \
+        env -i \
         HOME="${HOME}" \
         PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
         LANG="en_US.UTF-8" \
