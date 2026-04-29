@@ -11,10 +11,10 @@ def write_core_package(package: CoreConfigPackage) -> bytes:
     _write_int32(stream, CORE_MAGIC)
     _write_int32(stream, CURRENT_VERSION)
     _write_int32(stream, package.version)
-    _write_map_rows(stream, package.maps)
-    _write_task_rows(stream, package.tasks)
-    _write_player_level_rows(stream, package.player_levels)
-    _write_agency_building_rows(stream, package.agency_buildings)
+    _write_map_rows(stream, package.holmas_map_table)
+    _write_task_rows(stream, package.holmas_task_table)
+    _write_player_level_rows(stream, package.holmas_player_level_table)
+    _write_agency_building_table_rows(stream, package.holmas_agency_building_table)
     return stream.getvalue()
 
 
@@ -23,7 +23,7 @@ def write_cat_meta_package(package: CatMetaPackage) -> bytes:
     _write_int32(stream, CAT_META_MAGIC)
     _write_int32(stream, CURRENT_VERSION)
     _write_int32(stream, package.version)
-    _write_cat_rows(stream, package.cats)
+    _write_cat_rows(stream, package.holmas_cat_table)
     return stream.getvalue()
 
 
@@ -52,7 +52,7 @@ def _write_task_rows(stream: BytesIO, rows) -> None:
     for row in rows:
         _write_string(stream, row.task_type_id)
         _write_byte(stream, row.task_kind)
-        _write_int_array(stream, row.cat_indices)
+        _write_string_array(stream, row.cat_id_list)
         _write_int32(stream, row.count_min)
         _write_int32(stream, row.count_max)
         _write_int_array(stream, row.reward_values)
@@ -63,24 +63,27 @@ def _write_player_level_rows(stream: BytesIO, rows) -> None:
     _write_int32(stream, len(rows))
     for row in rows:
         _write_int32(stream, row.player_level)
-        _write_int32(stream, row.upgrade_exp)
+        _write_int32(stream, row.min_experience)
         _write_int32(stream, row.offline_reward_per_hour)
         _write_int32(stream, row.ad_unlock_hours)
-        _write_int_array(stream, row.task_type_indices)
+        _write_string_array(stream, row.task_type_ids)
         _write_int_array(stream, row.task_type_weights)
-        _write_int_array(stream, row.map_indices)
+        _write_string_array(stream, row.map_ids)
         _write_int_array(stream, row.map_weights)
-def _write_agency_building_rows(stream: BytesIO, rows) -> None:
+
+
+def _write_agency_building_table_rows(stream: BytesIO, rows) -> None:
     _write_int32(stream, len(rows))
     for row in rows:
         _write_int32(stream, row.agency_stage_id)
         _write_string(stream, row.stage_name)
         _write_string_array(stream, row.promotion_ids)
         _write_int_array(stream, row.promotion_level_caps)
-        _write_building_cost_rows(stream, row.promotion_upgrade_costs)
+        _write_agency_building_table_cost_rows(stream, row.promotion_upgrade_costs)
+        _write_string(stream, row.notes)
 
 
-def _write_building_cost_rows(stream: BytesIO, rows) -> None:
+def _write_agency_building_table_cost_rows(stream: BytesIO, rows) -> None:
     _write_int32(stream, len(rows))
     for row in rows:
         _write_int_array(stream, row.costs)

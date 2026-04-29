@@ -9,10 +9,10 @@ from typing import Iterable
 from .binary_codec import write_cat_meta_package, write_core_package
 from .models import (
     CURRENT_VERSION,
-    AgencyBuildingCostRow,
-    AgencyBuildingCostSheetRow,
-    AgencyBuildingRow,
-    AgencyBuildingSheetRow,
+    AgencyBuildingTableCostRow,
+    AgencyBuildingTableCostSheetRow,
+    AgencyBuildingTableRow,
+    AgencyBuildingTableSheetRow,
     BundleReport,
     CatMetaPackage,
     CatMetaRow,
@@ -175,7 +175,7 @@ def _load_player_level_table(report: ExportReport, repo_root: Path, config_root:
     )
 
 
-def _load_agency_building_table(report: ExportReport, repo_root: Path, config_root: Path) -> list[AgencyBuildingSheetRow]:
+def _load_agency_building_table(report: ExportReport, repo_root: Path, config_root: Path) -> list[AgencyBuildingTableSheetRow]:
     return _load_sheet(
         report,
         repo_root,
@@ -376,10 +376,8 @@ def _parse_tasks(report: ExportReport, source_path: str, rows: list[list[str]], 
 
 def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list[str]], header_map: dict[str, int]) -> list[PlayerLevelSheetRow]:
     player_level_col = _require_column(report, source_path, header_map, "playerLevel")
-    upgrade_exp_col = _get_optional_column(header_map, "upgradeExp")
-    min_experience_col = _get_optional_column(header_map, "minExperience")
-    if upgrade_exp_col < 0:
-        upgrade_exp_col = min_experience_col
+    legacy_upgrade_exp_col = _get_optional_column(header_map, "upgradeExp")
+    min_experience_col = _require_column(report, source_path, header_map, "minExperience")
     offline_reward_per_hour_col = _require_column(report, source_path, header_map, "offlineRewardPerHour")
     ad_unlock_hours_col = _require_column(report, source_path, header_map, "adUnlockHours")
     notes_col = _get_optional_column(header_map, "notes")
@@ -388,8 +386,8 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
     map_ids_col = _require_column(report, source_path, header_map, "mapIds")
     map_weights_col = _require_column(report, source_path, header_map, "mapWeights")
 
-    if upgrade_exp_col < 0:
-        report.errors.append(f"{source_path}: 缺少 upgradeExp/minExperience 列。Holmas_PlayerLevelTable 合并成长字段后必须提供升级门槛列。")
+    if legacy_upgrade_exp_col >= 0:
+        report.errors.append(f"{source_path}: 检测到旧技术表头 upgradeExp。Holmas_PlayerLevelTable 必须使用 minExperience。")
         return []
 
     items: list[PlayerLevelSheetRow] = []
@@ -399,14 +397,13 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
             continue
 
         player_level, level_ok = _try_parse_int(_get_cell(row, player_level_col))
-        upgrade_exp, upgrade_exp_ok = _try_parse_int(_get_cell(row, upgrade_exp_col))
         min_experience, min_experience_ok = _try_parse_int(_get_cell(row, min_experience_col))
         offline_reward_per_hour, offline_ok = _try_parse_int(_get_cell(row, offline_reward_per_hour_col))
         ad_unlock_hours, ad_ok = _try_parse_int(_get_cell(row, ad_unlock_hours_col))
         item = PlayerLevelSheetRow(
             row_index=len(items),
             player_level=player_level,
-            upgrade_exp=upgrade_exp,
+            min_experience=min_experience,
             offline_reward_per_hour=offline_reward_per_hour,
             ad_unlock_hours=ad_unlock_hours,
             notes=_get_cell(row, notes_col),
@@ -419,16 +416,9 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
         if not level_ok:
             report.errors.append(f"{source_path} 第 {row_index + 1} 行 playerLevel 无法解析。")
             continue
-        if not upgrade_exp_ok:
-            report.errors.append(f"{source_path} 第 {row_index + 1} 行 upgradeExp 无法解析。")
+        if not min_experience_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 minExperience 无法解析。")
             continue
-        if upgrade_exp_col >= 0 and min_experience_col >= 0:
-            if not min_experience_ok:
-                report.errors.append(f"{source_path} 第 {row_index + 1} 行 minExperience 无法解析。")
-                continue
-            if upgrade_exp != min_experience:
-                report.errors.append(f"{source_path} 第 {row_index + 1} 行 upgradeExp 与 minExperience 不一致。")
-                continue
         if not offline_ok:
             report.errors.append(f"{source_path} 第 {row_index + 1} 行 offlineRewardPerHour 无法解析。")
             continue
@@ -453,7 +443,7 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
     return items
 
 
-def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[list[str]], header_map: dict[str, int]) -> list[AgencyBuildingSheetRow]:
+def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[list[str]], header_map: dict[str, int]) -> list[AgencyBuildingTableSheetRow]:
     stage_id_col = _require_column(report, source_path, header_map, "agencyStageId")
     stage_name_col = _require_column(report, source_path, header_map, "stageName")
     promotion_ids_col = _require_column(report, source_path, header_map, "promotionIds")
@@ -461,7 +451,7 @@ def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[l
     promotion_costs_col = _require_column(report, source_path, header_map, "promotionUpgradeCosts")
     notes_col = _get_optional_column(header_map, "notes")
 
-    items: list[AgencyBuildingSheetRow] = []
+    items: list[AgencyBuildingTableSheetRow] = []
     for row_index in range(2, len(rows)):
         row = rows[row_index]
         if _is_blank_row(row):
@@ -472,7 +462,7 @@ def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[l
         promotion_level_caps = _parse_int_array_strict(_get_cell(row, promotion_caps_col), source_path, row_index + 1, report)
         promotion_upgrade_costs = _parse_nested_int_arrays(_get_cell(row, promotion_costs_col), source_path, row_index + 1, report)
 
-        item = AgencyBuildingSheetRow(
+        item = AgencyBuildingTableSheetRow(
             row_index=len(items),
             agency_stage_id=stage_id,
             stage_name=_get_cell(row, stage_name_col),
@@ -610,11 +600,11 @@ def _validate_player_level_table(report: ExportReport, player_rows: list[PlayerL
             report.errors.append(f"Holmas_PlayerLevelTable 存在重复 playerLevel: {player_row.player_level}。")
             return
         seen_player_levels.add(player_row.player_level)
-        if player_row.upgrade_exp < 0:
-            report.errors.append(f"Holmas_PlayerLevelTable 的 upgradeExp 不能为负: level={player_row.player_level}。")
+        if player_row.min_experience < 0:
+            report.errors.append(f"Holmas_PlayerLevelTable 的 minExperience 不能为负: level={player_row.player_level}。")
             return
-        if index > 0 and player_row.upgrade_exp <= player_rows[index - 1].upgrade_exp:
-            report.errors.append(f"Holmas_PlayerLevelTable 的 upgradeExp 必须严格递增: level={player_row.player_level}。")
+        if index > 0 and player_row.min_experience <= player_rows[index - 1].min_experience:
+            report.errors.append(f"Holmas_PlayerLevelTable 的 minExperience 必须严格递增: level={player_row.player_level}。")
             return
         if player_row.offline_reward_per_hour < 0:
             report.errors.append(f"Holmas_PlayerLevelTable 的 offlineRewardPerHour 不能为负: level={player_row.player_level}。")
@@ -624,12 +614,9 @@ def _validate_player_level_table(report: ExportReport, player_rows: list[PlayerL
             return
 
 
-def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuildingSheetRow]) -> None:
+def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuildingTableSheetRow]) -> None:
     if not rows:
         report.errors.append("缺少 Holmas_AgencyBuildingTable 数据。")
-        return
-    if len(rows) != 100:
-        report.errors.append(f"Holmas_AgencyBuildingTable 行数必须为 100，当前为 {len(rows)}。")
         return
 
     seen_stage_ids: set[int] = set()
@@ -659,17 +646,32 @@ def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuild
         if len(row.promotion_upgrade_costs) != len(row.promotion_ids):
             report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 promotionIds 与 promotionUpgradeCosts 长度不一致。")
             return
+        for promotion_index, promotion_id in enumerate(row.promotion_ids):
+            if not promotion_id:
+                report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的第 {promotion_index + 1} 个 promotionId 为空。")
+                return
+            level_cap = row.promotion_level_caps[promotion_index]
+            if level_cap <= 0:
+                report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id}/{promotion_id} 的 promotionLevelCaps 必须大于 0。")
+                return
+            costs = row.promotion_upgrade_costs[promotion_index].costs
+            if len(costs) != level_cap:
+                report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id}/{promotion_id} 的 promotionUpgradeCosts 长度必须等于 cap={level_cap}，当前为 {len(costs)}。")
+                return
+            if any(cost <= 0 for cost in costs):
+                report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id}/{promotion_id} 的升级费用必须全部大于 0。")
+                return
 
 
 def _build_core_package(
     map_rows: list[MapSheetRow],
     task_rows: list[TaskSheetRow],
     player_level_rows: list[PlayerLevelSheetRow],
-    agency_building_rows: list[AgencyBuildingSheetRow],
+    agency_building_rows: list[AgencyBuildingTableSheetRow],
 ) -> CoreConfigPackage:
     return CoreConfigPackage(
         version=CURRENT_VERSION,
-        maps=[
+        holmas_map_table=[
             MapRow(
                 map_id=row.map_id,
                 terrain_path=row.terrain_path,
@@ -678,11 +680,11 @@ def _build_core_package(
             )
             for row in map_rows
         ],
-        tasks=[
+        holmas_task_table=[
             TaskRow(
                 task_type_id=row.task_type_id,
                 task_kind=row.task_kind_code,
-                cat_indices=list(row.cat_indices),
+                cat_id_list=list(row.cat_id_list),
                 count_min=row.count_min,
                 count_max=row.count_max,
                 reward_values=list(row.reward_array),
@@ -690,27 +692,27 @@ def _build_core_package(
             )
             for row in task_rows
         ],
-        player_levels=[
+        holmas_player_level_table=[
             PlayerLevelRow(
                 player_level=row.player_level,
-                upgrade_exp=row.upgrade_exp,
+                min_experience=row.min_experience,
                 offline_reward_per_hour=row.offline_reward_per_hour,
                 ad_unlock_hours=row.ad_unlock_hours,
-                task_type_indices=list(row.task_type_indices),
+                task_type_ids=list(row.task_type_ids),
                 task_type_weights=list(row.task_type_weights),
-                map_indices=list(row.map_indices),
+                map_ids=list(row.map_ids),
                 map_weights=list(row.map_weights),
             )
             for row in player_level_rows
         ],
-        agency_buildings=[
-            AgencyBuildingRow(
+        holmas_agency_building_table=[
+            AgencyBuildingTableRow(
                 agency_stage_id=row.agency_stage_id,
                 stage_name=row.stage_name,
                 promotion_ids=list(row.promotion_ids),
                 promotion_level_caps=list(row.promotion_level_caps),
                 promotion_upgrade_costs=[
-                    AgencyBuildingCostRow(costs=list(cost_row.costs))
+                    AgencyBuildingTableCostRow(costs=list(cost_row.costs))
                     for cost_row in row.promotion_upgrade_costs
                 ],
                 notes=row.notes,
@@ -723,7 +725,7 @@ def _build_core_package(
 def _build_cat_package(cat_rows: list[CatSheetRow]) -> CatMetaPackage:
     return CatMetaPackage(
         version=CURRENT_VERSION,
-        cats=[
+        holmas_cat_table=[
             CatMetaRow(
                 cat_id=row.cat_id,
                 cat_name=row.cat_name,
@@ -747,11 +749,10 @@ def _build_header_map(report: ExportReport, source_path: str, header_row: list[s
         header_text = (header or "").strip()
         if not header_text:
             continue
-        header_key = header_text.lower()
-        if header_key in header_map:
+        if header_text in header_map:
             report.errors.append(f"{source_path} 存在重复字段名: {header_text}")
             continue
-        header_map[header_key] = index
+        header_map[header_text] = index
 
     return header_map
 
@@ -764,7 +765,7 @@ def _require_column(report: ExportReport, source_path: str, header_map: dict[str
 
 
 def _get_optional_column(header_map: dict[str, int], column_name: str) -> int:
-    return header_map.get(column_name.lower(), -1)
+    return header_map.get(column_name, -1)
 
 
 def _get_cell(row: list[str] | None, index: int) -> str:
@@ -837,7 +838,7 @@ def _parse_int_array_strict(text: str, source_path: str, row_number: int, report
     return values
 
 
-def _parse_nested_int_arrays(text: str, source_path: str, row_number: int, report: ExportReport) -> list[AgencyBuildingCostSheetRow]:
+def _parse_nested_int_arrays(text: str, source_path: str, row_number: int, report: ExportReport) -> list[AgencyBuildingTableCostSheetRow]:
     if not text or not text.strip():
         return []
 
@@ -846,7 +847,7 @@ def _parse_nested_int_arrays(text: str, source_path: str, row_number: int, repor
         for item in text.replace("｜", "|").split("|")
         if item.strip()
     ]
-    rows: list[AgencyBuildingCostSheetRow] = []
+    rows: list[AgencyBuildingTableCostSheetRow] = []
     for segment_index, segment in enumerate(segments, start=1):
         parts = [
             item.strip()
@@ -859,7 +860,7 @@ def _parse_nested_int_arrays(text: str, source_path: str, row_number: int, repor
                 costs.append(int(part))
             except ValueError:
                 report.errors.append(f"{source_path} 第 {row_number} 行第 {segment_index} 段升级费用无法解析为整数: {part}")
-        rows.append(AgencyBuildingCostSheetRow(costs=costs))
+        rows.append(AgencyBuildingTableCostSheetRow(costs=costs))
     return rows
 
 

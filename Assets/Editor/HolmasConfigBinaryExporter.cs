@@ -268,7 +268,7 @@ namespace Holmas.EditorTools
             }
 
             var headerMap = BuildHeaderMap(report, path, rows[1]);
-            return new SheetTable<HolmasAgencyBuildingSheetRow>(tableName, ParseAgencyBuildings(report, path, rows, headerMap));
+            return new SheetTable<HolmasAgencyBuildingSheetRow>(tableName, ParseAgencyBuildingTable(report, path, rows, headerMap));
         }
 
         private static List<HolmasMapSheetRow> ParseMaps(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
@@ -538,11 +538,7 @@ namespace Holmas.EditorTools
         {
             int playerLevelCol = RequireColumn(report, sourcePath, headerMap, "playerLevel");
             int upgradeExpCol = GetOptionalColumn(headerMap, "upgradeExp");
-            int minExperienceCol = GetOptionalColumn(headerMap, "minExperience");
-            if (upgradeExpCol < 0)
-            {
-                upgradeExpCol = minExperienceCol;
-            }
+            int minExperienceCol = RequireColumn(report, sourcePath, headerMap, "minExperience");
             int offlineRewardPerHourCol = RequireColumn(report, sourcePath, headerMap, "offlineRewardPerHour");
             int adUnlockHoursCol = RequireColumn(report, sourcePath, headerMap, "adUnlockHours");
             int notesCol = GetOptionalColumn(headerMap, "notes");
@@ -551,9 +547,14 @@ namespace Holmas.EditorTools
             int mapIdsCol = RequireColumn(report, sourcePath, headerMap, "mapIds");
             int mapWeightsCol = RequireColumn(report, sourcePath, headerMap, "mapWeights");
 
-            if (upgradeExpCol < 0)
+            if (upgradeExpCol >= 0)
             {
-                report.Errors.Add($"{sourcePath}: 缺少 upgradeExp/minExperience 列。Holmas_PlayerLevelTable 合并成长字段后必须提供升级门槛列。");
+                report.Errors.Add($"{sourcePath}: 检测到旧技术表头 upgradeExp。Holmas_PlayerLevelTable 必须使用 minExperience。");
+                return new List<HolmasPlayerLevelSheetRow>();
+            }
+
+            if (minExperienceCol < 0)
+            {
                 return new List<HolmasPlayerLevelSheetRow>();
             }
 
@@ -568,8 +569,6 @@ namespace Holmas.EditorTools
 
                 int playerLevel;
                 bool levelOk = TryParseInt(GetCell(row, playerLevelCol), out playerLevel);
-                int upgradeExp;
-                bool upgradeExpOk = TryParseInt(GetCell(row, upgradeExpCol), out upgradeExp);
                 int minExperience;
                 bool minExperienceOk = TryParseInt(GetCell(row, minExperienceCol), out minExperience);
                 int offlineRewardPerHour;
@@ -581,7 +580,7 @@ namespace Holmas.EditorTools
                 {
                     RowIndex = list.Count,
                     PlayerLevel = playerLevel,
-                    UpgradeExp = upgradeExp,
+                    MinExperience = minExperience,
                     OfflineRewardPerHour = offlineRewardPerHour,
                     AdUnlockHours = adUnlockHours,
                     Notes = GetCell(row, notesCol),
@@ -597,25 +596,10 @@ namespace Holmas.EditorTools
                     continue;
                 }
 
-                if (!upgradeExpOk)
+                if (!minExperienceOk)
                 {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 upgradeExp 无法解析。");
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 minExperience 无法解析。");
                     continue;
-                }
-
-                if (upgradeExpCol >= 0 && minExperienceCol >= 0)
-                {
-                    if (!minExperienceOk)
-                    {
-                        report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 minExperience 无法解析。");
-                        continue;
-                    }
-
-                    if (upgradeExp != minExperience)
-                    {
-                        report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 upgradeExp 与 minExperience 不一致。");
-                        continue;
-                    }
                 }
 
                 if (!offlineOk)
@@ -660,7 +644,7 @@ namespace Holmas.EditorTools
             return list;
         }
 
-        private static List<HolmasAgencyBuildingSheetRow> ParseAgencyBuildings(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        private static List<HolmasAgencyBuildingSheetRow> ParseAgencyBuildingTable(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int stageIdCol = RequireColumn(report, sourcePath, headerMap, "agencyStageId");
             int stageNameCol = RequireColumn(report, sourcePath, headerMap, "stageName");
@@ -776,15 +760,15 @@ namespace Holmas.EditorTools
                     return;
                 }
 
-                if (playerRow.UpgradeExp < 0)
+                if (playerRow.MinExperience < 0)
                 {
-                    report.Errors.Add($"Holmas_PlayerLevelTable 的 upgradeExp 不能为负: level={playerRow.PlayerLevel}。");
+                    report.Errors.Add($"Holmas_PlayerLevelTable 的 minExperience 不能为负: level={playerRow.PlayerLevel}。");
                     return;
                 }
 
-                if (i > 0 && playerRows[i - 1] != null && playerRow.UpgradeExp <= playerRows[i - 1].UpgradeExp)
+                if (i > 0 && playerRows[i - 1] != null && playerRow.MinExperience <= playerRows[i - 1].MinExperience)
                 {
-                    report.Errors.Add($"Holmas_PlayerLevelTable 的 upgradeExp 必须严格递增: level={playerRow.PlayerLevel}。");
+                    report.Errors.Add($"Holmas_PlayerLevelTable 的 minExperience 必须严格递增: level={playerRow.PlayerLevel}。");
                     return;
                 }
 
@@ -808,12 +792,6 @@ namespace Holmas.EditorTools
             if (rows.Count == 0)
             {
                 report.Errors.Add("缺少 Holmas_AgencyBuildingTable 数据。");
-                return;
-            }
-
-            if (rows.Count != 100)
-            {
-                report.Errors.Add($"Holmas_AgencyBuildingTable 行数必须为 100，当前为 {rows.Count}。");
                 return;
             }
 
@@ -874,6 +852,36 @@ namespace Holmas.EditorTools
                 {
                     report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 promotionIds 与 promotionUpgradeCosts 长度不一致。");
                     return;
+                }
+
+                for (int promotionIndex = 0; promotionIndex < row.PromotionIds.Length; promotionIndex++)
+                {
+                    string promotionId = row.PromotionIds[promotionIndex] ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(promotionId))
+                    {
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的第 {promotionIndex + 1} 个 promotionId 为空。");
+                        return;
+                    }
+
+                    int levelCap = row.PromotionLevelCaps[promotionIndex];
+                    if (levelCap <= 0)
+                    {
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId}/{promotionId} 的 promotionLevelCaps 必须大于 0。");
+                        return;
+                    }
+
+                    int[] costs = row.PromotionUpgradeCosts[promotionIndex]?.Costs ?? Array.Empty<int>();
+                    if (costs.Length != levelCap)
+                    {
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId}/{promotionId} 的 promotionUpgradeCosts 长度必须等于 cap={levelCap}，当前为 {costs.Length}。");
+                        return;
+                    }
+
+                    if (costs.Any(cost => cost <= 0))
+                    {
+                        report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId}/{promotionId} 的升级费用必须全部大于 0。");
+                        return;
+                    }
                 }
             }
         }
@@ -1053,47 +1061,47 @@ namespace Holmas.EditorTools
             return new HolmasCoreConfigPackage
             {
                 Version = HolmasConfigBinaryFormat.CurrentVersion,
-                Maps = mapTable.Rows.Select(row => new HolmasMapRow
+                Holmas_MapTable = mapTable.Rows.Select(row => new HolmasMapTableRow
                 {
-                    MapId = row.MapId,
-                    TerrainPath = row.TerrainPath,
-                    CatCountMin = row.CatCountMin,
-                    CatCountMax = row.CatCountMax,
+                    mapId = row.MapId,
+                    terrainPath = row.TerrainPath,
+                    catCountMin = row.CatCountMin,
+                    catCountMax = row.CatCountMax,
                 }).ToArray(),
-                Tasks = taskTable.Rows.Select(row => new HolmasTaskRow
+                Holmas_TaskTable = taskTable.Rows.Select(row => new HolmasTaskTableRow
                 {
-                    TaskTypeId = row.TaskTypeId,
-                    TaskKind = (HolmasTaskKind)row.TaskKindCode,
-                    CatIndices = row.CatIndices ?? Array.Empty<int>(),
-                    CountMin = row.CountMin,
-                    CountMax = row.CountMax,
-                    RewardValues = row.RewardArray ?? Array.Empty<int>(),
-                    LevelRewardFactor = row.LevelRewardFactor,
+                    taskTypeId = row.TaskTypeId,
+                    taskKind = (HolmasTaskKind)row.TaskKindCode,
+                    catIdList = row.CatIdList ?? Array.Empty<string>(),
+                    countMin = row.CountMin,
+                    countMax = row.CountMax,
+                    rewardArray = row.RewardArray ?? Array.Empty<int>(),
+                    levelRewardFactor = row.LevelRewardFactor,
                 }).ToArray(),
-                PlayerLevels = playerLevelTable.Rows.Select(row => new HolmasPlayerLevelRow
+                Holmas_PlayerLevelTable = playerLevelTable.Rows.Select(row => new HolmasPlayerLevelTableRow
                 {
-                    PlayerLevel = row.PlayerLevel,
-                    UpgradeExp = row.UpgradeExp,
-                    OfflineRewardPerHour = row.OfflineRewardPerHour,
-                    AdUnlockHours = row.AdUnlockHours,
-                    TaskTypeIndices = row.TaskTypeIndices ?? Array.Empty<int>(),
-                    TaskTypeWeights = row.TaskTypeWeights ?? Array.Empty<int>(),
-                    MapIndices = row.MapIndices ?? Array.Empty<int>(),
-                    MapWeights = row.MapWeights ?? Array.Empty<int>(),
+                    playerLevel = row.PlayerLevel,
+                    minExperience = row.MinExperience,
+                    offlineRewardPerHour = row.OfflineRewardPerHour,
+                    adUnlockHours = row.AdUnlockHours,
+                    taskTypeIds = row.TaskTypeIds ?? Array.Empty<string>(),
+                    taskTypeWeights = row.TaskTypeWeights ?? Array.Empty<int>(),
+                    mapIds = row.MapIds ?? Array.Empty<string>(),
+                    mapWeights = row.MapWeights ?? Array.Empty<int>(),
                 }).ToArray(),
-                AgencyBuildings = (agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingSheetRow>()).Select(row => new HolmasAgencyBuildingRow
+                Holmas_AgencyBuildingTable = (agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingSheetRow>()).Select(row => new HolmasAgencyBuildingTableRow
                 {
-                    AgencyStageId = row.AgencyStageId,
-                    StageName = row.StageName ?? string.Empty,
-                    PromotionIds = row.PromotionIds ?? Array.Empty<string>(),
-                    PromotionLevelCaps = row.PromotionLevelCaps ?? Array.Empty<int>(),
-                    PromotionUpgradeCosts = (row.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostSheetRow>())
-                        .Select(costRow => new HolmasAgencyBuildingCostRow
+                    agencyStageId = row.AgencyStageId,
+                    stageName = row.StageName ?? string.Empty,
+                    promotionIds = row.PromotionIds ?? Array.Empty<string>(),
+                    promotionLevelCaps = row.PromotionLevelCaps ?? Array.Empty<int>(),
+                    promotionUpgradeCosts = (row.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostSheetRow>())
+                        .Select(costRow => new HolmasAgencyBuildingTableCostRow
                         {
-                            Costs = costRow?.Costs ?? Array.Empty<int>(),
+                            costs = costRow?.Costs ?? Array.Empty<int>(),
                         })
                         .ToArray(),
-                    Notes = row.Notes ?? string.Empty,
+                    notes = row.Notes ?? string.Empty,
                 }).ToArray(),
             };
         }
@@ -1103,14 +1111,14 @@ namespace Holmas.EditorTools
             return new HolmasCatMetaPackage
             {
                 Version = HolmasConfigBinaryFormat.CurrentVersion,
-                Cats = catTable.Rows.Select(row => new HolmasCatMetaRow
+                Holmas_CatTable = catTable.Rows.Select(row => new HolmasCatTableRow
                 {
-                    CatId = row.CatId,
-                    CatName = row.CatName,
-                    IconPath = row.IconPath ?? string.Empty,
-                    Rarity = row.Rarity,
-                    Weight = row.Weight,
-                    Price = row.Price,
+                    catId = row.CatId,
+                    catName = row.CatName,
+                    iconPath = row.IconPath ?? string.Empty,
+                    rarity = row.Rarity,
+                    weight = row.Weight,
+                    price = row.Price,
                 }).ToArray(),
             };
         }
@@ -1182,7 +1190,7 @@ namespace Holmas.EditorTools
 
         private static Dictionary<string, int> BuildHeaderMap(HolmasConfigExportReport report, string sourcePath, string[] headerRow)
         {
-            var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var map = new Dictionary<string, int>(StringComparer.Ordinal);
             if (headerRow == null)
             {
                 report.Errors.Add($"{sourcePath} 缺少字段名行。");
@@ -1531,10 +1539,10 @@ namespace Holmas.EditorTools
     {
         public int Version;
         public string ExportedAtUtc;
-        public HolmasMapSheetRow[] Maps;
-        public HolmasTaskSheetRow[] Tasks;
-        public HolmasPlayerLevelSheetRow[] PlayerLevels;
-        public HolmasAgencyBuildingSheetRow[] AgencyBuildings;
+        public HolmasMapSheetRow[] Holmas_MapTable;
+        public HolmasTaskSheetRow[] Holmas_TaskTable;
+        public HolmasPlayerLevelSheetRow[] Holmas_PlayerLevelTable;
+        public HolmasAgencyBuildingSheetRow[] Holmas_AgencyBuildingTable;
     }
 
     [Serializable]
@@ -1542,7 +1550,7 @@ namespace Holmas.EditorTools
     {
         public int Version;
         public string ExportedAtUtc;
-        public HolmasCatSheetRow[] Cats;
+        public HolmasCatSheetRow[] Holmas_CatTable;
     }
 
     [Serializable]
@@ -1593,7 +1601,7 @@ namespace Holmas.EditorTools
     {
         public int RowIndex;
         public int PlayerLevel;
-        public int UpgradeExp;
+        public int MinExperience;
         public int OfflineRewardPerHour;
         public int AdUnlockHours;
         public string Notes;

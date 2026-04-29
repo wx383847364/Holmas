@@ -49,13 +49,16 @@ namespace Holmas.EditorTests
                 Assert.That(bundle.PlayerLevels.Last().UpgradeExp, Is.EqualTo(2000));
                 string coreJson = File.ReadAllText(Path.Combine(fixture.JsonRoot, "holmas_core_config.json"));
                 Assert.That(coreJson.Contains("\"MetaLevels\""), Is.False);
+                Assert.That(coreJson.Contains("\"AgencyBuildings\""), Is.False);
+                Assert.That(coreJson.Contains("\"Holmas_AgencyBuildingTable\""), Is.True);
             }
         }
 
         [Test]
-        public void HolmasConfigBinaryExporter_AllowsExpandedPlayerLevelRange()
+        public void HolmasConfigBinaryExporter_AllowsTableDrivenPlayerLevelRange()
         {
-            using (var fixture = CreateFixture(levelCount: 100, includeMergedGrowthColumns: true))
+            const int levelCount = 37;
+            using (var fixture = CreateFixture(levelCount: levelCount, includeMergedGrowthColumns: true))
             {
                 HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
                     fixture.ConfigRoot,
@@ -73,8 +76,8 @@ namespace Holmas.EditorTests
                     out HolmasConfigReport runtimeReport);
 
                 Assert.That(success, Is.True, runtimeReport == null ? "runtime report missing" : string.Join("\n", runtimeReport.Errors));
-                Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(100));
-                Assert.That(bundle.PlayerLevels.Last().OfflineRewardPerHour, Is.EqualTo(6000 + (99 * 600)));
+                Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(levelCount));
+                Assert.That(bundle.PlayerLevels.Last().OfflineRewardPerHour, Is.EqualTo(6000 + ((levelCount - 1) * 600)));
             }
         }
 
@@ -91,12 +94,12 @@ namespace Holmas.EditorTests
 
                 Assert.That(report, Is.Not.Null);
                 Assert.That(report.Success, Is.False);
-                Assert.That(report.Errors.Any(item => item.Contains("缺少 upgradeExp/minExperience 列")), Is.True, string.Join("\n", report.Errors));
+                Assert.That(report.Errors.Any(item => item.Contains("缺少必要列") && item.Contains("minExperience")), Is.True, string.Join("\n", report.Errors));
             }
         }
 
         [Test]
-        public void HolmasConfigBinaryExporter_RejectsConflictingUpgradeExpAndMinExperienceColumns()
+        public void HolmasConfigBinaryExporter_RejectsLegacyUpgradeExpColumn()
         {
             using (var fixture = CreateFixture(levelCount: 20, includeMergedGrowthColumns: true, includeDuplicateGrowthColumns: true, conflictLevel: 7))
             {
@@ -108,23 +111,7 @@ namespace Holmas.EditorTests
 
                 Assert.That(report, Is.Not.Null);
                 Assert.That(report.Success, Is.False);
-                Assert.That(report.Errors.Any(item => item.Contains("upgradeExp 与 minExperience 不一致")), Is.True, string.Join("\n", report.Errors));
-            }
-        }
-
-        [Test]
-        public void HolmasConfigBinaryExporter_AllowsMatchingUpgradeExpAndMinExperienceColumns()
-        {
-            using (var fixture = CreateFixture(levelCount: 20, includeMergedGrowthColumns: true, includeDuplicateGrowthColumns: true))
-            {
-                HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
-                    fixture.ConfigRoot,
-                    fixture.JsonRoot,
-                    fixture.BinaryRoot,
-                    refreshAssetDatabase: false);
-
-                Assert.That(report, Is.Not.Null);
-                Assert.That(report.Success, Is.True, string.Join("\n", report.Errors));
+                Assert.That(report.Errors.Any(item => item.Contains("旧技术表头 upgradeExp") && item.Contains("minExperience")), Is.True, string.Join("\n", report.Errors));
             }
         }
 
@@ -156,11 +143,13 @@ namespace Holmas.EditorTests
                 BuildAgencyRows(
                     "poster;stream;event",
                     "1;7;2",
-                    "0|10;20;30|-1;40"),
+                    "10|10;20;30;40;50;60;70|10;20",
+                    stageCount: 3),
                 BuildAgencyRows(
                     "leaflet;radio;online;tv;expo",
                     "5;5;5;5;1",
-                    "100;200|120;240;360|140|160;320;480;640;800|-1"),
+                    "100;200;300;400;500|120;240;360;480;600|140;280;420;560;700|160;320;480;640;800|1000",
+                    stageCount: 5),
             };
 
             foreach (string[][] agencyRows in agencyRowSets)
@@ -183,7 +172,7 @@ namespace Holmas.EditorTests
                         out HolmasConfigReport runtimeReport);
 
                     Assert.That(success, Is.True, runtimeReport == null ? "runtime report missing" : string.Join("\n", runtimeReport.Errors));
-                    Assert.That(bundle.AgencyBuildings[0].PromotionIds.Length, Is.EqualTo(agencyRows[2][2].Split(';').Length));
+                    Assert.That(bundle.Holmas_AgencyBuildingTable[0].promotionIds.Length, Is.EqualTo(agencyRows[2][2].Split(';').Length));
                 }
             }
         }
@@ -394,13 +383,13 @@ namespace Holmas.EditorTests
                 "100;200;300;400;500|120;240;360;480;600|140;280;420;560;700|160;320;480;640;800");
         }
 
-        private static string[][] BuildAgencyRows(string promotionIds, string promotionCaps, string promotionCosts)
+        private static string[][] BuildAgencyRows(string promotionIds, string promotionCaps, string promotionCosts, int stageCount = 8)
         {
-            var rows = new string[102][];
+            var rows = new string[stageCount + 2][];
             rows[0] = new[] { "城市阶段id", "城市名", "宣传功能id数组", "宣传升级级数上限数组", "宣传升级费用数组", "备注" };
             rows[1] = new[] { "agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes" };
 
-            for (int stage = 1; stage <= 100; stage++)
+            for (int stage = 1; stage <= stageCount; stage++)
             {
                 rows[stage + 1] = new[]
                 {

@@ -5,8 +5,8 @@ from pathlib import Path
 from struct import pack, unpack
 
 from .models import (
-    AgencyBuildingCostRow,
-    AgencyBuildingRow,
+    AgencyBuildingTableCostRow,
+    AgencyBuildingTableRow,
     BundleReport,
     CatMetaPackage,
     CatMetaRow,
@@ -38,17 +38,17 @@ def _write_json(path: Path, payload: dict) -> None:
 def _core_package_to_dict(package: CoreConfigPackage) -> dict:
     return {
         "Version": package.version,
-        "Maps": [_map_row_to_dict(row) for row in package.maps],
-        "Tasks": [_task_row_to_dict(row) for row in package.tasks],
-        "PlayerLevels": [_player_level_row_to_dict(row) for row in package.player_levels],
-        "AgencyBuildings": [_agency_building_row_to_dict(row) for row in package.agency_buildings],
+        "Holmas_MapTable": [_map_row_to_dict(row) for row in package.holmas_map_table],
+        "Holmas_TaskTable": [_task_row_to_dict(row) for row in package.holmas_task_table],
+        "Holmas_PlayerLevelTable": [_player_level_row_to_dict(row) for row in package.holmas_player_level_table],
+        "Holmas_AgencyBuildingTable": [_agency_building_table_row_to_dict(row) for row in package.holmas_agency_building_table],
     }
 
 
 def _cat_package_to_dict(package: CatMetaPackage) -> dict:
     return {
         "Version": package.version,
-        "Cats": [_cat_row_to_dict(row) for row in package.cats],
+        "Holmas_CatTable": [_cat_row_to_dict(row) for row in package.holmas_cat_table],
     }
 
 
@@ -78,62 +78,62 @@ def _bundle_report_to_dict(bundle: BundleReport) -> dict:
 
 def _map_row_to_dict(row: MapRow) -> dict:
     return {
-        "MapId": row.map_id,
-        "TerrainPath": row.terrain_path,
-        "CatCountMin": row.cat_count_min,
-        "CatCountMax": row.cat_count_max,
+        "mapId": row.map_id,
+        "terrainPath": row.terrain_path,
+        "catCountMin": row.cat_count_min,
+        "catCountMax": row.cat_count_max,
     }
 
 
 def _cat_row_to_dict(row: CatMetaRow) -> dict:
     return {
-        "CatId": row.cat_id,
-        "CatName": row.cat_name,
-        "IconPath": row.icon_path,
-        "Rarity": row.rarity,
-        "Weight": row.weight,
-        "Price": row.price,
+        "catId": row.cat_id,
+        "catName": row.cat_name,
+        "iconPath": row.icon_path,
+        "rarity": row.rarity,
+        "weight": row.weight,
+        "price": row.price,
     }
 
 
 def _task_row_to_dict(row: TaskRow) -> dict:
     return {
-        "TaskTypeId": row.task_type_id,
-        "TaskKind": row.task_kind,
-        "CatIndices": list(row.cat_indices),
-        "CountMin": row.count_min,
-        "CountMax": row.count_max,
-        "RewardValues": list(row.reward_values),
-        "LevelRewardFactor": _to_float32(row.level_reward_factor),
+        "taskTypeId": row.task_type_id,
+        "taskKind": row.task_kind,
+        "catIdList": list(row.cat_id_list),
+        "countMin": row.count_min,
+        "countMax": row.count_max,
+        "rewardArray": list(row.reward_values),
+        "levelRewardFactor": _to_float32(row.level_reward_factor),
     }
 
 
 def _player_level_row_to_dict(row: PlayerLevelRow) -> dict:
     return {
-        "PlayerLevel": row.player_level,
-        "UpgradeExp": row.upgrade_exp,
-        "OfflineRewardPerHour": row.offline_reward_per_hour,
-        "AdUnlockHours": row.ad_unlock_hours,
-        "TaskTypeIndices": list(row.task_type_indices),
-        "TaskTypeWeights": list(row.task_type_weights),
-        "MapIndices": list(row.map_indices),
-        "MapWeights": list(row.map_weights),
+        "playerLevel": row.player_level,
+        "minExperience": row.min_experience,
+        "offlineRewardPerHour": row.offline_reward_per_hour,
+        "adUnlockHours": row.ad_unlock_hours,
+        "taskTypeIds": list(row.task_type_ids),
+        "taskTypeWeights": list(row.task_type_weights),
+        "mapIds": list(row.map_ids),
+        "mapWeights": list(row.map_weights),
     }
 
-def _agency_building_row_to_dict(row: AgencyBuildingRow) -> dict:
+def _agency_building_table_row_to_dict(row: AgencyBuildingTableRow) -> dict:
     return {
-        "AgencyStageId": row.agency_stage_id,
-        "StageName": row.stage_name,
-        "PromotionIds": list(row.promotion_ids),
-        "PromotionLevelCaps": list(row.promotion_level_caps),
-        "PromotionUpgradeCosts": [_agency_building_cost_row_to_dict(cost_row) for cost_row in row.promotion_upgrade_costs],
-        "Notes": row.notes,
+        "agencyStageId": row.agency_stage_id,
+        "stageName": row.stage_name,
+        "promotionIds": list(row.promotion_ids),
+        "promotionLevelCaps": list(row.promotion_level_caps),
+        "promotionUpgradeCosts": [_agency_building_table_cost_row_to_dict(cost_row) for cost_row in row.promotion_upgrade_costs],
+        "notes": row.notes,
     }
 
 
-def _agency_building_cost_row_to_dict(row: AgencyBuildingCostRow) -> dict:
+def _agency_building_table_cost_row_to_dict(row: AgencyBuildingTableCostRow) -> dict:
     return {
-        "Costs": list(row.costs),
+        "costs": list(row.costs),
     }
 
 

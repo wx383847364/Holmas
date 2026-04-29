@@ -14,7 +14,6 @@ using App.Shared.Contracts;
 using App.Shared.Holmas.PlayerData;
 using App.Shared.Holmas.RuntimeData;
 using IHolmasPromotionCatalog = App.HotUpdate.Holmas.Meta.IHolmasAgencyCatalog;
-using HolmasAgencyPromotionDefinition = App.HotUpdate.Holmas.Meta.HolmasAgencyBuildingDefinition;
 using HolmasAgencyPromotionUpgradeResult = App.HotUpdate.Holmas.Meta.HolmasAgencyUpgradeResult;
 
 namespace App.HotUpdate.Holmas.Bootstrap
@@ -285,15 +284,15 @@ namespace App.HotUpdate.Holmas.Bootstrap
 
         private static HolmasAgencyCatalog CreatePromotionCatalog(HolmasConfigCatalogBundle configBundle)
         {
-            if (configBundle?.AgencyBuildings == null || configBundle.AgencyBuildings.Count == 0)
+            if (configBundle?.Holmas_AgencyBuildingTable == null || configBundle.Holmas_AgencyBuildingTable.Count == 0)
             {
-                throw new InvalidOperationException("HolmasGameBootstrap: 配置包缺少 AgencyBuildings，无法组装正式城市宣传成长服务。");
+                throw new InvalidOperationException("HolmasGameBootstrap: 配置包缺少 Holmas_AgencyBuildingTable，无法组装正式城市宣传成长服务。");
             }
 
-            return new HolmasAgencyCatalog(BuildPromotionDefinitions(configBundle.AgencyBuildings));
+            return new HolmasAgencyCatalog(BuildPromotionDefinitions(configBundle.Holmas_AgencyBuildingTable));
         }
 
-        private static IEnumerable<HolmasAgencyPromotionDefinition> BuildPromotionDefinitions(IReadOnlyList<HolmasAgencyBuildingRow> rows)
+        private static IEnumerable<HolmasAgencyBuildingDefinition> BuildPromotionDefinitions(IReadOnlyList<HolmasAgencyBuildingTableRow> rows)
         {
             if (rows == null || rows.Count == 0)
             {
@@ -302,33 +301,33 @@ namespace App.HotUpdate.Holmas.Bootstrap
 
             for (int stageIndex = 0; stageIndex < rows.Count; stageIndex++)
             {
-                HolmasAgencyBuildingRow stageRow = rows[stageIndex];
-                if (stageRow == null || stageRow.PromotionIds == null)
+                HolmasAgencyBuildingTableRow stageRow = rows[stageIndex];
+                if (stageRow == null || stageRow.promotionIds == null)
                 {
                     continue;
                 }
 
-                for (int promotionIndex = 0; promotionIndex < stageRow.PromotionIds.Length; promotionIndex++)
+                for (int promotionIndex = 0; promotionIndex < stageRow.promotionIds.Length; promotionIndex++)
                 {
-                    string promotionId = stageRow.PromotionIds[promotionIndex];
+                    string promotionId = stageRow.promotionIds[promotionIndex];
                     if (string.IsNullOrWhiteSpace(promotionId))
                     {
                         continue;
                     }
 
-                    int levelCap = stageRow.PromotionLevelCaps != null && promotionIndex < stageRow.PromotionLevelCaps.Length
-                        ? stageRow.PromotionLevelCaps[promotionIndex]
+                    int levelCap = stageRow.promotionLevelCaps != null && promotionIndex < stageRow.promotionLevelCaps.Length
+                        ? stageRow.promotionLevelCaps[promotionIndex]
                         : 0;
                     int[] costs = Array.Empty<int>();
-                    if (stageRow.PromotionUpgradeCosts != null && promotionIndex < stageRow.PromotionUpgradeCosts.Length)
+                    if (stageRow.promotionUpgradeCosts != null && promotionIndex < stageRow.promotionUpgradeCosts.Length)
                     {
-                        costs = stageRow.PromotionUpgradeCosts[promotionIndex]?.Costs ?? Array.Empty<int>();
+                        costs = stageRow.promotionUpgradeCosts[promotionIndex]?.costs ?? Array.Empty<int>();
                     }
 
-                    yield return new HolmasAgencyPromotionDefinition
+                    yield return new HolmasAgencyBuildingDefinition
                     {
-                        AgencyStageId = stageRow.AgencyStageId,
-                        StageName = stageRow.StageName,
+                        AgencyStageId = stageRow.agencyStageId,
+                        StageName = stageRow.stageName,
                         PromotionId = promotionId,
                         PromotionLevelCap = levelCap,
                         PromotionUpgradeCosts = costs,

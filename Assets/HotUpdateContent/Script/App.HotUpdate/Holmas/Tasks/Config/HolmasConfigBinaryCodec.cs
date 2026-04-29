@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -120,9 +121,9 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (json.IndexOf("\"MetaLevels\"", StringComparison.Ordinal) >= 0)
+                if (ContainsAnyTopLevelField(json, "MetaLevels", "PlayerLevels", "Maps", "Tasks", "AgencyBuildings"))
                 {
-                    error = "核心配置 JSON 使用了已移除的 MetaLevels 旧格式，请改用当前 PlayerLevels 结构重新导出。";
+                    error = "核心配置 JSON 使用了旧包装字段，请按 Holmas_*Table 表镜像协议重新导出。";
                     package = null;
                     return false;
                 }
@@ -165,6 +166,20 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
+                if (ContainsAnyTopLevelField(json, "Cats"))
+                {
+                    error = "猫元数据 JSON 使用了旧包装字段，请按 Holmas_CatTable 表镜像协议重新导出。";
+                    package = null;
+                    return false;
+                }
+
+                if (package.Version != HolmasConfigBinaryFormat.CurrentVersion)
+                {
+                    error = $"猫元数据 JSON 版本不支持: {package.Version}。当前仅支持版本 {HolmasConfigBinaryFormat.CurrentVersion}。";
+                    package = null;
+                    return false;
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -180,10 +195,10 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             writer.Write(HolmasConfigBinaryFormat.CoreMagic);
             writer.Write(HolmasConfigBinaryFormat.CurrentVersion);
             writer.Write(package.Version);
-            WriteMapRows(writer, package.Maps);
-            WriteTaskRows(writer, package.Tasks);
-            WritePlayerLevelRows(writer, package.PlayerLevels);
-            WriteAgencyBuildingRows(writer, package.AgencyBuildings);
+            WriteMapRows(writer, package.Holmas_MapTable);
+            WriteTaskRows(writer, package.Holmas_TaskTable);
+            WritePlayerLevelRows(writer, package.Holmas_PlayerLevelTable);
+            WriteAgencyBuildingTableRows(writer, package.Holmas_AgencyBuildingTable);
         }
 
         private static void WriteCatMetaPackage(BinaryWriter writer, HolmasCatMetaPackage package)
@@ -191,7 +206,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             writer.Write(HolmasConfigBinaryFormat.CatMetaMagic);
             writer.Write(HolmasConfigBinaryFormat.CurrentVersion);
             writer.Write(package.Version);
-            WriteCatRows(writer, package.Cats);
+            WriteCatRows(writer, package.Holmas_CatTable);
         }
 
         private static HolmasCoreConfigPackage ReadCorePackage(BinaryReader reader, out string error)
@@ -207,18 +222,18 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return null;
             }
 
-            HolmasMapRow[] maps = ReadMapRows(reader);
-            HolmasTaskRow[] tasks = ReadTaskRows(reader);
-            HolmasPlayerLevelRow[] playerLevels = ReadPlayerLevelRows(reader);
-            HolmasAgencyBuildingRow[] agencyBuildings = ReadAgencyBuildingRows(reader);
+            HolmasMapTableRow[] maps = ReadMapRows(reader);
+            HolmasTaskTableRow[] tasks = ReadTaskRows(reader);
+            HolmasPlayerLevelTableRow[] playerLevels = ReadPlayerLevelRows(reader);
+            HolmasAgencyBuildingTableRow[] agencyBuildingTable = ReadAgencyBuildingTableRows(reader);
 
             var package = new HolmasCoreConfigPackage
             {
                 Version = packageVersion,
-                Maps = maps,
-                Tasks = tasks,
-                PlayerLevels = playerLevels,
-                AgencyBuildings = agencyBuildings,
+                Holmas_MapTable = maps,
+                Holmas_TaskTable = tasks,
+                Holmas_PlayerLevelTable = playerLevels,
+                Holmas_AgencyBuildingTable = agencyBuildingTable,
             };
             package.CodecVersion = codecVersion;
 
@@ -241,10 +256,156 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             var package = new HolmasCatMetaPackage
             {
                 Version = packageVersion,
-                Cats = ReadCatRows(reader),
+                Holmas_CatTable = ReadCatRows(reader),
             };
 
             return package;
+        }
+
+        private static bool ContainsAnyTopLevelField(string json, params string[] fieldNames)
+        {
+            if (string.IsNullOrWhiteSpace(json) || fieldNames == null || fieldNames.Length == 0)
+            {
+                return false;
+            }
+
+            var legacyFields = new HashSet<string>(fieldNames, StringComparer.Ordinal);
+            foreach (string fieldName in EnumerateTopLevelFieldNames(json))
+            {
+                if (legacyFields.Contains(fieldName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<string> EnumerateTopLevelFieldNames(string json)
+        {
+            int index = 0;
+            SkipWhitespace(json, ref index);
+            if (index >= json.Length || json[index] != '{')
+            {
+                yield break;
+            }
+
+            index++;
+            while (index < json.Length)
+            {
+                SkipWhitespace(json, ref index);
+                if (index >= json.Length || json[index] == '}')
+                {
+                    yield break;
+                }
+
+                if (json[index] != '"')
+                {
+                    yield break;
+                }
+
+                string fieldName = ReadJsonString(json, ref index);
+                SkipWhitespace(json, ref index);
+                if (index >= json.Length || json[index] != ':')
+                {
+                    yield break;
+                }
+
+                index++;
+                yield return fieldName;
+                SkipJsonValue(json, ref index);
+                SkipWhitespace(json, ref index);
+                if (index < json.Length && json[index] == ',')
+                {
+                    index++;
+                }
+            }
+        }
+
+        private static void SkipWhitespace(string json, ref int index)
+        {
+            while (index < json.Length && char.IsWhiteSpace(json[index]))
+            {
+                index++;
+            }
+        }
+
+        private static string ReadJsonString(string json, ref int index)
+        {
+            if (index >= json.Length || json[index] != '"')
+            {
+                return string.Empty;
+            }
+
+            index++;
+            var chars = new List<char>();
+            while (index < json.Length)
+            {
+                char current = json[index++];
+                if (current == '"')
+                {
+                    break;
+                }
+
+                if (current == '\\' && index < json.Length)
+                {
+                    chars.Add(json[index++]);
+                    continue;
+                }
+
+                chars.Add(current);
+            }
+
+            return new string(chars.ToArray());
+        }
+
+        private static void SkipJsonValue(string json, ref int index)
+        {
+            SkipWhitespace(json, ref index);
+            if (index >= json.Length)
+            {
+                return;
+            }
+
+            if (json[index] == '"')
+            {
+                ReadJsonString(json, ref index);
+                return;
+            }
+
+            if (json[index] == '{' || json[index] == '[')
+            {
+                char open = json[index];
+                char close = open == '{' ? '}' : ']';
+                int depth = 1;
+                index++;
+                while (index < json.Length && depth > 0)
+                {
+                    if (json[index] == '"')
+                    {
+                        ReadJsonString(json, ref index);
+                        continue;
+                    }
+
+                    if (json[index] == open)
+                    {
+                        depth++;
+                    }
+                    else if (json[index] == close)
+                    {
+                        depth--;
+                    }
+
+                    index++;
+                }
+
+                return;
+            }
+
+            while (index < json.Length && json[index] != ',' && json[index] != '}' && json[index] != ']')
+            {
+                index++;
+            }
         }
 
         private static bool ReadAndValidateHeader(
@@ -277,208 +438,210 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             return true;
         }
 
-        private static void WriteMapRows(BinaryWriter writer, HolmasMapRow[] rows)
+        private static void WriteMapRows(BinaryWriter writer, HolmasMapTableRow[] rows)
         {
-            rows = rows ?? Array.Empty<HolmasMapRow>();
+            rows = rows ?? Array.Empty<HolmasMapTableRow>();
             writer.Write(rows.Length);
             for (int i = 0; i < rows.Length; i++)
             {
-                HolmasMapRow row = rows[i] ?? new HolmasMapRow();
-                WriteString(writer, row.MapId);
-                WriteString(writer, row.TerrainPath);
-                writer.Write(row.CatCountMin);
-                writer.Write(row.CatCountMax);
+                HolmasMapTableRow row = rows[i] ?? new HolmasMapTableRow();
+                WriteString(writer, row.mapId);
+                WriteString(writer, row.terrainPath);
+                writer.Write(row.catCountMin);
+                writer.Write(row.catCountMax);
             }
         }
 
-        private static HolmasMapRow[] ReadMapRows(BinaryReader reader)
+        private static HolmasMapTableRow[] ReadMapRows(BinaryReader reader)
         {
             int count = ReadNonNegativeCount(reader);
-            var rows = new HolmasMapRow[count];
+            var rows = new HolmasMapTableRow[count];
             for (int i = 0; i < count; i++)
             {
-                rows[i] = new HolmasMapRow
+                rows[i] = new HolmasMapTableRow
                 {
-                    MapId = ReadString(reader),
-                    TerrainPath = ReadString(reader),
-                    CatCountMin = reader.ReadInt32(),
-                    CatCountMax = reader.ReadInt32(),
+                    mapId = ReadString(reader),
+                    terrainPath = ReadString(reader),
+                    catCountMin = reader.ReadInt32(),
+                    catCountMax = reader.ReadInt32(),
                 };
             }
 
             return rows;
         }
 
-        private static void WriteCatRows(BinaryWriter writer, HolmasCatMetaRow[] rows)
+        private static void WriteCatRows(BinaryWriter writer, HolmasCatTableRow[] rows)
         {
-            rows = rows ?? Array.Empty<HolmasCatMetaRow>();
+            rows = rows ?? Array.Empty<HolmasCatTableRow>();
             writer.Write(rows.Length);
             for (int i = 0; i < rows.Length; i++)
             {
-                HolmasCatMetaRow row = rows[i] ?? new HolmasCatMetaRow();
-                WriteString(writer, row.CatId);
-                WriteString(writer, row.CatName);
-                WriteString(writer, row.IconPath);
-                writer.Write(row.Rarity);
-                writer.Write(row.Weight);
-                writer.Write(row.Price);
+                HolmasCatTableRow row = rows[i] ?? new HolmasCatTableRow();
+                WriteString(writer, row.catId);
+                WriteString(writer, row.catName);
+                WriteString(writer, row.iconPath);
+                writer.Write(row.rarity);
+                writer.Write(row.weight);
+                writer.Write(row.price);
             }
         }
 
-        private static HolmasCatMetaRow[] ReadCatRows(BinaryReader reader)
+        private static HolmasCatTableRow[] ReadCatRows(BinaryReader reader)
         {
             int count = ReadNonNegativeCount(reader);
-            var rows = new HolmasCatMetaRow[count];
+            var rows = new HolmasCatTableRow[count];
             for (int i = 0; i < count; i++)
             {
-                rows[i] = new HolmasCatMetaRow
+                rows[i] = new HolmasCatTableRow
                 {
-                    CatId = ReadString(reader),
-                    CatName = ReadString(reader),
-                    IconPath = ReadString(reader),
-                    Rarity = reader.ReadInt32(),
-                    Weight = reader.ReadInt32(),
-                    Price = reader.ReadInt32(),
+                    catId = ReadString(reader),
+                    catName = ReadString(reader),
+                    iconPath = ReadString(reader),
+                    rarity = reader.ReadInt32(),
+                    weight = reader.ReadInt32(),
+                    price = reader.ReadInt32(),
                 };
             }
 
             return rows;
         }
 
-        private static void WriteTaskRows(BinaryWriter writer, HolmasTaskRow[] rows)
+        private static void WriteTaskRows(BinaryWriter writer, HolmasTaskTableRow[] rows)
         {
-            rows = rows ?? Array.Empty<HolmasTaskRow>();
+            rows = rows ?? Array.Empty<HolmasTaskTableRow>();
             writer.Write(rows.Length);
             for (int i = 0; i < rows.Length; i++)
             {
-                HolmasTaskRow row = rows[i] ?? new HolmasTaskRow();
-                WriteString(writer, row.TaskTypeId);
-                writer.Write((byte)row.TaskKind);
-                WriteIntArray(writer, row.CatIndices);
-                writer.Write(row.CountMin);
-                writer.Write(row.CountMax);
-                WriteIntArray(writer, row.RewardValues);
-                writer.Write(row.LevelRewardFactor);
+                HolmasTaskTableRow row = rows[i] ?? new HolmasTaskTableRow();
+                WriteString(writer, row.taskTypeId);
+                writer.Write((byte)row.taskKind);
+                WriteStringArray(writer, row.catIdList);
+                writer.Write(row.countMin);
+                writer.Write(row.countMax);
+                WriteIntArray(writer, row.rewardArray);
+                writer.Write(row.levelRewardFactor);
             }
         }
 
-        private static HolmasTaskRow[] ReadTaskRows(BinaryReader reader)
+        private static HolmasTaskTableRow[] ReadTaskRows(BinaryReader reader)
         {
             int count = ReadNonNegativeCount(reader);
-            var rows = new HolmasTaskRow[count];
+            var rows = new HolmasTaskTableRow[count];
             for (int i = 0; i < count; i++)
             {
-                rows[i] = new HolmasTaskRow
+                rows[i] = new HolmasTaskTableRow
                 {
-                    TaskTypeId = ReadString(reader),
-                    TaskKind = (HolmasTaskKind)reader.ReadByte(),
-                    CatIndices = ReadIntArray(reader),
-                    CountMin = reader.ReadInt32(),
-                    CountMax = reader.ReadInt32(),
-                    RewardValues = ReadIntArray(reader),
-                    LevelRewardFactor = reader.ReadSingle(),
+                    taskTypeId = ReadString(reader),
+                    taskKind = (HolmasTaskKind)reader.ReadByte(),
+                    catIdList = ReadStringArray(reader),
+                    countMin = reader.ReadInt32(),
+                    countMax = reader.ReadInt32(),
+                    rewardArray = ReadIntArray(reader),
+                    levelRewardFactor = reader.ReadSingle(),
                 };
             }
 
             return rows;
         }
 
-        private static void WritePlayerLevelRows(BinaryWriter writer, HolmasPlayerLevelRow[] rows)
+        private static void WritePlayerLevelRows(BinaryWriter writer, HolmasPlayerLevelTableRow[] rows)
         {
-            rows = rows ?? Array.Empty<HolmasPlayerLevelRow>();
+            rows = rows ?? Array.Empty<HolmasPlayerLevelTableRow>();
             writer.Write(rows.Length);
             for (int i = 0; i < rows.Length; i++)
             {
-                HolmasPlayerLevelRow row = rows[i] ?? new HolmasPlayerLevelRow();
-                writer.Write(row.PlayerLevel);
-                writer.Write(row.UpgradeExp);
-                writer.Write(row.OfflineRewardPerHour);
-                writer.Write(row.AdUnlockHours);
-                WriteIntArray(writer, row.TaskTypeIndices);
-                WriteIntArray(writer, row.TaskTypeWeights);
-                WriteIntArray(writer, row.MapIndices);
-                WriteIntArray(writer, row.MapWeights);
+                HolmasPlayerLevelTableRow row = rows[i] ?? new HolmasPlayerLevelTableRow();
+                writer.Write(row.playerLevel);
+                writer.Write(row.minExperience);
+                writer.Write(row.offlineRewardPerHour);
+                writer.Write(row.adUnlockHours);
+                WriteStringArray(writer, row.taskTypeIds);
+                WriteIntArray(writer, row.taskTypeWeights);
+                WriteStringArray(writer, row.mapIds);
+                WriteIntArray(writer, row.mapWeights);
             }
         }
 
-        private static HolmasPlayerLevelRow[] ReadPlayerLevelRows(BinaryReader reader)
+        private static HolmasPlayerLevelTableRow[] ReadPlayerLevelRows(BinaryReader reader)
         {
             int count = ReadNonNegativeCount(reader);
-            var rows = new HolmasPlayerLevelRow[count];
+            var rows = new HolmasPlayerLevelTableRow[count];
             for (int i = 0; i < count; i++)
             {
                 int playerLevel = reader.ReadInt32();
-                int upgradeExp = reader.ReadInt32();
-                rows[i] = new HolmasPlayerLevelRow
+                int minExperience = reader.ReadInt32();
+                rows[i] = new HolmasPlayerLevelTableRow
                 {
-                    PlayerLevel = playerLevel,
-                    UpgradeExp = upgradeExp,
-                    OfflineRewardPerHour = reader.ReadInt32(),
-                    AdUnlockHours = reader.ReadInt32(),
-                    TaskTypeIndices = ReadIntArray(reader),
-                    TaskTypeWeights = ReadIntArray(reader),
-                    MapIndices = ReadIntArray(reader),
-                    MapWeights = ReadIntArray(reader),
+                    playerLevel = playerLevel,
+                    minExperience = minExperience,
+                    offlineRewardPerHour = reader.ReadInt32(),
+                    adUnlockHours = reader.ReadInt32(),
+                    taskTypeIds = ReadStringArray(reader),
+                    taskTypeWeights = ReadIntArray(reader),
+                    mapIds = ReadStringArray(reader),
+                    mapWeights = ReadIntArray(reader),
                 };
             }
 
             return rows;
         }
 
-        private static void WriteAgencyBuildingRows(BinaryWriter writer, HolmasAgencyBuildingRow[] rows)
+        private static void WriteAgencyBuildingTableRows(BinaryWriter writer, HolmasAgencyBuildingTableRow[] rows)
         {
-            rows = rows ?? Array.Empty<HolmasAgencyBuildingRow>();
+            rows = rows ?? Array.Empty<HolmasAgencyBuildingTableRow>();
             writer.Write(rows.Length);
             for (int i = 0; i < rows.Length; i++)
             {
-                HolmasAgencyBuildingRow row = rows[i] ?? new HolmasAgencyBuildingRow();
-                writer.Write(row.AgencyStageId);
-                WriteString(writer, row.StageName);
-                WriteStringArray(writer, row.PromotionIds);
-                WriteIntArray(writer, row.PromotionLevelCaps);
-                WriteBuildingCostRows(writer, row.PromotionUpgradeCosts);
+                HolmasAgencyBuildingTableRow row = rows[i] ?? new HolmasAgencyBuildingTableRow();
+                writer.Write(row.agencyStageId);
+                WriteString(writer, row.stageName);
+                WriteStringArray(writer, row.promotionIds);
+                WriteIntArray(writer, row.promotionLevelCaps);
+                WriteAgencyBuildingTableCostRows(writer, row.promotionUpgradeCosts);
+                WriteString(writer, row.notes);
             }
         }
 
-        private static HolmasAgencyBuildingRow[] ReadAgencyBuildingRows(BinaryReader reader)
+        private static HolmasAgencyBuildingTableRow[] ReadAgencyBuildingTableRows(BinaryReader reader)
         {
             int count = ReadNonNegativeCount(reader);
-            var rows = new HolmasAgencyBuildingRow[count];
+            var rows = new HolmasAgencyBuildingTableRow[count];
             for (int i = 0; i < count; i++)
             {
-                rows[i] = new HolmasAgencyBuildingRow
+                rows[i] = new HolmasAgencyBuildingTableRow
                 {
-                    AgencyStageId = reader.ReadInt32(),
-                    StageName = ReadString(reader),
-                    PromotionIds = ReadStringArray(reader),
-                    PromotionLevelCaps = ReadIntArray(reader),
-                    PromotionUpgradeCosts = ReadBuildingCostRows(reader),
+                    agencyStageId = reader.ReadInt32(),
+                    stageName = ReadString(reader),
+                    promotionIds = ReadStringArray(reader),
+                    promotionLevelCaps = ReadIntArray(reader),
+                    promotionUpgradeCosts = ReadAgencyBuildingTableCostRows(reader),
+                    notes = ReadString(reader),
                 };
             }
 
             return rows;
         }
 
-        private static void WriteBuildingCostRows(BinaryWriter writer, HolmasAgencyBuildingCostRow[] rows)
+        private static void WriteAgencyBuildingTableCostRows(BinaryWriter writer, HolmasAgencyBuildingTableCostRow[] rows)
         {
-            rows = rows ?? Array.Empty<HolmasAgencyBuildingCostRow>();
+            rows = rows ?? Array.Empty<HolmasAgencyBuildingTableCostRow>();
             writer.Write(rows.Length);
             for (int i = 0; i < rows.Length; i++)
             {
-                HolmasAgencyBuildingCostRow row = rows[i] ?? new HolmasAgencyBuildingCostRow();
-                WriteIntArray(writer, row.Costs);
+                HolmasAgencyBuildingTableCostRow row = rows[i] ?? new HolmasAgencyBuildingTableCostRow();
+                WriteIntArray(writer, row.costs);
             }
         }
 
-        private static HolmasAgencyBuildingCostRow[] ReadBuildingCostRows(BinaryReader reader)
+        private static HolmasAgencyBuildingTableCostRow[] ReadAgencyBuildingTableCostRows(BinaryReader reader)
         {
             int count = ReadNonNegativeCount(reader);
-            var rows = new HolmasAgencyBuildingCostRow[count];
+            var rows = new HolmasAgencyBuildingTableCostRow[count];
             for (int i = 0; i < count; i++)
             {
-                rows[i] = new HolmasAgencyBuildingCostRow
+                rows[i] = new HolmasAgencyBuildingTableCostRow
                 {
-                    Costs = ReadIntArray(reader),
+                    costs = ReadIntArray(reader),
                 };
             }
 

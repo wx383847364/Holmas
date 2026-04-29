@@ -11,7 +11,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public const int CoreMagic = 0x48434F52; // HCOR
         public const int CatMetaMagic = 0x48434154; // HCAT
-        public const int CurrentVersion = 6;
+        public const int CurrentVersion = 7;
         public const int MinSupportedVersion = CurrentVersion;
     }
 
@@ -66,45 +66,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     public sealed class HolmasCatMetaPackage
     {
         public int Version = HolmasConfigBinaryFormat.CurrentVersion;
-        public HolmasCatMetaRow[] Cats = Array.Empty<HolmasCatMetaRow>();
-    }
-
-    /// <summary>
-    /// 猫元数据行。
-    /// </summary>
-    [Serializable]
-    public sealed class HolmasCatMetaRow
-    {
-        public string CatId = string.Empty;
-        public string CatName = string.Empty;
-        public string IconPath = string.Empty;
-        public int Rarity;
-        public int Weight = 1;
-        public int Price;
-    }
-
-    /// <summary>
-    /// 宣传升级费用序列。
-    /// 每个实例对应一个宣传功能的一条升级费用曲线。
-    /// </summary>
-    [Serializable]
-    public sealed class HolmasAgencyBuildingCostRow
-    {
-        public int[] Costs = Array.Empty<int>();
-    }
-
-    /// <summary>
-    /// 侦探社宣传配置行。
-    /// </summary>
-    [Serializable]
-    public sealed class HolmasAgencyBuildingRow
-    {
-        public int AgencyStageId;
-        public string StageName = string.Empty;
-        public string[] PromotionIds = Array.Empty<string>();
-        public int[] PromotionLevelCaps = Array.Empty<int>();
-        public HolmasAgencyBuildingCostRow[] PromotionUpgradeCosts = Array.Empty<HolmasAgencyBuildingCostRow>();
-        public string Notes = string.Empty;
+        public HolmasCatTableRow[] Holmas_CatTable = Array.Empty<HolmasCatTableRow>();
     }
 
     /// <summary>
@@ -115,10 +77,10 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     public sealed class HolmasCoreConfigPackage
     {
         public int Version = HolmasConfigBinaryFormat.CurrentVersion;
-        public HolmasMapRow[] Maps = Array.Empty<HolmasMapRow>();
-        public HolmasTaskRow[] Tasks = Array.Empty<HolmasTaskRow>();
-        public HolmasPlayerLevelRow[] PlayerLevels = Array.Empty<HolmasPlayerLevelRow>();
-        public HolmasAgencyBuildingRow[] AgencyBuildings = Array.Empty<HolmasAgencyBuildingRow>();
+        public HolmasMapTableRow[] Holmas_MapTable = Array.Empty<HolmasMapTableRow>();
+        public HolmasTaskTableRow[] Holmas_TaskTable = Array.Empty<HolmasTaskTableRow>();
+        public HolmasPlayerLevelTableRow[] Holmas_PlayerLevelTable = Array.Empty<HolmasPlayerLevelTableRow>();
+        public HolmasAgencyBuildingTableRow[] Holmas_AgencyBuildingTable = Array.Empty<HolmasAgencyBuildingTableRow>();
 
         public int CodecVersion { get; internal set; } = HolmasConfigBinaryFormat.CurrentVersion;
     }
@@ -127,43 +89,81 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     /// 地图配置行。
     /// </summary>
     [Serializable]
-    public sealed class HolmasMapRow
+    public sealed class HolmasMapTableRow
     {
-        public string MapId = string.Empty;
-        public string TerrainPath = string.Empty;
-        public int CatCountMin;
-        public int CatCountMax;
+        public string mapId = string.Empty;
+        public string terrainPath = string.Empty;
+        public int catCountMin;
+        public int catCountMax;
+    }
+
+    /// <summary>
+    /// 猫表行，字段名严格匹配 Holmas_CatTable.xlsx 技术表头。
+    /// </summary>
+    [Serializable]
+    public sealed class HolmasCatTableRow
+    {
+        public string catId = string.Empty;
+        public string catName = string.Empty;
+        public string iconPath = string.Empty;
+        public int rarity;
+        public int weight = 1;
+        public int price;
     }
 
     /// <summary>
     /// 任务模板配置行。
     /// </summary>
     [Serializable]
-    public sealed class HolmasTaskRow
+    public sealed class HolmasTaskTableRow
     {
-        public string TaskTypeId = string.Empty;
-        public HolmasTaskKind TaskKind = HolmasTaskKind.Money;
-        public int[] CatIndices = Array.Empty<int>();
-        public int CountMin;
-        public int CountMax;
-        public int[] RewardValues = Array.Empty<int>();
-        public float LevelRewardFactor = 1f;
+        public string taskTypeId = string.Empty;
+        public HolmasTaskKind taskKind = HolmasTaskKind.Money;
+        public string[] catIdList = Array.Empty<string>();
+        public int countMin;
+        public int countMax;
+        public int[] rewardArray = Array.Empty<int>();
+        public float levelRewardFactor = 1f;
     }
 
     /// <summary>
     /// 玩家等级配置行。
     /// </summary>
     [Serializable]
-    public sealed class HolmasPlayerLevelRow
+    public sealed class HolmasPlayerLevelTableRow
     {
-        public int PlayerLevel;
-        public int UpgradeExp;
-        public int OfflineRewardPerHour;
-        public int AdUnlockHours = 24;
-        public int[] TaskTypeIndices = Array.Empty<int>();
-        public int[] TaskTypeWeights = Array.Empty<int>();
-        public int[] MapIndices = Array.Empty<int>();
-        public int[] MapWeights = Array.Empty<int>();
+        public int playerLevel;
+        public int minExperience;
+        public int offlineRewardPerHour;
+        public int adUnlockHours = 24;
+        public string[] taskTypeIds = Array.Empty<string>();
+        public int[] taskTypeWeights = Array.Empty<int>();
+        public string[] mapIds = Array.Empty<string>();
+        public int[] mapWeights = Array.Empty<int>();
+    }
+
+    /// <summary>
+    /// 宣传升级费用序列。
+    /// 每个实例对应一个宣传功能的一条升级费用曲线。
+    /// </summary>
+    [Serializable]
+    public sealed class HolmasAgencyBuildingTableCostRow
+    {
+        public int[] costs = Array.Empty<int>();
+    }
+
+    /// <summary>
+    /// Holmas_AgencyBuildingTable 表行，字段名严格匹配技术表头。
+    /// </summary>
+    [Serializable]
+    public sealed class HolmasAgencyBuildingTableRow
+    {
+        public int agencyStageId;
+        public string stageName = string.Empty;
+        public string[] promotionIds = Array.Empty<string>();
+        public int[] promotionLevelCaps = Array.Empty<int>();
+        public HolmasAgencyBuildingTableCostRow[] promotionUpgradeCosts = Array.Empty<HolmasAgencyBuildingTableCostRow>();
+        public string notes = string.Empty;
     }
 
     /// <summary>
@@ -179,7 +179,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             IReadOnlyList<HolmasMapDefinition> maps,
             IReadOnlyList<HolmasTaskTemplateDefinition> taskTemplates,
             IReadOnlyList<HolmasPlayerLevelDefinition> playerLevels,
-            IReadOnlyList<HolmasAgencyBuildingRow> agencyBuildings,
+            IReadOnlyList<HolmasAgencyBuildingTableRow> holmasAgencyBuildingTable,
             HolmasConfigReport report)
         {
             MapCatalog = mapCatalog;
@@ -188,7 +188,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             Maps = maps ?? Array.Empty<HolmasMapDefinition>();
             TaskTemplates = taskTemplates ?? Array.Empty<HolmasTaskTemplateDefinition>();
             PlayerLevels = playerLevels ?? Array.Empty<HolmasPlayerLevelDefinition>();
-            AgencyBuildings = agencyBuildings ?? Array.Empty<HolmasAgencyBuildingRow>();
+            Holmas_AgencyBuildingTable = holmasAgencyBuildingTable ?? Array.Empty<HolmasAgencyBuildingTableRow>();
             Report = report ?? new HolmasConfigReport();
         }
 
@@ -198,7 +198,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public IReadOnlyList<HolmasMapDefinition> Maps { get; }
         public IReadOnlyList<HolmasTaskTemplateDefinition> TaskTemplates { get; }
         public IReadOnlyList<HolmasPlayerLevelDefinition> PlayerLevels { get; }
-        public IReadOnlyList<HolmasAgencyBuildingRow> AgencyBuildings { get; }
+        public IReadOnlyList<HolmasAgencyBuildingTableRow> Holmas_AgencyBuildingTable { get; }
         public HolmasConfigReport Report { get; }
     }
 }

@@ -55,9 +55,9 @@ public static class HolmasCoreValidationMenu
                 throw new InvalidOperationException("Holmas smoke test could not recover the formal promotion catalog from bootstrap.");
             }
 
-            int smokeStageId = configBundle.AgencyBuildings
+            int smokeStageId = configBundle.Holmas_AgencyBuildingTable
                 .Where(row => row != null)
-                .Select(row => row.AgencyStageId)
+                .Select(row => row.agencyStageId)
                 .DefaultIfEmpty(1)
                 .Max();
             IReadOnlyList<HolmasAgencyBuildingDefinition> smokeStagePromotions = promotionCatalog.GetPromotionsForStage(smokeStageId);

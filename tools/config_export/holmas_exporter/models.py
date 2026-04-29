@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 CORE_MAGIC = 0x48434F52
 CAT_META_MAGIC = 0x48434154
-CURRENT_VERSION = 6
+CURRENT_VERSION = 7
 
 
 @dataclass
@@ -52,7 +52,7 @@ class TaskSheetRow:
 class PlayerLevelSheetRow:
     row_index: int = 0
     player_level: int = 0
-    upgrade_exp: int = 0
+    min_experience: int = 0
     offline_reward_per_hour: int = 0
     ad_unlock_hours: int = 0
     notes: str = ""
@@ -65,18 +65,18 @@ class PlayerLevelSheetRow:
 
 
 @dataclass
-class AgencyBuildingCostSheetRow:
+class AgencyBuildingTableCostSheetRow:
     costs: list[int] = field(default_factory=list)
 
 
 @dataclass
-class AgencyBuildingSheetRow:
+class AgencyBuildingTableSheetRow:
     row_index: int = 0
     agency_stage_id: int = 0
     stage_name: str = ""
     promotion_ids: list[str] = field(default_factory=list)
     promotion_level_caps: list[int] = field(default_factory=list)
-    promotion_upgrade_costs: list[AgencyBuildingCostSheetRow] = field(default_factory=list)
+    promotion_upgrade_costs: list[AgencyBuildingTableCostSheetRow] = field(default_factory=list)
     notes: str = ""
 
 
@@ -102,7 +102,7 @@ class CatMetaRow:
 class TaskRow:
     task_type_id: str = ""
     task_kind: int = 0
-    cat_indices: list[int] = field(default_factory=list)
+    cat_id_list: list[str] = field(default_factory=list)
     count_min: int = 0
     count_max: int = 0
     reward_values: list[int] = field(default_factory=list)
@@ -112,43 +112,43 @@ class TaskRow:
 @dataclass
 class PlayerLevelRow:
     player_level: int = 0
-    upgrade_exp: int = 0
+    min_experience: int = 0
     offline_reward_per_hour: int = 0
     ad_unlock_hours: int = 24
-    task_type_indices: list[int] = field(default_factory=list)
+    task_type_ids: list[str] = field(default_factory=list)
     task_type_weights: list[int] = field(default_factory=list)
-    map_indices: list[int] = field(default_factory=list)
+    map_ids: list[str] = field(default_factory=list)
     map_weights: list[int] = field(default_factory=list)
 
 
 @dataclass
-class AgencyBuildingCostRow:
+class AgencyBuildingTableCostRow:
     costs: list[int] = field(default_factory=list)
 
 
 @dataclass
-class AgencyBuildingRow:
+class AgencyBuildingTableRow:
     agency_stage_id: int = 0
     stage_name: str = ""
     promotion_ids: list[str] = field(default_factory=list)
     promotion_level_caps: list[int] = field(default_factory=list)
-    promotion_upgrade_costs: list[AgencyBuildingCostRow] = field(default_factory=list)
+    promotion_upgrade_costs: list[AgencyBuildingTableCostRow] = field(default_factory=list)
     notes: str = ""
 
 
 @dataclass
 class CoreConfigPackage:
     version: int = CURRENT_VERSION
-    maps: list[MapRow] = field(default_factory=list)
-    tasks: list[TaskRow] = field(default_factory=list)
-    player_levels: list[PlayerLevelRow] = field(default_factory=list)
-    agency_buildings: list[AgencyBuildingRow] = field(default_factory=list)
+    holmas_map_table: list[MapRow] = field(default_factory=list)
+    holmas_task_table: list[TaskRow] = field(default_factory=list)
+    holmas_player_level_table: list[PlayerLevelRow] = field(default_factory=list)
+    holmas_agency_building_table: list[AgencyBuildingTableRow] = field(default_factory=list)
 
 
 @dataclass
 class CatMetaPackage:
     version: int = CURRENT_VERSION
-    cats: list[CatMetaRow] = field(default_factory=list)
+    holmas_cat_table: list[CatMetaRow] = field(default_factory=list)
 
 
 @dataclass

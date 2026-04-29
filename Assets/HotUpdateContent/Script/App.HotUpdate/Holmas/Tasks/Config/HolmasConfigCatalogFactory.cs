@@ -6,7 +6,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
 {
     /// <summary>
     /// 从导出包恢复运行时 Catalog 的工厂。
-    /// 这里负责把 int 索引折回字符串外部接口，同时保留索引信息供后续优化使用。
+    /// 这里负责把表镜像配置恢复为运行时 Catalog，同时保持导出协议命名不被业务包装反向改写。
     /// </summary>
     public static class HolmasConfigCatalogFactory
     {
@@ -79,55 +79,53 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return false;
             }
 
-            if (!TryBuildCats(catMetaPackage.Cats, out var cats, out var catIdByIndex, report))
+            if (!TryBuildCats(catMetaPackage.Holmas_CatTable, out var cats, report))
             {
                 return false;
             }
 
-            if (!TryBuildMaps(corePackage.Maps, out var maps, out var mapIdByIndex, report))
+            if (!TryBuildMaps(corePackage.Holmas_MapTable, out var maps, report))
             {
                 return false;
             }
 
-            if (!TryBuildTasks(corePackage.Tasks, catIdByIndex, out var tasks, out var taskTypeIdByIndex, report))
+            if (!TryBuildTasks(corePackage.Holmas_TaskTable, cats, out var tasks, report))
             {
                 return false;
             }
 
             if (!TryBuildPlayerLevels(
-                corePackage.PlayerLevels,
-                taskTypeIdByIndex,
-                mapIdByIndex,
+                corePackage.Holmas_PlayerLevelTable,
+                tasks,
+                maps,
                 out var playerLevels,
                 report))
             {
                 return false;
             }
 
-            if (!TryBuildAgencyBuildings(corePackage.AgencyBuildings, out var agencyBuildings, report))
+            if (!TryBuildAgencyBuildingTable(corePackage.Holmas_AgencyBuildingTable, out var holmasAgencyBuildingTable, report))
             {
                 return false;
             }
 
             var mapCatalog = new HolmasMapCatalog(maps);
             var taskCatalog = new HolmasTaskCatalog(cats, tasks, playerLevels);
-            bundle = new HolmasConfigCatalogBundle(mapCatalog, taskCatalog, cats, maps, tasks, playerLevels, agencyBuildings, report);
+            bundle = new HolmasConfigCatalogBundle(mapCatalog, taskCatalog, cats, maps, tasks, playerLevels, holmasAgencyBuildingTable, report);
             report.MarkSuccess("配置包已成功恢复为运行时 Catalog。");
             return true;
         }
 
         private static bool TryBuildCats(
-            IReadOnlyList<HolmasCatMetaRow> rows,
+            IReadOnlyList<HolmasCatTableRow> rows,
             out List<HolmasCatDefinition> cats,
-            out Dictionary<int, string> catIdByIndex,
             HolmasConfigReport report)
         {
             cats = new List<HolmasCatDefinition>();
-            catIdByIndex = new Dictionary<int, string>();
 
             if (rows == null || rows.Count == 0)
             {
-                report.AddError("猫元数据包没有任何猫条目。");
+                report.AddError("Holmas_CatTable 没有任何猫条目。");
                 return false;
             }
 
@@ -141,10 +139,10 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                string catId = row.CatId ?? string.Empty;
+                string catId = row.catId ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(catId))
                 {
-                    report.AddError($"猫元数据第 {i} 行缺少 CatId。");
+                    report.AddError($"Holmas_CatTable 第 {i} 行缺少 catId。");
                     return false;
                 }
 
@@ -154,45 +152,44 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (string.IsNullOrWhiteSpace(row.CatName))
+                if (string.IsNullOrWhiteSpace(row.catName))
                 {
-                    report.AddError($"猫元数据缺少 CatName: {catId}。");
+                    report.AddError($"Holmas_CatTable 缺少 catName: {catId}。");
                     return false;
                 }
 
-                if (string.IsNullOrWhiteSpace(row.IconPath))
+                if (string.IsNullOrWhiteSpace(row.iconPath))
                 {
-                    report.AddWarning($"猫元数据缺少 IconPath: {catId}。当前阶段先保留为空字符串。");
+                    report.AddWarning($"Holmas_CatTable 缺少 iconPath: {catId}。当前阶段先保留为空字符串。");
                 }
 
-                if (row.Weight < 0)
+                if (row.weight < 0)
                 {
                     report.AddError($"猫权重不能为负: {catId}。");
                     return false;
                 }
 
-                if (row.Price < 0)
+                if (row.price < 0)
                 {
                     report.AddError($"猫价格不能为负: {catId}。");
                     return false;
                 }
 
-                if (row.Rarity < 0)
+                if (row.rarity < 0)
                 {
                     report.AddError($"猫稀有度不能为负: {catId}。");
                     return false;
                 }
 
-                catIdByIndex[i] = catId;
                 cats.Add(new HolmasCatDefinition
                 {
                     CatIndex = i,
                     CatId = catId,
-                    CatName = row.CatName,
-                    IconPath = row.IconPath,
-                    Rarity = row.Rarity,
-                    Weight = row.Weight,
-                    Price = row.Price,
+                    CatName = row.catName,
+                    IconPath = row.iconPath,
+                    Rarity = row.rarity,
+                    Weight = row.weight,
+                    Price = row.price,
                 });
             }
 
@@ -200,17 +197,15 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         }
 
         private static bool TryBuildMaps(
-            IReadOnlyList<HolmasMapRow> rows,
+            IReadOnlyList<HolmasMapTableRow> rows,
             out List<HolmasMapDefinition> maps,
-            out Dictionary<int, string> mapIdByIndex,
             HolmasConfigReport report)
         {
             maps = new List<HolmasMapDefinition>();
-            mapIdByIndex = new Dictionary<int, string>();
 
             if (rows == null || rows.Count == 0)
             {
-                report.AddError("核心配置包没有任何地图条目。");
+                report.AddError("Holmas_MapTable 没有任何地图条目。");
                 return false;
             }
 
@@ -224,7 +219,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                string mapId = row.MapId ?? string.Empty;
+                string mapId = row.mapId ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(mapId))
                 {
                     report.AddError($"地图配置第 {i} 行缺少 MapId。");
@@ -237,26 +232,25 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (string.IsNullOrWhiteSpace(row.TerrainPath))
+                if (string.IsNullOrWhiteSpace(row.terrainPath))
                 {
-                    report.AddError($"地图配置缺少 TerrainPath: {mapId}。");
+                    report.AddError($"Holmas_MapTable 缺少 terrainPath: {mapId}。");
                     return false;
                 }
 
-                if (row.CatCountMin < 0 || row.CatCountMax < row.CatCountMin)
+                if (row.catCountMin < 0 || row.catCountMax < row.catCountMin)
                 {
                     report.AddError($"地图配置的猫数范围非法: {mapId}。");
                     return false;
                 }
 
-                mapIdByIndex[i] = mapId;
                 maps.Add(new HolmasMapDefinition
                 {
                     MapIndex = i,
                     MapId = mapId,
-                    TerrainPath = row.TerrainPath,
-                    CatCountMin = row.CatCountMin,
-                    CatCountMax = row.CatCountMax,
+                    TerrainPath = row.terrainPath,
+                    CatCountMin = row.catCountMin,
+                    CatCountMax = row.catCountMax,
                 });
             }
 
@@ -264,22 +258,21 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         }
 
         private static bool TryBuildTasks(
-            IReadOnlyList<HolmasTaskRow> rows,
-            IReadOnlyDictionary<int, string> catIdByIndex,
+            IReadOnlyList<HolmasTaskTableRow> rows,
+            IReadOnlyList<HolmasCatDefinition> cats,
             out List<HolmasTaskTemplateDefinition> tasks,
-            out Dictionary<int, string> taskTypeIdByIndex,
             HolmasConfigReport report)
         {
             tasks = new List<HolmasTaskTemplateDefinition>();
-            taskTypeIdByIndex = new Dictionary<int, string>();
 
             if (rows == null || rows.Count == 0)
             {
-                report.AddError("核心配置包没有任何任务条目。");
+                report.AddError("Holmas_TaskTable 没有任何任务条目。");
                 return false;
             }
 
             var seenTaskTypeIds = new HashSet<string>(StringComparer.Ordinal);
+            var knownCatIds = new HashSet<string>((cats ?? Array.Empty<HolmasCatDefinition>()).Select(item => item.CatId), StringComparer.Ordinal);
             for (int i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
@@ -289,7 +282,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                string taskTypeId = row.TaskTypeId ?? string.Empty;
+                string taskTypeId = row.taskTypeId ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(taskTypeId))
                 {
                     report.AddError($"任务配置第 {i} 行缺少 TaskTypeId。");
@@ -302,57 +295,54 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (row.TaskKind != HolmasTaskKind.Money)
+                if (row.taskKind != HolmasTaskKind.Money)
                 {
-                    report.AddError($"当前阶段不支持的任务类型: {taskTypeId} ({row.TaskKind})。");
+                    report.AddError($"当前阶段不支持的任务类型: {taskTypeId} ({row.taskKind})。");
                     return false;
                 }
 
-                if (row.CatIndices == null || row.CatIndices.Length == 0)
+                if (row.catIdList == null || row.catIdList.Length == 0)
                 {
-                    report.AddError($"任务配置缺少 CatIndices: {taskTypeId}。");
+                    report.AddError($"Holmas_TaskTable 缺少 catIdList: {taskTypeId}。");
                     return false;
                 }
 
-                if (row.CountMin < 0 || row.CountMax < row.CountMin)
+                if (row.countMin < 0 || row.countMax < row.countMin)
                 {
                     report.AddError($"任务配置的数量范围非法: {taskTypeId}。");
                     return false;
                 }
 
-                if (row.LevelRewardFactor < 0f)
+                if (row.levelRewardFactor < 0f)
                 {
                     report.AddError($"任务配置的等级奖励系数不能为负: {taskTypeId}。");
                     return false;
                 }
 
-                var catIds = new string[row.CatIndices.Length];
-                for (int j = 0; j < row.CatIndices.Length; j++)
+                var catIds = row.catIdList ?? Array.Empty<string>();
+                for (int j = 0; j < catIds.Length; j++)
                 {
-                    int catIndex = row.CatIndices[j];
-                    if (!catIdByIndex.TryGetValue(catIndex, out string catId))
+                    string catId = catIds[j] ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(catId) || !knownCatIds.Contains(catId))
                     {
-                        report.AddError($"任务 {taskTypeId} 引用了不存在的猫索引: {catIndex}。");
+                        report.AddError($"任务 {taskTypeId} 引用了不存在的猫 ID: {catId}。");
                         return false;
                     }
-
-                    catIds[j] = catId;
                 }
 
-                var rewardValues = row.RewardValues ?? Array.Empty<int>();
-                taskTypeIdByIndex[i] = taskTypeId;
+                var rewardValues = row.rewardArray ?? Array.Empty<int>();
                 tasks.Add(new HolmasTaskTemplateDefinition
                 {
                     TaskIndex = i,
                     TaskTypeId = taskTypeId,
-                    TaskKind = row.TaskKind,
+                    TaskKind = row.taskKind,
                     CatIdList = catIds,
-                    CatIndices = row.CatIndices.ToArray(),
-                    CountMin = row.CountMin,
-                    CountMax = row.CountMax,
+                    CatIndices = Array.Empty<int>(),
+                    CountMin = row.countMin,
+                    CountMax = row.countMax,
                     RewardArray = Array.ConvertAll(rewardValues, value => value.ToString()),
                     RewardValues = rewardValues.ToArray(),
-                    LevelRewardFactor = row.LevelRewardFactor,
+                    LevelRewardFactor = row.levelRewardFactor,
                 });
             }
 
@@ -360,9 +350,9 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         }
 
         private static bool TryBuildPlayerLevels(
-            IReadOnlyList<HolmasPlayerLevelRow> rows,
-            IReadOnlyDictionary<int, string> taskTypeIdByIndex,
-            IReadOnlyDictionary<int, string> mapIdByIndex,
+            IReadOnlyList<HolmasPlayerLevelTableRow> rows,
+            IReadOnlyList<HolmasTaskTemplateDefinition> tasks,
+            IReadOnlyList<HolmasMapDefinition> maps,
             out List<HolmasPlayerLevelDefinition> playerLevels,
             HolmasConfigReport report)
         {
@@ -370,11 +360,13 @@ namespace App.HotUpdate.Holmas.Tasks.Config
 
             if (rows == null || rows.Count == 0)
             {
-                report.AddError("核心配置包没有任何玩家等级条目。");
+                report.AddError("Holmas_PlayerLevelTable 没有任何玩家等级条目。");
                 return false;
             }
 
             var seenLevels = new HashSet<int>();
+            var taskTypeIds = new HashSet<string>((tasks ?? Array.Empty<HolmasTaskTemplateDefinition>()).Select(item => item.TaskTypeId), StringComparer.Ordinal);
+            var mapIds = new HashSet<string>((maps ?? Array.Empty<HolmasMapDefinition>()).Select(item => item.MapId), StringComparer.Ordinal);
             int expectedLevel = 1;
 
             for (int i = 0; i < rows.Count; i++)
@@ -386,56 +378,56 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (row.PlayerLevel != expectedLevel)
+                if (row.playerLevel != expectedLevel)
                 {
-                    report.AddError($"玩家等级必须从 1 连续递增，当前第 {i + 1} 行是 {row.PlayerLevel}。");
+                    report.AddError($"玩家等级必须从 1 连续递增，当前第 {i + 1} 行是 {row.playerLevel}。");
                     return false;
                 }
 
                 expectedLevel++;
 
-                if (row.PlayerLevel < 0)
+                if (row.playerLevel < 0)
                 {
-                    report.AddError($"玩家等级不能为负: {row.PlayerLevel}。");
+                    report.AddError($"玩家等级不能为负: {row.playerLevel}。");
                     return false;
                 }
 
-                if (!seenLevels.Add(row.PlayerLevel))
+                if (!seenLevels.Add(row.playerLevel))
                 {
-                    report.AddError($"玩家等级存在重复定义: {row.PlayerLevel}。");
+                    report.AddError($"玩家等级存在重复定义: {row.playerLevel}。");
                     return false;
                 }
 
-                if (row.UpgradeExp < 0)
+                if (row.minExperience < 0)
                 {
-                    report.AddError($"玩家等级的升级门槛不能为负: {row.PlayerLevel}。");
+                    report.AddError($"玩家等级的 minExperience 不能为负: {row.playerLevel}。");
                     return false;
                 }
 
-                if (i > 0 && row.UpgradeExp <= rows[i - 1].UpgradeExp)
+                if (i > 0 && row.minExperience <= rows[i - 1].minExperience)
                 {
-                    report.AddError($"玩家等级的升级门槛必须严格递增: {row.PlayerLevel}。");
+                    report.AddError($"玩家等级的 minExperience 必须严格递增: {row.playerLevel}。");
                     return false;
                 }
 
-                if (row.OfflineRewardPerHour < 0)
+                if (row.offlineRewardPerHour < 0)
                 {
-                    report.AddError($"玩家等级的 offlineRewardPerHour 不能为负: {row.PlayerLevel}。");
+                    report.AddError($"玩家等级的 offlineRewardPerHour 不能为负: {row.playerLevel}。");
                     return false;
                 }
 
-                if (row.AdUnlockHours <= 0)
+                if (row.adUnlockHours <= 0)
                 {
-                    report.AddError($"玩家等级的 adUnlockHours 必须大于 0: {row.PlayerLevel}。");
+                    report.AddError($"玩家等级的 adUnlockHours 必须大于 0: {row.playerLevel}。");
                     return false;
                 }
 
-                if (!TryValidateWeightedIndices(row.TaskTypeIndices, row.TaskTypeWeights, taskTypeIdByIndex, $"玩家等级 {row.PlayerLevel} 的任务组", report))
+                if (!TryValidateWeightedIds(row.taskTypeIds, row.taskTypeWeights, taskTypeIds, $"玩家等级 {row.playerLevel} 的任务组", report))
                 {
                     return false;
                 }
 
-                if (!TryValidateWeightedIndices(row.MapIndices, row.MapWeights, mapIdByIndex, $"玩家等级 {row.PlayerLevel} 的地图组", report))
+                if (!TryValidateWeightedIds(row.mapIds, row.mapWeights, mapIds, $"玩家等级 {row.playerLevel} 的地图组", report))
                 {
                     return false;
                 }
@@ -443,38 +435,32 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 playerLevels.Add(new HolmasPlayerLevelDefinition
                 {
                     PlayerLevelIndex = i,
-                    PlayerLevel = row.PlayerLevel,
-                    UpgradeExp = row.UpgradeExp,
-                    OfflineRewardPerHour = row.OfflineRewardPerHour,
-                    AdUnlockHours = row.AdUnlockHours,
-                    TaskTypeIds = ResolveIds(row.TaskTypeIndices, taskTypeIdByIndex),
-                    TaskTypeWeights = row.TaskTypeWeights ?? Array.Empty<int>(),
-                    TaskTypeIndices = row.TaskTypeIndices ?? Array.Empty<int>(),
-                    MapIds = ResolveIds(row.MapIndices, mapIdByIndex),
-                    MapWeights = row.MapWeights ?? Array.Empty<int>(),
-                    MapIndices = row.MapIndices ?? Array.Empty<int>(),
+                    PlayerLevel = row.playerLevel,
+                    UpgradeExp = row.minExperience,
+                    OfflineRewardPerHour = row.offlineRewardPerHour,
+                    AdUnlockHours = row.adUnlockHours,
+                    TaskTypeIds = row.taskTypeIds ?? Array.Empty<string>(),
+                    TaskTypeWeights = row.taskTypeWeights ?? Array.Empty<int>(),
+                    TaskTypeIndices = Array.Empty<int>(),
+                    MapIds = row.mapIds ?? Array.Empty<string>(),
+                    MapWeights = row.mapWeights ?? Array.Empty<int>(),
+                    MapIndices = Array.Empty<int>(),
                 });
             }
 
             return true;
         }
 
-        private static bool TryBuildAgencyBuildings(
-            IReadOnlyList<HolmasAgencyBuildingRow> rows,
-            out List<HolmasAgencyBuildingRow> agencyBuildings,
+        private static bool TryBuildAgencyBuildingTable(
+            IReadOnlyList<HolmasAgencyBuildingTableRow> rows,
+            out List<HolmasAgencyBuildingTableRow> holmasAgencyBuildingTable,
             HolmasConfigReport report)
         {
-            agencyBuildings = new List<HolmasAgencyBuildingRow>();
+            holmasAgencyBuildingTable = new List<HolmasAgencyBuildingTableRow>();
 
             if (rows == null || rows.Count == 0)
             {
-                report.AddError("核心配置包缺少 AgencyBuildings。");
-                return false;
-            }
-
-            if (rows.Count != 100)
-            {
-                report.AddError($"AgencyBuildings 行数必须为 100，当前为 {rows.Count}。");
+                report.AddError("核心配置包缺少 Holmas_AgencyBuildingTable。");
                 return false;
             }
 
@@ -485,114 +471,134 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 var row = rows[i];
                 if (row == null)
                 {
-                    report.AddError($"AgencyBuildings 第 {i + 1} 行为空。");
+                    report.AddError($"Holmas_AgencyBuildingTable 第 {i + 1} 行为空。");
                     return false;
                 }
 
-                if (row.AgencyStageId <= 0)
+                if (row.agencyStageId <= 0)
                 {
-                    report.AddError($"AgencyBuildings 第 {i + 1} 行的 agencyStageId 必须是正整数。");
+                    report.AddError($"Holmas_AgencyBuildingTable 第 {i + 1} 行的 agencyStageId 必须是正整数。");
                     return false;
                 }
 
-                if (row.AgencyStageId != i + 1)
+                if (row.agencyStageId != i + 1)
                 {
-                    report.AddError($"AgencyBuildings 的 agencyStageId 必须按 1..N 连续递增，当前第 {i + 1} 行为 {row.AgencyStageId}。");
+                    report.AddError($"Holmas_AgencyBuildingTable 的 agencyStageId 必须按 1..N 连续递增，当前第 {i + 1} 行为 {row.agencyStageId}。");
                     return false;
                 }
 
-                if (!seenStageIds.Add(row.AgencyStageId))
+                if (!seenStageIds.Add(row.agencyStageId))
                 {
-                    report.AddError($"AgencyBuildings 存在重复 agencyStageId: {row.AgencyStageId}。");
+                    report.AddError($"Holmas_AgencyBuildingTable 存在重复 agencyStageId: {row.agencyStageId}。");
                     return false;
                 }
 
-                string stageName = row.StageName ?? string.Empty;
+                string stageName = row.stageName ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(stageName))
                 {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 缺少 stageName。");
+                    report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId} 缺少 stageName。");
                     return false;
                 }
 
                 if (!seenStageNames.Add(stageName))
                 {
-                    report.AddError($"AgencyBuildings 存在重复 stageName: {stageName}。");
+                    report.AddError($"Holmas_AgencyBuildingTable 存在重复 stageName: {stageName}。");
                     return false;
                 }
 
-                if (row.PromotionIds == null || row.PromotionIds.Length == 0)
+                if (row.promotionIds == null || row.promotionIds.Length == 0)
                 {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 缺少 promotionIds。");
+                    report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId} 缺少 promotionIds。");
                     return false;
                 }
 
-                if (row.PromotionLevelCaps == null || row.PromotionLevelCaps.Length != row.PromotionIds.Length)
+                if (row.promotionLevelCaps == null || row.promotionLevelCaps.Length != row.promotionIds.Length)
                 {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionIds 与 promotionLevelCaps 长度不一致。");
+                    report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId} 的 promotionIds 与 promotionLevelCaps 长度不一致。");
                     return false;
                 }
 
-                if (row.PromotionUpgradeCosts == null || row.PromotionUpgradeCosts.Length != row.PromotionIds.Length)
+                if (row.promotionUpgradeCosts == null || row.promotionUpgradeCosts.Length != row.promotionIds.Length)
                 {
-                    report.AddError($"AgencyBuildings {row.AgencyStageId} 的 promotionIds 与 promotionUpgradeCosts 长度不一致。");
+                    report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId} 的 promotionIds 与 promotionUpgradeCosts 长度不一致。");
                     return false;
                 }
 
-                for (int promotionIndex = 0; promotionIndex < row.PromotionIds.Length; promotionIndex++)
+                for (int promotionIndex = 0; promotionIndex < row.promotionIds.Length; promotionIndex++)
                 {
-                    string promotionId = row.PromotionIds[promotionIndex] ?? string.Empty;
+                    string promotionId = row.promotionIds[promotionIndex] ?? string.Empty;
                     if (string.IsNullOrWhiteSpace(promotionId))
                     {
-                        report.AddError($"AgencyBuildings {row.AgencyStageId} 的第 {promotionIndex + 1} 个 promotionId 为空。");
+                        report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId} 的第 {promotionIndex + 1} 个 promotionId 为空。");
+                        return false;
+                    }
+
+                    int levelCap = row.promotionLevelCaps[promotionIndex];
+                    if (levelCap <= 0)
+                    {
+                        report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId}/{promotionId} 的 promotionLevelCaps 必须大于 0。");
+                        return false;
+                    }
+
+                    int[] costs = row.promotionUpgradeCosts[promotionIndex]?.costs ?? Array.Empty<int>();
+                    if (costs.Length != levelCap)
+                    {
+                        report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId}/{promotionId} 的 promotionUpgradeCosts 长度必须等于 cap={levelCap}，当前为 {costs.Length}。");
+                        return false;
+                    }
+
+                    if (costs.Any(cost => cost <= 0))
+                    {
+                        report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId}/{promotionId} 的升级费用必须全部大于 0。");
                         return false;
                     }
                 }
 
-                agencyBuildings.Add(new HolmasAgencyBuildingRow
+                holmasAgencyBuildingTable.Add(new HolmasAgencyBuildingTableRow
                 {
-                    AgencyStageId = row.AgencyStageId,
-                    StageName = stageName,
-                    PromotionIds = row.PromotionIds.ToArray(),
-                    PromotionLevelCaps = row.PromotionLevelCaps.ToArray(),
-                    PromotionUpgradeCosts = (row.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostRow>())
-                        .Select(costRow => new HolmasAgencyBuildingCostRow
+                    agencyStageId = row.agencyStageId,
+                    stageName = stageName,
+                    promotionIds = row.promotionIds.ToArray(),
+                    promotionLevelCaps = row.promotionLevelCaps.ToArray(),
+                    promotionUpgradeCosts = (row.promotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingTableCostRow>())
+                        .Select(costRow => new HolmasAgencyBuildingTableCostRow
                         {
-                            Costs = costRow?.Costs ?? Array.Empty<int>(),
+                            costs = costRow?.costs ?? Array.Empty<int>(),
                         })
                         .ToArray(),
-                    Notes = row.Notes ?? string.Empty,
+                    notes = row.notes ?? string.Empty,
                 });
             }
 
             return true;
         }
 
-        private static bool TryValidateWeightedIndices(
-            int[] indices,
+        private static bool TryValidateWeightedIds(
+            string[] ids,
             int[] weights,
-            IReadOnlyDictionary<int, string> idByIndex,
+            HashSet<string> knownIds,
             string context,
             HolmasConfigReport report)
         {
-            if (indices == null || weights == null)
+            if (ids == null || weights == null)
             {
-                report.AddError($"{context} 的索引或权重为空。");
+                report.AddError($"{context} 的 ID 或权重为空。");
                 return false;
             }
 
-            if (indices.Length == 0 || weights.Length == 0)
+            if (ids.Length == 0 || weights.Length == 0)
             {
                 report.AddError($"{context} 缺少可用项。");
                 return false;
             }
 
-            if (indices.Length != weights.Length)
+            if (ids.Length != weights.Length)
             {
-                report.AddError($"{context} 的索引和权重长度不一致。");
+                report.AddError($"{context} 的 ID 和权重长度不一致。");
                 return false;
             }
 
-            for (int i = 0; i < indices.Length; i++)
+            for (int i = 0; i < ids.Length; i++)
             {
                 if (weights[i] < 0)
                 {
@@ -600,30 +606,15 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
-                if (!idByIndex.ContainsKey(indices[i]))
+                string id = ids[i] ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(id) || knownIds == null || !knownIds.Contains(id))
                 {
-                    report.AddError($"{context} 引用了不存在的索引: {indices[i]}。");
+                    report.AddError($"{context} 引用了不存在的 ID: {id}。");
                     return false;
                 }
             }
 
             return true;
-        }
-
-        private static string[] ResolveIds(int[] indices, IReadOnlyDictionary<int, string> idByIndex)
-        {
-            if (indices == null || indices.Length == 0)
-            {
-                return Array.Empty<string>();
-            }
-
-            var ids = new string[indices.Length];
-            for (int i = 0; i < indices.Length; i++)
-            {
-                ids[i] = idByIndex.TryGetValue(indices[i], out string id) ? id : string.Empty;
-            }
-
-            return ids;
         }
     }
 }
