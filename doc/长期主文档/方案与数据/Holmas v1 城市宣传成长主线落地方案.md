@@ -2,31 +2,32 @@
 
 ## Summary
 
-后续实现以 `100` 城市宣传方案为准，不再沿用“5 阶段建筑内容表”方案。
+后续实现以 `Holmas_AgencyBuildingTable.xlsx` 表内城市宣传数据为准，不再沿用“5 阶段建筑内容表”方案，也不在代码或测试中写死宣传阶段总数。
 
-本次落地不是只换表内容，而是正式把协议、语义和运行时主链都切到宣传系统：
+本次落地不是只换表内容，而是正式把导表协议、运行时主链和测试口径都切到“严格按表驱动”：
 
 - 地方宣传阶段改为 `agencyStageId`，个数根据表中数据判断
 - 每个地方有几个宣传功能读表Holmas_AgencyBuildingTable.xlsx中的promotionIds字段
 - 每个宣传功能升级次数读表Holmas_AgencyBuildingTable.xlsx中的promotionLevelCaps字段
 - 每次升级固定 `+1` 玩家经验
 - 总升级经验读表Holmas_PlayerLevelTable.xlsx中的minExperience
-- 表结构、导表协议、运行时模型、错误文案、测试口径统一改成“宣传”命名
+- 导表协议严格匹配 xlsx 表名和技术表头，不再包装成 `AgencyBuildings`、`AgencyPromotionStages` 等业务别名
+- runtime 只消费表数据，不反向包装、改名或用旧代码里的固定数量限制表
 
 ## 完成情况
 
 - 当前状态：进行中
-- 进度说明：已完成宣传语义、协议与主链接线方案定义，待持久化、UI 和整体验证链完全闭环。
+- 进度说明：已完成宣传语义与主链接线方案定义；导表协议口径已修订为严格镜像表格，待代码、持久化、UI 和整体验证链完全闭环。
 
 ## 实施目标
 
-本轮目标是把当前“建筑成长”整体升级为 `v1` 正式城市宣传成长系统，而不是在旧命名上继续加兼容补丁。
+本轮目标是把当前“建筑成长”整体升级为 `v1` 正式城市宣传成长系统，同时把导表协议收敛为表格镜像，而不是在旧命名上继续加兼容补丁。
 
 需要同时完成：
 
 1. 配置表切到宣传字段
-2. 导表与二进制协议切到宣传字段
-3. 运行时模型从 `building` 切到 `promotion`
+2. 导表、JSON 预览、bytes 与 C#/Python 配置模型严格匹配表文件名和技术表头
+3. 运行时业务模型从 `building` 切到 `promotion`，但不得改变导表协议命名
 4. `Bootstrap`、组合层和 smoke 统一切到宣传语义
 5. 测试、日志、错误文案统一切换
 
@@ -42,16 +43,12 @@
 成长字段保持：
 
 - `playerLevel`
-- `upgradeExp`
+- `minExperience`
 - `offlineRewardPerHour`
 - `adUnlockHours`
 - `notes`
 
-累计经验门槛改为 `2000` 总经验池版本：
-
-```text
-0,40,85,135,190,250,320,400,490,590,700,825,965,1120,1290,1475,1675,1840,1930,2000
-```
+累计经验门槛完全读取表内 `minExperience`，不在代码、导表工具、测试里写死总经验池或等级总数。
 
 ### Holmas_AgencyBuildingTable.xlsx
 
@@ -77,12 +74,19 @@
 `Xlsx导出二进制` 需要扩展以下规则：
 
 - `Holmas_PlayerLevelTable.xlsx` 行数不固定
+- `Holmas_PlayerLevelTable.xlsx` 的玩家等级和经验门槛按表数据校验，不写死总经验池或等级总数
+- 导出协议严格镜像 xlsx 表名和技术表头
+- JSON 顶层集合名使用表文件基础名，不包含 `.xlsx` 后缀：
+  - `Holmas_PlayerLevelTable`
+  - `Holmas_AgencyBuildingTable`
+- JSON 行字段使用第二行技术表头原名，不使用 C# 属性名或业务包装名
 - `agencyStageId` 必须从 `1` 开始连续递增
 - `stageName` 不允许重复
 - `promotionIds` 长度不固定
 - `promotionLevelCaps` 长度不固定
 - `promotionUpgradeCosts` 外层长度不固定
-- 每组 `promotionUpgradeCosts` 内层长度不固定
+- 每组 `promotionUpgradeCosts` 内层长度由同位置 `promotionLevelCaps` 决定
+- 每个 `promotionLevelCaps` 必须 `> 0`
 - 所有升级费用必须 `> 0`
 
 核心配置导出包继续保持两份正式产物：
@@ -90,7 +94,14 @@
 - `holmas_core_config.bytes`
 - `holmas_cat_meta.bytes`
 
-但 `core config` 的模型需要从 `AgencyBuildings[]` 语义切为“宣传配置”语义。
+`core config` 不再使用 `AgencyBuildings[]` 作为正式协议字段，也不新增 `AgencyPromotionStages` 这类业务包装名。
+
+正式协议约束为：
+
+- 表集合名严格等于表文件基础名：例如 `Holmas_AgencyBuildingTable`
+- 行字段严格等于技术表头：例如 `agencyStageId`、`stageName`、`promotionIds`、`promotionLevelCaps`、`promotionUpgradeCosts`、`notes`
+- 二进制 bytes 可以继续按固定顺序写入数据，但 C#/Python 源模型命名与字段含义必须能一一追溯到表名和表头
+- 检测到旧 JSON 字段 `AgencyBuildings` 时视为旧协议，必须报错并要求重新导表
 
 ## 运行时语义切换
 
@@ -107,8 +118,11 @@
 
 默认要求：
 
-- 不长期保留 `building` 与 `promotion` 双命名并存
-- 若短期兼容不可避免，也只能作为过渡层，不能继续作为主语义
+- 不保留 `building` 与 `promotion` 双主语义
+- 不保留旧 `AgencyBuildings` 协议兼容路径；旧 JSON 字段只用于识别并报错
+- runtime 可以把 `Holmas_AgencyBuildingTable` 的行数据转换成升级服务内部对象
+- 转换层不得改变导表协议命名，不得把表重新包装成 `AgencyBuildings`、`AgencyPromotionStages` 或固定阶段数组
+- `TryUpgradePromotion`、`PromotionLevels` 等业务 API 保留宣传语义，并且只消费严格导出的表数据
 
 ## 成长主链
 
@@ -140,7 +154,7 @@
 
 `Bootstrap` 与组合层需要同步切换：
 
-- 从导出配置恢复 `PlayerLevels`（合并后的成长字段）与宣传配置
+- 从导出配置恢复 `Holmas_PlayerLevelTable` 与 `Holmas_AgencyBuildingTable`
 - 不再组装“建筑成长”服务
 - 对外暴露宣传升级入口
 - 当前无 UI 主链依然能：
@@ -161,12 +175,16 @@
 - `stageName` 唯一
 - `promotionIds` 长度读表确定
 - 每个 `promotionId` 的 `cap` 读表确定
-- 每组 `promotionUpgradeCosts` 长度读表确定，且全部 `> 0`
+- 每组 `promotionUpgradeCosts` 长度必须等于同位置 `cap`，且全部 `> 0`
+- JSON 顶层存在 `Holmas_AgencyBuildingTable`
+- JSON 顶层不存在 `AgencyBuildings`
+- JSON 行字段严格使用 xlsx 技术表头原名
 
 ### 等级校验
 
-- `playerLevel` 连续 `1..100`
-- `upgradeExp` 严格递增
+- `playerLevel` 连续 `1..N`
+- `minExperience` 严格递增
+- 不写死玩家等级总数和总经验池
 
 ### 宣传升级逻辑
 
@@ -193,8 +211,8 @@
 
 建议按以下顺序实施：
 
-1. 切配置表字段与导表协议
-2. 切二进制模型与 runtime config 恢复
+1. 切配置表字段读取与导表协议镜像规则
+2. 切 JSON/bytes 模型与 runtime config 恢复
 3. 重构长期成长纯逻辑到宣传语义
 4. 接入 `Bootstrap`、`GameplayRuntime`、`ApplicationContext`
 5. 更新测试与 smoke
