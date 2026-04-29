@@ -6,12 +6,11 @@
 
 本次落地不是只换表内容，而是正式把协议、语义和运行时主链都切到宣传系统：
 
-- 长期成长继续保留 `20` 个玩家等级
-- 城市宣传阶段改为 `100` 个 `agencyStageId`
-- 每个城市固定 `4` 个宣传功能
-- 每个宣传功能固定升级 `5` 次
+- 地方宣传阶段改为 `agencyStageId`，个数根据表中数据判断
+- 每个地方有几个宣传功能读表Holmas_AgencyBuildingTable.xlsx中的promotionIds字段
+- 每个宣传功能升级次数读表Holmas_AgencyBuildingTable.xlsx中的promotionLevelCaps字段
 - 每次升级固定 `+1` 玩家经验
-- 总经验池固定为 `100 x 4 x 5 = 2000`
+- 总升级经验读表Holmas_PlayerLevelTable.xlsx中的minExperience
 - 表结构、导表协议、运行时模型、错误文案、测试口径统一改成“宣传”命名
 
 ## 完成情况
@@ -67,29 +66,24 @@
 
 字段含义固定为：
 
-- `agencyStageId`：`1..100` 的城市阶段
-- `stageName`：城市名称，必须唯一
-- `promotionIds`：固定四个宣传功能
-  - `leaflet`
-  - `radio`
-  - `online`
-  - `tv`
-- `promotionLevelCaps`：固定 `5;5;5;5`
-- `promotionUpgradeCosts`：4 组升级费用，每组固定 `5` 档
+- `agencyStageId`：从 `1` 开始连续递增的地区阶段，个数读表确定
+- `stageName`：地区名称，必须唯一
+- `promotionIds`：宣传功能可随时增加
+- `promotionLevelCaps`：不固定
+- `promotionUpgradeCosts`：不固定
 
 ## 导表与校验协议
 
 `Xlsx导出二进制` 需要扩展以下规则：
 
-- `Holmas_PlayerLevelTable.xlsx` 行数必须锁死为 `20`
-- `agencyStageId` 必须连续 `1..100`
+- `Holmas_PlayerLevelTable.xlsx` 行数不固定
+- `agencyStageId` 必须从 `1` 开始连续递增
 - `stageName` 不允许重复
-- `promotionIds` 长度固定为 `4`
-- `promotionLevelCaps` 长度固定为 `4`，且值固定全为 `5`
-- `promotionUpgradeCosts` 外层长度固定为 `4`
-- 每组 `promotionUpgradeCosts` 内层长度固定为 `5`
+- `promotionIds` 长度不固定
+- `promotionLevelCaps` 长度不固定
+- `promotionUpgradeCosts` 外层长度不固定
+- 每组 `promotionUpgradeCosts` 内层长度不固定
 - 所有升级费用必须 `> 0`
-- `Lv20.upgradeExp` 必须等于 `2000`
 
 核心配置导出包继续保持两份正式产物：
 
@@ -125,9 +119,9 @@
   - 对应宣传等级 `+1`
   - 玩家经验 `+1`
   - 重算 `playerLevel`
-- 当前城市 `4` 个宣传功能全部达到 `5/5`
+- 当前地区所有宣传功能全部达到 `cap`
   - 才推进到下一 `agencyStageId`
-- 如果当前是最后一个城市阶段
+- 如果当前是最后一个地区阶段
   - 满级后不再越界推进
 
 经验来源规则继续保持：
@@ -162,18 +156,17 @@
 
 ### 配表校验
 
-- `Holmas_AgencyBuildingTable.xlsx` 共 `100` 行
-- `agencyStageId` 连续 `1..100`
+- `Holmas_AgencyBuildingTable.xlsx` 行数不固定，读表确定
+- `agencyStageId` 从 `1` 开始连续递增
 - `stageName` 唯一
-- 每行固定 `4` 个 `promotionIds`
-- 每个 `promotionId` 的 `cap` 固定为 `5`
-- 每组 `promotionUpgradeCosts` 固定 `5` 档且全部 `> 0`
+- `promotionIds` 长度读表确定
+- 每个 `promotionId` 的 `cap` 读表确定
+- 每组 `promotionUpgradeCosts` 长度读表确定，且全部 `> 0`
 
 ### 等级校验
 
-- `playerLevel` 连续 `1..20`
+- `playerLevel` 连续 `1..100`
 - `upgradeExp` 严格递增
-- `Lv20.upgradeExp == 2000`
 
 ### 宣传升级逻辑
 
@@ -186,8 +179,6 @@
 ### 经验验证
 
 - 每次宣传升级固定 `+1`
-- 单个城市总经验固定 `20`
-- 全部 `100` 城市总经验固定 `2000`
 - 任务领奖不加经验
 - 地图完成不加经验
 - 离线结算不加经验
