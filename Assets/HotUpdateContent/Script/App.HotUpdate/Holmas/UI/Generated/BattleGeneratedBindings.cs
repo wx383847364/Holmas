@@ -6,7 +6,7 @@ namespace App.HotUpdate.Holmas.UI.Generated
     public static class BattleGeneratedBindings
     {
         public const string PrefabName = "BattlePanel";
-        public const string PrefabAssetPath = "Assets/Res/Perfabs/UI/BattlePanel.prefab";
+        public const string PrefabAssetPath = "Assets/HotUpdateContent/Res/Perfabs/UI/BattlePanel.prefab";
 
         private static readonly UiBindingManifest ManifestInstance = BuildManifest();
         private static readonly UiRuntimeScreenDescriptor DescriptorInstance =

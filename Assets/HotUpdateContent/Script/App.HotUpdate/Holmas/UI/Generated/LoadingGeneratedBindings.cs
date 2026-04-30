@@ -6,7 +6,7 @@ namespace App.HotUpdate.Holmas.UI.Generated
     public static class LoadingGeneratedBindings
     {
         public const string PrefabName = "LoadingPanel";
-        public const string PrefabAssetPath = "Assets/Res/Perfabs/UI/LoadingPanel.prefab";
+        public const string PrefabAssetPath = "Assets/HotUpdateContent/Res/Perfabs/UI/LoadingPanel.prefab";
 
         private static readonly UiBindingManifest ManifestInstance = BuildManifest();
         private static readonly UiRuntimeScreenDescriptor DescriptorInstance =

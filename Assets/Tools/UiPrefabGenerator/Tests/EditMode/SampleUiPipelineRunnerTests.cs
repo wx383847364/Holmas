@@ -18,7 +18,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                 });
 
                 Assert.That(report.Success, Is.True);
-                Assert.That(report.PrefabDraftPath, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
+                Assert.That(report.PrefabDraftPath, Is.EqualTo("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
                 SampleFixtureAssert.AreEqual(report.PreviewGeneration.Manifest, SampleFixtureLoader.LoadPrefabBindingManifest());
                 SampleFixtureAssert.AreEqual(
                     ((UiPrefabGenerator.HolmasAdapter.HolmasGeneratedResultConsumptionResult)report.AdapterResult).Plan,

@@ -6,7 +6,6 @@ using UnityEngine;
 using App.Shared.Contracts;
 using App.AOT.Infrastructure.DI;
 using App.AOT.YooRuntimeAssets;
-using YooAsset;
 
 namespace App.AOT.HotUpdate
 {
@@ -15,6 +14,19 @@ namespace App.AOT.HotUpdate
     /// </summary>
     public class HybridClrLoader
     {
+        private const string HotUpdateDllLocation = "Assets/HotUpdateContent/Res/HotUpdate/App.HotUpdate.dll.bytes";
+
+        private static readonly string[] AOTMetadataLocations =
+        {
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/mscorlib.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/System.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/System.Core.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/UnityEngine.CoreModule.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/UnityEngine.UI.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/Unity.TextMeshPro.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/App.Shared.dll.bytes",
+        };
+
         private readonly IAppLogger _logger;
         private readonly YooAssetsRuntime _yooAssets;
         private readonly IServiceContainer _serviceContainer;
@@ -65,16 +77,33 @@ namespace App.AOT.HotUpdate
         {
             _logger?.LogInfo("HybridClrLoader: 加载AOT元数据...");
 
-            // TODO: 从YooAssets加载AOT metadata文件
-            // 这里需要根据HybridCLR的实际API来调用
-            // 示例：
-            // var metadataHandle = _yooAssets.LoadAssetAsync<TextAsset>("AOTMetadata");
-            // await metadataHandle.Task;
-            // var metadataBytes = metadataHandle.AssetObject.bytes;
-            // HybridCLR.RuntimeApi.LoadMetadataForAOTAssembly(metadataBytes, HomologousImageMode.SuperSet);
+            int loadedCount = 0;
+            foreach (string location in AOTMetadataLocations)
+            {
+                IAssetHandle metadataHandle = await _yooAssets.LoadAssetAsync(location);
+                try
+                {
+                    if (!(metadataHandle?.AssetObject is TextAsset metadataAsset) || metadataAsset.bytes == null || metadataAsset.bytes.Length == 0)
+                    {
+                        _logger?.LogWarning("HybridClrLoader: AOT元数据不存在或为空，跳过。{0}", location);
+                        continue;
+                    }
 
-            await Task.Delay(100); // 模拟加载
-            _logger?.LogInfo("HybridClrLoader: AOT元数据加载完成");
+                    LoadMetadataForAOTAssembly(metadataAsset.bytes, location);
+                    loadedCount++;
+                }
+                finally
+                {
+                    metadataHandle?.Release();
+                }
+            }
+
+            if (loadedCount <= 0)
+            {
+                throw new InvalidOperationException("HybridClrLoader: 未能加载任何AOT metadata。");
+            }
+
+            _logger?.LogInfo("HybridClrLoader: AOT元数据加载完成，count={0}", loadedCount);
         }
 
         private async Task LoadHotUpdateDllAsync()
@@ -83,19 +112,20 @@ namespace App.AOT.HotUpdate
 
             try
             {
-                // 从YooAssets加载HotUpdate DLL
-                var dllHandle = _yooAssets.LoadAssetAsync<TextAsset>("App.HotUpdate.dll");
-                await dllHandle.Task;
-
-                if (dllHandle.Status != EOperationStatus.Succeed)
+                IAssetHandle dllHandle = await _yooAssets.LoadAssetAsync(HotUpdateDllLocation);
+                try
                 {
-                    throw new Exception($"加载HotUpdate DLL失败: {dllHandle.GetAssetInfo().Error}");
+                    if (!(dllHandle?.AssetObject is TextAsset dllAsset) || dllAsset.bytes == null || dllAsset.bytes.Length == 0)
+                    {
+                        throw new FileNotFoundException("加载HotUpdate DLL失败", HotUpdateDllLocation);
+                    }
+
+                    _hotUpdateAssembly = Assembly.Load(dllAsset.bytes);
                 }
-
-                var dllBytes = (dllHandle.AssetObject as TextAsset).bytes;
-
-                // 加载程序集
-                _hotUpdateAssembly = Assembly.Load(dllBytes);
+                finally
+                {
+                    dllHandle?.Release();
+                }
 
                 _logger?.LogInfo("HybridClrLoader: HotUpdate DLL加载完成");
             }
@@ -104,6 +134,31 @@ namespace App.AOT.HotUpdate
                 _logger?.LogError("HybridClrLoader: 加载HotUpdate DLL失败: {0}", ex);
                 throw;
             }
+        }
+
+        private void LoadMetadataForAOTAssembly(byte[] metadataBytes, string location)
+        {
+            Type runtimeApiType = Type.GetType("HybridCLR.RuntimeApi, HybridCLR.Runtime");
+            Type homologousImageModeType = Type.GetType("HybridCLR.HomologousImageMode, HybridCLR.Runtime");
+            if (runtimeApiType == null || homologousImageModeType == null)
+            {
+                throw new InvalidOperationException("HybridClrLoader: HybridCLR RuntimeApi 不可用，无法加载AOT metadata。");
+            }
+
+            MethodInfo method = runtimeApiType.GetMethod(
+                "LoadMetadataForAOTAssembly",
+                BindingFlags.Public | BindingFlags.Static,
+                null,
+                new[] { typeof(byte[]), homologousImageModeType },
+                null);
+            if (method == null)
+            {
+                throw new MissingMethodException("HybridCLR.RuntimeApi", "LoadMetadataForAOTAssembly");
+            }
+
+            object mode = Enum.Parse(homologousImageModeType, "SuperSet");
+            object result = method.Invoke(null, new[] { metadataBytes, mode });
+            _logger?.LogInfo("HybridClrLoader: AOT metadata加载完成。location={0}, result={1}", location, result);
         }
 
         private void InvokeHotUpdateEntry()

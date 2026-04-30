@@ -53,6 +53,12 @@ namespace App.AOT.YooRuntimeAssets
                 // 设置资源包
                 YooAssets.SetDefaultPackage(_defaultPackage);
 
+#if HOLMAS_YOO_OFFLINE_PLAYMODE
+                // Player smoke 使用内置包离线初始化，避免依赖 CDN。
+                var offlineModeParameters = new OfflinePlayModeParameters();
+                offlineModeParameters.BuildinFileSystemParameters = FileSystemParameters.CreateDefaultBuildinFileSystemParameters();
+                var initOperation = _defaultPackage.InitializeAsync(offlineModeParameters);
+#else
                 // 运行时模式：使用主机模式（从CDN下载）
                 var hostModeParameters = new HostPlayModeParameters();
                 // 内置文件系统参数
@@ -60,6 +66,7 @@ namespace App.AOT.YooRuntimeAssets
                 // 缓存文件系统参数（需要远程服务）
                 hostModeParameters.CacheFileSystemParameters = FileSystemParameters.CreateDefaultCacheFileSystemParameters(new RemoteServices());
                 var initOperation = _defaultPackage.InitializeAsync(hostModeParameters);
+#endif
 
                 if (initOperation != null)
                 {
@@ -70,6 +77,24 @@ namespace App.AOT.YooRuntimeAssets
                         throw new Exception(initOperation.Error);
                     }
                 }
+
+#if HOLMAS_YOO_OFFLINE_PLAYMODE
+                var versionOperation = _defaultPackage.RequestPackageVersionAsync();
+                await versionOperation.Task;
+                if (versionOperation.Status != EOperationStatus.Succeed)
+                {
+                    _logger?.LogError("YooAssetsRuntime: 资源包版本请求失败: {0}", versionOperation.Error);
+                    throw new Exception(versionOperation.Error);
+                }
+
+                var manifestOperation = _defaultPackage.UpdatePackageManifestAsync(versionOperation.PackageVersion);
+                await manifestOperation.Task;
+                if (manifestOperation.Status != EOperationStatus.Succeed)
+                {
+                    _logger?.LogError("YooAssetsRuntime: 资源包清单更新失败: {0}", manifestOperation.Error);
+                    throw new Exception(manifestOperation.Error);
+                }
+#endif
 
                 // 初始化补丁处理器
                 _patchHandler = new PatchOperationHandler(_defaultPackage, _logger);

@@ -25,7 +25,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                 });
 
                 Assert.That(result.Success, Is.True);
-                Assert.That(result.PrefabDraftPath, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
+                Assert.That(result.PrefabDraftPath, Is.EqualTo("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
 
                 GameObject prefabRoot = PrefabUtility.LoadPrefabContents(result.PrefabDraftPath);
                 try

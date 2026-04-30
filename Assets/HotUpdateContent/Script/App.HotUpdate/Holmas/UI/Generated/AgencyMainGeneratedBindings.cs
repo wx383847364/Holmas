@@ -10,7 +10,7 @@ namespace App.HotUpdate.Holmas.UI.Generated
     public static class AgencyMainGeneratedBindings
     {
         public const string PrefabName = "AgencyMainPanel";
-        public const string PrefabAssetPath = "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab";
+        public const string PrefabAssetPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab";
 
         private static readonly UiBindingManifest ManifestInstance = BuildManifest();
         private static readonly UiRuntimeScreenDescriptor DescriptorInstance =

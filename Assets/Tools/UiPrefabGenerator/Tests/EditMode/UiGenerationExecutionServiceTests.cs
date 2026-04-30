@@ -32,7 +32,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                 UiGenerationExecutionResult result = service.Execute(TaskDirectory, template, analysis);
 
                 Assert.That(result.Success, Is.True);
-                Assert.That(result.PrefabPath, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
+                Assert.That(result.PrefabPath, Is.EqualTo("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
                 Assert.That(result.ManifestPath, Is.EqualTo(TaskDirectory + "/prefab_binding_manifest.json"));
                 Assert.That(result.ManifestValidationPassed, Is.True);
                 Assert.That(result.StructureValidationPassed, Is.True);

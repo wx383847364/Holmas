@@ -25,7 +25,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             Assert.That(template, Is.Not.Null);
             Assert.That(template.ProfileId, Is.EqualTo("holmas_ugui_portrait"));
             Assert.That(template.Orientation, Is.EqualTo("portrait"));
-            Assert.That(template.DraftPrefabRoot, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait"));
+            Assert.That(template.DraftPrefabRoot, Is.EqualTo("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait"));
         }
 
         [Test]
@@ -47,7 +47,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                     ReferenceResolutionWidth = 1080,
                     ReferenceResolutionHeight = 1920,
                     AssetRoot = "Assets/Res",
-                    DraftPrefabRoot = "Assets/Res/Perfabs/Generated/Holmas/Portrait",
+                    DraftPrefabRoot = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait",
                 };
                 Texture2D sourceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(TempImageAssetPath);
                 string taskDirectory = UiGenerationTaskStorage.CreateTask(request, sourceImage);
@@ -361,7 +361,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                     {
                         TaskId = "test_execution_result",
                         Success = true,
-                        PrefabPath = "Assets/Res/Perfabs/Generated/Holmas/Portrait/Test.prefab",
+                        PrefabPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/Test.prefab",
                         ManifestValidationPassed = true,
                         StructureValidationPassed = true,
                     });

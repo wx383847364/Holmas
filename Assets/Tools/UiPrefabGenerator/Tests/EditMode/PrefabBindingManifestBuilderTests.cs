@@ -40,7 +40,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                 new PrefabBindingManifestBuildRequest
                 {
                     Spec = spec,
-                    PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                    PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
                 });
 
             Assert.That(result.Success, Is.False);
@@ -86,7 +86,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                 new PrefabBindingManifestBuildRequest
                 {
                     Spec = spec,
-                    PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                    PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
                 });
 
             Assert.That(result.Success, Is.True);
@@ -146,7 +146,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                 new PrefabBindingManifestBuildRequest
                 {
                     Spec = spec,
-                    PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                    PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
                 });
 
             Assert.That(result.Success, Is.True);

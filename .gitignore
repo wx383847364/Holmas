@@ -6,6 +6,9 @@
 UserSettings/
 MemoryCaptures/
 Recordings/
+HybridCLRData/
+HybridCLRGenerate/
+Assets/StreamingAssets/yoo/
 
 # Auto-generated IDE and solution files
 *.csproj

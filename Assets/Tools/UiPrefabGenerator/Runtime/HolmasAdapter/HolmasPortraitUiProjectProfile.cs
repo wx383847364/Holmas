@@ -12,7 +12,7 @@ namespace UiPrefabGenerator.HolmasAdapter
 
         public string DraftPrefabRoot
         {
-            get { return "Assets/Res/Perfabs/Generated/Holmas/Portrait"; }
+            get { return "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait"; }
         }
 
         public string RuntimeBindingNamespace

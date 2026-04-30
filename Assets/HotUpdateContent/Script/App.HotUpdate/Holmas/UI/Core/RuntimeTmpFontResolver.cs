@@ -12,7 +12,7 @@ namespace App.HotUpdate.Holmas.UI.Core
     /// </summary>
     public static class RuntimeTmpFontResolver
     {
-        private const string ProjectChineseFontResourcePath = "Fonts/NotoSansSC";
+        public const string ProjectChineseFontAssetPath = "Assets/HotUpdateContent/Res/Fonts/NotoSansSC.ttf";
 
         // 只有项目内字体资源缺失时，才尝试这些系统字体作为开发机临时兜底。
         private static readonly string[] PreferredChineseFontNames =
@@ -33,12 +33,17 @@ namespace App.HotUpdate.Holmas.UI.Core
         private const string DefaultChineseSample = "主界面已就绪开始找猫宣传升级返回当前没有活跃任务未进入棋盘";
 
         private static Font _projectChineseFont;
-        private static bool _attemptedProjectFontLoad;
         private static Font _systemFallbackFont;
         private static bool _attemptedSystemFontLoad;
         private static bool _loggedSystemFallbackWarning;
         private static TMP_FontAsset _projectChineseTmpFontAsset;
         private static TMP_FontAsset _systemFallbackTmpFontAsset;
+
+        public static void SetProjectChineseFont(Font font)
+        {
+            _projectChineseFont = font;
+            _projectChineseTmpFontAsset = null;
+        }
 
         public static void EnsureFontSupportsText(TMP_Text text, string contentSample = null)
         {
@@ -121,13 +126,6 @@ namespace App.HotUpdate.Holmas.UI.Core
                 return _projectChineseFont;
             }
 
-            if (_attemptedProjectFontLoad)
-            {
-                return null;
-            }
-
-            _attemptedProjectFontLoad = true;
-            _projectChineseFont = Resources.Load<Font>(ProjectChineseFontResourcePath);
             return _projectChineseFont;
         }
 
@@ -155,7 +153,7 @@ namespace App.HotUpdate.Holmas.UI.Core
                 {
                     _loggedSystemFallbackWarning = true;
                     Debug.LogWarning(
-                        "RuntimeTmpFontResolver: project font resource Fonts/NotoSansSC is unavailable. " +
+                        "RuntimeTmpFontResolver: project font asset " + ProjectChineseFontAssetPath + " is unavailable. " +
                         "Falling back to an OS font for local/dev use only.");
                 }
             }

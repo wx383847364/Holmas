@@ -1,6 +1,6 @@
 {
   "prefab_name": "AgencyMainPanel",
-  "prefab_draft_path": "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
+  "prefab_draft_path": "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
   "entries": [
     {
       "node_path": "AgencyMainPanel",

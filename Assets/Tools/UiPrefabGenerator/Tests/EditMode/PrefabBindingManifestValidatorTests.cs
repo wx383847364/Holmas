@@ -13,7 +13,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             var manifest = new PrefabBindingManifest
             {
                 PrefabName = "AgencyMainPanel",
-                PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
             };
             manifest.Entries.Add(new PrefabBindingEntry
             {
@@ -59,7 +59,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             var manifest = new PrefabBindingManifest
             {
                 PrefabName = "AgencyMainPanel",
-                PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
             };
             manifest.Entries.Add(new PrefabBindingEntry
             {
@@ -81,7 +81,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             var manifest = new PrefabBindingManifest
             {
                 PrefabName = "AgencyMainPanel",
-                PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
             };
             manifest.Entries.Add(new PrefabBindingEntry
             {
@@ -104,7 +104,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             var manifest = new PrefabBindingManifest
             {
                 PrefabName = "AgencyMainPanel",
-                PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
             };
             manifest.Entries.Add(new PrefabBindingEntry
             {
@@ -133,7 +133,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             var manifest = new PrefabBindingManifest
             {
                 PrefabName = "AgencyMainPanel",
-                PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
+                PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab",
             };
             manifest.Entries.Add(new PrefabBindingEntry
             {

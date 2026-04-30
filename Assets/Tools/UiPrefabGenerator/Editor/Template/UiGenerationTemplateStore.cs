@@ -30,7 +30,7 @@ namespace UiPrefabGenerator.Editor.Template
                 PageType = "mobile_fullscreen",
                 VisualDensity = "normal",
                 AssetRoot = "Assets/Res",
-                DraftPrefabRoot = "Assets/Res/Perfabs/Generated/Holmas/Portrait",
+                DraftPrefabRoot = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait",
                 RuntimeBindingNamespace = "App.HotUpdate.Holmas.UI.Generated",
                 ResourceMatchStrictness = "balanced",
                 NodeNameStyle = "PascalCase",

@@ -13,13 +13,13 @@ namespace UiPrefabGenerator.Tests.EditMode
             var portraitProfile = new HolmasPortraitUiProjectProfile();
 
             Assert.That(profile.ProfileId, Is.EqualTo("holmas_ugui"));
-            Assert.That(profile.DraftPrefabRoot, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas"));
+            Assert.That(profile.DraftPrefabRoot, Is.EqualTo("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas"));
             Assert.That(profile.AllowedComponentTypes, Has.Member("Button"));
             Assert.That(profile.AllowedComponentTypes, Has.Member("ScrollRect"));
             Assert.That(profile.AllowedComponentTypes, Has.Member("TextMeshProUGUI"));
             Assert.That(profile.AllowedComponentTypes, Has.Member("TMP_InputField"));
             Assert.That(portraitProfile.ProfileId, Is.EqualTo("holmas_ugui_portrait"));
-            Assert.That(portraitProfile.DraftPrefabRoot, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait"));
+            Assert.That(portraitProfile.DraftPrefabRoot, Is.EqualTo("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait"));
         }
 
         [Test]
@@ -29,7 +29,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             var manifest = new PrefabBindingManifest
             {
                 PrefabName = "AgencyMainPanel",
-                PrefabDraftPath = "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
+                PrefabDraftPath = "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
             };
             manifest.Entries.Add(new PrefabBindingEntry
             {

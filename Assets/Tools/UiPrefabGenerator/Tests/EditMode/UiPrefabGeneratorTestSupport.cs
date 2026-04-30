@@ -9,18 +9,18 @@ namespace UiPrefabGenerator.Tests.EditMode
     {
         private static readonly string[] PreservedFolderPaths =
         {
-            "Assets/Res/Perfabs/Generated",
-            "Assets/Res/Perfabs/Generated/Holmas",
-            "Assets/Res/Perfabs/Generated/Holmas/Portrait",
+            "Assets/HotUpdateContent/Res/Perfabs/Generated",
+            "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas",
+            "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait",
         };
 
         private static readonly string[] PreservedAssetPaths =
         {
-            "Assets/Res/Perfabs/Generated.meta",
-            "Assets/Res/Perfabs/Generated/Holmas.meta",
-            "Assets/Res/Perfabs/Generated/Holmas/Portrait.meta",
-            "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
-            "Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab.meta",
+            "Assets/HotUpdateContent/Res/Perfabs/Generated.meta",
+            "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas.meta",
+            "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait.meta",
+            "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab",
+            "Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab.meta",
         };
 
         private static readonly Dictionary<string, string> PreservedAssetContents = new Dictionary<string, string>();
@@ -34,11 +34,11 @@ namespace UiPrefabGenerator.Tests.EditMode
         public static void CleanupGeneratedDraftRoot()
         {
             PreserveTrackedGeneratedAssets();
-            DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab");
-            DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab");
-            DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas/Portrait");
-            DeleteAssetIfExists("Assets/Res/Perfabs/Generated/Holmas");
-            DeleteAssetIfExists("Assets/Res/Perfabs/Generated");
+            DeleteAssetIfExists("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/AgencyMainPanel.prefab");
+            DeleteAssetIfExists("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab");
+            DeleteAssetIfExists("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait");
+            DeleteAssetIfExists("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas");
+            DeleteAssetIfExists("Assets/HotUpdateContent/Res/Perfabs/Generated");
             AssetDatabase.Refresh();
             RestorePreservedAssets();
             AssetDatabase.Refresh();

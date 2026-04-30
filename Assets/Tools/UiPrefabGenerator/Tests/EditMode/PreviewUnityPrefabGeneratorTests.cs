@@ -51,7 +51,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             });
 
             Assert.That(result.Success, Is.True);
-            Assert.That(result.PrefabDraftPath, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
+            Assert.That(result.PrefabDraftPath, Is.EqualTo("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait/AgencyMainPanel.prefab"));
             Assert.That(result.Manifest.Entries.Count, Is.EqualTo(4));
             Assert.That(result.Manifest.Entries[1].Notes, Does.Contain("asset_slot=panel_bg"));
             Assert.That(result.Manifest.Entries[2].EventName, Is.Empty);

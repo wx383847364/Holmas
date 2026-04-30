@@ -18,7 +18,7 @@ namespace UiPrefabGenerator.Tests.EditMode
             Assert.That(template.Orientation, Is.EqualTo("portrait"));
             Assert.That(template.ReferenceResolutionWidth, Is.EqualTo(1080));
             Assert.That(template.ReferenceResolutionHeight, Is.EqualTo(1920));
-            Assert.That(template.DraftPrefabRoot, Is.EqualTo("Assets/Res/Perfabs/Generated/Holmas/Portrait"));
+            Assert.That(template.DraftPrefabRoot, Is.EqualTo("Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait"));
         }
 
         [Test]

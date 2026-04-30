@@ -29,6 +29,7 @@ namespace App.HotUpdate.Holmas.UI.Core
         private GameObject _inputBlocker;
         private GameObject _popupBackdrop;
         private Button _popupBackdropButton;
+        private IAssetHandle _projectFontHandle;
         private Action _popupBackdropClickAction;
         private bool _built;
         private bool _bootstrapStarted;
@@ -229,6 +230,8 @@ namespace App.HotUpdate.Holmas.UI.Core
         {
             try
             {
+                await PreloadProjectChineseFontAsync();
+
                 // 只先确保 Loading 自身可用；其他启动预加载必须在 Loading 可见后执行。
                 foreach (UiScreenDefinition definition in _screenService.Definitions)
                 {
@@ -257,6 +260,26 @@ namespace App.HotUpdate.Holmas.UI.Core
             {
                 _context?.Logger?.LogWarning("UiRoot: 启动默认页面失败。{0}", ex.Message);
             }
+        }
+
+        private async Task PreloadProjectChineseFontAsync()
+        {
+            if (_context == null || _context.AssetsRuntime == null || _projectFontHandle != null)
+            {
+                return;
+            }
+
+            IAssetHandle fontHandle = await _context.AssetsRuntime.LoadAssetAsync(RuntimeTmpFontResolver.ProjectChineseFontAssetPath);
+            if (fontHandle?.AssetObject is Font font)
+            {
+                _projectFontHandle = fontHandle;
+                RuntimeTmpFontResolver.SetProjectChineseFont(font);
+                _context.Logger?.LogInfo("UiRoot: 项目中文字体已从热更资源加载。{0}", RuntimeTmpFontResolver.ProjectChineseFontAssetPath);
+                return;
+            }
+
+            fontHandle?.Release();
+            _context.Logger?.LogWarning("UiRoot: 项目中文字体热更资源加载失败。{0}", RuntimeTmpFontResolver.ProjectChineseFontAssetPath);
         }
 
         private void ConfigureSafeAreaRuntime()
@@ -327,6 +350,13 @@ namespace App.HotUpdate.Holmas.UI.Core
                 _context?.Logger?.LogInfo("UiRoot: 侦测到双五角星鼠标手势，准备切换 GM 工具。");
                 _ = ToggleGmToolAsync(GmToggleRequestSource.Gesture);
             }
+        }
+
+        private void OnDestroy()
+        {
+            _projectFontHandle?.Release();
+            _projectFontHandle = null;
+            RuntimeTmpFontResolver.SetProjectChineseFont(null);
         }
 
         private RectTransform CreateLayer(string name, Transform parent)
