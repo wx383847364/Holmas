@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using App.AOT.Infrastructure.EventBus;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Levels;
@@ -171,6 +172,39 @@ namespace Holmas.Tests
             Assert.That(runtime.CurrentEnergy, Is.EqualTo(55));
             Assert.That(runtime.EnergyRecoveryLimit, Is.EqualTo(50));
             Assert.That(runtime.EnergyLabel, Is.EqualTo("55/50"));
+        }
+
+        [Test]
+        public void HolmasGameplayRuntime_AddEnergy_PublishesDomainEventsAfterLegacyStateChanged()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var eventBus = new EventBus();
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock, eventBus: eventBus);
+            var order = new List<string>();
+            HolmasEnergyChangedEvent energyEvent = null;
+
+            runtime.StateChanged += reason => order.Add("legacy:" + reason);
+            eventBus.SubscribeScoped<HolmasGameplayStateChangedEvent>(eventData => order.Add("domain:" + eventData.Reason));
+            eventBus.SubscribeScoped<HolmasEnergyChangedEvent>(eventData =>
+            {
+                energyEvent = eventData;
+                order.Add("energy:" + eventData.Reason);
+            });
+
+            runtime.AddEnergy();
+
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "legacy:EnergyChanged",
+                    "domain:EnergyChanged",
+                    "energy:EnergyChanged",
+                },
+                order);
+            Assert.That(energyEvent, Is.Not.Null);
+            Assert.That(energyEvent.CurrentEnergy, Is.EqualTo(55));
+            Assert.That(energyEvent.EnergyRecoveryLimit, Is.EqualTo(50));
+            Assert.That(energyEvent.EnergyLabel, Is.EqualTo("55/50"));
         }
 
         [Test]
@@ -2093,6 +2127,21 @@ namespace Holmas.Tests
             public void Publish<T>(T eventData) where T : class
             {
             }
+
+            public IEventSubscription SubscribeScoped<T>(
+                System.Action<T> handler,
+                int priority = 0,
+                System.Predicate<T> condition = null) where T : class
+            {
+                return new NullSubscription();
+            }
+        }
+
+        private sealed class NullSubscription : IEventSubscription
+        {
+            public void Dispose()
+            {
+            }
         }
 
         private sealed class InvalidTerrainAsset : ScriptableObject
@@ -2360,7 +2409,8 @@ namespace Holmas.Tests
 
         private static HolmasGameplayRuntime CreateEnergyRuntime(
             FixedUtcClock clock,
-            HolmasMetaProgressionState state = null)
+            HolmasMetaProgressionState state = null,
+            IEventBus eventBus = null)
         {
             var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
             var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(), clock);
@@ -2380,7 +2430,8 @@ namespace Holmas.Tests
                 null,
                 null,
                 state,
-                clock);
+                clock,
+                eventBus);
         }
     }
 }

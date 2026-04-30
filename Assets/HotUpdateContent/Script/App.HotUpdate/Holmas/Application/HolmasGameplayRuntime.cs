@@ -64,6 +64,7 @@ namespace App.HotUpdate.Holmas.Application
         private readonly IHolmasUtcClock _clock;
         private readonly IAppLogger _logger;
         private readonly IAssetsRuntime _assetsRuntime;
+        private readonly IEventBus _eventBus;
         private bool _currentLevelCompletionApplied;
         private float _energyRefreshAccumulator;
 
@@ -106,7 +107,8 @@ namespace App.HotUpdate.Holmas.Application
             IAssetsRuntime assetsRuntime,
             HolmasTaskBarState initialTaskBarState,
             HolmasMetaProgressionState initialMetaProgressionState,
-            IHolmasUtcClock clock = null)
+            IHolmasUtcClock clock = null,
+            IEventBus eventBus = null)
         {
             _taskProgressService = taskProgressService ?? throw new ArgumentNullException(nameof(taskProgressService));
             _metaProgressionService = metaProgressionService ?? throw new ArgumentNullException(nameof(metaProgressionService));
@@ -115,6 +117,7 @@ namespace App.HotUpdate.Holmas.Application
             _clock = clock ?? new HolmasSystemUtcClock();
             _logger = logger;
             _assetsRuntime = assetsRuntime;
+            _eventBus = eventBus;
 
             TaskBarState = initialTaskBarState ?? _taskProgressService.CreateDefaultTaskBarState();
             MetaProgressionState = initialMetaProgressionState ?? _metaProgressionService.CreateState();
@@ -1016,6 +1019,129 @@ namespace App.HotUpdate.Holmas.Application
         private void NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason reason)
         {
             StateChanged?.Invoke(reason);
+            PublishDomainEvents(reason);
+        }
+
+        private void PublishDomainEvents(HolmasGameplayRuntimeStateChangeReason reason)
+        {
+            if (_eventBus == null)
+            {
+                return;
+            }
+
+            HolmasTaskBarSummary taskSummary = BuildTaskBarSummary();
+            _eventBus.Publish(new HolmasGameplayStateChangedEvent
+            {
+                Reason = reason,
+                CurrentEnergy = CurrentEnergy,
+                EnergyRecoveryLimit = EnergyRecoveryLimit,
+                EnergyLabel = EnergyLabel,
+                TaskRewardTip = LastTaskRewardTip,
+                TaskRewardTipVersion = LastTaskRewardTipVersion,
+                TaskTotalCount = taskSummary.TotalTaskCount,
+                TaskClaimableCount = taskSummary.ClaimableTaskCount,
+                TaskUnlockedSlotCount = taskSummary.UnlockedSlotCount,
+                LevelMapId = CurrentLevelSnapshot != null ? CurrentLevelSnapshot.MapId ?? string.Empty : string.Empty,
+                LevelSeed = CurrentLevelSnapshot != null ? CurrentLevelSnapshot.Seed : 0,
+                LevelCompleted = CurrentLevelSnapshot != null && CurrentLevelSnapshot.Completed,
+            });
+
+            switch (reason)
+            {
+                case HolmasGameplayRuntimeStateChangeReason.EnergyChanged:
+                    _eventBus.Publish(new HolmasEnergyChangedEvent
+                    {
+                        Reason = reason,
+                        CurrentEnergy = CurrentEnergy,
+                        EnergyRecoveryLimit = EnergyRecoveryLimit,
+                        EnergyLabel = EnergyLabel,
+                    });
+                    break;
+
+                case HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed:
+                    _eventBus.Publish(new HolmasTaskRewardTipChangedEvent
+                    {
+                        Reason = reason,
+                        Tip = LastTaskRewardTip,
+                        Version = LastTaskRewardTipVersion,
+                    });
+                    PublishTaskBarChangedEvent(reason, taskSummary);
+                    break;
+
+                case HolmasGameplayRuntimeStateChangeReason.TasksRefilled:
+                case HolmasGameplayRuntimeStateChangeReason.AdSlotUnlocked:
+                case HolmasGameplayRuntimeStateChangeReason.ExpiredAdSlotsRefreshed:
+                    PublishTaskBarChangedEvent(reason, taskSummary);
+                    break;
+
+                case HolmasGameplayRuntimeStateChangeReason.LevelStarted:
+                case HolmasGameplayRuntimeStateChangeReason.LevelRevealed:
+                case HolmasGameplayRuntimeStateChangeReason.LevelFlagToggled:
+                case HolmasGameplayRuntimeStateChangeReason.LevelCompleted:
+                case HolmasGameplayRuntimeStateChangeReason.CurrentLevelSessionEnded:
+                    _eventBus.Publish(new HolmasLevelStateChangedEvent
+                    {
+                        Reason = reason,
+                        MapId = CurrentLevelSnapshot != null ? CurrentLevelSnapshot.MapId ?? string.Empty : string.Empty,
+                        Seed = CurrentLevelSnapshot != null ? CurrentLevelSnapshot.Seed : 0,
+                        Completed = CurrentLevelSnapshot != null && CurrentLevelSnapshot.Completed,
+                    });
+                    break;
+            }
+        }
+
+        private void PublishTaskBarChangedEvent(
+            HolmasGameplayRuntimeStateChangeReason reason,
+            HolmasTaskBarSummary taskSummary)
+        {
+            _eventBus.Publish(new HolmasTaskBarChangedEvent
+            {
+                Reason = reason,
+                TotalTaskCount = taskSummary.TotalTaskCount,
+                ClaimableTaskCount = taskSummary.ClaimableTaskCount,
+                UnlockedSlotCount = taskSummary.UnlockedSlotCount,
+            });
+        }
+
+        private HolmasTaskBarSummary BuildTaskBarSummary()
+        {
+            var summary = new HolmasTaskBarSummary();
+            if (TaskBarState == null)
+            {
+                return summary;
+            }
+
+            if (TaskBarState.Tasks != null)
+            {
+                summary.TotalTaskCount = TaskBarState.Tasks.Count;
+                for (int i = 0; i < TaskBarState.Tasks.Count; i++)
+                {
+                    if (TaskBarState.Tasks[i] != null && TaskBarState.Tasks[i].CanClaimReward)
+                    {
+                        summary.ClaimableTaskCount++;
+                    }
+                }
+            }
+
+            if (TaskBarState.Slots != null)
+            {
+                for (int i = 0; i < TaskBarState.Slots.Count; i++)
+                {
+                    if (TaskBarState.Slots[i] != null && TaskBarState.Slots[i].IsUnlocked)
+                    {
+                        summary.UnlockedSlotCount++;
+                    }
+                }
+            }
+
+            return summary;
+        }
+
+        private struct HolmasTaskBarSummary
+        {
+            public int TotalTaskCount;
+            public int ClaimableTaskCount;
+            public int UnlockedSlotCount;
         }
 
         private void SetLastTaskRewardTip(string tip)

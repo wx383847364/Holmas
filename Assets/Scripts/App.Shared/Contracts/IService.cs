@@ -182,10 +182,18 @@ namespace App.Shared.Contracts
     /// <summary>
     /// 事件总线接口（Shared层，供AOT和HotUpdate层跨层通信）
     /// </summary>
+    public interface IEventSubscription : System.IDisposable
+    {
+    }
+
     public interface IEventBus
     {
         void Subscribe<T>(System.Action<T> handler) where T : class;
         void Unsubscribe<T>(System.Action<T> handler) where T : class;
+        IEventSubscription SubscribeScoped<T>(
+            System.Action<T> handler,
+            int priority = 0,
+            System.Predicate<T> condition = null) where T : class;
         void Publish<T>(T eventData) where T : class;
     }
 }

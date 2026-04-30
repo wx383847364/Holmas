@@ -4,6 +4,7 @@ using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Progression;
 using App.HotUpdate.Holmas.UI.Core;
+using App.Shared.Contracts;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Battle
 {
@@ -13,6 +14,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private BattleView _view;
         private BattleBindings _bindings;
         private HolmasGameplayRuntime _runtime;
+        private IEventSubscription _energyChangedSubscription;
+        private IEventSubscription _taskRewardTipSubscription;
         private bool _isProcessing;
 
         protected override void OnCreate()
@@ -29,6 +32,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             if (_runtime != null)
             {
                 _runtime.StateChanged += OnRuntimeStateChanged;
+            }
+
+            IEventBus eventBus = Root != null && Root.Context != null ? Root.Context.EventBus : null;
+            if (eventBus != null)
+            {
+                _energyChangedSubscription = eventBus.SubscribeScoped<HolmasEnergyChangedEvent>(OnEnergyChanged);
+                _taskRewardTipSubscription = eventBus.SubscribeScoped<HolmasTaskRewardTipChangedEvent>(OnTaskRewardTipChanged);
             }
         }
 
@@ -63,6 +73,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             {
                 _runtime.StateChanged -= OnRuntimeStateChanged;
             }
+
+            _energyChangedSubscription?.Dispose();
+            _energyChangedSubscription = null;
+            _taskRewardTipSubscription?.Dispose();
+            _taskRewardTipSubscription = null;
         }
 
         private void OnBackClicked()
@@ -249,14 +264,31 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return;
             }
 
-            if (reason == HolmasGameplayRuntimeStateChangeReason.EnergyChanged)
+            // EnergyChanged and TaskRewardClaimed are handled by domain events to avoid duplicate refreshes.
+        }
+
+        private void OnEnergyChanged(HolmasEnergyChangedEvent eventData)
+        {
+            if (ScreenService == null ||
+                !ReferenceEquals(ScreenService.NavigationState.CurrentPage, this))
             {
-                Refresh(null);
+                return;
             }
-            else if (reason == HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed)
+
+            Refresh(null);
+        }
+
+        private void OnTaskRewardTipChanged(HolmasTaskRewardTipChangedEvent eventData)
+        {
+            if (ScreenService == null ||
+                !ReferenceEquals(ScreenService.NavigationState.CurrentPage, this))
             {
-                Refresh(GetCurrentRewardTip(_runtime));
+                return;
             }
+
+            Refresh(eventData != null && !string.IsNullOrWhiteSpace(eventData.Tip)
+                ? eventData.Tip
+                : GetCurrentRewardTip(_runtime));
         }
 
         private static string BuildStatusWithNewRewardTip(HolmasGameplayRuntime runtime, int previousTipVersion, string fallbackStatus)

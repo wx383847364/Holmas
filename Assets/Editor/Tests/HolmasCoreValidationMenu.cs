@@ -791,6 +791,21 @@ public static class HolmasCoreValidationMenu
         public void Publish<T>(T eventData) where T : class
         {
         }
+
+        public IEventSubscription SubscribeScoped<T>(
+            Action<T> handler,
+            int priority = 0,
+            Predicate<T> condition = null) where T : class
+        {
+            return new NullSubscription();
+        }
+    }
+
+    private sealed class NullSubscription : IEventSubscription
+    {
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class NullLogger : IAppLogger

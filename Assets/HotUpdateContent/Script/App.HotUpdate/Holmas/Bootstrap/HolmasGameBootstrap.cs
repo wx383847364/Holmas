@@ -112,7 +112,8 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 promotionCatalog,
                 clock,
                 taskBarRestoreResult.State,
-                archiveMapper.RestoreProgression(archiveLoadResult.Archive));
+                archiveMapper.RestoreProgression(archiveLoadResult.Archive),
+                eventBus);
             serviceContainer.RegisterSingleton(gameplayRuntime);
             tickManager.Register(gameplayRuntime);
 
@@ -249,7 +250,8 @@ namespace App.HotUpdate.Holmas.Bootstrap
             HolmasAgencyCatalog promotionCatalog,
             IHolmasUtcClock clock,
             HolmasTaskBarState initialTaskBarState,
-            HolmasMetaProgressionState initialMetaProgressionState)
+            HolmasMetaProgressionState initialMetaProgressionState,
+            IEventBus eventBus)
         {
             var randomSource = new HolmasSystemRandomSource();
             var metaSource = new HolmasDefaultMetaExperienceSource(metaCatalog);
@@ -267,7 +269,8 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 assetsRuntime,
                 initialTaskBarState,
                 initialMetaProgressionState,
-                clock);
+                clock,
+                eventBus);
         }
 
         private static bool TryRestoreTutorialSuspendedSession(
