@@ -182,18 +182,54 @@ namespace App.Shared.Contracts
     /// <summary>
     /// 事件总线接口（Shared层，供AOT和HotUpdate层跨层通信）
     /// </summary>
+    /// <remarks>
+    /// 作用域订阅句柄。
+    /// 新事件系统推荐 UI 页面、弹窗、短生命周期对象保存这个句柄，并在销毁时调用 Dispose。
+    /// 这样调用方不需要重新保存原始委托再手动 Unsubscribe，可以减少遗漏退订导致的残留监听。
+    /// </remarks>
     public interface IEventSubscription : System.IDisposable
     {
     }
 
+    /// <summary>
+    /// 强类型事件总线。
+    /// AOT 层提供具体实现，HotUpdate 层只依赖这个 Shared 契约发布和订阅事件。
+    /// </summary>
+    /// <remarks>
+    /// Subscribe / Unsubscribe / Publish 是早期接口，继续保留给已有代码和测试使用。
+    /// SubscribeScoped 是新接口，支持优先级、条件监听和 IDisposable 自动退订。
+    /// 这两个模型共用同一条事件通道，方便旧代码渐进迁移到更安全的作用域订阅方式。
+    /// </remarks>
     public interface IEventBus
     {
+        /// <summary>
+        /// 传统订阅方式。
+        /// 调用方必须在生命周期结束时使用同一个 handler 调用 Unsubscribe。
+        /// </summary>
         void Subscribe<T>(System.Action<T> handler) where T : class;
+
+        /// <summary>
+        /// 传统退订方式。
+        /// 如果同一个 handler 被重复订阅，一次 Unsubscribe 只移除其中一个订阅。
+        /// </summary>
         void Unsubscribe<T>(System.Action<T> handler) where T : class;
+
+        /// <summary>
+        /// 带生命周期句柄的订阅方式。
+        /// </summary>
+        /// <param name="handler">事件满足条件后实际执行的回调。</param>
+        /// <param name="priority">优先级，数值越大越先执行；相同优先级保持订阅先后顺序。</param>
+        /// <param name="condition">可选条件。返回 false 时跳过 handler；条件异常会被事件总线隔离。</param>
+        /// <returns>可 Dispose 的订阅句柄，Dispose 可重复调用且不会报错。</returns>
         IEventSubscription SubscribeScoped<T>(
             System.Action<T> handler,
             int priority = 0,
             System.Predicate<T> condition = null) where T : class;
+
+        /// <summary>
+        /// 发布强类型事件。
+        /// 只有订阅了同一个 T 类型的监听者会收到事件。
+        /// </summary>
         void Publish<T>(T eventData) where T : class;
     }
 }

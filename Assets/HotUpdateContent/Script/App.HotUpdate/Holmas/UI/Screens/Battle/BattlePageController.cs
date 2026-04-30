@@ -14,6 +14,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private BattleView _view;
         private BattleBindings _bindings;
         private HolmasGameplayRuntime _runtime;
+
+        // 领域事件订阅句柄。
+        // Battle 是首轮试迁移页面：体力变化和任务奖励提示已经从旧 StateChanged 分支迁到 EventBus。
+        // 保存句柄后，在 OnDestroy 中 Dispose，可以避免页面销毁后继续收到事件。
         private IEventSubscription _energyChangedSubscription;
         private IEventSubscription _taskRewardTipSubscription;
         private bool _isProcessing;
@@ -31,12 +35,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _view?.EnsureBindingSurface();
             if (_runtime != null)
             {
+                // 旧 StateChanged 暂时保留，用于后续还没迁移的 Runtime reason。
+                // 已迁移的 EnergyChanged / TaskRewardClaimed 不再在 OnRuntimeStateChanged 中处理，避免双刷新。
                 _runtime.StateChanged += OnRuntimeStateChanged;
             }
 
             IEventBus eventBus = Root != null && Root.Context != null ? Root.Context.EventBus : null;
             if (eventBus != null)
             {
+                // 新领域事件订阅：只关心 Battle 页面当前需要的两个低风险链路。
+                // 这里不订阅通用 HolmasGameplayStateChangedEvent，避免重新引入“大而全”的 reason switch。
                 _energyChangedSubscription = eventBus.SubscribeScoped<HolmasEnergyChangedEvent>(OnEnergyChanged);
                 _taskRewardTipSubscription = eventBus.SubscribeScoped<HolmasTaskRewardTipChangedEvent>(OnTaskRewardTipChanged);
             }
@@ -74,6 +82,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 _runtime.StateChanged -= OnRuntimeStateChanged;
             }
 
+            // Dispose 是幂等的，即使页面销毁流程重复调用也不会报错。
             _energyChangedSubscription?.Dispose();
             _energyChangedSubscription = null;
             _taskRewardTipSubscription?.Dispose();
@@ -264,9 +273,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return;
             }
 
-            // EnergyChanged and TaskRewardClaimed are handled by domain events to avoid duplicate refreshes.
+            // EnergyChanged 和 TaskRewardClaimed 已由下面的领域事件处理。
+            // 如果这里继续处理同样 reason，一次 Runtime 变化会先触发旧 StateChanged，再触发新 EventBus，
+            // Battle 页面就会刷新两次，状态文案也可能被后一次刷新覆盖。
         }
 
+        /// <summary>
+        /// 体力变化事件处理。
+        /// 只在当前页面仍是 BattlePageController 时刷新，避免后台页面被全局事件误刷新。
+        /// </summary>
         private void OnEnergyChanged(HolmasEnergyChangedEvent eventData)
         {
             if (ScreenService == null ||
@@ -278,6 +293,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             Refresh(null);
         }
 
+        /// <summary>
+        /// 任务奖励提示事件处理。
+        /// 优先使用事件 DTO 里的 Tip；如果事件为空或 Tip 为空，再回退读取 Runtime 当前提示。
+        /// </summary>
         private void OnTaskRewardTipChanged(HolmasTaskRewardTipChangedEvent eventData)
         {
             if (ScreenService == null ||

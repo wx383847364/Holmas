@@ -64,6 +64,10 @@ namespace App.HotUpdate.Holmas.Application
         private readonly IHolmasUtcClock _clock;
         private readonly IAppLogger _logger;
         private readonly IAssetsRuntime _assetsRuntime;
+
+        // 可选事件总线。
+        // Runtime 仍然能在没有事件总线的纯逻辑测试里独立运行；
+        // Bootstrap 正式启动时会注入 AOT EventBus，让 UI、教程、调试工具可以订阅领域事件。
         private readonly IEventBus _eventBus;
         private bool _currentLevelCompletionApplied;
         private float _energyRefreshAccumulator;
@@ -1018,10 +1022,24 @@ namespace App.HotUpdate.Holmas.Application
 
         private void NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason reason)
         {
+            // 顺序固定为先旧 StateChanged、再新领域事件。
+            // HolmasPlayerArchiveSyncService 等已有服务依赖旧 StateChanged 做存档 dirty 标记，
+            // 所以这里不能改成只发布 EventBus，也不能把新事件放到旧事件之前。
             StateChanged?.Invoke(reason);
             PublishDomainEvents(reason);
         }
 
+        /// <summary>
+        /// 把 Runtime 内部的 reason 映射为外部可订阅的 Holmas 领域事件。
+        /// </summary>
+        /// <remarks>
+        /// 这层是新 Game Event System 和旧 Runtime 之间的桥。
+        /// Runtime 内部仍然用 NotifyStateChanged(reason) 表达“状态变了”，
+        /// 这里再根据 reason 发布更具体的事件 DTO，避免 UI 到处 switch reason 或直接读取 Runtime 大对象。
+        ///
+        /// 所有 reason 都会发布 HolmasGameplayStateChangedEvent。
+        /// 只有首轮已确认有明确使用场景的 reason 才额外发布专用事件。
+        /// </remarks>
         private void PublishDomainEvents(HolmasGameplayRuntimeStateChangeReason reason)
         {
             if (_eventBus == null)
@@ -1029,7 +1047,10 @@ namespace App.HotUpdate.Holmas.Application
                 return;
             }
 
+            // 先构造轻量任务栏摘要，避免把 TaskBarState 这种可变业务对象直接暴露给监听者。
             HolmasTaskBarSummary taskSummary = BuildTaskBarSummary();
+
+            // 通用总事件：给调试面板、未来的全局 UI 刷新或兼容监听使用。
             _eventBus.Publish(new HolmasGameplayStateChangedEvent
             {
                 Reason = reason,
@@ -1049,6 +1070,7 @@ namespace App.HotUpdate.Holmas.Application
             switch (reason)
             {
                 case HolmasGameplayRuntimeStateChangeReason.EnergyChanged:
+                    // 体力变化事件：首轮由 BattlePageController 订阅，用于替代旧 StateChanged 分支。
                     _eventBus.Publish(new HolmasEnergyChangedEvent
                     {
                         Reason = reason,
@@ -1059,6 +1081,7 @@ namespace App.HotUpdate.Holmas.Application
                     break;
 
                 case HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed:
+                    // 任务领奖会同时影响“提示文案”和“任务栏结构/计数”，所以拆成两个专用事件。
                     _eventBus.Publish(new HolmasTaskRewardTipChangedEvent
                     {
                         Reason = reason,
@@ -1071,6 +1094,7 @@ namespace App.HotUpdate.Holmas.Application
                 case HolmasGameplayRuntimeStateChangeReason.TasksRefilled:
                 case HolmasGameplayRuntimeStateChangeReason.AdSlotUnlocked:
                 case HolmasGameplayRuntimeStateChangeReason.ExpiredAdSlotsRefreshed:
+                    // 这些 reason 只表示任务栏槽位或任务集合变化，不一定有新的奖励提示。
                     PublishTaskBarChangedEvent(reason, taskSummary);
                     break;
 
@@ -1079,6 +1103,8 @@ namespace App.HotUpdate.Holmas.Application
                 case HolmasGameplayRuntimeStateChangeReason.LevelFlagToggled:
                 case HolmasGameplayRuntimeStateChangeReason.LevelCompleted:
                 case HolmasGameplayRuntimeStateChangeReason.CurrentLevelSessionEnded:
+                    // 关卡类事件只暴露地图 ID、seed、完成状态这些轻字段。
+                    // 棋盘格子详情仍由 Runtime / BoardRuntime 管理，不在事件 DTO 中深拷。
                     _eventBus.Publish(new HolmasLevelStateChangedEvent
                     {
                         Reason = reason,
@@ -1103,6 +1129,13 @@ namespace App.HotUpdate.Holmas.Application
             });
         }
 
+        /// <summary>
+        /// 从当前任务栏计算事件 DTO 需要的轻量摘要。
+        /// </summary>
+        /// <remarks>
+        /// 事件监听者通常只需要“有多少任务、多少可领奖、多少槽已解锁”来决定是否刷新 UI。
+        /// 不把完整任务对象放进事件，可以减少跨模块耦合，也避免监听者误改 Runtime 内部状态。
+        /// </remarks>
         private HolmasTaskBarSummary BuildTaskBarSummary()
         {
             var summary = new HolmasTaskBarSummary();
@@ -1137,6 +1170,9 @@ namespace App.HotUpdate.Holmas.Application
             return summary;
         }
 
+        /// <summary>
+        /// 任务栏轻量摘要，只在 Runtime 内部组装事件 payload 时使用。
+        /// </summary>
         private struct HolmasTaskBarSummary
         {
             public int TotalTaskCount;

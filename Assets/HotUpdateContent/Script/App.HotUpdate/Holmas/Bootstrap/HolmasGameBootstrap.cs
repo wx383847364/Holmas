@@ -113,6 +113,9 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 clock,
                 taskBarRestoreResult.State,
                 archiveMapper.RestoreProgression(archiveLoadResult.Archive),
+                // 把 AOT EventBus 注入 Runtime。
+                // Runtime 仍保留旧 StateChanged，但会在旧事件之后桥接发布 Holmas 领域事件，
+                // 让 UI/调试工具可以逐步迁移到 Game Event System。
                 eventBus);
             serviceContainer.RegisterSingleton(gameplayRuntime);
             tickManager.Register(gameplayRuntime);
