@@ -56,6 +56,7 @@
 
 - `agencyStageId`
 - `stageName`
+- `stageImage`
 - `promotionIds`
 - `promotionLevelCaps`
 - `promotionUpgradeCosts`
@@ -65,6 +66,7 @@
 
 - `agencyStageId`：从 `1` 开始连续递增的地区阶段，个数读表确定
 - `stageName`：地区名称，必须唯一
+- `stageImage`：地区阶段在宣传界面地图上的按钮图片，供 stage 按钮直接读取
 - `promotionIds`：宣传功能可随时增加
 - `promotionLevelCaps`：不固定
 - `promotionUpgradeCosts`：不固定
@@ -82,6 +84,7 @@
 - JSON 行字段使用第二行技术表头原名，不使用 C# 属性名或业务包装名
 - `agencyStageId` 必须从 `1` 开始连续递增
 - `stageName` 不允许重复
+- `stageImage` 不允许为空，且必须能映射到正式资源
 - `promotionIds` 长度不固定
 - `promotionLevelCaps` 长度不固定
 - `promotionUpgradeCosts` 外层长度不固定
@@ -99,7 +102,7 @@
 正式协议约束为：
 
 - 表集合名严格等于表文件基础名：例如 `Holmas_AgencyBuildingTable`
-- 行字段严格等于技术表头：例如 `agencyStageId`、`stageName`、`promotionIds`、`promotionLevelCaps`、`promotionUpgradeCosts`、`notes`
+- 行字段严格等于技术表头：例如 `agencyStageId`、`stageName`、`stageImage`、`promotionIds`、`promotionLevelCaps`、`promotionUpgradeCosts`、`notes`
 - 二进制 bytes 可以继续按固定顺序写入数据，但 C#/Python 源模型命名与字段含义必须能一一追溯到表名和表头
 - 检测到旧 JSON 字段 `AgencyBuildings` 时视为旧协议，必须报错并要求重新导表
 
@@ -164,6 +167,78 @@
   - 结算离线收益
   - 升级宣传功能
 
+## 宣传界面设计
+
+宣传界面正式改为“地图 + stage 按钮 + stagebar”的主视图，不再只用纯文本摘要承载阶段信息。
+
+### 地图与 stage 按钮
+
+- 界面中显示一张宣传地图
+- 地图上固定展示 `5` 个 stage 按钮
+- stage 按钮严格按 `Holmas_AgencyBuildingTable.xlsx` 中的行顺序读取，不允许在 UI 层重新排序
+- 每个 stage 按钮的信息由以下三项组成：
+  - `agencyStageId`
+  - `stageName`
+  - `stageImage`
+- `agencyStageId` 用于按钮编号与当前阶段判断
+- `stageName` 用于按钮上的地区名展示
+- `stageImage` 用于按钮主视觉或对应地区缩略图
+
+stage 按钮的锁定规则固定为：
+
+- `Stage 1` 在新档或首次进入宣传界面时直接解锁，不显示锁定态
+- 除 `Stage 1` 之外，其他 stage 按钮默认显示 `lock`
+- 只有当玩家当前进度已经推进到对应 `agencyStageId` 时，该 stage 按钮才解锁
+- 未解锁 stage 仍可显示按钮位置、城市图和城市名，但必须覆盖锁定态，不允许直接交互进入
+- 已解锁但尚未完成的当前 stage 处于可点击状态
+- 已经完成并推进过去的 stage 处于已解锁状态，可按需要显示“已完成”或普通可回看态
+
+当总阶段数大于 `5` 时，界面按当前阶段生成连续的 `5` 个可见 stage：
+
+- 优先保证当前 `agencyStageId` 落在这 `5` 个按钮内
+- 中间阶段尽量显示为“前 2 个 + 当前阶段 + 后 2 个”
+- 当当前阶段靠近开头或结尾时，顺延为连续的前 `5` 个或后 `5` 个阶段
+
+### stagebar 进度条
+
+- 每两个相邻 stage 按钮之间放置一个 `stagebar`
+- `stagebar` 只连接表顺序中相邻的两个阶段，不允许跨阶段连线
+- `stagebar` 百分比根据“当前地区宣传进度”实时计算
+
+当前地区宣传进度定义为：
+
+- 当前地区所有宣传功能当前等级之和 / 当前地区所有宣传功能等级上限之和
+- 即：
+  - 分子：当前 `agencyStageId` 下全部 `promotionIds` 的当前等级总和
+  - 分母：当前 `agencyStageId` 下全部 `promotionLevelCaps` 的总和
+
+在地图中的显示规则固定为：
+
+- 已经完成并推进过去的阶段之间：`stagebar = 100%`
+- 当前阶段连接下一阶段的 `stagebar = 当前地区宣传进度百分比`
+- 尚未到达的后续阶段之间：`stagebar = 0%`
+
+例如当前处于 `Stage 3`：
+
+- `Stage 1 -> Stage 2` 的 `stagebar` 显示 `100%`
+- `Stage 2 -> Stage 3` 的 `stagebar` 显示 `100%`
+- `Stage 3 -> Stage 4` 的 `stagebar` 显示当前地区宣传进度
+- `Stage 4 -> Stage 5` 的 `stagebar` 显示 `0%`
+
+### UI 主链要求
+
+- 界面初始化时，先从 `Holmas_AgencyBuildingTable` 恢复全部阶段顺序数据
+- stage 按钮与 stagebar 的显示不得写死总阶段数、固定城市数或固定按钮内容
+- stage 按钮的锁定态必须严格跟随当前 `agencyStageId`
+  - `Stage 1` 始终解锁
+  - 其他 stage 只有在玩家推进到对应地图阶段时才解锁
+- 当前阶段宣传升级成功后，界面需要同步刷新：
+  - 当前 stage 的宣传进度
+  - 当前 stage 到下一 stage 的 `stagebar` 百分比
+  - 当阶段完成时，刷新新的当前 `agencyStageId` 与可见的 `5` 个 stage 按钮窗口
+  - 如果推进到了新的地图阶段，同时刷新新阶段按钮的 `lock` 状态
+- 当最后一个阶段完成后，不再继续生成新的后续 stagebar 进度
+
 ## 测试与验证
 
 必须覆盖：
@@ -173,6 +248,7 @@
 - `Holmas_AgencyBuildingTable.xlsx` 行数不固定，读表确定
 - `agencyStageId` 从 `1` 开始连续递增
 - `stageName` 唯一
+- `stageImage` 非空，且能映射到正式资源
 - `promotionIds` 长度读表确定
 - 每个 `promotionId` 的 `cap` 读表确定
 - 每组 `promotionUpgradeCosts` 长度必须等于同位置 `cap`，且全部 `> 0`
@@ -193,6 +269,9 @@
 - 当前城市未全满时不能推进下一城市
 - 当前城市全满后推进下一城市
 - 最后一个城市升满后不越界
+- `Stage 1` 初始解锁
+- 其他 stage 只有推进到对应 `agencyStageId` 后才解锁
+- 推进到新阶段时，对应 stage 按钮的 `lock` 状态同步解除
 
 ### 经验验证
 
@@ -221,8 +300,8 @@
 
 ## 本轮不做
 
-- 不接 UI
 - 不扩博彩任务
 - 不增加宣传效果值字段
 - 不引入第二货币
-- 不处理宣传按钮视觉与美术表现
+- 不做地图自由拖拽、缩放和分层特效
+- 不处理 stage 按钮的高级演出、点击动画和美术精修
