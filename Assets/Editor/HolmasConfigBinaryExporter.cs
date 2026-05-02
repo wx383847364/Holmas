@@ -22,6 +22,7 @@ namespace Holmas.EditorTools
         private const string TaskTableName = "Holmas_TaskTable.xlsx";
         private const string PlayerLevelTableName = "Holmas_PlayerLevelTable.xlsx";
         private const string AgencyBuildingTableName = "Holmas_AgencyBuildingTable.xlsx";
+        private const string LeaderboardTableName = "Holmas_LeaderboardTable.xlsx";
 
         private const string CoreBinaryName = "holmas_core_config.bytes";
         private const string CatBinaryName = "holmas_cat_meta.bytes";
@@ -79,6 +80,7 @@ namespace Holmas.EditorTools
                     CombineProjectPath(configRoot, TaskTableName),
                     CombineProjectPath(configRoot, PlayerLevelTableName),
                     CombineProjectPath(configRoot, AgencyBuildingTableName),
+                    CombineProjectPath(configRoot, LeaderboardTableName),
                 }
             };
 
@@ -90,6 +92,7 @@ namespace Holmas.EditorTools
             var taskTable = LoadTaskTable(report, configRoot);
             var playerLevelTable = LoadPlayerLevelTable(report, configRoot);
             var agencyBuildingTable = LoadAgencyBuildingTable(report, configRoot);
+            var leaderboardTable = LoadLeaderboardTable(report, configRoot);
 
             var catLookup = BuildAliasLookup(catTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.CatId, index)));
             var taskLookup = BuildAliasLookup(taskTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.TaskTypeId, index)));
@@ -102,8 +105,9 @@ namespace Holmas.EditorTools
             WarnUnreferencedMaps(report, mapTable, playerLevelTable);
             ValidatePlayerLevelTable(report, playerLevelTable);
             ValidateAgencyBuildingTable(report, agencyBuildingTable);
+            ValidateLeaderboardTable(report, leaderboardTable);
 
-            HolmasCoreConfigPackage corePackage = BuildCorePackage(mapTable, taskTable, playerLevelTable, agencyBuildingTable);
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(mapTable, taskTable, playerLevelTable, agencyBuildingTable, leaderboardTable);
             HolmasCatMetaPackage catPackage = BuildCatMetaPackage(catTable);
 
             report.BundleReports = new[]
@@ -111,10 +115,10 @@ namespace Holmas.EditorTools
                 new HolmasConfigBundleReport
                 {
                     BundleName = "core",
-                    SourceTableNames = new[] { MapTableName, TaskTableName, PlayerLevelTableName, AgencyBuildingTableName },
+                    SourceTableNames = new[] { MapTableName, TaskTableName, PlayerLevelTableName, AgencyBuildingTableName, LeaderboardTableName },
                     PreviewJsonPath = CombineProjectPath(jsonRoot, CorePreviewName),
                     BinaryPath = CombineProjectPath(hotUpdateConfigRoot, CoreBinaryName),
-                    RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count + agencyBuildingTable.Rows.Count,
+                    RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count + agencyBuildingTable.Rows.Count + leaderboardTable.Rows.Count,
                     WarningCount = report.Warnings.Count,
                     ErrorCount = report.Errors.Count,
                 },
@@ -269,6 +273,27 @@ namespace Holmas.EditorTools
 
             var headerMap = BuildHeaderMap(report, path, rows[1]);
             return new SheetTable<HolmasAgencyBuildingSheetRow>(tableName, ParseAgencyBuildingTable(report, path, rows, headerMap));
+        }
+
+        private static SheetTable<HolmasLeaderboardSheetRow> LoadLeaderboardTable(HolmasConfigExportReport report, string configRoot)
+        {
+            string tableName = LeaderboardTableName;
+            string path = CombineProjectPath(configRoot, tableName);
+            if (!File.Exists(path))
+            {
+                report.Errors.Add($"找不到 xlsx 文件: {path}");
+                return new SheetTable<HolmasLeaderboardSheetRow>(tableName);
+            }
+
+            List<string[]> rows = ReadWorksheetRows(report, path);
+            if (rows.Count < 2)
+            {
+                report.Errors.Add($"xlsx 结构不完整: {path}");
+                return new SheetTable<HolmasLeaderboardSheetRow>(tableName);
+            }
+
+            var headerMap = BuildHeaderMap(report, path, rows[1]);
+            return new SheetTable<HolmasLeaderboardSheetRow>(tableName, ParseLeaderboardTable(report, path, rows, headerMap));
         }
 
         private static List<HolmasMapSheetRow> ParseMaps(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
@@ -723,6 +748,118 @@ namespace Holmas.EditorTools
             return list;
         }
 
+        private static List<HolmasLeaderboardSheetRow> ParseLeaderboardTable(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
+        {
+            int leaderboardTypeCol = RequireColumn(report, sourcePath, headerMap, "leaderboardType");
+            int displayNameCol = RequireColumn(report, sourcePath, headerMap, "displayName");
+            int periodTypeCol = RequireColumn(report, sourcePath, headerMap, "periodType");
+            int timeZoneIdCol = RequireColumn(report, sourcePath, headerMap, "timeZoneId");
+            int resetDayOfWeekCol = RequireColumn(report, sourcePath, headerMap, "resetDayOfWeek");
+            int resetHourCol = RequireColumn(report, sourcePath, headerMap, "resetHour");
+            int resetMinuteCol = RequireColumn(report, sourcePath, headerMap, "resetMinute");
+            int topEntryCountCol = RequireColumn(report, sourcePath, headerMap, "topEntryCount");
+            int mockEntryCountCol = RequireColumn(report, sourcePath, headerMap, "mockEntryCount");
+            int isEnabledCol = RequireColumn(report, sourcePath, headerMap, "isEnabled");
+            int notesCol = GetOptionalColumn(headerMap, "notes");
+
+            var list = new List<HolmasLeaderboardSheetRow>();
+            for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
+            {
+                var row = rows[rowIndex];
+                if (IsBlankRow(row))
+                {
+                    continue;
+                }
+
+                bool resetDayOfWeekOk = TryParseInt(GetCell(row, resetDayOfWeekCol), out int resetDayOfWeek);
+                bool resetHourOk = TryParseInt(GetCell(row, resetHourCol), out int resetHour);
+                bool resetMinuteOk = TryParseInt(GetCell(row, resetMinuteCol), out int resetMinute);
+                bool topEntryCountOk = TryParseInt(GetCell(row, topEntryCountCol), out int topEntryCount);
+                bool mockEntryCountOk = TryParseInt(GetCell(row, mockEntryCountCol), out int mockEntryCount);
+                bool isEnabledOk = TryParseInt(GetCell(row, isEnabledCol), out int isEnabledValue);
+
+                var item = new HolmasLeaderboardSheetRow
+                {
+                    RowIndex = list.Count,
+                    LeaderboardType = GetCell(row, leaderboardTypeCol),
+                    DisplayName = GetCell(row, displayNameCol),
+                    PeriodType = GetCell(row, periodTypeCol),
+                    TimeZoneId = GetCell(row, timeZoneIdCol),
+                    ResetDayOfWeek = resetDayOfWeek,
+                    ResetHour = resetHour,
+                    ResetMinute = resetMinute,
+                    TopEntryCount = topEntryCount,
+                    MockEntryCount = mockEntryCount,
+                    IsEnabled = isEnabledOk && isEnabledValue != 0,
+                    Notes = GetCell(row, notesCol),
+                };
+
+                if (string.IsNullOrWhiteSpace(item.LeaderboardType))
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行缺少 leaderboardType。");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(item.DisplayName))
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行缺少 displayName。");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(item.PeriodType))
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行缺少 periodType。");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(item.TimeZoneId))
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行缺少 timeZoneId。");
+                    continue;
+                }
+
+                if (!resetDayOfWeekOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 resetDayOfWeek 无法解析。");
+                    continue;
+                }
+
+                if (!resetHourOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 resetHour 无法解析。");
+                    continue;
+                }
+
+                if (!resetMinuteOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 resetMinute 无法解析。");
+                    continue;
+                }
+
+                if (!topEntryCountOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 topEntryCount 无法解析。");
+                    continue;
+                }
+
+                if (!mockEntryCountOk)
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 mockEntryCount 无法解析。");
+                    continue;
+                }
+
+                if (!isEnabledOk || (isEnabledValue != 0 && isEnabledValue != 1))
+                {
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 isEnabled 必须是 0 或 1。");
+                    continue;
+                }
+
+                list.Add(item);
+            }
+
+            return list;
+        }
+
         private static void ValidatePlayerLevelTable(
             HolmasConfigExportReport report,
             SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable)
@@ -882,6 +1019,87 @@ namespace Holmas.EditorTools
                         report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId}/{promotionId} 的升级费用必须全部大于 0。");
                         return;
                     }
+                }
+            }
+        }
+
+        private static void ValidateLeaderboardTable(HolmasConfigExportReport report, SheetTable<HolmasLeaderboardSheetRow> leaderboardTable)
+        {
+            var rows = leaderboardTable?.Rows ?? new List<HolmasLeaderboardSheetRow>();
+            if (rows.Count == 0)
+            {
+                report.Errors.Add("缺少 Holmas_LeaderboardTable 数据。");
+                return;
+            }
+
+            var seenTypes = new HashSet<string>(StringComparer.Ordinal);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null)
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable 第 {i + 1} 行为空。");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(row.LeaderboardType))
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable 第 {i + 1} 行缺少 leaderboardType。");
+                    return;
+                }
+
+                if (!seenTypes.Add(row.LeaderboardType))
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable 存在重复 leaderboardType: {row.LeaderboardType}。");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(row.DisplayName))
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable {row.LeaderboardType} 缺少 displayName。");
+                    return;
+                }
+
+                if (!Enum.TryParse(row.PeriodType ?? string.Empty, true, out HolmasLeaderboardPeriodType periodType))
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable {row.LeaderboardType} 的 periodType 非法: {row.PeriodType}。");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(row.TimeZoneId))
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable {row.LeaderboardType} 缺少 timeZoneId。");
+                    return;
+                }
+
+                if (row.ResetDayOfWeek < 0 || row.ResetDayOfWeek > 7)
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable {row.LeaderboardType} 的 resetDayOfWeek 必须在 0..7 内。");
+                    return;
+                }
+
+                if (row.ResetHour < 0 || row.ResetHour > 23)
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable {row.LeaderboardType} 的 resetHour 必须在 0..23 内。");
+                    return;
+                }
+
+                if (row.ResetMinute < 0 || row.ResetMinute > 59)
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable {row.LeaderboardType} 的 resetMinute 必须在 0..59 内。");
+                    return;
+                }
+
+                if (row.TopEntryCount <= 0)
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable {row.LeaderboardType} 的 topEntryCount 必须大于 0。");
+                    return;
+                }
+
+                if (row.MockEntryCount < row.TopEntryCount)
+                {
+                    report.Errors.Add($"Holmas_LeaderboardTable {row.LeaderboardType} 的 mockEntryCount 不能小于 topEntryCount。");
+                    return;
                 }
             }
         }
@@ -1056,7 +1274,8 @@ namespace Holmas.EditorTools
             SheetTable<HolmasMapSheetRow> mapTable,
             SheetTable<HolmasTaskSheetRow> taskTable,
             SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable,
-            SheetTable<HolmasAgencyBuildingSheetRow> agencyBuildingTable)
+            SheetTable<HolmasAgencyBuildingSheetRow> agencyBuildingTable,
+            SheetTable<HolmasLeaderboardSheetRow> leaderboardTable)
         {
             return new HolmasCoreConfigPackage
             {
@@ -1101,6 +1320,20 @@ namespace Holmas.EditorTools
                             costs = costRow?.Costs ?? Array.Empty<int>(),
                         })
                         .ToArray(),
+                    notes = row.Notes ?? string.Empty,
+                }).ToArray(),
+                Holmas_LeaderboardTable = (leaderboardTable?.Rows ?? new List<HolmasLeaderboardSheetRow>()).Select(row => new HolmasLeaderboardTableRow
+                {
+                    leaderboardType = row.LeaderboardType ?? string.Empty,
+                    displayName = row.DisplayName ?? string.Empty,
+                    periodType = row.PeriodType ?? "AllTime",
+                    timeZoneId = row.TimeZoneId ?? "Asia/Shanghai",
+                    resetDayOfWeek = row.ResetDayOfWeek,
+                    resetHour = row.ResetHour,
+                    resetMinute = row.ResetMinute,
+                    topEntryCount = row.TopEntryCount,
+                    mockEntryCount = row.MockEntryCount,
+                    isEnabled = row.IsEnabled,
                     notes = row.Notes ?? string.Empty,
                 }).ToArray(),
             };
@@ -1543,6 +1776,7 @@ namespace Holmas.EditorTools
         public HolmasTaskSheetRow[] Holmas_TaskTable;
         public HolmasPlayerLevelSheetRow[] Holmas_PlayerLevelTable;
         public HolmasAgencyBuildingSheetRow[] Holmas_AgencyBuildingTable;
+        public HolmasLeaderboardSheetRow[] Holmas_LeaderboardTable;
     }
 
     [Serializable]
@@ -1628,6 +1862,23 @@ namespace Holmas.EditorTools
         public string[] PromotionIds;
         public int[] PromotionLevelCaps;
         public HolmasAgencyBuildingCostSheetRow[] PromotionUpgradeCosts;
+        public string Notes;
+    }
+
+    [Serializable]
+    public sealed class HolmasLeaderboardSheetRow
+    {
+        public int RowIndex;
+        public string LeaderboardType;
+        public string DisplayName;
+        public string PeriodType;
+        public string TimeZoneId;
+        public int ResetDayOfWeek;
+        public int ResetHour;
+        public int ResetMinute;
+        public int TopEntryCount;
+        public int MockEntryCount;
+        public bool IsEnabled;
         public string Notes;
     }
 

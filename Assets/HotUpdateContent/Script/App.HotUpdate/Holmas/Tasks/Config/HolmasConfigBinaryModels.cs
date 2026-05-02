@@ -81,6 +81,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public HolmasTaskTableRow[] Holmas_TaskTable = Array.Empty<HolmasTaskTableRow>();
         public HolmasPlayerLevelTableRow[] Holmas_PlayerLevelTable = Array.Empty<HolmasPlayerLevelTableRow>();
         public HolmasAgencyBuildingTableRow[] Holmas_AgencyBuildingTable = Array.Empty<HolmasAgencyBuildingTableRow>();
+        public HolmasLeaderboardTableRow[] Holmas_LeaderboardTable = Array.Empty<HolmasLeaderboardTableRow>();
 
         public int CodecVersion { get; internal set; } = HolmasConfigBinaryFormat.CurrentVersion;
     }
@@ -166,6 +167,22 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public string notes = string.Empty;
     }
 
+    [Serializable]
+    public sealed class HolmasLeaderboardTableRow
+    {
+        public string leaderboardType = string.Empty;
+        public string displayName = string.Empty;
+        public string periodType = "AllTime";
+        public string timeZoneId = "Asia/Shanghai";
+        public int resetDayOfWeek;
+        public int resetHour;
+        public int resetMinute;
+        public int topEntryCount = 20;
+        public int mockEntryCount = 100;
+        public bool isEnabled = true;
+        public string notes = string.Empty;
+    }
+
     /// <summary>
     /// 运行时配置恢复结果。
     /// 方便上层同时拿到两个 Catalog 和原始定义快照。
@@ -180,6 +197,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             IReadOnlyList<HolmasTaskTemplateDefinition> taskTemplates,
             IReadOnlyList<HolmasPlayerLevelDefinition> playerLevels,
             IReadOnlyList<HolmasAgencyBuildingTableRow> holmasAgencyBuildingTable,
+            IReadOnlyList<HolmasLeaderboardDefinition> leaderboards,
             HolmasConfigReport report)
         {
             MapCatalog = mapCatalog;
@@ -189,6 +207,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             TaskTemplates = taskTemplates ?? Array.Empty<HolmasTaskTemplateDefinition>();
             PlayerLevels = playerLevels ?? Array.Empty<HolmasPlayerLevelDefinition>();
             Holmas_AgencyBuildingTable = holmasAgencyBuildingTable ?? Array.Empty<HolmasAgencyBuildingTableRow>();
+            Leaderboards = leaderboards ?? Array.Empty<HolmasLeaderboardDefinition>();
             Report = report ?? new HolmasConfigReport();
         }
 
@@ -199,6 +218,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public IReadOnlyList<HolmasTaskTemplateDefinition> TaskTemplates { get; }
         public IReadOnlyList<HolmasPlayerLevelDefinition> PlayerLevels { get; }
         public IReadOnlyList<HolmasAgencyBuildingTableRow> Holmas_AgencyBuildingTable { get; }
+        public IReadOnlyList<HolmasLeaderboardDefinition> Leaderboards { get; }
         public HolmasConfigReport Report { get; }
     }
 }

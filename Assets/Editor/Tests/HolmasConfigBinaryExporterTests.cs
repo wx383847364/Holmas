@@ -46,11 +46,13 @@ namespace Holmas.EditorTests
                 Assert.That(bundle.Maps.Count, Is.EqualTo(1));
                 Assert.That(bundle.TaskTemplates.Count, Is.EqualTo(1));
                 Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(20));
+                Assert.That(bundle.Leaderboards.Count, Is.EqualTo(3));
                 Assert.That(bundle.PlayerLevels.Last().UpgradeExp, Is.EqualTo(2000));
                 string coreJson = File.ReadAllText(Path.Combine(fixture.JsonRoot, "holmas_core_config.json"));
                 Assert.That(coreJson.Contains("\"MetaLevels\""), Is.False);
                 Assert.That(coreJson.Contains("\"AgencyBuildings\""), Is.False);
                 Assert.That(coreJson.Contains("\"Holmas_AgencyBuildingTable\""), Is.True);
+                Assert.That(coreJson.Contains("\"Holmas_LeaderboardTable\""), Is.True);
             }
         }
 
@@ -217,13 +219,34 @@ namespace Holmas.EditorTests
             }
         }
 
+        [Test]
+        public void HolmasConfigBinaryExporter_RejectsLeaderboardMockCountSmallerThanTopCount()
+        {
+            using (var fixture = CreateFixture(
+                levelCount: 20,
+                includeMergedGrowthColumns: true,
+                leaderboardRows: BuildLeaderboardRows(mockEntryCount: 10, topEntryCount: 20)))
+            {
+                HolmasConfigExportReport report = HolmasConfigBinaryExporter.ExportAll(
+                    fixture.ConfigRoot,
+                    fixture.JsonRoot,
+                    fixture.BinaryRoot,
+                    refreshAssetDatabase: false);
+
+                Assert.That(report, Is.Not.Null);
+                Assert.That(report.Success, Is.False);
+                Assert.That(report.Errors.Any(item => item.Contains("mockEntryCount") && item.Contains("topEntryCount")), Is.True, string.Join("\n", report.Errors));
+            }
+        }
+
         private static ExportFixture CreateFixture(
             int levelCount,
             bool includeMergedGrowthColumns,
             bool includeDuplicateGrowthColumns = false,
             int conflictLevel = -1,
             bool includeUnusedMap = false,
-            string[][] agencyRows = null)
+            string[][] agencyRows = null,
+            string[][] leaderboardRows = null)
         {
             string root = Path.Combine(Path.GetTempPath(), "holmas_xlsx_export_test_" + Guid.NewGuid().ToString("N"));
             string configRoot = Path.Combine(root, "Config");
@@ -268,6 +291,11 @@ namespace Holmas.EditorTests
                 Path.Combine(configRoot, "Holmas_AgencyBuildingTable.xlsx"),
                 "Holmas_AgencyBuildingTable",
                 agencyRows ?? BuildAgencyRows());
+
+            WriteWorkbook(
+                Path.Combine(configRoot, "Holmas_LeaderboardTable.xlsx"),
+                "Holmas_LeaderboardTable",
+                leaderboardRows ?? BuildLeaderboardRows());
 
             return new ExportFixture(root, configRoot, jsonRoot, binaryRoot);
         }
@@ -403,6 +431,18 @@ namespace Holmas.EditorTests
             }
 
             return rows;
+        }
+
+        private static string[][] BuildLeaderboardRows(int mockEntryCount = 100, int topEntryCount = 20)
+        {
+            return new[]
+            {
+                new[] { "排行榜类型", "显示名称", "周期类型", "时区", "每周重置日", "重置小时", "重置分钟", "榜单显示条数", "Mock 数据条数", "是否启用", "备注" },
+                new[] { "leaderboardType", "displayName", "periodType", "timeZoneId", "resetDayOfWeek", "resetHour", "resetMinute", "topEntryCount", "mockEntryCount", "isEnabled", "notes" },
+                new[] { "Level", "等级榜", "AllTime", "Asia/Shanghai", "0", "0", "0", topEntryCount.ToString(), mockEntryCount.ToString(), "1", "长期榜" },
+                new[] { "WeeklyCatsFound", "每周找猫榜", "Weekly", "Asia/Shanghai", "1", "0", "0", topEntryCount.ToString(), mockEntryCount.ToString(), "1", "每周一零点重置" },
+                new[] { "DailyTaskIncome", "每日收入榜", "Daily", "Asia/Shanghai", "0", "0", "0", topEntryCount.ToString(), mockEntryCount.ToString(), "1", "每日零点重置" },
+            };
         }
 
         private static void WriteWorkbook(string path, string sheetName, string[][] rows)

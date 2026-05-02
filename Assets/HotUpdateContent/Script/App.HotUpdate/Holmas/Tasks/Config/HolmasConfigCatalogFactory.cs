@@ -109,9 +109,14 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 return false;
             }
 
+            if (!TryBuildLeaderboards(corePackage.Holmas_LeaderboardTable, out var leaderboards, report))
+            {
+                return false;
+            }
+
             var mapCatalog = new HolmasMapCatalog(maps);
             var taskCatalog = new HolmasTaskCatalog(cats, tasks, playerLevels);
-            bundle = new HolmasConfigCatalogBundle(mapCatalog, taskCatalog, cats, maps, tasks, playerLevels, holmasAgencyBuildingTable, report);
+            bundle = new HolmasConfigCatalogBundle(mapCatalog, taskCatalog, cats, maps, tasks, playerLevels, holmasAgencyBuildingTable, leaderboards, report);
             report.MarkSuccess("配置包已成功恢复为运行时 Catalog。");
             return true;
         }
@@ -567,6 +572,111 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                         })
                         .ToArray(),
                     notes = row.notes ?? string.Empty,
+                });
+            }
+
+            return true;
+        }
+
+        private static bool TryBuildLeaderboards(
+            IReadOnlyList<HolmasLeaderboardTableRow> rows,
+            out List<HolmasLeaderboardDefinition> leaderboards,
+            HolmasConfigReport report)
+        {
+            leaderboards = new List<HolmasLeaderboardDefinition>();
+
+            if (rows == null || rows.Count == 0)
+            {
+                report.AddError("缺少 Holmas_LeaderboardTable。");
+                return false;
+            }
+
+            var seenTypes = new HashSet<string>(StringComparer.Ordinal);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null)
+                {
+                    report.AddError($"Holmas_LeaderboardTable 第 {i + 1} 行为空。");
+                    return false;
+                }
+
+                string leaderboardType = row.leaderboardType ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(leaderboardType))
+                {
+                    report.AddError($"Holmas_LeaderboardTable 第 {i + 1} 行缺少 leaderboardType。");
+                    return false;
+                }
+
+                if (!seenTypes.Add(leaderboardType))
+                {
+                    report.AddError($"Holmas_LeaderboardTable 存在重复 leaderboardType: {leaderboardType}。");
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(row.displayName))
+                {
+                    report.AddError($"Holmas_LeaderboardTable {leaderboardType} 缺少 displayName。");
+                    return false;
+                }
+
+                if (!Enum.TryParse(row.periodType ?? string.Empty, true, out HolmasLeaderboardPeriodType periodType))
+                {
+                    report.AddError($"Holmas_LeaderboardTable {leaderboardType} 的 periodType 非法: {row.periodType}。");
+                    return false;
+                }
+
+                string timeZoneId = row.timeZoneId ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(timeZoneId))
+                {
+                    report.AddError($"Holmas_LeaderboardTable {leaderboardType} 缺少 timeZoneId。");
+                    return false;
+                }
+
+                if (row.resetDayOfWeek < 0 || row.resetDayOfWeek > 7)
+                {
+                    report.AddError($"Holmas_LeaderboardTable {leaderboardType} 的 resetDayOfWeek 必须在 0..7 内。");
+                    return false;
+                }
+
+                if (row.resetHour < 0 || row.resetHour > 23)
+                {
+                    report.AddError($"Holmas_LeaderboardTable {leaderboardType} 的 resetHour 必须在 0..23 内。");
+                    return false;
+                }
+
+                if (row.resetMinute < 0 || row.resetMinute > 59)
+                {
+                    report.AddError($"Holmas_LeaderboardTable {leaderboardType} 的 resetMinute 必须在 0..59 内。");
+                    return false;
+                }
+
+                if (row.topEntryCount <= 0)
+                {
+                    report.AddError($"Holmas_LeaderboardTable {leaderboardType} 的 topEntryCount 必须大于 0。");
+                    return false;
+                }
+
+                if (row.mockEntryCount < row.topEntryCount)
+                {
+                    report.AddError($"Holmas_LeaderboardTable {leaderboardType} 的 mockEntryCount 不能小于 topEntryCount。");
+                    return false;
+                }
+
+                leaderboards.Add(new HolmasLeaderboardDefinition
+                {
+                    LeaderboardIndex = i,
+                    LeaderboardType = leaderboardType,
+                    DisplayName = row.displayName,
+                    PeriodType = periodType,
+                    TimeZoneId = timeZoneId,
+                    ResetDayOfWeek = row.resetDayOfWeek,
+                    ResetHour = row.resetHour,
+                    ResetMinute = row.resetMinute,
+                    TopEntryCount = row.topEntryCount,
+                    MockEntryCount = row.mockEntryCount,
+                    IsEnabled = row.isEnabled,
+                    Notes = row.notes ?? string.Empty,
                 });
             }
 

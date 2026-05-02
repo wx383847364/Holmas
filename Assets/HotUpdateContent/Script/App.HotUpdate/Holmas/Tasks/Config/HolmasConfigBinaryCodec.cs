@@ -199,6 +199,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             WriteTaskRows(writer, package.Holmas_TaskTable);
             WritePlayerLevelRows(writer, package.Holmas_PlayerLevelTable);
             WriteAgencyBuildingTableRows(writer, package.Holmas_AgencyBuildingTable);
+            WriteLeaderboardRows(writer, package.Holmas_LeaderboardTable);
         }
 
         private static void WriteCatMetaPackage(BinaryWriter writer, HolmasCatMetaPackage package)
@@ -226,6 +227,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             HolmasTaskTableRow[] tasks = ReadTaskRows(reader);
             HolmasPlayerLevelTableRow[] playerLevels = ReadPlayerLevelRows(reader);
             HolmasAgencyBuildingTableRow[] agencyBuildingTable = ReadAgencyBuildingTableRows(reader);
+            HolmasLeaderboardTableRow[] leaderboards = ReadLeaderboardRowsOrDefault(reader);
 
             var package = new HolmasCoreConfigPackage
             {
@@ -234,6 +236,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 Holmas_TaskTable = tasks,
                 Holmas_PlayerLevelTable = playerLevels,
                 Holmas_AgencyBuildingTable = agencyBuildingTable,
+                Holmas_LeaderboardTable = leaderboards,
             };
             package.CodecVersion = codecVersion;
 
@@ -642,6 +645,62 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 rows[i] = new HolmasAgencyBuildingTableCostRow
                 {
                     costs = ReadIntArray(reader),
+                };
+            }
+
+            return rows;
+        }
+
+        private static void WriteLeaderboardRows(BinaryWriter writer, HolmasLeaderboardTableRow[] rows)
+        {
+            rows = rows ?? Array.Empty<HolmasLeaderboardTableRow>();
+            writer.Write(rows.Length);
+            for (int i = 0; i < rows.Length; i++)
+            {
+                HolmasLeaderboardTableRow row = rows[i] ?? new HolmasLeaderboardTableRow();
+                WriteString(writer, row.leaderboardType);
+                WriteString(writer, row.displayName);
+                WriteString(writer, row.periodType);
+                WriteString(writer, row.timeZoneId);
+                writer.Write(row.resetDayOfWeek);
+                writer.Write(row.resetHour);
+                writer.Write(row.resetMinute);
+                writer.Write(row.topEntryCount);
+                writer.Write(row.mockEntryCount);
+                writer.Write(row.isEnabled);
+                WriteString(writer, row.notes);
+            }
+        }
+
+        private static HolmasLeaderboardTableRow[] ReadLeaderboardRowsOrDefault(BinaryReader reader)
+        {
+            if (reader == null || reader.BaseStream == null || reader.BaseStream.Position >= reader.BaseStream.Length)
+            {
+                return Array.Empty<HolmasLeaderboardTableRow>();
+            }
+
+            return ReadLeaderboardRows(reader);
+        }
+
+        private static HolmasLeaderboardTableRow[] ReadLeaderboardRows(BinaryReader reader)
+        {
+            int count = ReadNonNegativeCount(reader);
+            var rows = new HolmasLeaderboardTableRow[count];
+            for (int i = 0; i < count; i++)
+            {
+                rows[i] = new HolmasLeaderboardTableRow
+                {
+                    leaderboardType = ReadString(reader),
+                    displayName = ReadString(reader),
+                    periodType = ReadString(reader),
+                    timeZoneId = ReadString(reader),
+                    resetDayOfWeek = reader.ReadInt32(),
+                    resetHour = reader.ReadInt32(),
+                    resetMinute = reader.ReadInt32(),
+                    topEntryCount = reader.ReadInt32(),
+                    mockEntryCount = reader.ReadInt32(),
+                    isEnabled = reader.ReadBoolean(),
+                    notes = ReadString(reader),
                 };
             }
 

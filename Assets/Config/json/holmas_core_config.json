@@ -14752,5 +14752,46 @@
             ],
             "notes": "核心城市"
         }
+    ],
+    "Holmas_LeaderboardTable": [
+        {
+            "leaderboardType": "Level",
+            "displayName": "???",
+            "periodType": "AllTime",
+            "timeZoneId": "Asia/Shanghai",
+            "resetDayOfWeek": 0,
+            "resetHour": 0,
+            "resetMinute": 0,
+            "topEntryCount": 20,
+            "mockEntryCount": 100,
+            "isEnabled": true,
+            "notes": "??????????"
+        },
+        {
+            "leaderboardType": "WeeklyCatsFound",
+            "displayName": "?????",
+            "periodType": "Weekly",
+            "timeZoneId": "Asia/Shanghai",
+            "resetDayOfWeek": 1,
+            "resetHour": 0,
+            "resetMinute": 0,
+            "topEntryCount": 20,
+            "mockEntryCount": 100,
+            "isEnabled": true,
+            "notes": "???????"
+        },
+        {
+            "leaderboardType": "DailyTaskIncome",
+            "displayName": "?????",
+            "periodType": "Daily",
+            "timeZoneId": "Asia/Shanghai",
+            "resetDayOfWeek": 0,
+            "resetHour": 0,
+            "resetMinute": 0,
+            "topEntryCount": 20,
+            "mockEntryCount": 100,
+            "isEnabled": true,
+            "notes": "????????????????"
+        }
     ]
 }

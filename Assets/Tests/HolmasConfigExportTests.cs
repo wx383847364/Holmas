@@ -31,6 +31,7 @@ namespace Holmas.Tests
             Assert.That(tables.Levels.First().MinExperience, Is.EqualTo(0));
             Assert.That(tables.Levels.Skip(1).Select((item, index) => item.MinExperience > tables.Levels[index].MinExperience).All(item => item), Is.True);
             Assert.That(tables.Holmas_AgencyBuildingTable, Is.Not.Empty);
+            Assert.That(tables.Holmas_LeaderboardTable, Has.Count.EqualTo(3));
             Assert.That(tables.Tasks.All(item => string.Equals(item.TaskKind, "Money", StringComparison.Ordinal)), Is.True);
             Assert.That(tables.Cats.All(item => item.Price > 0 && item.Weight > 0 && item.Rarity > 0), Is.True);
             Assert.That(tables.Maps.All(item => item.CatCountMin > 0 && item.CatCountMax >= item.CatCountMin), Is.True);
@@ -106,6 +107,7 @@ namespace Holmas.Tests
             Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(tables.Levels.Count));
             Assert.That(bundle.Maps.Count, Is.EqualTo(tables.Maps.Count));
             Assert.That(bundle.Holmas_AgencyBuildingTable.Count, Is.EqualTo(tables.Holmas_AgencyBuildingTable.Count));
+            Assert.That(bundle.Leaderboards.Count, Is.EqualTo(tables.Holmas_LeaderboardTable.Count));
             Assert.That(bundle.Report.Success, Is.True);
             Assert.That(bundle.Report.Errors, Is.Empty);
         }
@@ -322,6 +324,7 @@ namespace Holmas.Tests
             Assert.That(coreJson.Contains("\"Holmas_TaskTable\""), Is.True);
             Assert.That(coreJson.Contains("\"Holmas_PlayerLevelTable\""), Is.True);
             Assert.That(coreJson.Contains("\"Holmas_AgencyBuildingTable\""), Is.True);
+            Assert.That(coreJson.Contains("\"Holmas_LeaderboardTable\""), Is.True);
             Assert.That(catJson.Contains("\"Holmas_CatTable\""), Is.True);
             Assert.That(coreJson.Contains("\"AgencyBuildings\""), Is.False);
             Assert.That(coreJson.Contains("\"PlayerLevels\""), Is.False);
@@ -607,6 +610,20 @@ namespace Holmas.Tests
                     PromotionUpgradeCosts = item.promotionUpgradeCosts.Select(costs => (costs?.costs ?? Array.Empty<int>()).ToArray()).ToArray(),
                     Notes = item.notes,
                 }).ToList(),
+                Holmas_LeaderboardTable = (corePackage.Holmas_LeaderboardTable ?? Array.Empty<HolmasLeaderboardTableRow>()).Select(item => new ExportLeaderboardTableRow
+                {
+                    LeaderboardType = item.leaderboardType,
+                    DisplayName = item.displayName,
+                    PeriodType = item.periodType,
+                    TimeZoneId = item.timeZoneId,
+                    ResetDayOfWeek = item.resetDayOfWeek,
+                    ResetHour = item.resetHour,
+                    ResetMinute = item.resetMinute,
+                    TopEntryCount = item.topEntryCount,
+                    MockEntryCount = item.mockEntryCount,
+                    IsEnabled = item.isEnabled,
+                    Notes = item.notes,
+                }).ToList(),
             };
         }
 
@@ -765,6 +782,20 @@ namespace Holmas.Tests
                     }).ToArray(),
                     notes = item.Notes,
                 }).ToArray(),
+                Holmas_LeaderboardTable = tables.Holmas_LeaderboardTable.Select(item => new HolmasLeaderboardTableRow
+                {
+                    leaderboardType = item.LeaderboardType,
+                    displayName = item.DisplayName,
+                    periodType = item.PeriodType,
+                    timeZoneId = item.TimeZoneId,
+                    resetDayOfWeek = item.ResetDayOfWeek,
+                    resetHour = item.ResetHour,
+                    resetMinute = item.ResetMinute,
+                    topEntryCount = item.TopEntryCount,
+                    mockEntryCount = item.MockEntryCount,
+                    isEnabled = item.IsEnabled,
+                    notes = item.Notes,
+                }).ToArray(),
             };
         }
 
@@ -864,6 +895,7 @@ namespace Holmas.Tests
             public List<ExportTaskRow> Tasks { get; set; } = new List<ExportTaskRow>();
             public List<ExportLevelRow> Levels { get; set; } = new List<ExportLevelRow>();
             public List<ExportAgencyBuildingTableRow> Holmas_AgencyBuildingTable { get; set; } = new List<ExportAgencyBuildingTableRow>();
+            public List<ExportLeaderboardTableRow> Holmas_LeaderboardTable { get; set; } = new List<ExportLeaderboardTableRow>();
         }
 
         private sealed class ExportCatRow
@@ -917,6 +949,21 @@ namespace Holmas.Tests
             public string Notes = string.Empty;
         }
 
+        private sealed class ExportLeaderboardTableRow
+        {
+            public string LeaderboardType = string.Empty;
+            public string DisplayName = string.Empty;
+            public string PeriodType = "AllTime";
+            public string TimeZoneId = "Asia/Shanghai";
+            public int ResetDayOfWeek;
+            public int ResetHour;
+            public int ResetMinute;
+            public int TopEntryCount = 20;
+            public int MockEntryCount = 100;
+            public bool IsEnabled = true;
+            public string Notes = string.Empty;
+        }
+
         private static class ExportConfigValidator
         {
             public static List<string> Validate(ExportConfigTables tables)
@@ -933,6 +980,7 @@ namespace Holmas.Tests
                 ValidateTasks(tables.Tasks, tables.Cats, errors);
                 ValidateLevels(tables.Levels, tables.Tasks, tables.Maps, errors);
                 ValidateAgencyPromotions(tables.Holmas_AgencyBuildingTable, errors);
+                ValidateLeaderboards(tables.Holmas_LeaderboardTable, errors);
                 return errors;
             }
 
@@ -1253,6 +1301,77 @@ namespace Holmas.Tests
                     }
 
                     expectedStage++;
+                }
+            }
+
+            private static void ValidateLeaderboards(IEnumerable<ExportLeaderboardTableRow> leaderboards, List<string> errors)
+            {
+                bool hasAny = false;
+                var seenTypes = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var leaderboard in leaderboards ?? Array.Empty<ExportLeaderboardTableRow>())
+                {
+                    hasAny = true;
+                    if (leaderboard == null)
+                    {
+                        errors.Add("排行榜表存在空行。");
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(leaderboard.LeaderboardType))
+                    {
+                        errors.Add("排行榜表存在空的 leaderboardType。");
+                        continue;
+                    }
+
+                    if (!seenTypes.Add(leaderboard.LeaderboardType))
+                    {
+                        errors.Add($"排行榜表存在重复 leaderboardType: {leaderboard.LeaderboardType}");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(leaderboard.DisplayName))
+                    {
+                        errors.Add($"排行榜表缺少显示名称: {leaderboard.LeaderboardType}");
+                    }
+
+                    if (!Enum.TryParse(leaderboard.PeriodType ?? string.Empty, true, out HolmasLeaderboardPeriodType periodType))
+                    {
+                        errors.Add($"排行榜表周期类型非法: {leaderboard.LeaderboardType}/{leaderboard.PeriodType}");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(leaderboard.TimeZoneId))
+                    {
+                        errors.Add($"排行榜表缺少时区: {leaderboard.LeaderboardType}");
+                    }
+
+                    if (leaderboard.ResetDayOfWeek < 0 || leaderboard.ResetDayOfWeek > 7)
+                    {
+                        errors.Add($"排行榜表 resetDayOfWeek 非法: {leaderboard.LeaderboardType}");
+                    }
+
+                    if (leaderboard.ResetHour < 0 || leaderboard.ResetHour > 23)
+                    {
+                        errors.Add($"排行榜表 resetHour 非法: {leaderboard.LeaderboardType}");
+                    }
+
+                    if (leaderboard.ResetMinute < 0 || leaderboard.ResetMinute > 59)
+                    {
+                        errors.Add($"排行榜表 resetMinute 非法: {leaderboard.LeaderboardType}");
+                    }
+
+                    if (leaderboard.TopEntryCount <= 0)
+                    {
+                        errors.Add($"排行榜表 topEntryCount 非法: {leaderboard.LeaderboardType}");
+                    }
+
+                    if (leaderboard.MockEntryCount < leaderboard.TopEntryCount)
+                    {
+                        errors.Add($"排行榜表 mockEntryCount 不能小于 topEntryCount: {leaderboard.LeaderboardType}");
+                    }
+                }
+
+                if (!hasAny)
+                {
+                    errors.Add("缺少排行榜表数据。");
                 }
             }
 
