@@ -36,7 +36,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private UnityAction<bool> _currentFindToggleAction;
         private Action<int> _currentTaskSlotAction;
         private Action<int, bool> _currentCellAction;
+        private Toggle _exclusiveWalkToggle;
+        private Toggle _exclusiveFindToggle;
         private bool _isSyncingToggles;
+        private bool _isEnforcingModeToggles;
         private HolmasCatSpriteLoader _catSpriteLoader;
 
         public void EnsureBindingSurface()
@@ -986,8 +989,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             group.allowSwitchOff = false;
             walkToggle.group = group;
             findToggle.group = group;
-            walkToggle.SetIsOnWithoutNotify(true);
-            findToggle.SetIsOnWithoutNotify(false);
+            ConfigureModeToggleExclusivity(walkToggle, findToggle);
+            SetExclusiveMode(true);
             return group;
         }
 
@@ -1002,6 +1005,94 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _bindings.WalkToggle.SetIsOnWithoutNotify(viewModel.WalkToggleIsOn);
             _bindings.FindToggle.SetIsOnWithoutNotify(viewModel.FindToggleIsOn);
             _isSyncingToggles = false;
+        }
+
+        private void ConfigureModeToggleExclusivity(Toggle walkToggle, Toggle findToggle)
+        {
+            if (_exclusiveWalkToggle != null)
+            {
+                _exclusiveWalkToggle.onValueChanged.RemoveListener(OnExclusiveWalkToggleChanged);
+            }
+
+            if (_exclusiveFindToggle != null)
+            {
+                _exclusiveFindToggle.onValueChanged.RemoveListener(OnExclusiveFindToggleChanged);
+            }
+
+            _exclusiveWalkToggle = walkToggle;
+            _exclusiveFindToggle = findToggle;
+
+            if (_exclusiveWalkToggle != null)
+            {
+                _exclusiveWalkToggle.onValueChanged.AddListener(OnExclusiveWalkToggleChanged);
+            }
+
+            if (_exclusiveFindToggle != null)
+            {
+                _exclusiveFindToggle.onValueChanged.AddListener(OnExclusiveFindToggleChanged);
+            }
+        }
+
+        private void OnExclusiveWalkToggleChanged(bool isOn)
+        {
+            if (_isEnforcingModeToggles)
+            {
+                return;
+            }
+
+            if (isOn || _exclusiveFindToggle == null || !_exclusiveFindToggle.isOn)
+            {
+                SetExclusiveMode(true);
+            }
+        }
+
+        private void OnExclusiveFindToggleChanged(bool isOn)
+        {
+            if (_isEnforcingModeToggles)
+            {
+                return;
+            }
+
+            if (isOn)
+            {
+                SetExclusiveMode(false);
+            }
+            else if (_exclusiveWalkToggle == null || !_exclusiveWalkToggle.isOn)
+            {
+                SetExclusiveMode(true);
+            }
+        }
+
+        private void SetExclusiveMode(bool useWalkMode)
+        {
+            _isEnforcingModeToggles = true;
+            if (_exclusiveWalkToggle != null)
+            {
+                _exclusiveWalkToggle.SetIsOnWithoutNotify(useWalkMode);
+            }
+
+            if (_exclusiveFindToggle != null)
+            {
+                _exclusiveFindToggle.SetIsOnWithoutNotify(!useWalkMode);
+            }
+
+            _isEnforcingModeToggles = false;
+        }
+
+        private void ClearModeToggleExclusivity()
+        {
+            if (_exclusiveWalkToggle != null)
+            {
+                _exclusiveWalkToggle.onValueChanged.RemoveListener(OnExclusiveWalkToggleChanged);
+            }
+
+            if (_exclusiveFindToggle != null)
+            {
+                _exclusiveFindToggle.onValueChanged.RemoveListener(OnExclusiveFindToggleChanged);
+            }
+
+            _exclusiveWalkToggle = null;
+            _exclusiveFindToggle = null;
         }
 
         private void RenderBoard(MainVm viewModel)
@@ -1089,6 +1180,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private void OnDestroy()
         {
+            ClearModeToggleExclusivity();
             _catSpriteLoader?.Dispose();
             _catSpriteLoader = null;
         }
