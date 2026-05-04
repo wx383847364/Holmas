@@ -40,6 +40,11 @@ REQUIRED_PATHS = [
 
 META_ROOT = Path("Assets/Tools/UiPrefabGenerator")
 HEX_GUID = re.compile(r"^[0-9a-f]{32}$")
+TUANJIE_BASE64_GUID = re.compile(r"^[A-Za-z0-9+/]{55}=$")
+
+
+def is_valid_meta_guid(guid: str) -> bool:
+    return bool(HEX_GUID.fullmatch(guid) or TUANJIE_BASE64_GUID.fullmatch(guid))
 
 
 def find_invalid_meta_guids():
@@ -50,7 +55,7 @@ def find_invalid_meta_guids():
             if line.startswith("guid: "):
                 guid = line.split(": ", 1)[1].strip()
                 break
-        if guid is None or not HEX_GUID.fullmatch(guid):
+        if guid is None or not is_valid_meta_guid(guid):
             invalid.append((path, guid))
     return invalid
 
