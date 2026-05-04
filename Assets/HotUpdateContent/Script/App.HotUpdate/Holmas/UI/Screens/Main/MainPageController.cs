@@ -655,18 +655,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 bool hasActiveLevel = context.GameplayRuntime.HasActiveUncompletedLevel;
                 if (!slot.IsUnlocked)
                 {
-                    HolmasTaskSlotUnlockResult unlock = context.UnlockAdSlot(slotIndex);
-                    if (!unlock.Success)
-                    {
-                        finalStatus = $"任务槽 {slotIndex + 1} 解锁失败：{unlock.FailureReason}";
-                    }
-                    else
-                    {
-                        runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
-                        finalStatus = runtimeTask != null && runtimeTask.Task != null
-                            ? $"任务槽 {slotIndex + 1} 已解锁并补入任务。{BuildTaskSlotStatus(slotIndex, slot, runtimeTask, hasActiveLevel)}"
-                            : $"任务槽 {slotIndex + 1} 已解锁；当前等级暂无可补任务。";
-                    }
+                    finalStatus = BuildLockedTaskSlotStatus(slotIndex);
                 }
                 else if (runtimeTask != null && runtimeTask.Task != null)
                 {
@@ -718,6 +707,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                     ? "继续当前棋盘即可推进。"
                     : "完成后会自动领奖并补新任务。";
             return $"任务槽 {slotIndex + 1} 进度 {runtimeTask.Task.CurrentCount}/{runtimeTask.Task.TargetCount}，{suffix}";
+        }
+
+        private static string BuildLockedTaskSlotStatus(int slotIndex)
+        {
+            return $"任务槽 {slotIndex + 1} 尚未解锁；请通过任务奖励或广告入口解锁。";
         }
 
         private void Refresh(string status = null)

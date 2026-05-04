@@ -118,10 +118,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             if (slot == null || !slot.IsUnlocked)
             {
                 item.Progress = "未解锁";
-                item.Reward = "观看广告后开启";
+                item.Reward = "需通过任务或广告解锁";
                 item.IsLocked = true;
-                item.ClaimButtonEnabled = true;
-                item.ClaimButtonLabel = "观看广告";
+                item.ClaimButtonEnabled = false;
+                item.ClaimButtonLabel = "待解锁";
                 return item;
             }
 

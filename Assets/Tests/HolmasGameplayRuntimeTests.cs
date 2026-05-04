@@ -1294,7 +1294,8 @@ namespace Holmas.Tests
             Assert.That(viewModel.TaskItems[4].SlotIndex, Is.EqualTo(4));
             Assert.That(viewModel.TaskItems[4].IsLocked, Is.True);
             Assert.That(viewModel.TaskItems[4].Progress, Is.EqualTo("未解锁"));
-            Assert.That(viewModel.TaskItems[4].ButtonEnabled, Is.True);
+            Assert.That(viewModel.TaskItems[4].Reward, Does.Contain("任务或广告解锁"));
+            Assert.That(viewModel.TaskItems[4].ButtonEnabled, Is.False);
         }
 
         [Test]
@@ -1555,6 +1556,9 @@ namespace Holmas.Tests
             Assert.That(agencyVm.TaskSummary, Does.Not.Contain("可领奖"));
             Assert.That(agencyVm.TaskItems[0].ClaimButtonLabel, Is.EqualTo("查看状态"));
             Assert.That(agencyVm.TaskItems[1].Reward, Does.Contain("自动领奖并锁定"));
+            Assert.That(agencyVm.TaskItems[4].IsLocked, Is.True);
+            Assert.That(agencyVm.TaskItems[4].ClaimButtonEnabled, Is.False);
+            Assert.That(agencyVm.TaskItems[4].ClaimButtonLabel, Is.EqualTo("待解锁"));
         }
 
         [Test]

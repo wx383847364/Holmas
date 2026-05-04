@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
-using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Generated;
 
@@ -176,19 +175,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                     : null;
                 if (slot != null && !slot.IsUnlocked)
                 {
-                    HolmasTaskSlotUnlockResult unlock = context.UnlockAdSlot(slotIndex);
-                    if (!unlock.Success)
-                    {
-                        finalStatus = $"任务槽 {slotIndex + 1} 解锁失败：{unlock.FailureReason}";
-                    }
-                    else
-                    {
-                        slot = context.GameplayRuntime.TaskBarState.GetSlot(slotIndex);
-                        runtimeTask = context.GameplayRuntime.TaskBarState.GetTaskBySlot(slotIndex);
-                        finalStatus = runtimeTask != null && runtimeTask.Task != null
-                            ? $"任务槽 {slotIndex + 1} 已解锁并补入任务。{BuildTaskStatus(slotIndex, slot, runtimeTask)}"
-                            : $"任务槽 {slotIndex + 1} 已解锁；当前等级暂无可补任务。";
-                    }
+                    finalStatus = BuildLockedTaskStatus(slotIndex);
                 }
                 else
                 {
@@ -254,6 +241,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 ? "广告槽已到期，完成当前任务后会自动领奖并重新锁定。"
                 : "完成后会自动领奖并补新任务。";
             return $"任务槽 {slotIndex + 1} 进度 {runtimeTask.Task.CurrentCount}/{runtimeTask.Task.TargetCount}，{suffix}";
+        }
+
+        private static string BuildLockedTaskStatus(int slotIndex)
+        {
+            return $"任务槽 {slotIndex + 1} 尚未解锁；请通过任务奖励或广告入口解锁。";
         }
     }
 }

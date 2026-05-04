@@ -383,10 +383,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (slot == null || !slot.IsUnlocked)
             {
                 item.Progress = "未解锁";
-                item.Reward = "观看广告后开启";
+                item.Reward = "需通过任务或广告解锁";
                 item.ProgressNormalized = 0f;
                 item.IsLocked = true;
-                item.ButtonEnabled = true;
+                item.ButtonEnabled = false;
                 return item;
             }
 
