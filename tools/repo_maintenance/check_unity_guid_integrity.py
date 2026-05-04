@@ -8,13 +8,25 @@ import sys
 from pathlib import Path
 
 
-META_GUID_RE = re.compile(r"^[0-9a-f]{32}$")
+UNITY_HEX_GUID_RE = re.compile(r"^[0-9a-f]{32}$")
+# Tuanjie 2022.3.62t2 can serialize .meta GUIDs as 56-character base64-like
+# tokens instead of Unity's common 32-character lowercase hex form.
+TUANJIE_BASE64_GUID_RE = re.compile(r"^[A-Za-z0-9+/]{55}=$")
 SERIALIZED_GUID_RE = re.compile(r"guid:\s*([^,}\s]+)")
 BUILTIN_GUIDS = {
     "00000000000000000000000000000000",
     "0000000000000000e000000000000000",
     "0000000000000000f000000000000000",
 }
+
+
+def is_valid_unity_or_tuanjie_guid(guid: str) -> bool:
+    return bool(
+        UNITY_HEX_GUID_RE.fullmatch(guid) or
+        TUANJIE_BASE64_GUID_RE.fullmatch(guid)
+    )
+
+
 UNITY_TEXT_EXTENSIONS = {
     ".anim",
     ".asmdef",
@@ -122,7 +134,7 @@ def validate_meta_files(repo_root: Path, paths: list[Path] | None = None) -> lis
             continue
 
         guid = guid_line[6:].strip()
-        if not META_GUID_RE.fullmatch(guid):
+        if not is_valid_unity_or_tuanjie_guid(guid):
             errors.append(f"{path}: invalid meta GUID `{guid}`")
     return errors
 
@@ -147,7 +159,7 @@ def validate_serialized_guid_tokens(repo_root: Path, paths: list[Path] | None = 
                 guid = match.group(1)
                 if guid in BUILTIN_GUIDS:
                     continue
-                if not META_GUID_RE.fullmatch(guid):
+                if not UNITY_HEX_GUID_RE.fullmatch(guid):
                     errors.append(
                         f"{path}:{line_no}: invalid serialized GUID token `{guid}`"
                     )
@@ -172,7 +184,7 @@ def main() -> int:
     for item in errors:
         print(f"  - {item}", file=sys.stderr)
     print(
-        "[hint] Unity/Tuanjie `.meta` GUIDs must stay as 32 lowercase hex characters.",
+        "[hint] `.meta` GUIDs may be 32 lowercase hex characters or Tuanjie 56-character base64-like tokens; serialized asset references must stay 32 lowercase hex characters.",
         file=sys.stderr,
     )
     return 1
