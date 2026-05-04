@@ -1,1733 +1,2021 @@
 {
-    "Version": 7,
+    "Version": 8,
     "Holmas_MapTable": [
         {
             "mapId": "map_0001",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-8-8.asset",
             "catCountMin": 11,
-            "catCountMax": 14
+            "catCountMax": 14,
+            "extraFields": []
         },
         {
             "mapId": "map_0002",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-8-8.asset",
             "catCountMin": 11,
-            "catCountMax": 14
+            "catCountMax": 14,
+            "extraFields": []
         },
         {
             "mapId": "map_0003",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-8-8.asset",
             "catCountMin": 11,
-            "catCountMax": 14
+            "catCountMax": 14,
+            "extraFields": []
         },
         {
             "mapId": "map_0004",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-8-8.asset",
             "catCountMin": 11,
-            "catCountMax": 14
+            "catCountMax": 14,
+            "extraFields": []
         },
         {
             "mapId": "map_0005",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-8-8.asset",
             "catCountMin": 11,
-            "catCountMax": 14
+            "catCountMax": 14,
+            "extraFields": []
         },
         {
             "mapId": "map_0006",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-8-8.asset",
             "catCountMin": 11,
-            "catCountMax": 14
+            "catCountMax": 14,
+            "extraFields": []
         },
         {
             "mapId": "map_0007",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-8-8.asset",
             "catCountMin": 11,
-            "catCountMax": 14
+            "catCountMax": 14,
+            "extraFields": []
         },
         {
             "mapId": "map_0008",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-9-9.asset",
             "catCountMin": 14,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_0009",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-9-9.asset",
             "catCountMin": 14,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_0010",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-9-9.asset",
             "catCountMin": 14,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_0011",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-9-9.asset",
             "catCountMin": 14,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_0012",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-9-9.asset",
             "catCountMin": 14,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_0013",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-9-9.asset",
             "catCountMin": 14,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_0014",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0015",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0016",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0017",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0018",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0019",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0020",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0021",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0022",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0023",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0024",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0025",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0026",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0027",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-10-10.asset",
             "catCountMin": 18,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_0028",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0029",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0030",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0031",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0032",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0033",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0034",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0035",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0036",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0037",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0038",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0039",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0040",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0041",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-11-11.asset",
             "catCountMin": 21,
-            "catCountMax": 26
+            "catCountMax": 26,
+            "extraFields": []
         },
         {
             "mapId": "map_0042",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0043",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0044",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0045",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0046",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0047",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0048",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0049",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0050",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0051",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0052",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0053",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/5-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0054",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0055",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0056",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-12-12.asset",
             "catCountMin": 25,
-            "catCountMax": 31
+            "catCountMax": 31,
+            "extraFields": []
         },
         {
             "mapId": "map_0057",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0058",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0059",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0060",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0061",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0062",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0063",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0064",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0065",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0066",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0067",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0068",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0069",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0070",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0071",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/9-13-13.asset",
             "catCountMin": 30,
-            "catCountMax": 37
+            "catCountMax": 37,
+            "extraFields": []
         },
         {
             "mapId": "map_0072",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-14-14.asset",
             "catCountMin": 35,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_1001",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-8-8.asset",
             "catCountMin": 14,
-            "catCountMax": 16
+            "catCountMax": 16,
+            "extraFields": []
         },
         {
             "mapId": "map_1002",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-8-8.asset",
             "catCountMin": 14,
-            "catCountMax": 16
+            "catCountMax": 16,
+            "extraFields": []
         },
         {
             "mapId": "map_1003",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-8-8.asset",
             "catCountMin": 14,
-            "catCountMax": 16
+            "catCountMax": 16,
+            "extraFields": []
         },
         {
             "mapId": "map_1004",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-8-8.asset",
             "catCountMin": 14,
-            "catCountMax": 16
+            "catCountMax": 16,
+            "extraFields": []
         },
         {
             "mapId": "map_1005",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-8-8.asset",
             "catCountMin": 14,
-            "catCountMax": 16
+            "catCountMax": 16,
+            "extraFields": []
         },
         {
             "mapId": "map_1006",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-8-8.asset",
             "catCountMin": 14,
-            "catCountMax": 16
+            "catCountMax": 16,
+            "extraFields": []
         },
         {
             "mapId": "map_1007",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-8-8.asset",
             "catCountMin": 14,
-            "catCountMax": 16
+            "catCountMax": 16,
+            "extraFields": []
         },
         {
             "mapId": "map_1008",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-9-9.asset",
             "catCountMin": 17,
-            "catCountMax": 20
+            "catCountMax": 20,
+            "extraFields": []
         },
         {
             "mapId": "map_1009",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-9-9.asset",
             "catCountMin": 17,
-            "catCountMax": 20
+            "catCountMax": 20,
+            "extraFields": []
         },
         {
             "mapId": "map_1010",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-9-9.asset",
             "catCountMin": 17,
-            "catCountMax": 20
+            "catCountMax": 20,
+            "extraFields": []
         },
         {
             "mapId": "map_1011",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-9-9.asset",
             "catCountMin": 17,
-            "catCountMax": 20
+            "catCountMax": 20,
+            "extraFields": []
         },
         {
             "mapId": "map_1012",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-9-9.asset",
             "catCountMin": 17,
-            "catCountMax": 20
+            "catCountMax": 20,
+            "extraFields": []
         },
         {
             "mapId": "map_1013",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-9-9.asset",
             "catCountMin": 17,
-            "catCountMax": 20
+            "catCountMax": 20,
+            "extraFields": []
         },
         {
             "mapId": "map_1014",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1015",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1016",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1017",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1018",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1019",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1020",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1021",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1022",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1023",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1024",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1025",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1026",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1027",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-10-10.asset",
             "catCountMin": 22,
-            "catCountMax": 25
+            "catCountMax": 25,
+            "extraFields": []
         },
         {
             "mapId": "map_1028",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1029",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1030",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1031",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1032",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1033",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1034",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1035",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1036",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1037",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1038",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1039",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1040",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1041",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-11-11.asset",
             "catCountMin": 26,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_1042",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1043",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1044",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1045",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1046",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1047",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1048",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1049",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1050",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1051",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1052",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1053",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/5-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1054",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1055",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1056",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-12-12.asset",
             "catCountMin": 31,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_1057",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1058",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1059",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1060",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1061",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1062",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1063",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1064",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1065",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1066",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1067",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1068",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1069",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1070",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1071",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/9-13-13.asset",
             "catCountMin": 37,
-            "catCountMax": 42
+            "catCountMax": 42,
+            "extraFields": []
         },
         {
             "mapId": "map_1072",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-14-14.asset",
             "catCountMin": 43,
-            "catCountMax": 49
+            "catCountMax": 49,
+            "extraFields": []
         },
         {
             "mapId": "map_2001",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-8-8.asset",
             "catCountMin": 16,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_2002",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-8-8.asset",
             "catCountMin": 16,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_2003",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-8-8.asset",
             "catCountMin": 16,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_2004",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-8-8.asset",
             "catCountMin": 16,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_2005",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-8-8.asset",
             "catCountMin": 16,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_2006",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-8-8.asset",
             "catCountMin": 16,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_2007",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-8-8.asset",
             "catCountMin": 16,
-            "catCountMax": 17
+            "catCountMax": 17,
+            "extraFields": []
         },
         {
             "mapId": "map_2008",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-9-9.asset",
             "catCountMin": 20,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_2009",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-9-9.asset",
             "catCountMin": 20,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_2010",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-9-9.asset",
             "catCountMin": 20,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_2011",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-9-9.asset",
             "catCountMin": 20,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_2012",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-9-9.asset",
             "catCountMin": 20,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_2013",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-9-9.asset",
             "catCountMin": 20,
-            "catCountMax": 22
+            "catCountMax": 22,
+            "extraFields": []
         },
         {
             "mapId": "map_2014",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2015",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2016",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2017",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2018",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2019",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2020",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2021",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2022",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2023",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2024",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2025",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2026",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2027",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-10-10.asset",
             "catCountMin": 25,
-            "catCountMax": 28
+            "catCountMax": 28,
+            "extraFields": []
         },
         {
             "mapId": "map_2028",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2029",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2030",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2031",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2032",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2033",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2034",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2035",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2036",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2037",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2038",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2039",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2040",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2041",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-11-11.asset",
             "catCountMin": 30,
-            "catCountMax": 33
+            "catCountMax": 33,
+            "extraFields": []
         },
         {
             "mapId": "map_2042",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2043",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2044",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2045",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2046",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2047",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2048",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2049",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2050",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2051",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2052",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2053",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/5-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2054",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2055",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2056",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-12-12.asset",
             "catCountMin": 36,
-            "catCountMax": 40
+            "catCountMax": 40,
+            "extraFields": []
         },
         {
             "mapId": "map_2057",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2058",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2059",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2060",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2061",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2062",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2063",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2064",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2065",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2066",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2067",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2068",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2069",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2070",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2071",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/9-13-13.asset",
             "catCountMin": 42,
-            "catCountMax": 47
+            "catCountMax": 47,
+            "extraFields": []
         },
         {
             "mapId": "map_2072",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-14-14.asset",
             "catCountMin": 49,
-            "catCountMax": 54
+            "catCountMax": 54,
+            "extraFields": []
         },
         {
             "mapId": "map_3001",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-8-8.asset",
             "catCountMin": 17,
-            "catCountMax": 19
+            "catCountMax": 19,
+            "extraFields": []
         },
         {
             "mapId": "map_3002",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-8-8.asset",
             "catCountMin": 17,
-            "catCountMax": 19
+            "catCountMax": 19,
+            "extraFields": []
         },
         {
             "mapId": "map_3003",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-8-8.asset",
             "catCountMin": 17,
-            "catCountMax": 19
+            "catCountMax": 19,
+            "extraFields": []
         },
         {
             "mapId": "map_3004",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-8-8.asset",
             "catCountMin": 17,
-            "catCountMax": 19
+            "catCountMax": 19,
+            "extraFields": []
         },
         {
             "mapId": "map_3005",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-8-8.asset",
             "catCountMin": 17,
-            "catCountMax": 19
+            "catCountMax": 19,
+            "extraFields": []
         },
         {
             "mapId": "map_3006",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-8-8.asset",
             "catCountMin": 17,
-            "catCountMax": 19
+            "catCountMax": 19,
+            "extraFields": []
         },
         {
             "mapId": "map_3007",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-8-8.asset",
             "catCountMin": 17,
-            "catCountMax": 19
+            "catCountMax": 19,
+            "extraFields": []
         },
         {
             "mapId": "map_3008",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-9-9.asset",
             "catCountMin": 22,
-            "catCountMax": 24
+            "catCountMax": 24,
+            "extraFields": []
         },
         {
             "mapId": "map_3009",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-9-9.asset",
             "catCountMin": 22,
-            "catCountMax": 24
+            "catCountMax": 24,
+            "extraFields": []
         },
         {
             "mapId": "map_3010",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-9-9.asset",
             "catCountMin": 22,
-            "catCountMax": 24
+            "catCountMax": 24,
+            "extraFields": []
         },
         {
             "mapId": "map_3011",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-9-9.asset",
             "catCountMin": 22,
-            "catCountMax": 24
+            "catCountMax": 24,
+            "extraFields": []
         },
         {
             "mapId": "map_3012",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-9-9.asset",
             "catCountMin": 22,
-            "catCountMax": 24
+            "catCountMax": 24,
+            "extraFields": []
         },
         {
             "mapId": "map_3013",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-9-9.asset",
             "catCountMin": 22,
-            "catCountMax": 24
+            "catCountMax": 24,
+            "extraFields": []
         },
         {
             "mapId": "map_3014",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3015",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3016",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3017",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3018",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3019",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3020",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3021",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3022",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3023",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3024",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3025",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3026",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3027",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-10-10.asset",
             "catCountMin": 28,
-            "catCountMax": 30
+            "catCountMax": 30,
+            "extraFields": []
         },
         {
             "mapId": "map_3028",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3029",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3030",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3031",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3032",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3033",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3034",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3035",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3036",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3037",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3038",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3039",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3040",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3041",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-11-11.asset",
             "catCountMin": 33,
-            "catCountMax": 36
+            "catCountMax": 36,
+            "extraFields": []
         },
         {
             "mapId": "map_3042",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3043",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3044",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3045",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3046",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3047",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3048",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3049",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3050",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3051",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3052",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3053",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/5-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3054",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3055",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3056",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-12-12.asset",
             "catCountMin": 40,
-            "catCountMax": 43
+            "catCountMax": 43,
+            "extraFields": []
         },
         {
             "mapId": "map_3057",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3058",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/11-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3059",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/12-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3060",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/13-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3061",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/14-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3062",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/15-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3063",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/16-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3064",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/17-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3065",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/18-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3066",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/19-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3067",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/4-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3068",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/6-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3069",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/7-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3070",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/8-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3071",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/9-13-13.asset",
             "catCountMin": 47,
-            "catCountMax": 50
+            "catCountMax": 50,
+            "extraFields": []
         },
         {
             "mapId": "map_3072",
             "terrainPath": "Assets/HotUpdateContent/Res/Map/10-14-14.asset",
             "catCountMin": 54,
-            "catCountMax": 58
+            "catCountMax": 58,
+            "extraFields": []
         }
     ],
     "Holmas_TaskTable": [
@@ -1759,7 +2047,8 @@
             "countMin": 1,
             "countMax": 2,
             "rewardArray": [],
-            "levelRewardFactor": 1.0
+            "levelRewardFactor": 1.0,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b1_c_m",
@@ -1789,7 +2078,8 @@
             "countMin": 2,
             "countMax": 3,
             "rewardArray": [],
-            "levelRewardFactor": 1.0499999523162842
+            "levelRewardFactor": 1.0499999523162842,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b1_c_a",
@@ -1809,7 +2099,8 @@
             "countMin": 2,
             "countMax": 3,
             "rewardArray": [],
-            "levelRewardFactor": 1.0499999523162842
+            "levelRewardFactor": 1.0499999523162842,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b1_c_b",
@@ -1829,7 +2120,8 @@
             "countMin": 1,
             "countMax": 2,
             "rewardArray": [],
-            "levelRewardFactor": 1.0
+            "levelRewardFactor": 1.0,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b2_cu_s",
@@ -1873,7 +2165,8 @@
             "countMin": 2,
             "countMax": 3,
             "rewardArray": [],
-            "levelRewardFactor": 1.100000023841858
+            "levelRewardFactor": 1.100000023841858,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b2_cu_m",
@@ -1917,7 +2210,8 @@
             "countMin": 3,
             "countMax": 4,
             "rewardArray": [],
-            "levelRewardFactor": 1.149999976158142
+            "levelRewardFactor": 1.149999976158142,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b2_u_s",
@@ -1941,7 +2235,8 @@
             "countMin": 1,
             "countMax": 2,
             "rewardArray": [],
-            "levelRewardFactor": 1.149999976158142
+            "levelRewardFactor": 1.149999976158142,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b2_c_l",
@@ -1971,7 +2266,8 @@
             "countMin": 3,
             "countMax": 4,
             "rewardArray": [],
-            "levelRewardFactor": 1.100000023841858
+            "levelRewardFactor": 1.100000023841858,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b3_cur_s",
@@ -2025,7 +2321,8 @@
             "countMin": 2,
             "countMax": 3,
             "rewardArray": [],
-            "levelRewardFactor": 1.2000000476837158
+            "levelRewardFactor": 1.2000000476837158,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b3_u_m",
@@ -2049,7 +2346,8 @@
             "countMin": 2,
             "countMax": 3,
             "rewardArray": [],
-            "levelRewardFactor": 1.2200000286102295
+            "levelRewardFactor": 1.2200000286102295,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b3_r_s",
@@ -2069,7 +2367,8 @@
             "countMin": 1,
             "countMax": 2,
             "rewardArray": [],
-            "levelRewardFactor": 1.25
+            "levelRewardFactor": 1.25,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b3_cu_l",
@@ -2113,7 +2412,8 @@
             "countMin": 3,
             "countMax": 5,
             "rewardArray": [],
-            "levelRewardFactor": 1.2000000476837158
+            "levelRewardFactor": 1.2000000476837158,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b4_ur_s",
@@ -2147,7 +2447,8 @@
             "countMin": 2,
             "countMax": 3,
             "rewardArray": [],
-            "levelRewardFactor": 1.2999999523162842
+            "levelRewardFactor": 1.2999999523162842,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b4_r_m",
@@ -2167,7 +2468,8 @@
             "countMin": 2,
             "countMax": 4,
             "rewardArray": [],
-            "levelRewardFactor": 1.350000023841858
+            "levelRewardFactor": 1.350000023841858,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b4_re_s",
@@ -2192,7 +2494,8 @@
             "countMin": 1,
             "countMax": 2,
             "rewardArray": [],
-            "levelRewardFactor": 1.399999976158142
+            "levelRewardFactor": 1.399999976158142,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b4_cur_l",
@@ -2246,7 +2549,8 @@
             "countMin": 4,
             "countMax": 6,
             "rewardArray": [],
-            "levelRewardFactor": 1.2999999523162842
+            "levelRewardFactor": 1.2999999523162842,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b5_re_m",
@@ -2271,7 +2575,8 @@
             "countMin": 2,
             "countMax": 3,
             "rewardArray": [],
-            "levelRewardFactor": 1.5
+            "levelRewardFactor": 1.5,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b5_e_s",
@@ -2286,7 +2591,8 @@
             "countMin": 1,
             "countMax": 2,
             "rewardArray": [],
-            "levelRewardFactor": 1.600000023841858
+            "levelRewardFactor": 1.600000023841858,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b5_ur_l",
@@ -2320,7 +2626,8 @@
             "countMin": 4,
             "countMax": 6,
             "rewardArray": [],
-            "levelRewardFactor": 1.4500000476837158
+            "levelRewardFactor": 1.4500000476837158,
+            "extraFields": []
         },
         {
             "taskTypeId": "task_b5_all_l",
@@ -2379,7 +2686,8 @@
             "countMin": 5,
             "countMax": 7,
             "rewardArray": [],
-            "levelRewardFactor": 1.399999976158142
+            "levelRewardFactor": 1.399999976158142,
+            "extraFields": []
         }
     ],
     "Holmas_PlayerLevelTable": [
@@ -2407,7 +2715,8 @@
             "mapWeights": [
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 2,
@@ -2441,7 +2750,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 3,
@@ -2479,7 +2789,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 4,
@@ -2517,7 +2828,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 5,
@@ -2557,7 +2869,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 6,
@@ -2613,7 +2926,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 7,
@@ -2669,7 +2983,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 8,
@@ -2725,7 +3040,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 9,
@@ -2781,7 +3097,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 10,
@@ -2837,7 +3154,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 11,
@@ -2901,7 +3219,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 12,
@@ -2965,7 +3284,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 13,
@@ -3029,7 +3349,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 14,
@@ -3093,7 +3414,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 15,
@@ -3157,7 +3479,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 16,
@@ -3221,7 +3544,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 17,
@@ -3285,7 +3609,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 18,
@@ -3349,7 +3674,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 19,
@@ -3413,7 +3739,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 20,
@@ -3477,7 +3804,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 21,
@@ -3549,7 +3877,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 22,
@@ -3621,7 +3950,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 23,
@@ -3693,7 +4023,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 24,
@@ -3765,7 +4096,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 25,
@@ -3837,7 +4169,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 26,
@@ -3909,7 +4242,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 27,
@@ -3981,7 +4315,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 28,
@@ -4053,7 +4388,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 29,
@@ -4125,7 +4461,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 30,
@@ -4197,7 +4534,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 31,
@@ -4285,7 +4623,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 32,
@@ -4373,7 +4712,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 33,
@@ -4461,7 +4801,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 34,
@@ -4549,7 +4890,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 35,
@@ -4637,7 +4979,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 36,
@@ -4725,7 +5068,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 37,
@@ -4813,7 +5157,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 38,
@@ -4901,7 +5246,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 39,
@@ -4989,7 +5335,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 40,
@@ -5077,7 +5424,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 41,
@@ -5165,7 +5513,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 42,
@@ -5253,7 +5602,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 43,
@@ -5341,7 +5691,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 44,
@@ -5429,7 +5780,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 45,
@@ -5517,7 +5869,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 46,
@@ -5605,7 +5958,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 47,
@@ -5693,7 +6047,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 48,
@@ -5781,7 +6136,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 49,
@@ -5869,7 +6225,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 50,
@@ -5957,7 +6314,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 51,
@@ -6045,7 +6403,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 52,
@@ -6133,7 +6492,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 53,
@@ -6221,7 +6581,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 54,
@@ -6309,7 +6670,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 55,
@@ -6397,7 +6759,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 56,
@@ -6485,7 +6848,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 57,
@@ -6573,7 +6937,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 58,
@@ -6661,7 +7026,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 59,
@@ -6749,7 +7115,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 60,
@@ -6837,7 +7204,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 61,
@@ -6925,7 +7293,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 62,
@@ -7013,7 +7382,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 63,
@@ -7101,7 +7471,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 64,
@@ -7189,7 +7560,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 65,
@@ -7277,7 +7649,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 66,
@@ -7365,7 +7738,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 67,
@@ -7453,7 +7827,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 68,
@@ -7541,7 +7916,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 69,
@@ -7629,7 +8005,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 70,
@@ -7717,7 +8094,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 71,
@@ -7805,7 +8183,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 72,
@@ -7893,7 +8272,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 73,
@@ -7981,7 +8361,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 74,
@@ -8069,7 +8450,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 75,
@@ -8157,7 +8539,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 76,
@@ -8245,7 +8628,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 77,
@@ -8333,7 +8717,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 78,
@@ -8421,7 +8806,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 79,
@@ -8509,7 +8895,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 80,
@@ -8597,7 +8984,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 81,
@@ -8685,7 +9073,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 82,
@@ -8773,7 +9162,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 83,
@@ -8861,7 +9251,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 84,
@@ -8949,7 +9340,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 85,
@@ -9037,7 +9429,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 86,
@@ -9125,7 +9518,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 87,
@@ -9213,7 +9607,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 88,
@@ -9301,7 +9696,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 89,
@@ -9389,7 +9785,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 90,
@@ -9477,7 +9874,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 91,
@@ -9565,7 +9963,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 92,
@@ -9653,7 +10052,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 93,
@@ -9741,7 +10141,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 94,
@@ -9829,7 +10230,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 95,
@@ -9917,7 +10319,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 96,
@@ -10005,7 +10408,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 97,
@@ -10093,7 +10497,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 98,
@@ -10181,7 +10586,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 99,
@@ -10269,7 +10675,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         },
         {
             "playerLevel": 100,
@@ -10357,7 +10764,8 @@
                 100,
                 100,
                 100
-            ]
+            ],
+            "extraFields": []
         }
     ],
     "Holmas_AgencyBuildingTable": [
@@ -10397,7 +10805,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 2,
@@ -10438,7 +10852,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 3,
@@ -10482,7 +10902,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 4,
@@ -10526,7 +10952,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 5,
@@ -10570,7 +11002,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 6,
@@ -10614,7 +11052,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 7,
@@ -10658,7 +11102,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 8,
@@ -10702,7 +11152,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 9,
@@ -10746,7 +11202,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 10,
@@ -10790,7 +11252,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 11,
@@ -10834,7 +11302,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 12,
@@ -10878,7 +11352,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 13,
@@ -10922,7 +11402,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 14,
@@ -10966,7 +11452,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 15,
@@ -11010,7 +11502,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 16,
@@ -11054,7 +11552,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 17,
@@ -11098,7 +11602,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 18,
@@ -11142,7 +11652,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 19,
@@ -11186,7 +11702,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 20,
@@ -11230,7 +11752,13 @@
                     ]
                 }
             ],
-            "notes": "新手城市"
+            "notes": "新手城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 21,
@@ -11274,7 +11802,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 22,
@@ -11318,7 +11852,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 23,
@@ -11362,7 +11902,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 24,
@@ -11406,7 +11952,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 25,
@@ -11450,7 +12002,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 26,
@@ -11494,7 +12052,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 27,
@@ -11538,7 +12102,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 28,
@@ -11582,7 +12152,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 29,
@@ -11626,7 +12202,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 30,
@@ -11670,7 +12252,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 31,
@@ -11714,7 +12302,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 32,
@@ -11758,7 +12352,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 33,
@@ -11802,7 +12402,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 34,
@@ -11846,7 +12452,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 35,
@@ -11890,7 +12502,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 36,
@@ -11934,7 +12552,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 37,
@@ -11978,7 +12602,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 38,
@@ -12022,7 +12652,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 39,
@@ -12066,7 +12702,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 40,
@@ -12110,7 +12752,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 41,
@@ -12154,7 +12802,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 42,
@@ -12198,7 +12852,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 43,
@@ -12242,7 +12902,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 44,
@@ -12286,7 +12952,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 45,
@@ -12330,7 +13002,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 46,
@@ -12374,7 +13052,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 47,
@@ -12418,7 +13102,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 48,
@@ -12462,7 +13152,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 49,
@@ -12506,7 +13202,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 50,
@@ -12550,7 +13252,13 @@
                     ]
                 }
             ],
-            "notes": "成长城市"
+            "notes": "成长城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 51,
@@ -12594,7 +13302,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 52,
@@ -12638,7 +13352,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 53,
@@ -12682,7 +13402,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 54,
@@ -12726,7 +13452,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 55,
@@ -12770,7 +13502,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 56,
@@ -12814,7 +13552,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 57,
@@ -12858,7 +13602,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 58,
@@ -12902,7 +13652,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 59,
@@ -12946,7 +13702,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 60,
@@ -12990,7 +13752,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 61,
@@ -13034,7 +13802,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 62,
@@ -13078,7 +13852,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 63,
@@ -13122,7 +13902,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 64,
@@ -13166,7 +13952,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 65,
@@ -13210,7 +14002,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 66,
@@ -13254,7 +14052,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 67,
@@ -13298,7 +14102,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 68,
@@ -13342,7 +14152,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 69,
@@ -13386,7 +14202,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 70,
@@ -13430,7 +14252,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 71,
@@ -13474,7 +14302,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 72,
@@ -13518,7 +14352,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 73,
@@ -13562,7 +14402,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 74,
@@ -13606,7 +14452,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 75,
@@ -13650,7 +14502,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 76,
@@ -13694,7 +14552,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 77,
@@ -13738,7 +14602,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 78,
@@ -13782,7 +14652,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 79,
@@ -13826,7 +14702,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 80,
@@ -13870,7 +14752,13 @@
                     ]
                 }
             ],
-            "notes": "高阶城市"
+            "notes": "高阶城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 81,
@@ -13914,7 +14802,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 82,
@@ -13958,7 +14852,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 83,
@@ -14002,7 +14902,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 84,
@@ -14046,7 +14952,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 85,
@@ -14090,7 +15002,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 86,
@@ -14134,7 +15052,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 87,
@@ -14178,7 +15102,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 88,
@@ -14222,7 +15152,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 89,
@@ -14266,7 +15202,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 90,
@@ -14310,7 +15252,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         },
         {
             "agencyStageId": 91,
@@ -14354,7 +15302,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building01.png"
+                }
+            ]
         },
         {
             "agencyStageId": 92,
@@ -14398,7 +15352,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building02.png"
+                }
+            ]
         },
         {
             "agencyStageId": 93,
@@ -14442,7 +15402,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building03.png"
+                }
+            ]
         },
         {
             "agencyStageId": 94,
@@ -14486,7 +15452,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building04.png"
+                }
+            ]
         },
         {
             "agencyStageId": 95,
@@ -14530,7 +15502,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building05.png"
+                }
+            ]
         },
         {
             "agencyStageId": 96,
@@ -14574,7 +15552,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building06.png"
+                }
+            ]
         },
         {
             "agencyStageId": 97,
@@ -14618,7 +15602,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building07.png"
+                }
+            ]
         },
         {
             "agencyStageId": 98,
@@ -14662,7 +15652,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building08.png"
+                }
+            ]
         },
         {
             "agencyStageId": 99,
@@ -14706,7 +15702,13 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building09.png"
+                }
+            ]
         },
         {
             "agencyStageId": 100,
@@ -14750,13 +15752,19 @@
                     ]
                 }
             ],
-            "notes": "核心城市"
+            "notes": "核心城市",
+            "extraFields": [
+                {
+                    "key": "stageImage",
+                    "value": "Textures/buildings/building10.png"
+                }
+            ]
         }
     ],
     "Holmas_LeaderboardTable": [
         {
             "leaderboardType": "Level",
-            "displayName": "???",
+            "displayName": "等级总榜",
             "periodType": "AllTime",
             "timeZoneId": "Asia/Shanghai",
             "resetDayOfWeek": 0,
@@ -14765,11 +15773,12 @@
             "topEntryCount": 20,
             "mockEntryCount": 100,
             "isEnabled": true,
-            "notes": "??????????"
+            "notes": "",
+            "extraFields": []
         },
         {
             "leaderboardType": "WeeklyCatsFound",
-            "displayName": "?????",
+            "displayName": "寻猫周榜",
             "periodType": "Weekly",
             "timeZoneId": "Asia/Shanghai",
             "resetDayOfWeek": 1,
@@ -14778,11 +15787,12 @@
             "topEntryCount": 20,
             "mockEntryCount": 100,
             "isEnabled": true,
-            "notes": "???????"
+            "notes": "",
+            "extraFields": []
         },
         {
             "leaderboardType": "DailyTaskIncome",
-            "displayName": "?????",
+            "displayName": "收入日榜",
             "periodType": "Daily",
             "timeZoneId": "Asia/Shanghai",
             "resetDayOfWeek": 0,
@@ -14791,7 +15801,744 @@
             "topEntryCount": 20,
             "mockEntryCount": 100,
             "isEnabled": true,
-            "notes": "????????????????"
+            "notes": "",
+            "extraFields": []
+        }
+    ],
+    "Holmas_GenericTables": [
+        {
+            "tableName": "Holmas_CollectibleRewardPoolTable",
+            "rows": [
+                {
+                    "extraFields": [
+                        {
+                            "key": "poolId",
+                            "value": "pool_task_city_novice"
+                        },
+                        {
+                            "key": "poolName",
+                            "value": "城市纪念新手碎片池"
+                        },
+                        {
+                            "key": "collectibleIds",
+                            "value": "city_memory_001;city_memory_002;cat_merch_001"
+                        },
+                        {
+                            "key": "weights",
+                            "value": "45;35;20"
+                        },
+                        {
+                            "key": "shardCounts",
+                            "value": "2;2;1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "用于前期找猫任务奖励"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "poolId",
+                            "value": "pool_task_city_advanced"
+                        },
+                        {
+                            "key": "poolName",
+                            "value": "城市纪念进阶碎片池"
+                        },
+                        {
+                            "key": "collectibleIds",
+                            "value": "city_memory_002;city_memory_003;city_memory_004"
+                        },
+                        {
+                            "key": "weights",
+                            "value": "40;35;25"
+                        },
+                        {
+                            "key": "shardCounts",
+                            "value": "2;2;1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "用于中后期找猫任务奖励"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "poolId",
+                            "value": "pool_task_cat_rare"
+                        },
+                        {
+                            "key": "poolName",
+                            "value": "猫咪周边稀有碎片池"
+                        },
+                        {
+                            "key": "collectibleIds",
+                            "value": "cat_merch_002;cat_merch_003;cat_merch_004"
+                        },
+                        {
+                            "key": "weights",
+                            "value": "45;35;20"
+                        },
+                        {
+                            "key": "shardCounts",
+                            "value": "2;1;1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "用于高价值任务奖励"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "poolId",
+                            "value": "pool_activity_spring"
+                        },
+                        {
+                            "key": "poolName",
+                            "value": "春日活动碎片池"
+                        },
+                        {
+                            "key": "collectibleIds",
+                            "value": "festival_badge_001;city_memory_003;cat_merch_003"
+                        },
+                        {
+                            "key": "weights",
+                            "value": "60;25;15"
+                        },
+                        {
+                            "key": "shardCounts",
+                            "value": "5;2;2"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "春日活动投放"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "poolId",
+                            "value": "pool_activity_summer"
+                        },
+                        {
+                            "key": "poolName",
+                            "value": "夏夜活动碎片池"
+                        },
+                        {
+                            "key": "collectibleIds",
+                            "value": "festival_badge_002;city_memory_004;cat_merch_004"
+                        },
+                        {
+                            "key": "weights",
+                            "value": "60;25;15"
+                        },
+                        {
+                            "key": "shardCounts",
+                            "value": "5;2;2"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "夏夜活动投放"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "poolId",
+                            "value": "pool_activity_harvest"
+                        },
+                        {
+                            "key": "poolName",
+                            "value": "丰收活动碎片池"
+                        },
+                        {
+                            "key": "collectibleIds",
+                            "value": "festival_badge_003;city_memory_003;cat_merch_003"
+                        },
+                        {
+                            "key": "weights",
+                            "value": "55;25;20"
+                        },
+                        {
+                            "key": "shardCounts",
+                            "value": "4;2;2"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "丰收活动投放"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "poolId",
+                            "value": "pool_activity_winter"
+                        },
+                        {
+                            "key": "poolName",
+                            "value": "雪夜活动碎片池"
+                        },
+                        {
+                            "key": "collectibleIds",
+                            "value": "festival_badge_004;city_memory_004;cat_merch_004"
+                        },
+                        {
+                            "key": "weights",
+                            "value": "55;25;20"
+                        },
+                        {
+                            "key": "shardCounts",
+                            "value": "4;2;2"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "雪夜活动投放"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "tableName": "Holmas_CollectibleTable",
+            "rows": [
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "city_memory_001"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "海港明信片"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "city_memory"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "1"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/city_memory_001.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "记录海港旧码头风景的纪念明信片。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "10"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "10"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "常驻任务碎片来源"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "city_memory_002"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "旧街车票"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "city_memory"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "1"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/city_memory_002.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "印着旧城区路线的复古车票。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "12"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "20"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "常驻任务碎片来源"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "city_memory_003"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "钟楼印章"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "city_memory"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "2"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/city_memory_003.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "城市钟楼纪念章，带有浮雕纹理。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "20"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "30"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "任务与活动均可投放"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "city_memory_004"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "天台望远镜"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "city_memory"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "2"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/city_memory_004.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "老城区观景天台上的小型纪念望远镜。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "24"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "40"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "任务与活动均可投放"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "cat_merch_001"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "毛线球挂件"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "cat_merch"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "1"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/cat_merch_001.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "最常见的猫咪主题挂件。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "8"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "50"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "常驻任务碎片来源"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "cat_merch_002"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "猫爪马克杯"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "cat_merch"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "2"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/cat_merch_002.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "杯壁压印猫爪图案的纪念杯。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "18"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "60"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "常驻任务碎片来源"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "cat_merch_003"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "布偶猫抱枕"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "cat_merch"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "3"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/cat_merch_003.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "节庆展位限定的布偶猫抱枕。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "30"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "70"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "高阶任务或活动碎片来源"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "cat_merch_004"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "金铃铛项圈"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "cat_merch"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "3"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/cat_merch_004.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "镀金铃铛造型的收藏项圈。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "30"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "80"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "高阶任务或活动碎片来源"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "festival_badge_001"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "春日纪念徽章"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "festival_badge"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "2"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/festival_badge_001.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "春日活动限定的纪念徽章。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "15"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "90"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "活动限定"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "festival_badge_002"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "夏夜纪念徽章"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "festival_badge"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "2"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/festival_badge_002.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "夏夜庆典活动限定徽章。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "15"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "100"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "活动限定"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "festival_badge_003"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "丰收纪念徽章"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "festival_badge"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "3"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/festival_badge_003.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "丰收主题活动限定徽章。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "25"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "110"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "活动限定"
+                        }
+                    ]
+                },
+                {
+                    "extraFields": [
+                        {
+                            "key": "collectibleId",
+                            "value": "festival_badge_004"
+                        },
+                        {
+                            "key": "displayName",
+                            "value": "雪夜纪念徽章"
+                        },
+                        {
+                            "key": "seriesId",
+                            "value": "festival_badge"
+                        },
+                        {
+                            "key": "rarity",
+                            "value": "3"
+                        },
+                        {
+                            "key": "iconPath",
+                            "value": "Assets/HotUpdateContent/Res/Icons/Collectibles/festival_badge_004.png"
+                        },
+                        {
+                            "key": "description",
+                            "value": "雪夜活动限定的纪念徽章。"
+                        },
+                        {
+                            "key": "unlockShardCount",
+                            "value": "25"
+                        },
+                        {
+                            "key": "sortOrder",
+                            "value": "120"
+                        },
+                        {
+                            "key": "isEnabled",
+                            "value": "1"
+                        },
+                        {
+                            "key": "notes",
+                            "value": "活动限定"
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }

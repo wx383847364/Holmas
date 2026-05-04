@@ -15,6 +15,8 @@ def write_core_package(package: CoreConfigPackage) -> bytes:
     _write_task_rows(stream, package.holmas_task_table)
     _write_player_level_rows(stream, package.holmas_player_level_table)
     _write_agency_building_table_rows(stream, package.holmas_agency_building_table)
+    _write_leaderboard_rows(stream, package.holmas_leaderboard_table)
+    _write_generic_tables(stream, package.holmas_generic_tables)
     return stream.getvalue()
 
 
@@ -34,6 +36,7 @@ def _write_map_rows(stream: BytesIO, rows) -> None:
         _write_string(stream, row.terrain_path)
         _write_int32(stream, row.cat_count_min)
         _write_int32(stream, row.cat_count_max)
+        _write_extra_fields(stream, row.extra_fields)
 
 
 def _write_cat_rows(stream: BytesIO, rows) -> None:
@@ -45,6 +48,7 @@ def _write_cat_rows(stream: BytesIO, rows) -> None:
         _write_int32(stream, row.rarity)
         _write_int32(stream, row.weight)
         _write_int32(stream, row.price)
+        _write_extra_fields(stream, row.extra_fields)
 
 
 def _write_task_rows(stream: BytesIO, rows) -> None:
@@ -57,6 +61,7 @@ def _write_task_rows(stream: BytesIO, rows) -> None:
         _write_int32(stream, row.count_max)
         _write_int_array(stream, row.reward_values)
         _write_float32(stream, row.level_reward_factor)
+        _write_extra_fields(stream, row.extra_fields)
 
 
 def _write_player_level_rows(stream: BytesIO, rows) -> None:
@@ -70,6 +75,7 @@ def _write_player_level_rows(stream: BytesIO, rows) -> None:
         _write_int_array(stream, row.task_type_weights)
         _write_string_array(stream, row.map_ids)
         _write_int_array(stream, row.map_weights)
+        _write_extra_fields(stream, row.extra_fields)
 
 
 def _write_agency_building_table_rows(stream: BytesIO, rows) -> None:
@@ -81,12 +87,47 @@ def _write_agency_building_table_rows(stream: BytesIO, rows) -> None:
         _write_int_array(stream, row.promotion_level_caps)
         _write_agency_building_table_cost_rows(stream, row.promotion_upgrade_costs)
         _write_string(stream, row.notes)
+        _write_extra_fields(stream, row.extra_fields)
 
 
 def _write_agency_building_table_cost_rows(stream: BytesIO, rows) -> None:
     _write_int32(stream, len(rows))
     for row in rows:
         _write_int_array(stream, row.costs)
+
+
+def _write_leaderboard_rows(stream: BytesIO, rows) -> None:
+    _write_int32(stream, len(rows))
+    for row in rows:
+        _write_string(stream, row.leaderboard_type)
+        _write_string(stream, row.display_name)
+        _write_string(stream, row.period_type)
+        _write_string(stream, row.time_zone_id)
+        _write_int32(stream, row.reset_day_of_week)
+        _write_int32(stream, row.reset_hour)
+        _write_int32(stream, row.reset_minute)
+        _write_int32(stream, row.top_entry_count)
+        _write_int32(stream, row.mock_entry_count)
+        _write_byte(stream, 1 if row.is_enabled else 0)
+        _write_string(stream, row.notes)
+        _write_extra_fields(stream, row.extra_fields)
+
+
+def _write_generic_tables(stream: BytesIO, tables) -> None:
+    _write_int32(stream, len(tables))
+    for table in tables:
+        _write_string(stream, table.table_name)
+        _write_int32(stream, len(table.rows))
+        for row in table.rows:
+            _write_extra_fields(stream, row.extra_fields)
+
+
+def _write_extra_fields(stream: BytesIO, fields) -> None:
+    fields = fields or []
+    _write_int32(stream, len(fields))
+    for field in fields:
+        _write_string(stream, field.key)
+        _write_string(stream, field.value)
 
 
 def _write_string(stream: BytesIO, value: str) -> None:

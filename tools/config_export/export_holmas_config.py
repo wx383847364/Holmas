@@ -8,15 +8,6 @@ from pathlib import Path
 from holmas_exporter import export_all, validate_all
 
 
-XLSX_FILES = (
-    "Holmas_MapTable.xlsx",
-    "Holmas_CatTable.xlsx",
-    "Holmas_TaskTable.xlsx",
-    "Holmas_PlayerLevelTable.xlsx",
-    "Holmas_AgencyBuildingTable.xlsx",
-)
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Holmas Xlsx -> JSON/bytes 导出工具。")
     parser.add_argument(
@@ -63,16 +54,30 @@ def main() -> int:
 
 
 def _check_xlsx_files(config_root: Path) -> None:
-    missing = [config_root / name for name in XLSX_FILES if not (config_root / name).is_file()]
-    if missing:
-        joined = "\n".join(str(path) for path in missing)
-        raise SystemExit(f"[error] 找不到以下 Xlsx 文件：\n{joined}")
+    if not config_root.is_dir():
+        raise SystemExit(f"[error] 找不到配置目录：{config_root}")
+    if not _discover_exportable_xlsx_files(config_root):
+        raise SystemExit(f"[error] 配置目录下没有 Xlsx 文件：{config_root}")
 
 
 def _print_xlsx_summary(config_root: Path, repo_root: Path) -> None:
-    for file_name in XLSX_FILES:
-        path = config_root / file_name
+    for path in _discover_exportable_xlsx_files(config_root):
         print(f"[info] xlsx source: {path.relative_to(repo_root).as_posix()}")
+
+
+def _discover_exportable_xlsx_files(config_root: Path) -> list[Path]:
+    return sorted(path for path in config_root.glob("*.xlsx") if _is_exportable_xlsx_file(path))
+
+
+def _is_exportable_xlsx_file(path: Path) -> bool:
+    if path is None or not path.is_file():
+        return False
+
+    name = path.name
+    if not name.lower().endswith(".xlsx"):
+        return False
+
+    return not (name.startswith(".") or name.startswith("~") or name.startswith("~$"))
 
 
 def _print_report_summary(report, dry_run: bool) -> None:

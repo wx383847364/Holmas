@@ -1,5 +1,5 @@
 {
-    "Version": 7,
+    "Version": 8,
     "Holmas_CatTable": [
         {
             "catId": "1",
@@ -7,7 +7,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_01.png",
             "rarity": 1,
             "weight": 1000,
-            "price": 1000
+            "price": 1000,
+            "extraFields": []
         },
         {
             "catId": "2",
@@ -15,7 +16,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_02.png",
             "rarity": 1,
             "weight": 990,
-            "price": 1200
+            "price": 1200,
+            "extraFields": []
         },
         {
             "catId": "3",
@@ -23,7 +25,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_03.png",
             "rarity": 1,
             "weight": 980,
-            "price": 1400
+            "price": 1400,
+            "extraFields": []
         },
         {
             "catId": "4",
@@ -31,7 +34,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_04.png",
             "rarity": 1,
             "weight": 970,
-            "price": 1600
+            "price": 1600,
+            "extraFields": []
         },
         {
             "catId": "5",
@@ -39,7 +43,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_05.png",
             "rarity": 1,
             "weight": 960,
-            "price": 1800
+            "price": 1800,
+            "extraFields": []
         },
         {
             "catId": "6",
@@ -47,7 +52,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_06.png",
             "rarity": 1,
             "weight": 950,
-            "price": 3500
+            "price": 3500,
+            "extraFields": []
         },
         {
             "catId": "7",
@@ -55,7 +61,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_07.png",
             "rarity": 1,
             "weight": 940,
-            "price": 3800
+            "price": 3800,
+            "extraFields": []
         },
         {
             "catId": "8",
@@ -63,7 +70,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_08.png",
             "rarity": 1,
             "weight": 930,
-            "price": 4100
+            "price": 4100,
+            "extraFields": []
         },
         {
             "catId": "9",
@@ -71,7 +79,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_09.png",
             "rarity": 1,
             "weight": 920,
-            "price": 4400
+            "price": 4400,
+            "extraFields": []
         },
         {
             "catId": "10",
@@ -79,7 +88,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_10.png",
             "rarity": 1,
             "weight": 910,
-            "price": 4700
+            "price": 4700,
+            "extraFields": []
         },
         {
             "catId": "11",
@@ -87,7 +97,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_11.png",
             "rarity": 1,
             "weight": 900,
-            "price": 5000
+            "price": 5000,
+            "extraFields": []
         },
         {
             "catId": "12",
@@ -95,7 +106,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_12.png",
             "rarity": 1,
             "weight": 890,
-            "price": 5300
+            "price": 5300,
+            "extraFields": []
         },
         {
             "catId": "13",
@@ -103,7 +115,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_13.png",
             "rarity": 1,
             "weight": 880,
-            "price": 5600
+            "price": 5600,
+            "extraFields": []
         },
         {
             "catId": "14",
@@ -111,7 +124,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_14.png",
             "rarity": 1,
             "weight": 870,
-            "price": 5900
+            "price": 5900,
+            "extraFields": []
         },
         {
             "catId": "15",
@@ -119,7 +133,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_15.png",
             "rarity": 1,
             "weight": 860,
-            "price": 6200
+            "price": 6200,
+            "extraFields": []
         },
         {
             "catId": "16",
@@ -127,7 +142,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_16.png",
             "rarity": 1,
             "weight": 850,
-            "price": 6500
+            "price": 6500,
+            "extraFields": []
         },
         {
             "catId": "17",
@@ -135,7 +151,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_17.png",
             "rarity": 1,
             "weight": 840,
-            "price": 6800
+            "price": 6800,
+            "extraFields": []
         },
         {
             "catId": "18",
@@ -143,7 +160,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_18.png",
             "rarity": 1,
             "weight": 830,
-            "price": 7100
+            "price": 7100,
+            "extraFields": []
         },
         {
             "catId": "19",
@@ -151,7 +169,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_19.png",
             "rarity": 1,
             "weight": 820,
-            "price": 7400
+            "price": 7400,
+            "extraFields": []
         },
         {
             "catId": "20",
@@ -159,7 +178,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_20.png",
             "rarity": 1,
             "weight": 810,
-            "price": 7700
+            "price": 7700,
+            "extraFields": []
         },
         {
             "catId": "21",
@@ -167,7 +187,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_21.png",
             "rarity": 2,
             "weight": 800,
-            "price": 12500
+            "price": 12500,
+            "extraFields": []
         },
         {
             "catId": "22",
@@ -175,7 +196,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_22.png",
             "rarity": 2,
             "weight": 790,
-            "price": 12800
+            "price": 12800,
+            "extraFields": []
         },
         {
             "catId": "23",
@@ -183,7 +205,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_23.png",
             "rarity": 2,
             "weight": 780,
-            "price": 13100
+            "price": 13100,
+            "extraFields": []
         },
         {
             "catId": "24",
@@ -191,7 +214,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_24.png",
             "rarity": 2,
             "weight": 770,
-            "price": 13400
+            "price": 13400,
+            "extraFields": []
         },
         {
             "catId": "25",
@@ -199,7 +223,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_25.png",
             "rarity": 2,
             "weight": 760,
-            "price": 13700
+            "price": 13700,
+            "extraFields": []
         },
         {
             "catId": "26",
@@ -207,7 +232,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_26.png",
             "rarity": 2,
             "weight": 750,
-            "price": 14000
+            "price": 14000,
+            "extraFields": []
         },
         {
             "catId": "27",
@@ -215,7 +241,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_27.png",
             "rarity": 2,
             "weight": 740,
-            "price": 14300
+            "price": 14300,
+            "extraFields": []
         },
         {
             "catId": "28",
@@ -223,7 +250,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_28.png",
             "rarity": 2,
             "weight": 730,
-            "price": 14600
+            "price": 14600,
+            "extraFields": []
         },
         {
             "catId": "29",
@@ -231,7 +259,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_29.png",
             "rarity": 2,
             "weight": 720,
-            "price": 14900
+            "price": 14900,
+            "extraFields": []
         },
         {
             "catId": "30",
@@ -239,7 +268,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_30.png",
             "rarity": 2,
             "weight": 710,
-            "price": 15200
+            "price": 15200,
+            "extraFields": []
         },
         {
             "catId": "31",
@@ -247,7 +277,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_31.png",
             "rarity": 2,
             "weight": 700,
-            "price": 15500
+            "price": 15500,
+            "extraFields": []
         },
         {
             "catId": "32",
@@ -255,7 +286,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_32.png",
             "rarity": 2,
             "weight": 690,
-            "price": 15800
+            "price": 15800,
+            "extraFields": []
         },
         {
             "catId": "33",
@@ -263,7 +295,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_33.png",
             "rarity": 2,
             "weight": 680,
-            "price": 16100
+            "price": 16100,
+            "extraFields": []
         },
         {
             "catId": "34",
@@ -271,7 +304,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_34.png",
             "rarity": 2,
             "weight": 670,
-            "price": 16400
+            "price": 16400,
+            "extraFields": []
         },
         {
             "catId": "35",
@@ -279,7 +313,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_35.png",
             "rarity": 3,
             "weight": 660,
-            "price": 16700
+            "price": 16700,
+            "extraFields": []
         },
         {
             "catId": "36",
@@ -287,7 +322,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_36.png",
             "rarity": 3,
             "weight": 650,
-            "price": 17000
+            "price": 17000,
+            "extraFields": []
         },
         {
             "catId": "37",
@@ -295,7 +331,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_37.png",
             "rarity": 3,
             "weight": 640,
-            "price": 17300
+            "price": 17300,
+            "extraFields": []
         },
         {
             "catId": "38",
@@ -303,7 +340,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_38.png",
             "rarity": 3,
             "weight": 630,
-            "price": 17600
+            "price": 17600,
+            "extraFields": []
         },
         {
             "catId": "39",
@@ -311,7 +349,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_39.png",
             "rarity": 3,
             "weight": 620,
-            "price": 17900
+            "price": 17900,
+            "extraFields": []
         },
         {
             "catId": "40",
@@ -319,7 +358,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_40.png",
             "rarity": 3,
             "weight": 610,
-            "price": 18200
+            "price": 18200,
+            "extraFields": []
         },
         {
             "catId": "41",
@@ -327,7 +367,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_41.png",
             "rarity": 3,
             "weight": 600,
-            "price": 34500
+            "price": 34500,
+            "extraFields": []
         },
         {
             "catId": "42",
@@ -335,7 +376,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_42.png",
             "rarity": 3,
             "weight": 590,
-            "price": 35000
+            "price": 35000,
+            "extraFields": []
         },
         {
             "catId": "43",
@@ -343,7 +385,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_43.png",
             "rarity": 3,
             "weight": 580,
-            "price": 35500
+            "price": 35500,
+            "extraFields": []
         },
         {
             "catId": "44",
@@ -351,7 +394,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_44.png",
             "rarity": 3,
             "weight": 570,
-            "price": 36000
+            "price": 36000,
+            "extraFields": []
         },
         {
             "catId": "45",
@@ -359,7 +403,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_45.png",
             "rarity": 4,
             "weight": 560,
-            "price": 36500
+            "price": 36500,
+            "extraFields": []
         },
         {
             "catId": "46",
@@ -367,7 +412,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_46.png",
             "rarity": 4,
             "weight": 550,
-            "price": 37000
+            "price": 37000,
+            "extraFields": []
         },
         {
             "catId": "47",
@@ -375,7 +421,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_47.png",
             "rarity": 4,
             "weight": 540,
-            "price": 37500
+            "price": 37500,
+            "extraFields": []
         },
         {
             "catId": "48",
@@ -383,7 +430,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_48.png",
             "rarity": 4,
             "weight": 530,
-            "price": 38000
+            "price": 38000,
+            "extraFields": []
         },
         {
             "catId": "49",
@@ -391,7 +439,8 @@
             "iconPath": "Assets/HotUpdateContent/Res/Icons/cat_49.png",
             "rarity": 4,
             "weight": 520,
-            "price": 38500
+            "price": 38500,
+            "extraFields": []
         }
     ]
 }

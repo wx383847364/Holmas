@@ -19,6 +19,13 @@ from .models import (
     CatSheetRow,
     CoreConfigPackage,
     ExportReport,
+    ExtraField,
+    GenericConfigRow,
+    GenericConfigSheetRow,
+    GenericConfigSheetTable,
+    GenericConfigTable,
+    LeaderboardRow,
+    LeaderboardSheetRow,
     MapRow,
     MapSheetRow,
     PlayerLevelRow,
@@ -35,6 +42,7 @@ CAT_TABLE_NAME = "Holmas_CatTable.xlsx"
 TASK_TABLE_NAME = "Holmas_TaskTable.xlsx"
 PLAYER_LEVEL_TABLE_NAME = "Holmas_PlayerLevelTable.xlsx"
 AGENCY_BUILDING_TABLE_NAME = "Holmas_AgencyBuildingTable.xlsx"
+LEADERBOARD_TABLE_NAME = "Holmas_LeaderboardTable.xlsx"
 
 CORE_BINARY_NAME = "holmas_core_config.bytes"
 CAT_BINARY_NAME = "holmas_cat_meta.bytes"
@@ -64,15 +72,10 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
     json_root = Path(json_root).resolve()
     binary_root = Path(binary_root).resolve()
 
+    xlsx_paths = _discover_exportable_xlsx_paths(config_root)
     report = ExportReport(
         exported_at_utc=_utc_now_string(),
-        source_files=[
-            _display_path(repo_root, config_root / MAP_TABLE_NAME),
-            _display_path(repo_root, config_root / CAT_TABLE_NAME),
-            _display_path(repo_root, config_root / TASK_TABLE_NAME),
-            _display_path(repo_root, config_root / PLAYER_LEVEL_TABLE_NAME),
-            _display_path(repo_root, config_root / AGENCY_BUILDING_TABLE_NAME),
-        ],
+        source_files=[_display_path(repo_root, path) for path in xlsx_paths],
     )
 
     map_rows = _load_map_table(report, repo_root, config_root)
@@ -80,6 +83,8 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
     task_rows = _load_task_table(report, repo_root, config_root)
     player_level_rows = _load_player_level_table(report, repo_root, config_root)
     agency_building_rows = _load_agency_building_table(report, repo_root, config_root)
+    leaderboard_rows = _load_leaderboard_table(report, repo_root, config_root)
+    generic_tables = _load_generic_tables(report, repo_root, xlsx_paths)
 
     cat_lookup = _build_alias_lookup((row.cat_id, index) for index, row in enumerate(cat_rows))
     task_lookup = _build_alias_lookup((row.task_type_id, index) for index, row in enumerate(task_rows))
@@ -92,8 +97,9 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
     _warn_unreferenced_map_rows(report, map_rows, player_level_rows)
     _validate_player_level_table(report, player_level_rows)
     _validate_agency_building_table(report, agency_building_rows)
+    _validate_leaderboard_table(report, leaderboard_rows)
 
-    core_package = _build_core_package(map_rows, task_rows, player_level_rows, agency_building_rows)
+    core_package = _build_core_package(map_rows, task_rows, player_level_rows, agency_building_rows, leaderboard_rows, generic_tables)
     cat_package = _build_cat_package(cat_rows)
 
     report.bundle_reports = [
@@ -104,10 +110,19 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
                 TASK_TABLE_NAME,
                 PLAYER_LEVEL_TABLE_NAME,
                 AGENCY_BUILDING_TABLE_NAME,
+                LEADERBOARD_TABLE_NAME,
+                "Holmas_GenericTables",
             ],
             preview_json_path=_display_path(repo_root, json_root / CORE_PREVIEW_NAME),
             binary_path=_display_path(repo_root, binary_root / CORE_BINARY_NAME),
-            row_count=len(map_rows) + len(task_rows) + len(player_level_rows) + len(agency_building_rows),
+            row_count=(
+                len(map_rows)
+                + len(task_rows)
+                + len(player_level_rows)
+                + len(agency_building_rows)
+                + len(leaderboard_rows)
+                + sum(len(table.rows) for table in generic_tables)
+            ),
             warning_count=report.warning_count,
             error_count=report.error_count,
         ),
@@ -184,6 +199,78 @@ def _load_agency_building_table(report: ExportReport, repo_root: Path, config_ro
     )
 
 
+def _discover_exportable_xlsx_paths(config_root: Path) -> list[Path]:
+    return sorted(path for path in config_root.glob("*.xlsx") if _is_exportable_xlsx_path(path))
+
+
+def _is_exportable_xlsx_path(path: Path) -> bool:
+    if path is None or not path.is_file():
+        return False
+
+    name = path.name
+    if not name.lower().endswith(".xlsx"):
+        return False
+
+    return not (name.startswith(".") or name.startswith("~") or name.startswith("~$"))
+
+
+def _load_leaderboard_table(report: ExportReport, repo_root: Path, config_root: Path) -> list[LeaderboardSheetRow]:
+    return _load_sheet(
+        report,
+        repo_root,
+        config_root / LEADERBOARD_TABLE_NAME,
+        _parse_leaderboards,
+    )
+
+
+def _load_generic_tables(report: ExportReport, repo_root: Path, xlsx_paths: list[Path]) -> list[GenericConfigSheetTable]:
+    known_table_names = {
+        MAP_TABLE_NAME,
+        CAT_TABLE_NAME,
+        TASK_TABLE_NAME,
+        PLAYER_LEVEL_TABLE_NAME,
+        AGENCY_BUILDING_TABLE_NAME,
+        LEADERBOARD_TABLE_NAME,
+    }
+    tables: list[GenericConfigSheetTable] = []
+    for path in xlsx_paths:
+        if path.name in known_table_names:
+            continue
+        table = _load_generic_table(report, repo_root, path)
+        if table is not None:
+            tables.append(table)
+    return tables
+
+
+def _load_generic_table(report: ExportReport, repo_root: Path, path: Path) -> GenericConfigSheetTable | None:
+    source_path = _display_path(repo_root, path)
+    try:
+        rows = read_first_worksheet(path)
+    except XlsxReadError as exc:
+        report.errors.append(str(exc))
+        return None
+
+    if len(rows) < 2:
+        report.errors.append(f"xlsx 结构不完整: {source_path}")
+        return None
+
+    header_map = _build_header_map(report, source_path, rows[1])
+    table_rows: list[GenericConfigSheetRow] = []
+    for row_index in range(2, len(rows)):
+        row = rows[row_index]
+        if _is_blank_row(row):
+            continue
+
+        table_rows.append(
+            GenericConfigSheetRow(
+                row_index=len(table_rows),
+                extra_fields=_collect_extra_fields(header_map, row, known_columns=set()),
+            )
+        )
+
+    return GenericConfigSheetTable(table_name=path.stem, rows=table_rows)
+
+
 def _load_sheet(report: ExportReport, repo_root: Path, path: Path, parser):
     source_path = _display_path(repo_root, path)
     if not path.is_file():
@@ -209,6 +296,7 @@ def _parse_maps(report: ExportReport, source_path: str, rows: list[list[str]], h
     terrain_path_col = _require_column(report, source_path, header_map, "terrainPath")
     cat_count_max_col = _require_column(report, source_path, header_map, "catCountMax")
     cat_count_min_col = _require_column(report, source_path, header_map, "catCountMin")
+    known_columns = {"mapId", "terrainPath", "catCountMax", "catCountMin"}
 
     items: list[MapSheetRow] = []
     for row_index in range(2, len(rows)):
@@ -225,6 +313,7 @@ def _parse_maps(report: ExportReport, source_path: str, rows: list[list[str]], h
             terrain_path=_get_cell(row, terrain_path_col),
             cat_count_max=cat_count_max,
             cat_count_min=cat_count_min,
+            extra_fields=_collect_extra_fields(header_map, row, known_columns),
         )
 
         if not item.map_id:
@@ -254,6 +343,7 @@ def _parse_cats(report: ExportReport, source_path: str, rows: list[list[str]], h
     rarity_col = _get_optional_column(header_map, "rarity")
     weight_col = _get_optional_column(header_map, "weight")
     price_col = _get_optional_column(header_map, "price")
+    known_columns = {"catId", "catName", "iconPath", "rarity", "weight", "price"}
 
     has_any_icon_missing = False
     has_any_rarity_missing = False
@@ -278,6 +368,7 @@ def _parse_cats(report: ExportReport, source_path: str, rows: list[list[str]], h
             rarity=rarity,
             weight=weight,
             price=price,
+            extra_fields=_collect_extra_fields(header_map, row, known_columns),
         )
 
         if not item.cat_id:
@@ -317,6 +408,7 @@ def _parse_tasks(report: ExportReport, source_path: str, rows: list[list[str]], 
     count_min_col = _require_column(report, source_path, header_map, "countMin")
     reward_array_col = _get_optional_column(header_map, "rewardArray")
     level_reward_factor_col = _require_column(report, source_path, header_map, "levelRewardFactor")
+    known_columns = {"taskTypeId", "taskKind", "catIdList", "countMax", "countMin", "rewardArray", "levelRewardFactor"}
 
     if task_kind_col < 0:
         report.warnings.append(f"{source_path}: 缺少 taskKind 列，已默认全部视为 Money。")
@@ -349,6 +441,7 @@ def _parse_tasks(report: ExportReport, source_path: str, rows: list[list[str]], 
             count_min=count_min,
             reward_array=_parse_int_array(_get_cell(row, reward_array_col), source_path, row_index + 1, report),
             level_reward_factor=level_reward_factor,
+            extra_fields=_collect_extra_fields(header_map, row, known_columns),
         )
 
         if not item.task_type_id:
@@ -385,6 +478,18 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
     task_type_weights_col = _require_column(report, source_path, header_map, "taskTypeWeights")
     map_ids_col = _require_column(report, source_path, header_map, "mapIds")
     map_weights_col = _require_column(report, source_path, header_map, "mapWeights")
+    known_columns = {
+        "playerLevel",
+        "upgradeExp",
+        "minExperience",
+        "offlineRewardPerHour",
+        "adUnlockHours",
+        "notes",
+        "taskTypeIds",
+        "taskTypeWeights",
+        "mapIds",
+        "mapWeights",
+    }
 
     if legacy_upgrade_exp_col >= 0:
         report.errors.append(f"{source_path}: 检测到旧技术表头 upgradeExp。Holmas_PlayerLevelTable 必须使用 minExperience。")
@@ -411,6 +516,7 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
             task_type_weights=_parse_int_array_strict(_get_cell(row, task_type_weights_col), source_path, row_index + 1, report),
             map_ids=_split_array(_get_cell(row, map_ids_col)),
             map_weights=_parse_int_array_strict(_get_cell(row, map_weights_col), source_path, row_index + 1, report),
+            extra_fields=_collect_extra_fields(header_map, row, known_columns),
         )
 
         if not level_ok:
@@ -450,6 +556,7 @@ def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[l
     promotion_caps_col = _require_column(report, source_path, header_map, "promotionLevelCaps")
     promotion_costs_col = _require_column(report, source_path, header_map, "promotionUpgradeCosts")
     notes_col = _get_optional_column(header_map, "notes")
+    known_columns = {"agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes"}
 
     items: list[AgencyBuildingTableSheetRow] = []
     for row_index in range(2, len(rows)):
@@ -470,6 +577,7 @@ def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[l
             promotion_level_caps=promotion_level_caps,
             promotion_upgrade_costs=promotion_upgrade_costs,
             notes=_get_cell(row, notes_col),
+            extra_fields=_collect_extra_fields(header_map, row, known_columns),
         )
 
         if not stage_id_ok or item.agency_stage_id <= 0:
@@ -492,6 +600,97 @@ def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[l
             continue
         if len(item.promotion_ids) != len(item.promotion_upgrade_costs):
             report.errors.append(f"{source_path} 第 {row_index + 1} 行 promotionIds 与 promotionUpgradeCosts 长度不一致。")
+            continue
+
+        items.append(item)
+
+    return items
+
+
+def _parse_leaderboards(report: ExportReport, source_path: str, rows: list[list[str]], header_map: dict[str, int]) -> list[LeaderboardSheetRow]:
+    leaderboard_type_col = _require_column(report, source_path, header_map, "leaderboardType")
+    display_name_col = _require_column(report, source_path, header_map, "displayName")
+    period_type_col = _require_column(report, source_path, header_map, "periodType")
+    time_zone_id_col = _require_column(report, source_path, header_map, "timeZoneId")
+    reset_day_of_week_col = _require_column(report, source_path, header_map, "resetDayOfWeek")
+    reset_hour_col = _require_column(report, source_path, header_map, "resetHour")
+    reset_minute_col = _require_column(report, source_path, header_map, "resetMinute")
+    top_entry_count_col = _require_column(report, source_path, header_map, "topEntryCount")
+    mock_entry_count_col = _require_column(report, source_path, header_map, "mockEntryCount")
+    is_enabled_col = _require_column(report, source_path, header_map, "isEnabled")
+    notes_col = _get_optional_column(header_map, "notes")
+    known_columns = {
+        "leaderboardType",
+        "displayName",
+        "periodType",
+        "timeZoneId",
+        "resetDayOfWeek",
+        "resetHour",
+        "resetMinute",
+        "topEntryCount",
+        "mockEntryCount",
+        "isEnabled",
+        "notes",
+    }
+
+    items: list[LeaderboardSheetRow] = []
+    for row_index in range(2, len(rows)):
+        row = rows[row_index]
+        if _is_blank_row(row):
+            continue
+
+        reset_day_of_week, reset_day_ok = _try_parse_int(_get_cell(row, reset_day_of_week_col))
+        reset_hour, reset_hour_ok = _try_parse_int(_get_cell(row, reset_hour_col))
+        reset_minute, reset_minute_ok = _try_parse_int(_get_cell(row, reset_minute_col))
+        top_entry_count, top_entry_ok = _try_parse_int(_get_cell(row, top_entry_count_col))
+        mock_entry_count, mock_entry_ok = _try_parse_int(_get_cell(row, mock_entry_count_col))
+        is_enabled, enabled_ok = _parse_bool(_get_cell(row, is_enabled_col), default_value=True)
+
+        item = LeaderboardSheetRow(
+            row_index=len(items),
+            leaderboard_type=_get_cell(row, leaderboard_type_col),
+            display_name=_get_cell(row, display_name_col),
+            period_type=_get_cell(row, period_type_col),
+            time_zone_id=_get_cell(row, time_zone_id_col),
+            reset_day_of_week=reset_day_of_week,
+            reset_hour=reset_hour,
+            reset_minute=reset_minute,
+            top_entry_count=top_entry_count,
+            mock_entry_count=mock_entry_count,
+            is_enabled=is_enabled,
+            notes=_get_cell(row, notes_col),
+            extra_fields=_collect_extra_fields(header_map, row, known_columns),
+        )
+
+        if not item.leaderboard_type:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行缺少 leaderboardType。")
+            continue
+        if not item.display_name:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行缺少 displayName。")
+            continue
+        if not item.period_type:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行缺少 periodType。")
+            continue
+        if not item.time_zone_id:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行缺少 timeZoneId。")
+            continue
+        if not reset_day_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 resetDayOfWeek 无法解析。")
+            continue
+        if not reset_hour_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 resetHour 无法解析。")
+            continue
+        if not reset_minute_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 resetMinute 无法解析。")
+            continue
+        if not top_entry_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 topEntryCount 无法解析。")
+            continue
+        if not mock_entry_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 mockEntryCount 无法解析。")
+            continue
+        if not enabled_ok:
+            report.errors.append(f"{source_path} 第 {row_index + 1} 行 isEnabled 无法解析。")
             continue
 
         items.append(item)
@@ -663,11 +862,54 @@ def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuild
                 return
 
 
+def _validate_leaderboard_table(report: ExportReport, rows: list[LeaderboardSheetRow]) -> None:
+    if not rows:
+        report.errors.append("缺少 Holmas_LeaderboardTable 数据。")
+        return
+
+    seen_types: set[str] = set()
+    valid_period_types = {"alltime", "weekly", "daily"}
+    for row in rows:
+        if not row.leaderboard_type:
+            report.errors.append("Holmas_LeaderboardTable 缺少 leaderboardType。")
+            return
+        if row.leaderboard_type in seen_types:
+            report.errors.append(f"Holmas_LeaderboardTable 存在重复 leaderboardType: {row.leaderboard_type}。")
+            return
+        seen_types.add(row.leaderboard_type)
+        if not row.display_name:
+            report.errors.append(f"Holmas_LeaderboardTable {row.leaderboard_type} 缺少 displayName。")
+            return
+        if (row.period_type or "").lower() not in valid_period_types:
+            report.errors.append(f"Holmas_LeaderboardTable {row.leaderboard_type} 的 periodType 非法: {row.period_type}。")
+            return
+        if not row.time_zone_id:
+            report.errors.append(f"Holmas_LeaderboardTable {row.leaderboard_type} 缺少 timeZoneId。")
+            return
+        if row.reset_day_of_week < 0 or row.reset_day_of_week > 7:
+            report.errors.append(f"Holmas_LeaderboardTable {row.leaderboard_type} 的 resetDayOfWeek 必须在 0..7 内。")
+            return
+        if row.reset_hour < 0 or row.reset_hour > 23:
+            report.errors.append(f"Holmas_LeaderboardTable {row.leaderboard_type} 的 resetHour 必须在 0..23 内。")
+            return
+        if row.reset_minute < 0 or row.reset_minute > 59:
+            report.errors.append(f"Holmas_LeaderboardTable {row.leaderboard_type} 的 resetMinute 必须在 0..59 内。")
+            return
+        if row.top_entry_count <= 0:
+            report.errors.append(f"Holmas_LeaderboardTable {row.leaderboard_type} 的 topEntryCount 必须大于 0。")
+            return
+        if row.mock_entry_count < row.top_entry_count:
+            report.errors.append(f"Holmas_LeaderboardTable {row.leaderboard_type} 的 mockEntryCount 不能小于 topEntryCount。")
+            return
+
+
 def _build_core_package(
     map_rows: list[MapSheetRow],
     task_rows: list[TaskSheetRow],
     player_level_rows: list[PlayerLevelSheetRow],
     agency_building_rows: list[AgencyBuildingTableSheetRow],
+    leaderboard_rows: list[LeaderboardSheetRow],
+    generic_tables: list[GenericConfigSheetTable],
 ) -> CoreConfigPackage:
     return CoreConfigPackage(
         version=CURRENT_VERSION,
@@ -677,6 +919,7 @@ def _build_core_package(
                 terrain_path=row.terrain_path,
                 cat_count_min=row.cat_count_min,
                 cat_count_max=row.cat_count_max,
+                extra_fields=list(row.extra_fields),
             )
             for row in map_rows
         ],
@@ -689,6 +932,7 @@ def _build_core_package(
                 count_max=row.count_max,
                 reward_values=list(row.reward_array),
                 level_reward_factor=_to_float32(row.level_reward_factor),
+                extra_fields=list(row.extra_fields),
             )
             for row in task_rows
         ],
@@ -702,6 +946,7 @@ def _build_core_package(
                 task_type_weights=list(row.task_type_weights),
                 map_ids=list(row.map_ids),
                 map_weights=list(row.map_weights),
+                extra_fields=list(row.extra_fields),
             )
             for row in player_level_rows
         ],
@@ -716,8 +961,36 @@ def _build_core_package(
                     for cost_row in row.promotion_upgrade_costs
                 ],
                 notes=row.notes,
+                extra_fields=list(row.extra_fields),
             )
             for row in agency_building_rows
+        ],
+        holmas_leaderboard_table=[
+            LeaderboardRow(
+                leaderboard_type=row.leaderboard_type,
+                display_name=row.display_name,
+                period_type=row.period_type,
+                time_zone_id=row.time_zone_id,
+                reset_day_of_week=row.reset_day_of_week,
+                reset_hour=row.reset_hour,
+                reset_minute=row.reset_minute,
+                top_entry_count=row.top_entry_count,
+                mock_entry_count=row.mock_entry_count,
+                is_enabled=row.is_enabled,
+                notes=row.notes,
+                extra_fields=list(row.extra_fields),
+            )
+            for row in leaderboard_rows
+        ],
+        holmas_generic_tables=[
+            GenericConfigTable(
+                table_name=table.table_name,
+                rows=[
+                    GenericConfigRow(extra_fields=list(row.extra_fields))
+                    for row in table.rows
+                ],
+            )
+            for table in generic_tables
         ],
     )
 
@@ -733,6 +1006,7 @@ def _build_cat_package(cat_rows: list[CatSheetRow]) -> CatMetaPackage:
                 rarity=row.rarity,
                 weight=row.weight,
                 price=row.price,
+                extra_fields=list(row.extra_fields),
             )
             for row in cat_rows
         ],
@@ -804,6 +1078,32 @@ def _parse_byte(text: str, default_value: int) -> tuple[int, bool]:
     if not ok or value < 0 or value > 255:
         return default_value, False
     return value, True
+
+
+def _parse_bool(text: str, default_value: bool) -> tuple[bool, bool]:
+    normalized = (text or "").strip().lower()
+    if not normalized:
+        return default_value, False
+    if normalized in {"1", "true", "yes", "y", "是"}:
+        return True, True
+    if normalized in {"0", "false", "no", "n", "否"}:
+        return False, True
+    return default_value, False
+
+
+def _collect_extra_fields(header_map: dict[str, int], row: list[str] | None, known_columns: set[str]) -> list[ExtraField]:
+    if not header_map:
+        return []
+
+    fields: list[ExtraField] = []
+    for header, index in sorted(header_map.items(), key=lambda item: item[1]):
+        if header in known_columns:
+            continue
+        value = _get_cell(row, index)
+        if not value:
+            continue
+        fields.append(ExtraField(key=header, value=value))
+    return fields
 
 
 def _parse_int_array(text: str, source_path: str, row_number: int, report: ExportReport) -> list[int]:

@@ -1,13 +1,16 @@
 {
-    "ExportedAtUtc": "2026-04-29T17:08:22.7370340Z",
+    "ExportedAtUtc": "2026-05-03T04:14:58.2609830Z",
     "Success": true,
     "BinaryWrittenCount": 2,
     "SourceFiles": [
-        "Assets/Config/Holmas_MapTable.xlsx",
+        "Assets/Config/Holmas_AgencyBuildingTable.xlsx",
         "Assets/Config/Holmas_CatTable.xlsx",
-        "Assets/Config/Holmas_TaskTable.xlsx",
+        "Assets/Config/Holmas_CollectibleRewardPoolTable.xlsx",
+        "Assets/Config/Holmas_CollectibleTable.xlsx",
+        "Assets/Config/Holmas_LeaderboardTable.xlsx",
+        "Assets/Config/Holmas_MapTable.xlsx",
         "Assets/Config/Holmas_PlayerLevelTable.xlsx",
-        "Assets/Config/Holmas_AgencyBuildingTable.xlsx"
+        "Assets/Config/Holmas_TaskTable.xlsx"
     ],
     "BundleReports": [
         {
@@ -16,11 +19,13 @@
                 "Holmas_MapTable.xlsx",
                 "Holmas_TaskTable.xlsx",
                 "Holmas_PlayerLevelTable.xlsx",
-                "Holmas_AgencyBuildingTable.xlsx"
+                "Holmas_AgencyBuildingTable.xlsx",
+                "Holmas_LeaderboardTable.xlsx",
+                "Holmas_GenericTables"
             ],
             "PreviewJsonPath": "Assets/Config/json/holmas_core_config.json",
             "BinaryPath": "Assets/HotUpdateContent/Config/holmas_core_config.bytes",
-            "RowCount": 508,
+            "RowCount": 530,
             "WarningCount": 0,
             "ErrorCount": 0
         },

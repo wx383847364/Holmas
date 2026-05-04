@@ -11,7 +11,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public const int CoreMagic = 0x48434F52; // HCOR
         public const int CatMetaMagic = 0x48434154; // HCAT
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
         public const int MinSupportedVersion = CurrentVersion;
     }
 
@@ -82,6 +82,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public HolmasPlayerLevelTableRow[] Holmas_PlayerLevelTable = Array.Empty<HolmasPlayerLevelTableRow>();
         public HolmasAgencyBuildingTableRow[] Holmas_AgencyBuildingTable = Array.Empty<HolmasAgencyBuildingTableRow>();
         public HolmasLeaderboardTableRow[] Holmas_LeaderboardTable = Array.Empty<HolmasLeaderboardTableRow>();
+        public HolmasGenericConfigTable[] Holmas_GenericTables = Array.Empty<HolmasGenericConfigTable>();
 
         public int CodecVersion { get; internal set; } = HolmasConfigBinaryFormat.CurrentVersion;
     }
@@ -96,6 +97,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public string terrainPath = string.Empty;
         public int catCountMin;
         public int catCountMax;
+        public HolmasExtraField[] extraFields = Array.Empty<HolmasExtraField>();
     }
 
     /// <summary>
@@ -110,6 +112,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public int rarity;
         public int weight = 1;
         public int price;
+        public HolmasExtraField[] extraFields = Array.Empty<HolmasExtraField>();
     }
 
     /// <summary>
@@ -125,6 +128,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public int countMax;
         public int[] rewardArray = Array.Empty<int>();
         public float levelRewardFactor = 1f;
+        public HolmasExtraField[] extraFields = Array.Empty<HolmasExtraField>();
     }
 
     /// <summary>
@@ -141,6 +145,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public int[] taskTypeWeights = Array.Empty<int>();
         public string[] mapIds = Array.Empty<string>();
         public int[] mapWeights = Array.Empty<int>();
+        public HolmasExtraField[] extraFields = Array.Empty<HolmasExtraField>();
     }
 
     /// <summary>
@@ -165,6 +170,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public int[] promotionLevelCaps = Array.Empty<int>();
         public HolmasAgencyBuildingTableCostRow[] promotionUpgradeCosts = Array.Empty<HolmasAgencyBuildingTableCostRow>();
         public string notes = string.Empty;
+        public HolmasExtraField[] extraFields = Array.Empty<HolmasExtraField>();
     }
 
     [Serializable]
@@ -181,6 +187,27 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public int mockEntryCount = 100;
         public bool isEnabled = true;
         public string notes = string.Empty;
+        public HolmasExtraField[] extraFields = Array.Empty<HolmasExtraField>();
+    }
+
+    [Serializable]
+    public sealed class HolmasExtraField
+    {
+        public string key = string.Empty;
+        public string value = string.Empty;
+    }
+
+    [Serializable]
+    public sealed class HolmasGenericConfigRow
+    {
+        public HolmasExtraField[] extraFields = Array.Empty<HolmasExtraField>();
+    }
+
+    [Serializable]
+    public sealed class HolmasGenericConfigTable
+    {
+        public string tableName = string.Empty;
+        public HolmasGenericConfigRow[] rows = Array.Empty<HolmasGenericConfigRow>();
     }
 
     /// <summary>

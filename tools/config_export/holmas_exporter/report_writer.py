@@ -12,6 +12,10 @@ from .models import (
     CatMetaRow,
     CoreConfigPackage,
     ExportReport,
+    ExtraField,
+    GenericConfigRow,
+    GenericConfigTable,
+    LeaderboardRow,
     MapRow,
     PlayerLevelRow,
     TaskRow,
@@ -42,6 +46,8 @@ def _core_package_to_dict(package: CoreConfigPackage) -> dict:
         "Holmas_TaskTable": [_task_row_to_dict(row) for row in package.holmas_task_table],
         "Holmas_PlayerLevelTable": [_player_level_row_to_dict(row) for row in package.holmas_player_level_table],
         "Holmas_AgencyBuildingTable": [_agency_building_table_row_to_dict(row) for row in package.holmas_agency_building_table],
+        "Holmas_LeaderboardTable": [_leaderboard_row_to_dict(row) for row in package.holmas_leaderboard_table],
+        "Holmas_GenericTables": [_generic_table_to_dict(table) for table in package.holmas_generic_tables],
     }
 
 
@@ -82,6 +88,7 @@ def _map_row_to_dict(row: MapRow) -> dict:
         "terrainPath": row.terrain_path,
         "catCountMin": row.cat_count_min,
         "catCountMax": row.cat_count_max,
+        "extraFields": [_extra_field_to_dict(field) for field in row.extra_fields],
     }
 
 
@@ -93,6 +100,7 @@ def _cat_row_to_dict(row: CatMetaRow) -> dict:
         "rarity": row.rarity,
         "weight": row.weight,
         "price": row.price,
+        "extraFields": [_extra_field_to_dict(field) for field in row.extra_fields],
     }
 
 
@@ -105,6 +113,7 @@ def _task_row_to_dict(row: TaskRow) -> dict:
         "countMax": row.count_max,
         "rewardArray": list(row.reward_values),
         "levelRewardFactor": _to_float32(row.level_reward_factor),
+        "extraFields": [_extra_field_to_dict(field) for field in row.extra_fields],
     }
 
 
@@ -118,6 +127,7 @@ def _player_level_row_to_dict(row: PlayerLevelRow) -> dict:
         "taskTypeWeights": list(row.task_type_weights),
         "mapIds": list(row.map_ids),
         "mapWeights": list(row.map_weights),
+        "extraFields": [_extra_field_to_dict(field) for field in row.extra_fields],
     }
 
 def _agency_building_table_row_to_dict(row: AgencyBuildingTableRow) -> dict:
@@ -128,12 +138,50 @@ def _agency_building_table_row_to_dict(row: AgencyBuildingTableRow) -> dict:
         "promotionLevelCaps": list(row.promotion_level_caps),
         "promotionUpgradeCosts": [_agency_building_table_cost_row_to_dict(cost_row) for cost_row in row.promotion_upgrade_costs],
         "notes": row.notes,
+        "extraFields": [_extra_field_to_dict(field) for field in row.extra_fields],
     }
 
 
 def _agency_building_table_cost_row_to_dict(row: AgencyBuildingTableCostRow) -> dict:
     return {
         "costs": list(row.costs),
+    }
+
+
+def _leaderboard_row_to_dict(row: LeaderboardRow) -> dict:
+    return {
+        "leaderboardType": row.leaderboard_type,
+        "displayName": row.display_name,
+        "periodType": row.period_type,
+        "timeZoneId": row.time_zone_id,
+        "resetDayOfWeek": row.reset_day_of_week,
+        "resetHour": row.reset_hour,
+        "resetMinute": row.reset_minute,
+        "topEntryCount": row.top_entry_count,
+        "mockEntryCount": row.mock_entry_count,
+        "isEnabled": row.is_enabled,
+        "notes": row.notes,
+        "extraFields": [_extra_field_to_dict(field) for field in row.extra_fields],
+    }
+
+
+def _generic_table_to_dict(table: GenericConfigTable) -> dict:
+    return {
+        "tableName": table.table_name,
+        "rows": [_generic_row_to_dict(row) for row in table.rows],
+    }
+
+
+def _generic_row_to_dict(row: GenericConfigRow) -> dict:
+    return {
+        "extraFields": [_extra_field_to_dict(field) for field in row.extra_fields],
+    }
+
+
+def _extra_field_to_dict(field: ExtraField) -> dict:
+    return {
+        "key": field.key,
+        "value": field.value,
     }
 
 

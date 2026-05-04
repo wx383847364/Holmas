@@ -5,7 +5,13 @@ from dataclasses import dataclass, field
 
 CORE_MAGIC = 0x48434F52
 CAT_META_MAGIC = 0x48434154
-CURRENT_VERSION = 7
+CURRENT_VERSION = 8
+
+
+@dataclass
+class ExtraField:
+    key: str = ""
+    value: str = ""
 
 
 @dataclass
@@ -17,6 +23,7 @@ class MapSheetRow:
     cat_count_max: int = 0
     map_id_index: int = -1
     terrain_path_index: int = -1
+    extra_fields: list[ExtraField] = field(default_factory=list)
 
 
 @dataclass
@@ -31,6 +38,7 @@ class CatSheetRow:
     cat_id_index: int = -1
     cat_name_index: int = -1
     icon_path_index: int = -1
+    extra_fields: list[ExtraField] = field(default_factory=list)
 
 
 @dataclass
@@ -46,6 +54,7 @@ class TaskSheetRow:
     reward_array: list[int] = field(default_factory=list)
     level_reward_factor: float = 1.0
     task_type_id_index: int = -1
+    extra_fields: list[ExtraField] = field(default_factory=list)
 
 
 @dataclass
@@ -62,6 +71,7 @@ class PlayerLevelSheetRow:
     map_ids: list[str] = field(default_factory=list)
     map_indices: list[int] = field(default_factory=list)
     map_weights: list[int] = field(default_factory=list)
+    extra_fields: list[ExtraField] = field(default_factory=list)
 
 
 @dataclass
@@ -78,6 +88,36 @@ class AgencyBuildingTableSheetRow:
     promotion_level_caps: list[int] = field(default_factory=list)
     promotion_upgrade_costs: list[AgencyBuildingTableCostSheetRow] = field(default_factory=list)
     notes: str = ""
+    extra_fields: list[ExtraField] = field(default_factory=list)
+
+
+@dataclass
+class LeaderboardSheetRow:
+    row_index: int = 0
+    leaderboard_type: str = ""
+    display_name: str = ""
+    period_type: str = "AllTime"
+    time_zone_id: str = "Asia/Shanghai"
+    reset_day_of_week: int = 0
+    reset_hour: int = 0
+    reset_minute: int = 0
+    top_entry_count: int = 20
+    mock_entry_count: int = 100
+    is_enabled: bool = True
+    notes: str = ""
+    extra_fields: list[ExtraField] = field(default_factory=list)
+
+
+@dataclass
+class GenericConfigSheetRow:
+    row_index: int = 0
+    extra_fields: list[ExtraField] = field(default_factory=list)
+
+
+@dataclass
+class GenericConfigSheetTable:
+    table_name: str = ""
+    rows: list[GenericConfigSheetRow] = field(default_factory=list)
 
 
 @dataclass
@@ -86,6 +126,7 @@ class MapRow:
     terrain_path: str = ""
     cat_count_min: int = 0
     cat_count_max: int = 0
+    extra_fields: list[ExtraField] = field(default_factory=list)
 
 
 @dataclass
@@ -96,6 +137,7 @@ class CatMetaRow:
     rarity: int = 0
     weight: int = 1
     price: int = 0
+    extra_fields: list[ExtraField] = field(default_factory=list)
 
 
 @dataclass
@@ -107,6 +149,7 @@ class TaskRow:
     count_max: int = 0
     reward_values: list[int] = field(default_factory=list)
     level_reward_factor: float = 1.0
+    extra_fields: list[ExtraField] = field(default_factory=list)
 
 
 @dataclass
@@ -119,6 +162,7 @@ class PlayerLevelRow:
     task_type_weights: list[int] = field(default_factory=list)
     map_ids: list[str] = field(default_factory=list)
     map_weights: list[int] = field(default_factory=list)
+    extra_fields: list[ExtraField] = field(default_factory=list)
 
 
 @dataclass
@@ -134,6 +178,34 @@ class AgencyBuildingTableRow:
     promotion_level_caps: list[int] = field(default_factory=list)
     promotion_upgrade_costs: list[AgencyBuildingTableCostRow] = field(default_factory=list)
     notes: str = ""
+    extra_fields: list[ExtraField] = field(default_factory=list)
+
+
+@dataclass
+class LeaderboardRow:
+    leaderboard_type: str = ""
+    display_name: str = ""
+    period_type: str = "AllTime"
+    time_zone_id: str = "Asia/Shanghai"
+    reset_day_of_week: int = 0
+    reset_hour: int = 0
+    reset_minute: int = 0
+    top_entry_count: int = 20
+    mock_entry_count: int = 100
+    is_enabled: bool = True
+    notes: str = ""
+    extra_fields: list[ExtraField] = field(default_factory=list)
+
+
+@dataclass
+class GenericConfigRow:
+    extra_fields: list[ExtraField] = field(default_factory=list)
+
+
+@dataclass
+class GenericConfigTable:
+    table_name: str = ""
+    rows: list[GenericConfigRow] = field(default_factory=list)
 
 
 @dataclass
@@ -143,6 +215,8 @@ class CoreConfigPackage:
     holmas_task_table: list[TaskRow] = field(default_factory=list)
     holmas_player_level_table: list[PlayerLevelRow] = field(default_factory=list)
     holmas_agency_building_table: list[AgencyBuildingTableRow] = field(default_factory=list)
+    holmas_leaderboard_table: list[LeaderboardRow] = field(default_factory=list)
+    holmas_generic_tables: list[GenericConfigTable] = field(default_factory=list)
 
 
 @dataclass

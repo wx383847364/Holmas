@@ -70,18 +70,11 @@ namespace Holmas.EditorTools
             string hotUpdateConfigRoot,
             bool refreshAssetDatabase)
         {
+            string[] xlsxPaths = DiscoverXlsxPaths(configRoot);
             var report = new HolmasConfigExportReport
             {
                 ExportedAtUtc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
-                SourceFiles = new[]
-                {
-                    CombineProjectPath(configRoot, MapTableName),
-                    CombineProjectPath(configRoot, CatTableName),
-                    CombineProjectPath(configRoot, TaskTableName),
-                    CombineProjectPath(configRoot, PlayerLevelTableName),
-                    CombineProjectPath(configRoot, AgencyBuildingTableName),
-                    CombineProjectPath(configRoot, LeaderboardTableName),
-                }
+                SourceFiles = xlsxPaths
             };
 
             EnsureDirectory(CombineProjectPath(jsonRoot, string.Empty));
@@ -93,6 +86,7 @@ namespace Holmas.EditorTools
             var playerLevelTable = LoadPlayerLevelTable(report, configRoot);
             var agencyBuildingTable = LoadAgencyBuildingTable(report, configRoot);
             var leaderboardTable = LoadLeaderboardTable(report, configRoot);
+            var genericTables = LoadGenericTables(report, xlsxPaths);
 
             var catLookup = BuildAliasLookup(catTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.CatId, index)));
             var taskLookup = BuildAliasLookup(taskTable.Rows.Select((row, index) => new KeyValuePair<string, int>(row.TaskTypeId, index)));
@@ -107,7 +101,7 @@ namespace Holmas.EditorTools
             ValidateAgencyBuildingTable(report, agencyBuildingTable);
             ValidateLeaderboardTable(report, leaderboardTable);
 
-            HolmasCoreConfigPackage corePackage = BuildCorePackage(mapTable, taskTable, playerLevelTable, agencyBuildingTable, leaderboardTable);
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(mapTable, taskTable, playerLevelTable, agencyBuildingTable, leaderboardTable, genericTables);
             HolmasCatMetaPackage catPackage = BuildCatMetaPackage(catTable);
 
             report.BundleReports = new[]
@@ -115,10 +109,10 @@ namespace Holmas.EditorTools
                 new HolmasConfigBundleReport
                 {
                     BundleName = "core",
-                    SourceTableNames = new[] { MapTableName, TaskTableName, PlayerLevelTableName, AgencyBuildingTableName, LeaderboardTableName },
+                    SourceTableNames = new[] { MapTableName, TaskTableName, PlayerLevelTableName, AgencyBuildingTableName, LeaderboardTableName, "Holmas_GenericTables" },
                     PreviewJsonPath = CombineProjectPath(jsonRoot, CorePreviewName),
                     BinaryPath = CombineProjectPath(hotUpdateConfigRoot, CoreBinaryName),
-                    RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count + agencyBuildingTable.Rows.Count + leaderboardTable.Rows.Count,
+                    RowCount = mapTable.Rows.Count + taskTable.Rows.Count + playerLevelTable.Rows.Count + agencyBuildingTable.Rows.Count + leaderboardTable.Rows.Count + genericTables.Sum(table => table.Rows.Count),
                     WarningCount = report.Warnings.Count,
                     ErrorCount = report.Errors.Count,
                 },
@@ -296,12 +290,64 @@ namespace Holmas.EditorTools
             return new SheetTable<HolmasLeaderboardSheetRow>(tableName, ParseLeaderboardTable(report, path, rows, headerMap));
         }
 
+        private static List<SheetTable<HolmasGenericConfigSheetRow>> LoadGenericTables(HolmasConfigExportReport report, string[] xlsxPaths)
+        {
+            var knownTableNames = new HashSet<string>(StringComparer.Ordinal)
+            {
+                MapTableName,
+                CatTableName,
+                TaskTableName,
+                PlayerLevelTableName,
+                AgencyBuildingTableName,
+                LeaderboardTableName,
+            };
+
+            var tables = new List<SheetTable<HolmasGenericConfigSheetRow>>();
+            foreach (string path in xlsxPaths ?? Array.Empty<string>())
+            {
+                string tableName = Path.GetFileName(path);
+                if (knownTableNames.Contains(tableName))
+                {
+                    continue;
+                }
+
+                List<string[]> rows = ReadWorksheetRows(report, path);
+                if (rows.Count < 2)
+                {
+                    report.Errors.Add($"xlsx 结构不完整: {path}");
+                    continue;
+                }
+
+                Dictionary<string, int> headerMap = BuildHeaderMap(report, path, rows[1]);
+                var tableRows = new List<HolmasGenericConfigSheetRow>();
+                for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
+                {
+                    string[] row = rows[rowIndex];
+                    if (IsBlankRow(row))
+                    {
+                        continue;
+                    }
+
+                    tableRows.Add(new HolmasGenericConfigSheetRow
+                    {
+                        RowIndex = tableRows.Count,
+                        ExtraFields = CollectExtraFields(headerMap, row, new HashSet<string>(StringComparer.Ordinal)),
+                    });
+                }
+
+                tables.Add(new SheetTable<HolmasGenericConfigSheetRow>(Path.GetFileNameWithoutExtension(path), tableRows));
+            }
+
+            return tables;
+        }
+
         private static List<HolmasMapSheetRow> ParseMaps(HolmasConfigExportReport report, string sourcePath, List<string[]> rows, Dictionary<string, int> headerMap)
         {
             int mapIdCol = RequireColumn(report, sourcePath, headerMap, "mapId");
             int terrainPathCol = RequireColumn(report, sourcePath, headerMap, "terrainPath");
             int catCountMaxCol = RequireColumn(report, sourcePath, headerMap, "catCountMax");
             int catCountMinCol = RequireColumn(report, sourcePath, headerMap, "catCountMin");
+            var knownColumns = BuildKnownColumns("mapId", "terrainPath", "catCountMax", "catCountMin");
 
             var list = new List<HolmasMapSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
@@ -324,6 +370,7 @@ namespace Holmas.EditorTools
                     TerrainPath = GetCell(row, terrainPathCol),
                     CatCountMax = catCountMax,
                     CatCountMin = catCountMin,
+                    ExtraFields = CollectExtraFields(headerMap, row, knownColumns),
                 };
 
                 if (string.IsNullOrWhiteSpace(item.MapId))
@@ -370,6 +417,7 @@ namespace Holmas.EditorTools
             int rarityCol = GetOptionalColumn(headerMap, "rarity");
             int weightCol = GetOptionalColumn(headerMap, "weight");
             int priceCol = GetOptionalColumn(headerMap, "price");
+            var knownColumns = BuildKnownColumns("catId", "catName", "iconPath", "rarity", "weight", "price");
 
             bool hasAnyIconMissing = false;
             bool hasAnyRarityMissing = false;
@@ -394,6 +442,7 @@ namespace Holmas.EditorTools
                     Rarity = ParseByte(GetCell(row, rarityCol), defaultValue: 0, out bool rarityOk),
                     Weight = ParseInt(GetCell(row, weightCol), defaultValue: 1, out bool weightOk),
                     Price = ParseInt(GetCell(row, priceCol), defaultValue: 0, out bool priceOk),
+                    ExtraFields = CollectExtraFields(headerMap, row, knownColumns),
                 };
 
                 if (string.IsNullOrWhiteSpace(item.CatId))
@@ -463,6 +512,7 @@ namespace Holmas.EditorTools
             int countMinCol = RequireColumn(report, sourcePath, headerMap, "countMin");
             int rewardArrayCol = GetOptionalColumn(headerMap, "rewardArray");
             int levelRewardFactorCol = RequireColumn(report, sourcePath, headerMap, "levelRewardFactor");
+            var knownColumns = BuildKnownColumns("taskTypeId", "taskKind", "catIdList", "countMax", "countMin", "rewardArray", "levelRewardFactor");
 
             if (taskKindCol < 0)
             {
@@ -511,6 +561,7 @@ namespace Holmas.EditorTools
                     CountMin = countMin,
                     RewardArray = ParseIntArray(GetCell(row, rewardArrayCol), sourcePath, rowIndex + 1, report),
                     LevelRewardFactor = levelRewardFactor,
+                    ExtraFields = CollectExtraFields(headerMap, row, knownColumns),
                 };
 
                 if (string.IsNullOrWhiteSpace(item.TaskTypeId))
@@ -571,6 +622,7 @@ namespace Holmas.EditorTools
             int taskTypeWeightsCol = RequireColumn(report, sourcePath, headerMap, "taskTypeWeights");
             int mapIdsCol = RequireColumn(report, sourcePath, headerMap, "mapIds");
             int mapWeightsCol = RequireColumn(report, sourcePath, headerMap, "mapWeights");
+            var knownColumns = BuildKnownColumns("playerLevel", "upgradeExp", "minExperience", "offlineRewardPerHour", "adUnlockHours", "notes", "taskTypeIds", "taskTypeWeights", "mapIds", "mapWeights");
 
             if (upgradeExpCol >= 0)
             {
@@ -613,6 +665,7 @@ namespace Holmas.EditorTools
                     TaskTypeWeights = ParseIntArrayStrict(GetCell(row, taskTypeWeightsCol), sourcePath, rowIndex + 1, report),
                     MapIds = SplitArray(GetCell(row, mapIdsCol)),
                     MapWeights = ParseIntArrayStrict(GetCell(row, mapWeightsCol), sourcePath, rowIndex + 1, report),
+                    ExtraFields = CollectExtraFields(headerMap, row, knownColumns),
                 };
 
                 if (!levelOk)
@@ -677,6 +730,7 @@ namespace Holmas.EditorTools
             int promotionCapsCol = RequireColumn(report, sourcePath, headerMap, "promotionLevelCaps");
             int promotionCostsCol = RequireColumn(report, sourcePath, headerMap, "promotionUpgradeCosts");
             int notesCol = GetOptionalColumn(headerMap, "notes");
+            var knownColumns = BuildKnownColumns("agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes");
 
             var list = new List<HolmasAgencyBuildingSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
@@ -703,6 +757,7 @@ namespace Holmas.EditorTools
                     PromotionLevelCaps = levelCaps,
                     PromotionUpgradeCosts = upgradeCosts,
                     Notes = GetCell(row, notesCol),
+                    ExtraFields = CollectExtraFields(headerMap, row, knownColumns),
                 };
 
                 if (!stageIdOk || stageId <= 0)
@@ -761,6 +816,7 @@ namespace Holmas.EditorTools
             int mockEntryCountCol = RequireColumn(report, sourcePath, headerMap, "mockEntryCount");
             int isEnabledCol = RequireColumn(report, sourcePath, headerMap, "isEnabled");
             int notesCol = GetOptionalColumn(headerMap, "notes");
+            var knownColumns = BuildKnownColumns("leaderboardType", "displayName", "periodType", "timeZoneId", "resetDayOfWeek", "resetHour", "resetMinute", "topEntryCount", "mockEntryCount", "isEnabled", "notes");
 
             var list = new List<HolmasLeaderboardSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
@@ -776,7 +832,7 @@ namespace Holmas.EditorTools
                 bool resetMinuteOk = TryParseInt(GetCell(row, resetMinuteCol), out int resetMinute);
                 bool topEntryCountOk = TryParseInt(GetCell(row, topEntryCountCol), out int topEntryCount);
                 bool mockEntryCountOk = TryParseInt(GetCell(row, mockEntryCountCol), out int mockEntryCount);
-                bool isEnabledOk = TryParseInt(GetCell(row, isEnabledCol), out int isEnabledValue);
+                bool isEnabledOk = TryParseBool(GetCell(row, isEnabledCol), defaultValue: true, out bool isEnabled);
 
                 var item = new HolmasLeaderboardSheetRow
                 {
@@ -790,8 +846,9 @@ namespace Holmas.EditorTools
                     ResetMinute = resetMinute,
                     TopEntryCount = topEntryCount,
                     MockEntryCount = mockEntryCount,
-                    IsEnabled = isEnabledOk && isEnabledValue != 0,
+                    IsEnabled = isEnabled,
                     Notes = GetCell(row, notesCol),
+                    ExtraFields = CollectExtraFields(headerMap, row, knownColumns),
                 };
 
                 if (string.IsNullOrWhiteSpace(item.LeaderboardType))
@@ -848,9 +905,9 @@ namespace Holmas.EditorTools
                     continue;
                 }
 
-                if (!isEnabledOk || (isEnabledValue != 0 && isEnabledValue != 1))
+                if (!isEnabledOk)
                 {
-                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 isEnabled 必须是 0 或 1。");
+                    report.Errors.Add($"{sourcePath} 第 {rowIndex + 1} 行 isEnabled 无法解析。");
                     continue;
                 }
 
@@ -1275,7 +1332,8 @@ namespace Holmas.EditorTools
             SheetTable<HolmasTaskSheetRow> taskTable,
             SheetTable<HolmasPlayerLevelSheetRow> playerLevelTable,
             SheetTable<HolmasAgencyBuildingSheetRow> agencyBuildingTable,
-            SheetTable<HolmasLeaderboardSheetRow> leaderboardTable)
+            SheetTable<HolmasLeaderboardSheetRow> leaderboardTable,
+            List<SheetTable<HolmasGenericConfigSheetRow>> genericTables)
         {
             return new HolmasCoreConfigPackage
             {
@@ -1286,6 +1344,7 @@ namespace Holmas.EditorTools
                     terrainPath = row.TerrainPath,
                     catCountMin = row.CatCountMin,
                     catCountMax = row.CatCountMax,
+                    extraFields = ToRuntimeExtraFields(row.ExtraFields),
                 }).ToArray(),
                 Holmas_TaskTable = taskTable.Rows.Select(row => new HolmasTaskTableRow
                 {
@@ -1296,6 +1355,7 @@ namespace Holmas.EditorTools
                     countMax = row.CountMax,
                     rewardArray = row.RewardArray ?? Array.Empty<int>(),
                     levelRewardFactor = row.LevelRewardFactor,
+                    extraFields = ToRuntimeExtraFields(row.ExtraFields),
                 }).ToArray(),
                 Holmas_PlayerLevelTable = playerLevelTable.Rows.Select(row => new HolmasPlayerLevelTableRow
                 {
@@ -1307,6 +1367,7 @@ namespace Holmas.EditorTools
                     taskTypeWeights = row.TaskTypeWeights ?? Array.Empty<int>(),
                     mapIds = row.MapIds ?? Array.Empty<string>(),
                     mapWeights = row.MapWeights ?? Array.Empty<int>(),
+                    extraFields = ToRuntimeExtraFields(row.ExtraFields),
                 }).ToArray(),
                 Holmas_AgencyBuildingTable = (agencyBuildingTable?.Rows ?? new List<HolmasAgencyBuildingSheetRow>()).Select(row => new HolmasAgencyBuildingTableRow
                 {
@@ -1321,6 +1382,7 @@ namespace Holmas.EditorTools
                         })
                         .ToArray(),
                     notes = row.Notes ?? string.Empty,
+                    extraFields = ToRuntimeExtraFields(row.ExtraFields),
                 }).ToArray(),
                 Holmas_LeaderboardTable = (leaderboardTable?.Rows ?? new List<HolmasLeaderboardSheetRow>()).Select(row => new HolmasLeaderboardTableRow
                 {
@@ -1335,6 +1397,15 @@ namespace Holmas.EditorTools
                     mockEntryCount = row.MockEntryCount,
                     isEnabled = row.IsEnabled,
                     notes = row.Notes ?? string.Empty,
+                    extraFields = ToRuntimeExtraFields(row.ExtraFields),
+                }).ToArray(),
+                Holmas_GenericTables = (genericTables ?? new List<SheetTable<HolmasGenericConfigSheetRow>>()).Select(table => new HolmasGenericConfigTable
+                {
+                    tableName = table.Name ?? string.Empty,
+                    rows = (table.Rows ?? new List<HolmasGenericConfigSheetRow>()).Select(row => new HolmasGenericConfigRow
+                    {
+                        extraFields = ToRuntimeExtraFields(row.ExtraFields),
+                    }).ToArray(),
                 }).ToArray(),
             };
         }
@@ -1352,6 +1423,7 @@ namespace Holmas.EditorTools
                     rarity = row.Rarity,
                     weight = row.Weight,
                     price = row.Price,
+                    extraFields = ToRuntimeExtraFields(row.ExtraFields),
                 }).ToArray(),
             };
         }
@@ -1450,6 +1522,53 @@ namespace Holmas.EditorTools
             return map;
         }
 
+        private static HashSet<string> BuildKnownColumns(params string[] columns)
+        {
+            return new HashSet<string>(columns ?? Array.Empty<string>(), StringComparer.Ordinal);
+        }
+
+        private static HolmasExtraField[] CollectExtraFields(Dictionary<string, int> headerMap, string[] row, HashSet<string> knownColumns)
+        {
+            if (headerMap == null || headerMap.Count == 0)
+            {
+                return Array.Empty<HolmasExtraField>();
+            }
+
+            var fields = new List<HolmasExtraField>();
+            foreach (KeyValuePair<string, int> pair in headerMap.OrderBy(item => item.Value))
+            {
+                if (knownColumns != null && knownColumns.Contains(pair.Key))
+                {
+                    continue;
+                }
+
+                string value = GetCell(row, pair.Value);
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    continue;
+                }
+
+                fields.Add(new HolmasExtraField
+                {
+                    Key = pair.Key,
+                    Value = value,
+                });
+            }
+
+            return fields.ToArray();
+        }
+
+        private static App.HotUpdate.Holmas.Tasks.Config.HolmasExtraField[] ToRuntimeExtraFields(HolmasExtraField[] fields)
+        {
+            return (fields ?? Array.Empty<HolmasExtraField>())
+                .Select(field => new App.HotUpdate.Holmas.Tasks.Config.HolmasExtraField
+                {
+                    key = field?.Key ?? string.Empty,
+                    value = field?.Value ?? string.Empty,
+                })
+                .ToArray();
+        }
+
         private static List<string[]> ReadWorksheetRows(HolmasConfigExportReport report, string sourcePath)
         {
             if (HolmasXlsxTableReader.TryReadFirstWorksheet(sourcePath, out List<string[]> rows, out string error))
@@ -1463,6 +1582,39 @@ namespace Holmas.EditorTools
             }
 
             return new List<string[]>();
+        }
+
+        private static string[] DiscoverXlsxPaths(string configRoot)
+        {
+            string root = CombineProjectPath(configRoot, string.Empty);
+            if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root))
+            {
+                return Array.Empty<string>();
+            }
+
+            return Directory.GetFiles(root, "*.xlsx", SearchOption.TopDirectoryOnly)
+                .Where(IsExportableXlsxPath)
+                .Select(NormalizePath)
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .ToArray();
+        }
+
+        private static bool IsExportableXlsxPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                return false;
+            }
+
+            string fileName = Path.GetFileName(path);
+            if (string.IsNullOrWhiteSpace(fileName) || !fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return !fileName.StartsWith(".", StringComparison.Ordinal) &&
+                   !fileName.StartsWith("~", StringComparison.Ordinal) &&
+                   !fileName.StartsWith("~$", StringComparison.Ordinal);
         }
 
         private static int RequireColumn(HolmasConfigExportReport report, string sourcePath, Dictionary<string, int> headerMap, string columnName)
@@ -1605,6 +1757,31 @@ namespace Holmas.EditorTools
         private static bool TryParseLong(string text, out long value)
         {
             return long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        }
+
+        private static bool TryParseBool(string text, bool defaultValue, out bool value)
+        {
+            string normalized = string.IsNullOrWhiteSpace(text) ? string.Empty : text.Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(normalized))
+            {
+                value = defaultValue;
+                return false;
+            }
+
+            if (normalized == "1" || normalized == "true" || normalized == "yes" || normalized == "y" || normalized == "是")
+            {
+                value = true;
+                return true;
+            }
+
+            if (normalized == "0" || normalized == "false" || normalized == "no" || normalized == "n" || normalized == "否")
+            {
+                value = false;
+                return true;
+            }
+
+            value = defaultValue;
+            return false;
         }
 
         private static HolmasAgencyBuildingCostSheetRow[] ParseNestedIntArrays(string text, string sourcePath, int rowNumber, HolmasConfigExportReport report)
@@ -1777,6 +1954,7 @@ namespace Holmas.EditorTools
         public HolmasPlayerLevelSheetRow[] Holmas_PlayerLevelTable;
         public HolmasAgencyBuildingSheetRow[] Holmas_AgencyBuildingTable;
         public HolmasLeaderboardSheetRow[] Holmas_LeaderboardTable;
+        public HolmasGenericConfigTablePreview[] Holmas_GenericTables;
     }
 
     [Serializable]
@@ -1797,6 +1975,7 @@ namespace Holmas.EditorTools
         public int CatCountMax;
         public int MapIdIndex = -1;
         public int TerrainPathIndex = -1;
+        public HolmasExtraField[] ExtraFields = Array.Empty<HolmasExtraField>();
     }
 
     [Serializable]
@@ -1812,6 +1991,7 @@ namespace Holmas.EditorTools
         public int CatIdIndex = -1;
         public int CatNameIndex = -1;
         public int IconPathIndex = -1;
+        public HolmasExtraField[] ExtraFields = Array.Empty<HolmasExtraField>();
     }
 
     [Serializable]
@@ -1828,6 +2008,7 @@ namespace Holmas.EditorTools
         public int[] RewardArray;
         public float LevelRewardFactor;
         public int TaskTypeIdIndex = -1;
+        public HolmasExtraField[] ExtraFields = Array.Empty<HolmasExtraField>();
     }
 
     [Serializable]
@@ -1845,6 +2026,7 @@ namespace Holmas.EditorTools
         public string[] MapIds;
         public int[] MapIndices;
         public int[] MapWeights;
+        public HolmasExtraField[] ExtraFields = Array.Empty<HolmasExtraField>();
     }
 
     [Serializable]
@@ -1863,6 +2045,7 @@ namespace Holmas.EditorTools
         public int[] PromotionLevelCaps;
         public HolmasAgencyBuildingCostSheetRow[] PromotionUpgradeCosts;
         public string Notes;
+        public HolmasExtraField[] ExtraFields = Array.Empty<HolmasExtraField>();
     }
 
     [Serializable]
@@ -1880,6 +2063,28 @@ namespace Holmas.EditorTools
         public int MockEntryCount;
         public bool IsEnabled;
         public string Notes;
+        public HolmasExtraField[] ExtraFields = Array.Empty<HolmasExtraField>();
+    }
+
+    [Serializable]
+    public sealed class HolmasExtraField
+    {
+        public string Key;
+        public string Value;
+    }
+
+    [Serializable]
+    public sealed class HolmasGenericConfigSheetRow
+    {
+        public int RowIndex;
+        public HolmasExtraField[] ExtraFields = Array.Empty<HolmasExtraField>();
+    }
+
+    [Serializable]
+    public sealed class HolmasGenericConfigTablePreview
+    {
+        public string TableName;
+        public HolmasGenericConfigSheetRow[] Rows;
     }
 
     [Serializable]

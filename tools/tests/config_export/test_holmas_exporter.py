@@ -61,16 +61,18 @@ class HolmasPythonExporterTests(unittest.TestCase):
             cat_json = json.loads((json_root / "holmas_cat_meta.json").read_text(encoding="utf-8"))
             report_json = json.loads((json_root / "holmas_export_report.json").read_text(encoding="utf-8"))
 
-            self.assertEqual(core_json["Version"], 6)
-            self.assertEqual(core_json["PlayerLevels"][-1]["UpgradeExp"], 2000)
+            self.assertEqual(core_json["Version"], 8)
+            self.assertEqual(core_json["Holmas_PlayerLevelTable"][-1]["minExperience"], 2000)
             self.assertNotIn("MetaLevels", core_json)
-            self.assertEqual(cat_json["Cats"][0]["CatName"], "布偶猫")
+            self.assertEqual(cat_json["Holmas_CatTable"][0]["catName"], "布偶猫")
+            self.assertIn("Holmas_LeaderboardTable", core_json)
+            self.assertIn("Holmas_GenericTables", core_json)
             self.assertTrue(report_json["Success"])
             self.assertEqual(report_json["BinaryWrittenCount"], 2)
             self.assertTrue((binary_root / "holmas_core_config.bytes").is_file())
             self.assertTrue((binary_root / "holmas_cat_meta.bytes").is_file())
 
-    def test_validate_all_accepts_matching_upgradeexp_and_minexperience_columns(self) -> None:
+    def test_validate_all_rejects_legacy_upgradeexp_column(self) -> None:
         with tempfile.TemporaryDirectory(prefix="holmas_python_export_dual_match_") as temp_dir:
             root = Path(temp_dir)
             repo_root = root / "Holmas"
@@ -85,7 +87,11 @@ class HolmasPythonExporterTests(unittest.TestCase):
 
             result = validate_all(repo_root, config_root, json_root, binary_root)
 
-            self.assertTrue(result.report.success, "\n".join(result.report.errors))
+            self.assertFalse(result.report.success)
+            self.assertTrue(
+                any("旧技术表头 upgradeExp" in error for error in result.report.errors),
+                "\n".join(result.report.errors),
+            )
 
     def test_validate_all_rejects_conflicting_upgradeexp_and_minexperience_columns(self) -> None:
         with tempfile.TemporaryDirectory(prefix="holmas_python_export_dual_conflict_") as temp_dir:
@@ -104,7 +110,7 @@ class HolmasPythonExporterTests(unittest.TestCase):
 
             self.assertFalse(result.report.success)
             self.assertTrue(
-                any("upgradeExp 与 minExperience 不一致" in error for error in result.report.errors),
+                any("旧技术表头 upgradeExp" in error for error in result.report.errors),
                 "\n".join(result.report.errors),
             )
 
@@ -141,8 +147,8 @@ class HolmasPythonExporterTests(unittest.TestCase):
 
     def test_validate_all_accepts_variable_promotion_counts(self) -> None:
         promotion_shapes = [
-            ("poster;stream;event", "1;7;2", "0|10;20;30|-1;40"),
-            ("leaflet;radio;online;tv;expo", "5;5;5;5;1", "100;200|120;240;360|140|160;320;480;640;800|-1"),
+            ("poster;stream;event", "1;3;2", "10|10;20;30|10;40"),
+            ("leaflet;radio;online;tv;expo", "5;5;1;5;1", "100;200;300;400;500|120;240;360;480;600|140|160;320;480;640;800|180"),
         ]
         for promotion_ids, promotion_caps, promotion_costs in promotion_shapes:
             with self.subTest(promotion_ids=promotion_ids):
@@ -217,6 +223,55 @@ class HolmasPythonExporterTests(unittest.TestCase):
             self.assertTrue(
                 any("promotionIds 为空" in error or "缺少 promotionIds" in error for error in result.report.errors),
                 "\n".join(result.report.errors),
+            )
+
+    def test_export_all_preserves_unknown_columns_and_unknown_tables(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="holmas_python_export_extra_fields_") as temp_dir:
+            root = Path(temp_dir)
+            repo_root = root / "Holmas"
+            config_root = repo_root / "Assets" / "Config"
+            json_root = config_root / "json"
+            binary_root = repo_root / "Assets" / "HotUpdateContent" / "Config"
+            config_root.mkdir(parents=True, exist_ok=True)
+            json_root.mkdir(parents=True, exist_ok=True)
+            binary_root.mkdir(parents=True, exist_ok=True)
+
+            _write_fixture(config_root)
+            _write_tabular_workbook(
+                config_root / "Holmas_MapTable.xlsx",
+                "Sheet1",
+                [
+                    ["地图id", "地图对应的数据地址Path", "猫的最大数量max", "猫的最小数量mini", "策划备注"],
+                    ["mapId", "terrainPath", "catCountMax", "catCountMin", "designerNote"],
+                    ["map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12", "非法数字也不校验 abc"],
+                ],
+            )
+            _write_tabular_workbook(
+                config_root / "Holmas_CustomTable.xlsx",
+                "Holmas_CustomTable",
+                [
+                    ["自定义ID", "任意值"],
+                    ["customId", "payload"],
+                    ["row_001", "abc;not-a-reference"],
+                ],
+            )
+            (config_root / "~$Holmas_MapTable.xlsx").write_text("not a real workbook", encoding="utf-8")
+            (config_root / ".HiddenConfig.xlsx").write_text("not a real workbook", encoding="utf-8")
+
+            result = export_all(repo_root, config_root, json_root, binary_root)
+
+            self.assertTrue(result.report.success, "\n".join(result.report.errors))
+            self.assertFalse(any("~$" in source_file or ".HiddenConfig" in source_file for source_file in result.report.source_files))
+            core_json = json.loads((json_root / "holmas_core_config.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                core_json["Holmas_MapTable"][0]["extraFields"],
+                [{"key": "designerNote", "value": "非法数字也不校验 abc"}],
+            )
+            generic_tables = {table["tableName"]: table for table in core_json["Holmas_GenericTables"]}
+            self.assertIn("Holmas_CustomTable", generic_tables)
+            self.assertEqual(
+                generic_tables["Holmas_CustomTable"]["rows"][0]["extraFields"],
+                [{"key": "customId", "value": "row_001"}, {"key": "payload", "value": "abc;not-a-reference"}],
             )
 
 
@@ -306,6 +361,16 @@ def _write_fixture(
     for stage in range(1, 101):
         agency_rows.append([str(stage), f"城市{stage:03d}", promotion_ids, promotion_caps, promotion_costs, ""])
     _write_tabular_workbook(config_root / "Holmas_AgencyBuildingTable.xlsx", "Holmas_AgencyBuildingTable", agency_rows)
+
+    _write_tabular_workbook(
+        config_root / "Holmas_LeaderboardTable.xlsx",
+        "Holmas_LeaderboardTable",
+        [
+            ["排行榜类型", "显示名称", "更新类型", "时区", "周几重置", "按小时重置", "按分钟重置", "前端显示名次", "虚拟名次", "是否显示", "注释"],
+            ["leaderboardType", "displayName", "periodType", "timeZoneId", "resetDayOfWeek", "resetHour", "resetMinute", "topEntryCount", "mockEntryCount", "isEnabled", "notes"],
+            ["Level", "等级总榜", "AllTime", "Asia/Shanghai", "0", "0", "0", "20", "100", "1", ""],
+        ],
+    )
 
 
 def _write_tabular_workbook(path: Path, sheet_name: str, rows: list[list[str]]) -> None:

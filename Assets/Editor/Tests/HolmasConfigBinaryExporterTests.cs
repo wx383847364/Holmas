@@ -48,6 +48,9 @@ namespace Holmas.EditorTests
                 Assert.That(bundle.PlayerLevels.Count, Is.EqualTo(20));
                 Assert.That(bundle.Leaderboards.Count, Is.EqualTo(3));
                 Assert.That(bundle.PlayerLevels.Last().UpgradeExp, Is.EqualTo(2000));
+                Assert.That(HolmasConfigBinaryCodec.TryReadCorePackage(File.ReadAllBytes(corePath), out HolmasCoreConfigPackage corePackage, out string coreReadError), Is.True, coreReadError);
+                Assert.That(corePackage.Holmas_MapTable[0].extraFields.Any(field => field.key == "designerNote" && field.value.Contains("不校验")), Is.True);
+                Assert.That(corePackage.Holmas_GenericTables.Any(table => table.tableName == "Holmas_CustomTable"), Is.True);
                 string coreJson = File.ReadAllText(Path.Combine(fixture.JsonRoot, "holmas_core_config.json"));
                 Assert.That(coreJson.Contains("\"MetaLevels\""), Is.False);
                 Assert.That(coreJson.Contains("\"AgencyBuildings\""), Is.False);
@@ -297,6 +300,18 @@ namespace Holmas.EditorTests
                 "Holmas_LeaderboardTable",
                 leaderboardRows ?? BuildLeaderboardRows());
 
+            WriteWorkbook(
+                Path.Combine(configRoot, "Holmas_CustomTable.xlsx"),
+                "Holmas_CustomTable",
+                new[]
+                {
+                    new[] { "自定义ID", "任意值" },
+                    new[] { "customId", "payload" },
+                    new[] { "row_001", "abc;not-a-reference" },
+                });
+            File.WriteAllText(Path.Combine(configRoot, "~$Holmas_MapTable.xlsx"), "not a real workbook");
+            File.WriteAllText(Path.Combine(configRoot, ".HiddenConfig.xlsx"), "not a real workbook");
+
             return new ExportFixture(root, configRoot, jsonRoot, binaryRoot);
         }
 
@@ -306,15 +321,15 @@ namespace Holmas.EditorTests
                 ? new[]
                 {
                     new[] { "地图id", "地图对应的数据地址Path", "猫的最大数量max", "猫的最小数量mini" },
-                    new[] { "mapId", "terrainPath", "catCountMax", "catCountMin" },
-                    new[] { "map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12" },
-                    new[] { "map_002", "Assets/HotUpdateContent/Res/Map/2.asset", "16", "13" },
+                    new[] { "mapId", "terrainPath", "catCountMax", "catCountMin", "designerNote" },
+                    new[] { "map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12", "新增列不校验 abc" },
+                    new[] { "map_002", "Assets/HotUpdateContent/Res/Map/2.asset", "16", "13", "备用地图" },
                 }
                 : new[]
                 {
-                    new[] { "地图id", "地图对应的数据地址Path", "猫的最大数量max", "猫的最小数量mini" },
-                    new[] { "mapId", "terrainPath", "catCountMax", "catCountMin" },
-                    new[] { "map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12" },
+                    new[] { "地图id", "地图对应的数据地址Path", "猫的最大数量max", "猫的最小数量mini", "策划备注" },
+                    new[] { "mapId", "terrainPath", "catCountMax", "catCountMin", "designerNote" },
+                    new[] { "map_001", "Assets/HotUpdateContent/Res/Map/1.asset", "15", "12", "新增列不校验 abc" },
                 };
         }
 

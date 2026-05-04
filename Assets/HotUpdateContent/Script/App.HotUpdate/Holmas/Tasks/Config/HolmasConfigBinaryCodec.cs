@@ -200,6 +200,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             WritePlayerLevelRows(writer, package.Holmas_PlayerLevelTable);
             WriteAgencyBuildingTableRows(writer, package.Holmas_AgencyBuildingTable);
             WriteLeaderboardRows(writer, package.Holmas_LeaderboardTable);
+            WriteGenericTables(writer, package.Holmas_GenericTables);
         }
 
         private static void WriteCatMetaPackage(BinaryWriter writer, HolmasCatMetaPackage package)
@@ -228,6 +229,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
             HolmasPlayerLevelTableRow[] playerLevels = ReadPlayerLevelRows(reader);
             HolmasAgencyBuildingTableRow[] agencyBuildingTable = ReadAgencyBuildingTableRows(reader);
             HolmasLeaderboardTableRow[] leaderboards = ReadLeaderboardRowsOrDefault(reader);
+            HolmasGenericConfigTable[] genericTables = ReadGenericTablesOrDefault(reader);
 
             var package = new HolmasCoreConfigPackage
             {
@@ -237,6 +239,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 Holmas_PlayerLevelTable = playerLevels,
                 Holmas_AgencyBuildingTable = agencyBuildingTable,
                 Holmas_LeaderboardTable = leaderboards,
+                Holmas_GenericTables = genericTables,
             };
             package.CodecVersion = codecVersion;
 
@@ -452,6 +455,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 WriteString(writer, row.terrainPath);
                 writer.Write(row.catCountMin);
                 writer.Write(row.catCountMax);
+                WriteExtraFields(writer, row.extraFields);
             }
         }
 
@@ -467,6 +471,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     terrainPath = ReadString(reader),
                     catCountMin = reader.ReadInt32(),
                     catCountMax = reader.ReadInt32(),
+                    extraFields = ReadExtraFields(reader),
                 };
             }
 
@@ -486,6 +491,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 writer.Write(row.rarity);
                 writer.Write(row.weight);
                 writer.Write(row.price);
+                WriteExtraFields(writer, row.extraFields);
             }
         }
 
@@ -503,6 +509,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     rarity = reader.ReadInt32(),
                     weight = reader.ReadInt32(),
                     price = reader.ReadInt32(),
+                    extraFields = ReadExtraFields(reader),
                 };
             }
 
@@ -523,6 +530,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 writer.Write(row.countMax);
                 WriteIntArray(writer, row.rewardArray);
                 writer.Write(row.levelRewardFactor);
+                WriteExtraFields(writer, row.extraFields);
             }
         }
 
@@ -541,6 +549,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     countMax = reader.ReadInt32(),
                     rewardArray = ReadIntArray(reader),
                     levelRewardFactor = reader.ReadSingle(),
+                    extraFields = ReadExtraFields(reader),
                 };
             }
 
@@ -562,6 +571,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 WriteIntArray(writer, row.taskTypeWeights);
                 WriteStringArray(writer, row.mapIds);
                 WriteIntArray(writer, row.mapWeights);
+                WriteExtraFields(writer, row.extraFields);
             }
         }
 
@@ -583,6 +593,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     taskTypeWeights = ReadIntArray(reader),
                     mapIds = ReadStringArray(reader),
                     mapWeights = ReadIntArray(reader),
+                    extraFields = ReadExtraFields(reader),
                 };
             }
 
@@ -602,6 +613,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 WriteIntArray(writer, row.promotionLevelCaps);
                 WriteAgencyBuildingTableCostRows(writer, row.promotionUpgradeCosts);
                 WriteString(writer, row.notes);
+                WriteExtraFields(writer, row.extraFields);
             }
         }
 
@@ -619,6 +631,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     promotionLevelCaps = ReadIntArray(reader),
                     promotionUpgradeCosts = ReadAgencyBuildingTableCostRows(reader),
                     notes = ReadString(reader),
+                    extraFields = ReadExtraFields(reader),
                 };
             }
 
@@ -669,6 +682,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 writer.Write(row.mockEntryCount);
                 writer.Write(row.isEnabled);
                 WriteString(writer, row.notes);
+                WriteExtraFields(writer, row.extraFields);
             }
         }
 
@@ -701,10 +715,94 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     mockEntryCount = reader.ReadInt32(),
                     isEnabled = reader.ReadBoolean(),
                     notes = ReadString(reader),
+                    extraFields = ReadExtraFields(reader),
                 };
             }
 
             return rows;
+        }
+
+        private static void WriteGenericTables(BinaryWriter writer, HolmasGenericConfigTable[] tables)
+        {
+            tables = tables ?? Array.Empty<HolmasGenericConfigTable>();
+            writer.Write(tables.Length);
+            for (int i = 0; i < tables.Length; i++)
+            {
+                HolmasGenericConfigTable table = tables[i] ?? new HolmasGenericConfigTable();
+                WriteString(writer, table.tableName);
+                HolmasGenericConfigRow[] rows = table.rows ?? Array.Empty<HolmasGenericConfigRow>();
+                writer.Write(rows.Length);
+                for (int rowIndex = 0; rowIndex < rows.Length; rowIndex++)
+                {
+                    HolmasGenericConfigRow row = rows[rowIndex] ?? new HolmasGenericConfigRow();
+                    WriteExtraFields(writer, row.extraFields);
+                }
+            }
+        }
+
+        private static HolmasGenericConfigTable[] ReadGenericTablesOrDefault(BinaryReader reader)
+        {
+            if (reader == null || reader.BaseStream == null || reader.BaseStream.Position >= reader.BaseStream.Length)
+            {
+                return Array.Empty<HolmasGenericConfigTable>();
+            }
+
+            return ReadGenericTables(reader);
+        }
+
+        private static HolmasGenericConfigTable[] ReadGenericTables(BinaryReader reader)
+        {
+            int count = ReadNonNegativeCount(reader);
+            var tables = new HolmasGenericConfigTable[count];
+            for (int i = 0; i < count; i++)
+            {
+                string tableName = ReadString(reader);
+                int rowCount = ReadNonNegativeCount(reader);
+                var rows = new HolmasGenericConfigRow[rowCount];
+                for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
+                {
+                    rows[rowIndex] = new HolmasGenericConfigRow
+                    {
+                        extraFields = ReadExtraFields(reader),
+                    };
+                }
+
+                tables[i] = new HolmasGenericConfigTable
+                {
+                    tableName = tableName,
+                    rows = rows,
+                };
+            }
+
+            return tables;
+        }
+
+        private static void WriteExtraFields(BinaryWriter writer, HolmasExtraField[] fields)
+        {
+            fields = fields ?? Array.Empty<HolmasExtraField>();
+            writer.Write(fields.Length);
+            for (int i = 0; i < fields.Length; i++)
+            {
+                HolmasExtraField field = fields[i] ?? new HolmasExtraField();
+                WriteString(writer, field.key);
+                WriteString(writer, field.value);
+            }
+        }
+
+        private static HolmasExtraField[] ReadExtraFields(BinaryReader reader)
+        {
+            int count = ReadNonNegativeCount(reader);
+            var fields = new HolmasExtraField[count];
+            for (int i = 0; i < count; i++)
+            {
+                fields[i] = new HolmasExtraField
+                {
+                    key = ReadString(reader),
+                    value = ReadString(reader),
+                };
+            }
+
+            return fields;
         }
 
         private static void WriteString(BinaryWriter writer, string value)

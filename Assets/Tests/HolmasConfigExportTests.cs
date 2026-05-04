@@ -133,7 +133,7 @@ namespace Holmas.Tests
         public void HolmasConfigCatalogFactory_RejectsUnsupportedCoreJsonVersion()
         {
             string json = File.ReadAllText(Path.Combine(Application.dataPath, "Config", "json", "holmas_core_config.json")).TrimStart('\uFEFF');
-            json = json.Replace("\"Version\": 7", "\"Version\": 6");
+            json = json.Replace("\"Version\": 8", "\"Version\": 7");
 
             bool success = HolmasConfigBinaryCodec.TryReadCoreJson(json, out _, out string error);
 
@@ -325,6 +325,8 @@ namespace Holmas.Tests
             Assert.That(coreJson.Contains("\"Holmas_PlayerLevelTable\""), Is.True);
             Assert.That(coreJson.Contains("\"Holmas_AgencyBuildingTable\""), Is.True);
             Assert.That(coreJson.Contains("\"Holmas_LeaderboardTable\""), Is.True);
+            Assert.That(coreJson.Contains("\"Holmas_GenericTables\""), Is.True);
+            Assert.That(coreJson.Contains("\"extraFields\""), Is.True);
             Assert.That(catJson.Contains("\"Holmas_CatTable\""), Is.True);
             Assert.That(coreJson.Contains("\"AgencyBuildings\""), Is.False);
             Assert.That(coreJson.Contains("\"PlayerLevels\""), Is.False);
