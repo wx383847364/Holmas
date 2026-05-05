@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using UnityEngine;
+using HybridCLR;
 using App.Shared.Contracts;
 using App.AOT.Infrastructure.DI;
 using App.AOT.YooRuntimeAssets;
@@ -142,26 +143,7 @@ namespace App.AOT.HotUpdate
 
         private void LoadMetadataForAOTAssembly(byte[] metadataBytes, string location)
         {
-            Type runtimeApiType = Type.GetType("HybridCLR.RuntimeApi, HybridCLR.Runtime");
-            Type homologousImageModeType = Type.GetType("HybridCLR.HomologousImageMode, HybridCLR.Runtime");
-            if (runtimeApiType == null || homologousImageModeType == null)
-            {
-                throw new InvalidOperationException("HybridClrLoader: HybridCLR RuntimeApi 不可用，无法加载AOT metadata。");
-            }
-
-            MethodInfo method = runtimeApiType.GetMethod(
-                "LoadMetadataForAOTAssembly",
-                BindingFlags.Public | BindingFlags.Static,
-                null,
-                new[] { typeof(byte[]), homologousImageModeType },
-                null);
-            if (method == null)
-            {
-                throw new MissingMethodException("HybridCLR.RuntimeApi", "LoadMetadataForAOTAssembly");
-            }
-
-            object mode = Enum.Parse(homologousImageModeType, "SuperSet");
-            object result = method.Invoke(null, new[] { metadataBytes, mode });
+            LoadImageErrorCode result = RuntimeApi.LoadMetadataForAOTAssembly(metadataBytes, HomologousImageMode.SuperSet);
             _logger?.LogInfo("HybridClrLoader: AOT metadata加载完成。location={0}, result={1}", location, result);
         }
 

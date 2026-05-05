@@ -3,6 +3,7 @@
     "rootNamespace": "App.AOT",
     "references": [
         "App.Shared",
+        "HybridCLR.Runtime",
         "YooAsset"
     ],
     "includePlatforms": [],
