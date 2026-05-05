@@ -97,7 +97,7 @@ bash tools/validation/run_holmas_il2cpp_player_smoke.sh --build-target Standalon
 3. 构建 YooAssets `DefaultPackage` 到 `Assets/StreamingAssets/yoo/DefaultPackage`
 4. 给 player 构建追加 `HOLMAS_YOO_OFFLINE_PLAYMODE`
 5. 使用 IL2CPP 构建 standalone player
-6. 启动 player，并在日志里等待 `HybridClrLoader: HybridCLR热更代码加载完成` 或 `GameBootstrap: 初始化完成`
+6. 启动 player，并在日志里等待 `HolmasGameBootstrap: Holmas 业务骨架已启动`、`HotUpdateEntry: Holmas 业务骨架接线完成` 或 `GameBootstrap: 初始化完成`
 
 2026-04-30 本机尝试结果：
 
@@ -129,6 +129,18 @@ bash tools/validation/run_holmas_il2cpp_player_smoke.sh --build-target Standalon
 - `run_holmas_il2cpp_player_smoke.sh` 需要把 `HybridCLRData` 带入临时工程，否则临时工程会重新显示未初始化；脚本已改为不再排除 `HybridCLRData`，这些仍是本地临时构建产物，不提交。
 - `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_player_smoke_20260506_000122_ai_hybridclrdata` 已越过 Installer 检查、HotUpdate DLL 编译、link.xml 生成和 stripped AOT 前置流程；当前失败点为 Tuanjie StandaloneOSX IL2CPP player 模块缺失，日志报 `Currently selected scripting backend (IL2CPP) is not installed.` 日志：`/tmp/holmas_il2cpp_player_smoke_20260506_000122_ai_hybridclrdata_build.log`，临时工程保留在 `/private/tmp/holmas_il2cpp_player_smoke_smGPXO`。
 - 本机 `/Applications/Tuanjie/Hub/Editor/2022.3.62t2/Tuanjie.app/Contents/PlaybackEngines/MacStandaloneSupport/Variations` 仅发现 mono player 变体，未发现 StandaloneOSX IL2CPP player 变体。下一步需要通过 Tuanjie Hub 为当前编辑器安装 StandaloneOSX IL2CPP 支持，或改用已安装 IL2CPP 支持的目标平台继续 smoke。
+
+2026-05-06 StandaloneOSX IL2CPP 模块安装后复跑结果：
+
+- Tuanjie Hub 安装 `Mac Build Support (IL2CPP)` 后，当前编辑器已出现 StandaloneOSX IL2CPP player 变体：`macos_arm64_player_*_il2cpp`、`macos_x64_player_*_il2cpp`、`macos_x64arm64_player_*_il2cpp`。
+- 首轮 `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_player_smoke_20260506_004254` 已进入严格 HybridCLR/YooAssets 流程，但构建输出放在临时工程 `Library/` 下，被 Unity/Tuanjie 拒绝：`Invalid build path ... The 'Library' directory is an internal work directory of Unity`。脚本已改为把 player 输出到临时工程外侧，并在成功后清理。
+- 第二轮 `holmas_il2cpp_player_smoke_20260506_011243` 构建和 player 启动均成功，失败推进到真实运行时：`HybridCLR.RuntimeApi` 通过反射不可用，AOT metadata 无法加载。AOT 层已显式引用 `HybridCLR.Runtime` 并直接调用 `RuntimeApi.LoadMetadataForAOTAssembly(..., HomologousImageMode.SuperSet)`。
+- 第三轮 `holmas_il2cpp_player_smoke_20260506_012152` 已加载 11 个 AOT metadata、HotUpdate DLL，并调用 `HotUpdateEntry`；随后卡在 `HolmasGameBootstrap.Start()` 同步等待 YooAssets/档案异步流程。HotUpdate 入口已改为异步启动 `HolmasGameBootstrap.StartAsync()`，避免在 YooAssets 回调栈内阻塞主线程；player smoke 判定也改为等待 Holmas 业务骨架完成标记。
+- 最终 `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_player_smoke_20260506_013126` 已通过：日志显示 `YooAssetsRuntime` 初始化完成，11 个 AOT metadata 全部 `result=OK`，HotUpdate DLL 加载完成，`GameBootstrap: 初始化完成，进入热更层`，`HolmasGameBootstrap: Holmas 业务骨架已启动`，`HotUpdateEntry: Holmas 业务骨架接线完成`。日志：`/tmp/holmas_il2cpp_player_smoke_20260506_013126_player.log`。
+- Agent 6 复审指出 `HotUpdateEntry.Start` 若为 `async void` 会让 AOT `HybridClrLoader` 提前记录启动成功，且无法捕获 `HolmasGameBootstrap.StartAsync` 后续失败。已修正为 `StartAsync(IServiceContainer)` 返回 `Task`，AOT/Editor 反射路径优先调用并等待 `StartAsync`；`Start(IServiceContainer)` 仅保留为同步兼容包装。
+- 修正后复跑 `run_holmas_hotupdate_validation.sh --log-prefix holmas_hotupdate_validation_20260506_startasync_fix` 已通过；复跑 `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_player_smoke_20260506_startasync_fix` 已通过。player 日志顺序确认 `HolmasGameBootstrap: Holmas 业务骨架已启动` 和 `HotUpdateEntry: Holmas 业务骨架接线完成` 先于 `HybridClrLoader: HybridCLR热更代码加载完成`。日志：`/tmp/holmas_il2cpp_player_smoke_20260506_startasync_fix_player.log`。
+- 同轮热更专项 `run_holmas_hotupdate_validation.sh --log-prefix holmas_hotupdate_validation_20260506_013520` 已通过：YooAssets 本地包、HotUpdate DLL/metadata 验证和 BootstrapScene PlayMode/batchmode probe 全部通过。日志：`/tmp/holmas_hotupdate_validation_20260506_013520_yooassets_package.log`、`/tmp/holmas_hotupdate_validation_20260506_013520_playmode_probe.log`。
+- 当前最新本地链路结论：Editor/OfflinePlayMode 热更专项和 StandaloneOSX IL2CPP player smoke 均已跑通；下一阶段再推进远端 CDN manifest、微信真机启动链路和目标平台专属 AOT metadata 校验。
 
 ## 已知边界
 

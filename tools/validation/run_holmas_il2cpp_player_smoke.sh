@@ -287,7 +287,7 @@ PLAYER_PID=$!
 deadline=$((SECONDS + PLAYER_TIMEOUT_SECONDS))
 player_success=0
 while [[ ${SECONDS} -lt ${deadline} ]]; do
-    if [[ -f "${PLAYER_LOG}" ]] && rg -q "HybridClrLoader: HybridCLR热更代码加载完成|GameBootstrap: 初始化完成" "${PLAYER_LOG}"; then
+    if [[ -f "${PLAYER_LOG}" ]] && rg -q "HotUpdateEntry: Holmas 业务骨架接线完成|HolmasGameBootstrap: Holmas 业务骨架已启动|GameBootstrap: 初始化完成" "${PLAYER_LOG}"; then
         player_success=1
         break
     fi

@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using App.Shared.Contracts;
 using App.HotUpdate.Holmas.Bootstrap;
 
@@ -15,13 +17,25 @@ namespace App.HotUpdate.Entry
         /// </summary>
         public static void Start(IServiceContainer serviceContainer)
         {
+            StartAsync(serviceContainer).GetAwaiter().GetResult();
+        }
+
+        public static async Task StartAsync(IServiceContainer serviceContainer)
+        {
             var logger = serviceContainer?.Get<IAppLogger>();
-            logger?.LogInfo("HotUpdateEntry: 热更层启动，准备进入 Holmas 业务骨架。");
+            try
+            {
+                logger?.LogInfo("HotUpdateEntry: 热更层启动，准备进入 Holmas 业务骨架。");
 
-            // 这轮只先冻结 DTO 与业务骨架入口，不在这里直接实现地图、任务和 UI 细节。
-            HolmasGameBootstrap.Start(serviceContainer);
+                await HolmasGameBootstrap.StartAsync(serviceContainer);
 
-            logger?.LogInfo("HotUpdateEntry: Holmas 业务骨架接线完成。");
+                logger?.LogInfo("HotUpdateEntry: Holmas 业务骨架接线完成。");
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError("HotUpdateEntry: Holmas 业务骨架启动失败。{0}", ex);
+                throw;
+            }
         }
     }
 }

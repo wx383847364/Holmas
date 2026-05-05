@@ -56,7 +56,7 @@ namespace App.AOT.HotUpdate
 #if UNITY_EDITOR
                 // 编辑器模式：代码已经编译，直接调用入口
                 _logger?.LogInfo("HybridClrLoader: 编辑器模式 - 直接调用热更入口");
-                InvokeHotUpdateEntryEditor();
+                await InvokeHotUpdateEntryEditorAsync();
 #else
                 // 1. 加载AOT元数据补充文件
                 await LoadAOTMetadataAsync();
@@ -65,9 +65,8 @@ namespace App.AOT.HotUpdate
                 await LoadHotUpdateDllAsync();
 
                 // 3. 调用热更入口
-                InvokeHotUpdateEntry();
+                await InvokeHotUpdateEntryAsync();
 #endif
-                await Task.CompletedTask; // 保持异步签名
 
                 _logger?.LogInfo("HybridClrLoader: HybridCLR热更代码加载完成");
             }
@@ -147,7 +146,7 @@ namespace App.AOT.HotUpdate
             _logger?.LogInfo("HybridClrLoader: AOT metadata加载完成。location={0}, result={1}", location, result);
         }
 
-        private void InvokeHotUpdateEntry()
+        private async Task InvokeHotUpdateEntryAsync()
         {
             _logger?.LogInfo("HybridClrLoader: 调用热更入口...");
 
@@ -165,15 +164,13 @@ namespace App.AOT.HotUpdate
                     throw new Exception("未找到HotUpdateEntry类");
                 }
 
-                // 查找Start方法
-                var startMethod = entryType.GetMethod("Start", BindingFlags.Public | BindingFlags.Static);
+                var startMethod = FindHotUpdateEntryStartMethod(entryType);
                 if (startMethod == null)
                 {
-                    throw new Exception("未找到HotUpdateEntry.Start方法");
+                    throw new Exception("未找到HotUpdateEntry.StartAsync或Start方法");
                 }
 
-                // 调用Start方法，传入ServiceContainer
-                startMethod.Invoke(null, new object[] { _serviceContainer });
+                await InvokeHotUpdateEntryStartMethodAsync(startMethod);
 
                 _logger?.LogInfo("HybridClrLoader: 热更入口调用成功");
             }
@@ -188,7 +185,7 @@ namespace App.AOT.HotUpdate
         /// <summary>
         /// 编辑器模式下直接调用热更入口（代码已编译，无需加载 DLL）
         /// </summary>
-        private void InvokeHotUpdateEntryEditor()
+        private async Task InvokeHotUpdateEntryEditorAsync()
         {
             _logger?.LogInfo("HybridClrLoader: 编辑器模式调用热更入口...");
 
@@ -211,13 +208,13 @@ namespace App.AOT.HotUpdate
                     throw new Exception("未找到HotUpdateEntry类");
                 }
 
-                var startMethod = entryType.GetMethod("Start", BindingFlags.Public | BindingFlags.Static);
+                var startMethod = FindHotUpdateEntryStartMethod(entryType);
                 if (startMethod == null)
                 {
-                    throw new Exception("未找到HotUpdateEntry.Start方法");
+                    throw new Exception("未找到HotUpdateEntry.StartAsync或Start方法");
                 }
 
-                startMethod.Invoke(null, new object[] { _serviceContainer });
+                await InvokeHotUpdateEntryStartMethodAsync(startMethod);
 
                 _logger?.LogInfo("HybridClrLoader: 编辑器模式热更入口调用成功");
             }
@@ -228,6 +225,21 @@ namespace App.AOT.HotUpdate
             }
         }
 #endif
+
+        private MethodInfo FindHotUpdateEntryStartMethod(Type entryType)
+        {
+            return entryType.GetMethod("StartAsync", BindingFlags.Public | BindingFlags.Static)
+                   ?? entryType.GetMethod("Start", BindingFlags.Public | BindingFlags.Static);
+        }
+
+        private async Task InvokeHotUpdateEntryStartMethodAsync(MethodInfo startMethod)
+        {
+            object result = startMethod.Invoke(null, new object[] { _serviceContainer });
+            if (result is Task task)
+            {
+                await task;
+            }
+        }
 
         public void Shutdown()
         {

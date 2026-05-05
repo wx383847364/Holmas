@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Leaderboards;
 using App.HotUpdate.Holmas.Levels;
@@ -39,6 +40,11 @@ namespace App.HotUpdate.Holmas.Bootstrap
         /// </summary>
         public static void Start(IServiceContainer serviceContainer)
         {
+            StartAsync(serviceContainer).GetAwaiter().GetResult();
+        }
+
+        public static async Task StartAsync(IServiceContainer serviceContainer)
+        {
             if (serviceContainer == null)
             {
                 throw new ArgumentNullException(nameof(serviceContainer));
@@ -62,7 +68,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 throw new InvalidOperationException("HolmasGameBootstrap: 启动失败，AOT 提供的基础设施依赖不完整。");
             }
 
-            HolmasConfigCatalogBundle configBundle = TryLoadConfigBundle(assetsRuntime, logger);
+            HolmasConfigCatalogBundle configBundle = await TryLoadConfigBundleAsync(assetsRuntime, logger);
             if (configBundle == null)
             {
                 throw new InvalidOperationException("HolmasGameBootstrap: 未能加载正式导出配置，拒绝以错误成长协议启动。");
@@ -75,7 +81,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
             var clock = new HolmasSystemUtcClock();
             var archiveMapper = new HolmasPlayerArchiveMapper();
             var archiveGateway = new HolmasLocalMockServerGateway(persistence, logger, clock);
-            HolmasPlayerArchiveLoadResult archiveLoadResult = archiveGateway.LoadAsync().GetAwaiter().GetResult();
+            HolmasPlayerArchiveLoadResult archiveLoadResult = await archiveGateway.LoadAsync();
             bool archiveNeedsSave = false;
             if (!archiveLoadResult.Success)
             {
@@ -183,7 +189,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
 
             HolmasTutorialSuspendedSessionArchiveData suspendedSession = archiveLoadResult.Archive?.TutorialSuspendedSession;
             bool consumedSuspendedSession = suspendedSession != null;
-            if (TryRestoreTutorialSuspendedSession(
+            if (await TryRestoreTutorialSuspendedSessionAsync(
                     suspendedSession,
                     archiveMapper,
                     gameplayRuntime,
@@ -214,7 +220,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
                     }
                     else
                     {
-                        gameplayRuntime.RestoreLevelAsync(archiveLoadResult.Archive.CurrentLevel).GetAwaiter().GetResult();
+                        await gameplayRuntime.RestoreLevelAsync(archiveLoadResult.Archive.CurrentLevel);
                     }
                 }
                 catch (Exception ex)
@@ -228,7 +234,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
             if (archiveNeedsSave)
             {
                 archiveSyncService.MarkDirty("bootstrap_recover_default_archive");
-                archiveSyncService.FlushAsync().GetAwaiter().GetResult();
+                await archiveSyncService.FlushAsync();
             }
 
             HolmasUiBootstrap.EnsureCreated(Context, levelLaunchGateway);
@@ -237,12 +243,12 @@ namespace App.HotUpdate.Holmas.Bootstrap
             Context.Logger.LogInfo("HolmasGameBootstrap: Holmas 业务骨架已启动，城市宣传编排入口已就位。");
         }
 
-        private static HolmasConfigCatalogBundle TryLoadConfigBundle(IAssetsRuntime assetsRuntime, IAppLogger logger)
+        private static async Task<HolmasConfigCatalogBundle> TryLoadConfigBundleAsync(IAssetsRuntime assetsRuntime, IAppLogger logger)
         {
             try
             {
                 var loader = new HolmasConfigRuntimeLoader(assetsRuntime);
-                HolmasConfigLoadResult result = loader.LoadDefaultAsync().GetAwaiter().GetResult();
+                HolmasConfigLoadResult result = await loader.LoadDefaultAsync();
                 if (!result.Success || result.Bundle == null)
                 {
                     logger?.LogWarning(
@@ -297,7 +303,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 eventBus);
         }
 
-        private static bool TryRestoreTutorialSuspendedSession(
+        private static async Task<bool> TryRestoreTutorialSuspendedSessionAsync(
             HolmasTutorialSuspendedSessionArchiveData suspendedSession,
             HolmasPlayerArchiveMapper archiveMapper,
             HolmasGameplayRuntime gameplayRuntime,
@@ -328,7 +334,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
             try
             {
                 gameplayRuntime.RestoreTaskBarState(taskBarRestoreResult.State);
-                gameplayRuntime.RestoreLevelAsync(suspendedSession.CurrentLevel).GetAwaiter().GetResult();
+                await gameplayRuntime.RestoreLevelAsync(suspendedSession.CurrentLevel);
                 logger?.LogInfo("HolmasGameBootstrap: 已恢复教程前正式棋盘。mapId={0}", suspendedSession.CurrentLevel.MapId);
                 return true;
             }
