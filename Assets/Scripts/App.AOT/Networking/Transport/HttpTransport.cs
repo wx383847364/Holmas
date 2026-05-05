@@ -13,10 +13,15 @@ namespace App.AOT.Networking.Transport
     public class HttpTransport : ITransport
     {
         private bool _isConnected;
+        private Action<byte[]> _onWebSocketMessage;
 
         public bool IsConnected => _isConnected;
         public event Action<bool> OnConnectionChanged;
-        public event Action<byte[]> OnWebSocketMessage;
+        public event Action<byte[]> OnWebSocketMessage
+        {
+            add => _onWebSocketMessage += value;
+            remove => _onWebSocketMessage -= value;
+        }
 
         public void Initialize()
         {
@@ -111,6 +116,11 @@ namespace App.AOT.Networking.Transport
         {
             // HTTP传输不支持WebSocket
             return Task.FromResult(false);
+        }
+
+        private void NotifyWebSocketMessage(byte[] data)
+        {
+            _onWebSocketMessage?.Invoke(data);
         }
     }
 }

@@ -17,7 +17,9 @@ namespace App.AOT.YooRuntimeAssets
         private readonly IAppLogger _logger;
         private ResourcePackage _defaultPackage;
         private PatchOperationHandler _patchHandler;
+#if UNITY_EDITOR
         private bool _isEditorMode;
+#endif
 
         // CDN地址配置
         private const string DefaultHostServer = "https://your-cdn-url.com/bundles";
@@ -31,18 +33,33 @@ namespace App.AOT.YooRuntimeAssets
         /// <summary>
         /// 初始化YooAssets
         /// </summary>
-        public async Task InitializeAsync()
+        public Task InitializeAsync()
+        {
+#if UNITY_EDITOR
+            try
+            {
+                _logger?.LogInfo("YooAssetsRuntime: 开始初始化YooAssets...");
+                _isEditorMode = true;
+                _logger?.LogInfo("YooAssetsRuntime: 编辑器模式 - 使用 AssetDatabase 直接加载");
+                _logger?.LogInfo("YooAssetsRuntime: YooAssets初始化完成");
+                return Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError("YooAssetsRuntime: 初始化失败: {0}", ex);
+                throw;
+            }
+#else
+            return InitializePlayerAsync();
+#endif
+        }
+
+#if !UNITY_EDITOR
+        private async Task InitializePlayerAsync()
         {
             try
             {
                 _logger?.LogInfo("YooAssetsRuntime: 开始初始化YooAssets...");
-
-#if UNITY_EDITOR
-                // 编辑器模式：标记为编辑器模式，使用 AssetDatabase 直接加载
-                _isEditorMode = true;
-                _logger?.LogInfo("YooAssetsRuntime: 编辑器模式 - 使用 AssetDatabase 直接加载");
-#else
-                _isEditorMode = false;
 
                 // 初始化YooAssets
                 YooAssets.Initialize();
@@ -98,7 +115,6 @@ namespace App.AOT.YooRuntimeAssets
 
                 // 初始化补丁处理器
                 _patchHandler = new PatchOperationHandler(_defaultPackage, _logger);
-#endif
 
                 _logger?.LogInfo("YooAssetsRuntime: YooAssets初始化完成");
             }
@@ -108,6 +124,7 @@ namespace App.AOT.YooRuntimeAssets
                 throw;
             }
         }
+#endif
 
         /// <summary>
         /// 远程资源服务
