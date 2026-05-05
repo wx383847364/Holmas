@@ -8,6 +8,7 @@ PROJECT_VERSION_FILE="${REPO_ROOT}/ProjectSettings/ProjectVersion.txt"
 
 EDITOR_PATH="${TUANJIE_EDITOR_PATH:-}"
 TEMP_PROJECT_DIR=""
+PLAYER_OUTPUT_ROOT=""
 KEEP_TEMP_ON_SUCCESS=0
 BUILD_ONLY=0
 BUILD_TARGET=""
@@ -87,6 +88,11 @@ cleanup_temp_project() {
         rm -rf "${TEMP_PROJECT_DIR}"
         log "验证通过，已删除临时工程：${TEMP_PROJECT_DIR}"
     fi
+
+    if [[ -n "${PLAYER_OUTPUT_ROOT}" && -d "${PLAYER_OUTPUT_ROOT}" ]]; then
+        rm -rf "${PLAYER_OUTPUT_ROOT}"
+        log "验证通过，已删除临时 Player 输出：${PLAYER_OUTPUT_ROOT}"
+    fi
 }
 
 on_exit() {
@@ -157,7 +163,8 @@ BUILD_LOG="${LOG_DIR}/${LOG_PREFIX}_build.log"
 PLAYER_LOG="${LOG_DIR}/${LOG_PREFIX}_player.log"
 REQUEST_PATH="${TEMP_PROJECT_DIR}/Library/holmas_il2cpp_player_smoke_request.json"
 RESULT_PATH="${TEMP_PROJECT_DIR}/Library/holmas_il2cpp_player_smoke_result.json"
-PLAYER_OUTPUT_DIR="${TEMP_PROJECT_DIR}/Library/HolmasIl2CppPlayerSmoke/Player"
+PLAYER_OUTPUT_ROOT="${TEMP_PROJECT_DIR}_player"
+PLAYER_OUTPUT_DIR="${PLAYER_OUTPUT_ROOT}/Player"
 BATCHMODE_TIMEOUT_SECONDS="${HOLMAS_IL2CPP_SMOKE_BUILD_TIMEOUT_SECONDS:-2400}"
 PLAYER_TIMEOUT_SECONDS="${HOLMAS_IL2CPP_SMOKE_PLAYER_TIMEOUT_SECONDS:-90}"
 

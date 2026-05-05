@@ -145,7 +145,7 @@ public static class HolmasIl2CppPlayerSmoke
     private static string GetLocationPathName(string outputDirectory, BuildTarget target)
     {
         string root = string.IsNullOrWhiteSpace(outputDirectory)
-            ? "Library/HolmasIl2CppPlayerSmoke/Player"
+            ? Path.Combine(Path.GetTempPath(), "HolmasIl2CppPlayerSmoke", "Player")
             : outputDirectory;
         string fullRoot = Path.GetFullPath(root);
 
@@ -178,7 +178,7 @@ public static class HolmasIl2CppPlayerSmoke
     private sealed class SmokeRequest
     {
         public string BuildTargetName = string.Empty;
-        public string OutputDirectory = "Library/HolmasIl2CppPlayerSmoke/Player";
+        public string OutputDirectory = "";
     }
 
     [Serializable]

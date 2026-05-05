@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Holmas Font Preview</title>
+  <style>
+    @font-face {
+      font-family: "Holmas Noto Sans SC";
+      src: url("../../Assets/Res/Font/NotoSansSC.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Holmas LXGW Marker Gothic";
+      src: url("../../Assets/Res/Font/LXGWMarkerGothic-Regular.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Holmas Resource Han Rounded";
+      src: url("../../Assets/Res/Font/ResourceHanRoundedCN-Regular.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Holmas Smiley Sans";
+      src: url("../../Assets/Res/Font/SmileySans-Oblique.ttf") format("truetype");
+    }
+
+    @font-face {
+      font-family: "Holmas ZCOOL KuaiLe";
+      src: url("../../Assets/Res/Font/ZCOOLKuaiLe-Regular.ttf") format("truetype");
+    }
+
+    :root {
+      color: #34505a;
+      background: #e9f7f3;
+      font-family: "Holmas Noto Sans SC", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 28px;
+      min-height: 100vh;
+      background:
+        linear-gradient(120deg, rgba(255, 247, 196, 0.75), transparent 38%),
+        linear-gradient(210deg, rgba(255, 207, 218, 0.7), transparent 42%),
+        #e9f7f3;
+    }
+
+    header {
+      max-width: 1160px;
+      margin: 0 auto 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #24434d;
+      font: 700 28px/1.25 "Holmas LXGW Marker Gothic", "Holmas Noto Sans SC", sans-serif;
+    }
+
+    .note {
+      margin: 0;
+      max-width: 860px;
+      color: #5d747b;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+
+    .phone {
+      min-height: 640px;
+      padding: 16px;
+      border: 1px solid rgba(96, 135, 137, 0.35);
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(247, 255, 252, 0.9)),
+        #f8fffb;
+      box-shadow: 0 16px 34px rgba(72, 104, 110, 0.16);
+      overflow: hidden;
+    }
+
+    .font-name {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 0 2px;
+    }
+
+    .font-name strong {
+      color: #243f48;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .font-name span {
+      color: #789098;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .screen {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 580px;
+      padding: 16px;
+      border: 1px solid rgba(177, 218, 211, 0.9);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(238, 255, 249, 0.95), rgba(255, 250, 236, 0.85)),
+        #f7fffb;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      background: #fff7dd;
+      border: 2px solid #f4cd74;
+      color: #4d6971;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .pill {
+      min-width: 0;
+      padding: 7px 10px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid rgba(113, 170, 166, 0.45);
+      color: #36545b;
+      font-size: 15px;
+      line-height: 1.2;
+      box-shadow: inset 0 -2px 0 rgba(170, 226, 219, 0.5);
+    }
+
+    .hero {
+      margin-bottom: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(255, 231, 142, 0.8), rgba(255, 186, 202, 0.7)),
+        #ffe6bf;
+      border: 1px solid rgba(236, 169, 91, 0.34);
+    }
+
+    .hero h2 {
+      margin: 0 0 8px;
+      color: #5b4a24;
+      font-size: 31px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #5e614a;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      color: #395962;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .tasks {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .task {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      min-height: 68px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid rgba(125, 178, 169, 0.38);
+    }
+
+    .task-icon {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: #edf8ff;
+      color: #2879a6;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .task-title {
+      color: #314e58;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .task-sub {
+      margin-top: 3px;
+      color: #788d92;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .reward {
+      padding: 6px 8px;
+      min-width: 52px;
+      border-radius: 12px;
+      background: #fff3c0;
+      color: #7b5c08;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1;
+      border: 1px solid rgba(229, 184, 71, 0.55);
+    }
+
+    .collection {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .item {
+      min-height: 86px;
+      padding: 9px 6px;
+      border-radius: 15px;
+      background: #fff;
+      border: 1px solid rgba(137, 187, 181, 0.38);
+      text-align: center;
+    }
+
+    .badge {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      margin: 0 auto 6px;
+      border-radius: 14px;
+      background: #fce7ef;
+      color: #b75a78;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .item-name {
+      color: #426069;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .progress {
+      margin-top: 4px;
+      color: #87999e;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .button {
+      display: grid;
+      place-items: center;
+      min-height: 48px;
+      padding: 8px 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(74, 139, 135, 0.28);
+      color: #31535c;
+      font-size: 18px;
+      line-height: 1.15;
+      text-align: center;
+      background: #bff0e6;
+      box-shadow: inset 0 -4px 0 rgba(78, 171, 160, 0.2);
+    }
+
+    .button.secondary {
+      background: #ffd7e0;
+      color: #6b3f51;
+      box-shadow: inset 0 -4px 0 rgba(213, 113, 142, 0.18);
+    }
+
+    .noto {
+      font-family: "Holmas Noto Sans SC", sans-serif;
+    }
+
+    .lxgw {
+      font-family: "Holmas LXGW Marker Gothic", "Holmas Noto Sans SC", sans-serif;
+    }
+
+    .rounded {
+      font-family: "Holmas Resource Han Rounded", "Holmas Noto Sans SC", sans-serif;
+    }
+
+    .smiley {
+      font-family: "Holmas Smiley Sans", "Holmas Noto Sans SC", sans-serif;
+    }
+
+    .zcool {
+      font-family: "Holmas ZCOOL KuaiLe", "Holmas Noto Sans SC", sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Holmas 字体整体风格预览</h1>
+    <p class="note">同一套找猫、任务栏、收藏品和按钮样例，分别套用已下载字体。正式接入 Unity 时建议只用一款作为主 UI 字体，标题或活动少量使用装饰字体，微信小游戏首包再做字体子集化。</p>
+  </header>
+
+  <main class="grid">
+    <article class="phone noto">
+      <div class="font-name"><strong>Noto Sans SC</strong><span>稳妥正文</span></div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="avatar">Lv</div>
+          <div class="stats">
+            <div class="pill">金币 12,389</div>
+            <div class="pill">体力 82/100</div>
+          </div>
+        </div>
+        <section class="hero">
+          <h2>游园竹舍</h2>
+          <p>侦探社今日委托已刷新，找到目标猫咪即可领取奖励。</p>
+        </section>
+        <section>
+          <h3 class="section-title">今日任务</h3>
+          <div class="tasks">
+            <div class="task"><div class="task-icon">猫</div><div><div class="task-title">寻找布偶猫 2/3</div><div class="task-sub">完成后自动领奖并补入新任务</div></div><div class="reward">+260</div></div>
+            <div class="task"><div class="task-icon">图</div><div><div class="task-title">解锁城市纪念物碎片</div><div class="task-sub">收集 12/30 后可加入图鉴</div></div><div class="reward">碎片</div></div>
+          </div>
+        </section>
+        <section>
+          <h3 class="section-title">收藏品</h3>
+          <div class="collection"><div class="item"><div class="badge">竹</div><div class="item-name">竹影铃铛</div><div class="progress">18/30</div></div><div class="item"><div class="badge">星</div><div class="item-name">星光徽章</div><div class="progress">已解锁</div></div><div class="item"><div class="badge">礼</div><div class="item-name">节日邮票</div><div class="progress">6/20</div></div></div>
+        </section>
+        <div class="actions"><div class="button">开始找猫</div><div class="button secondary">查看图鉴</div></div>
+      </div>
+    </article>
+
+    <article class="phone lxgw">
+      <div class="font-name"><strong>霞鹜漫黑</strong><span>首推主 UI</span></div>
+      <div class="screen">
+        <div class="topbar"><div class="avatar">Lv</div><div class="stats"><div class="pill">金币 12,389</div><div class="pill">体力 82/100</div></div></div>
+        <section class="hero"><h2>游园竹舍</h2><p>侦探社今日委托已刷新，找到目标猫咪即可领取奖励。</p></section>
+        <section><h3 class="section-title">今日任务</h3><div class="tasks"><div class="task"><div class="task-icon">猫</div><div><div class="task-title">寻找布偶猫 2/3</div><div class="task-sub">完成后自动领奖并补入新任务</div></div><div class="reward">+260</div></div><div class="task"><div class="task-icon">图</div><div><div class="task-title">解锁城市纪念物碎片</div><div class="task-sub">收集 12/30 后可加入图鉴</div></div><div class="reward">碎片</div></div></div></section>
+        <section><h3 class="section-title">收藏品</h3><div class="collection"><div class="item"><div class="badge">竹</div><div class="item-name">竹影铃铛</div><div class="progress">18/30</div></div><div class="item"><div class="badge">星</div><div class="item-name">星光徽章</div><div class="progress">已解锁</div></div><div class="item"><div class="badge">礼</div><div class="item-name">节日邮票</div><div class="progress">6/20</div></div></div></section>
+        <div class="actions"><div class="button">开始找猫</div><div class="button secondary">查看图鉴</div></div>
+      </div>
+    </article>
+
+    <article class="phone rounded">
+      <div class="font-name"><strong>Resource Han Rounded</strong><span>圆润稳重</span></div>
+      <div class="screen">
+        <div class="topbar"><div class="avatar">Lv</div><div class="stats"><div class="pill">金币 12,389</div><div class="pill">体力 82/100</div></div></div>
+        <section class="hero"><h2>游园竹舍</h2><p>侦探社今日委托已刷新，找到目标猫咪即可领取奖励。</p></section>
+        <section><h3 class="section-title">今日任务</h3><div class="tasks"><div class="task"><div class="task-icon">猫</div><div><div class="task-title">寻找布偶猫 2/3</div><div class="task-sub">完成后自动领奖并补入新任务</div></div><div class="reward">+260</div></div><div class="task"><div class="task-icon">图</div><div><div class="task-title">解锁城市纪念物碎片</div><div class="task-sub">收集 12/30 后可加入图鉴</div></div><div class="reward">碎片</div></div></div></section>
+        <section><h3 class="section-title">收藏品</h3><div class="collection"><div class="item"><div class="badge">竹</div><div class="item-name">竹影铃铛</div><div class="progress">18/30</div></div><div class="item"><div class="badge">星</div><div class="item-name">星光徽章</div><div class="progress">已解锁</div></div><div class="item"><div class="badge">礼</div><div class="item-name">节日邮票</div><div class="progress">6/20</div></div></div></section>
+        <div class="actions"><div class="button">开始找猫</div><div class="button secondary">查看图鉴</div></div>
+      </div>
+    </article>
+
+    <article class="phone smiley">
+      <div class="font-name"><strong>得意黑</strong><span>标题点缀</span></div>
+      <div class="screen">
+        <div class="topbar"><div class="avatar">Lv</div><div class="stats"><div class="pill">金币 12,389</div><div class="pill">体力 82/100</div></div></div>
+        <section class="hero"><h2>游园竹舍</h2><p>侦探社今日委托已刷新，找到目标猫咪即可领取奖励。</p></section>
+        <section><h3 class="section-title">今日任务</h3><div class="tasks"><div class="task"><div class="task-icon">猫</div><div><div class="task-title">寻找布偶猫 2/3</div><div class="task-sub">完成后自动领奖并补入新任务</div></div><div class="reward">+260</div></div><div class="task"><div class="task-icon">图</div><div><div class="task-title">解锁城市纪念物碎片</div><div class="task-sub">收集 12/30 后可加入图鉴</div></div><div class="reward">碎片</div></div></div></section>
+        <section><h3 class="section-title">收藏品</h3><div class="collection"><div class="item"><div class="badge">竹</div><div class="item-name">竹影铃铛</div><div class="progress">18/30</div></div><div class="item"><div class="badge">星</div><div class="item-name">星光徽章</div><div class="progress">已解锁</div></div><div class="item"><div class="badge">礼</div><div class="item-name">节日邮票</div><div class="progress">6/20</div></div></div></section>
+        <div class="actions"><div class="button">开始找猫</div><div class="button secondary">查看图鉴</div></div>
+      </div>
+    </article>
+
+    <article class="phone zcool">
+      <div class="font-name"><strong>站酷快乐体</strong><span>活动装饰</span></div>
+      <div class="screen">
+        <div class="topbar"><div class="avatar">Lv</div><div class="stats"><div class="pill">金币 12,389</div><div class="pill">体力 82/100</div></div></div>
+        <section class="hero"><h2>游园竹舍</h2><p>侦探社今日委托已刷新，找到目标猫咪即可领取奖励。</p></section>
+        <section><h3 class="section-title">今日任务</h3><div class="tasks"><div class="task"><div class="task-icon">猫</div><div><div class="task-title">寻找布偶猫 2/3</div><div class="task-sub">完成后自动领奖并补入新任务</div></div><div class="reward">+260</div></div><div class="task"><div class="task-icon">图</div><div><div class="task-title">解锁城市纪念物碎片</div><div class="task-sub">收集 12/30 后可加入图鉴</div></div><div class="reward">碎片</div></div></div></section>
+        <section><h3 class="section-title">收藏品</h3><div class="collection"><div class="item"><div class="badge">竹</div><div class="item-name">竹影铃铛</div><div class="progress">18/30</div></div><div class="item"><div class="badge">星</div><div class="item-name">星光徽章</div><div class="progress">已解锁</div></div><div class="item"><div class="badge">礼</div><div class="item-name">节日邮票</div><div class="progress">6/20</div></div></div></section>
+        <div class="actions"><div class="button">开始找猫</div><div class="button secondary">查看图鉴</div></div>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

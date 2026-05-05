@@ -12,7 +12,7 @@ namespace App.HotUpdate.Holmas.UI.Core
     /// </summary>
     public static class RuntimeTmpFontResolver
     {
-        public const string ProjectChineseFontAssetPath = "Assets/HotUpdateContent/Res/Fonts/NotoSansSC.ttf";
+        public const string ProjectChineseFontAssetPath = "Assets/Res/Font/NotoSansSC.ttf";
 
         // 只有项目内字体资源缺失时，才尝试这些系统字体作为开发机临时兜底。
         private static readonly string[] PreferredChineseFontNames =
@@ -38,6 +38,13 @@ namespace App.HotUpdate.Holmas.UI.Core
         private static bool _loggedSystemFallbackWarning;
         private static TMP_FontAsset _projectChineseTmpFontAsset;
         private static TMP_FontAsset _systemFallbackTmpFontAsset;
+        private static HolmasFontRuntimeSettings _runtimeSettings;
+
+        public static void SetRuntimeSettings(HolmasFontRuntimeSettings settings)
+        {
+            _runtimeSettings = settings;
+            _projectChineseTmpFontAsset = null;
+        }
 
         public static void SetProjectChineseFont(Font font)
         {
@@ -121,6 +128,12 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private static Font GetProjectChineseFont()
         {
+            Font runtimeFont = _runtimeSettings != null ? _runtimeSettings.ResolvePreferredProjectFont() : null;
+            if (runtimeFont != null)
+            {
+                return runtimeFont;
+            }
+
             if (_projectChineseFont != null)
             {
                 return _projectChineseFont;
