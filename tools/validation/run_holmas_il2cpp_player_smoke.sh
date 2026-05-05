@@ -170,7 +170,6 @@ rsync -a --delete \
     --exclude 'Temp' \
     --exclude 'Logs' \
     --exclude 'obj' \
-    --exclude 'HybridCLRData' \
     --exclude 'Assets/StreamingAssets' \
     --exclude '.DS_Store' \
     "${REPO_ROOT}/" "${TEMP_PROJECT_DIR}/"

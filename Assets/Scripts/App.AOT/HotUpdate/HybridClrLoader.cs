@@ -23,6 +23,10 @@ namespace App.AOT.HotUpdate
             "Assets/HotUpdateContent/Res/HotUpdate/Metadata/System.Core.dll.bytes",
             "Assets/HotUpdateContent/Res/HotUpdate/Metadata/UnityEngine.CoreModule.dll.bytes",
             "Assets/HotUpdateContent/Res/HotUpdate/Metadata/UnityEngine.UI.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/UnityEngine.UIModule.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/UnityEngine.TextRenderingModule.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/UnityEngine.JSONSerializeModule.dll.bytes",
+            "Assets/HotUpdateContent/Res/HotUpdate/Metadata/UnityEngine.InputLegacyModule.dll.bytes",
             "Assets/HotUpdateContent/Res/HotUpdate/Metadata/Unity.TextMeshPro.dll.bytes",
             "Assets/HotUpdateContent/Res/HotUpdate/Metadata/App.Shared.dll.bytes",
         };

@@ -28,6 +28,10 @@ public static class HolmasHybridClrBuildPipeline
         "System.Core",
         "UnityEngine.CoreModule",
         "UnityEngine.UI",
+        "UnityEngine.UIModule",
+        "UnityEngine.TextRenderingModule",
+        "UnityEngine.JSONSerializeModule",
+        "UnityEngine.InputLegacyModule",
         "Unity.TextMeshPro",
         "App.Shared",
     };
@@ -135,6 +139,7 @@ public static class HolmasHybridClrBuildPipeline
 
         package.Groups.Add(CreateGroup("HotUpdateConfig", "Assets/HotUpdateContent/Config"));
         package.Groups.Add(CreateGroup("HotUpdateRes", "Assets/HotUpdateContent/Res"));
+        package.Groups.Add(CreateGroup("SharedFontRes", "Assets/Res/Font"));
         setting.Packages.Add(package);
 
         AssetBundleCollectorSettingData.SaveFile();
