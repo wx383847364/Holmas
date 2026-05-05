@@ -44,6 +44,13 @@ namespace App.HotUpdate.Holmas.UI.Generated
                 MainBindings.ButtonClickEvent,
                 requiresManualWiring: true,
                 notes: "controller_wires_gm");
+            manifest.AddEntry(
+                MainBindings.LeaderboardButtonKey,
+                "Button",
+                MainBindings.LeaderboardButtonNodePath,
+                MainBindings.ButtonClickEvent,
+                requiresManualWiring: true,
+                notes: "controller_wires_leaderboard");
             manifest.AddEntry(MainBindings.MinesGroupKey, "RectTransform", MainBindings.MinesGroupNodePath, notes: "embedded_board_parent");
             manifest.AddEntry(MainBindings.BoardContainerKey, "RectTransform", MainBindings.BoardContainerNodePath, notes: "embedded_runtime_board");
             manifest.AddEntry(MainBindings.TutorialBoardContainerKey, "RectTransform", MainBindings.TutorialBoardContainerNodePath, notes: "tutorial_board_overlay");

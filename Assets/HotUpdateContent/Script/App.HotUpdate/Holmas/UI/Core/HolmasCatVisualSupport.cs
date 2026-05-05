@@ -66,6 +66,8 @@ namespace App.HotUpdate.Holmas.UI.Core
         private readonly Dictionary<string, Task<Sprite>> _loadingTasks =
             new Dictionary<string, Task<Sprite>>(StringComparer.Ordinal);
         private IAssetsRuntime _assetsRuntime;
+        private int _requestGeneration;
+        private bool _disposed;
 
         public HolmasCatSpriteLoader(IAssetsRuntime assetsRuntime)
         {
@@ -79,6 +81,8 @@ namespace App.HotUpdate.Holmas.UI.Core
                 return;
             }
 
+            _requestGeneration++;
+            _disposed = false;
             DisposeCachedHandles();
             _assetsRuntime = assetsRuntime;
         }
@@ -92,7 +96,8 @@ namespace App.HotUpdate.Holmas.UI.Core
 
             string catId = visual != null ? visual.CatId : string.Empty;
             string iconPath = visual != null ? visual.IconPath : string.Empty;
-            string requestKey = $"{catId}|{iconPath}|{dimmed}";
+            int generation = _requestGeneration;
+            string requestKey = $"{generation}|{catId}|{iconPath}|{dimmed}";
             HolmasCatImageRequest request = image.GetComponent<HolmasCatImageRequest>() ?? image.gameObject.AddComponent<HolmasCatImageRequest>();
             request.RequestKey = requestKey;
             image.enabled = true;
@@ -104,12 +109,12 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
 
             ApplyFallback(image, catId, dimmed);
-            if (string.IsNullOrWhiteSpace(iconPath) || _assetsRuntime == null)
+            if (string.IsNullOrWhiteSpace(iconPath) || _assetsRuntime == null || _disposed)
             {
                 return;
             }
 
-            _ = LoadAndApplyAsync(image, request, requestKey, iconPath, catId, dimmed);
+            _ = LoadAndApplyAsync(image, request, requestKey, iconPath, catId, dimmed, generation);
         }
 
         public void Clear(Image image)
@@ -123,12 +128,29 @@ namespace App.HotUpdate.Holmas.UI.Core
             image.enabled = false;
             image.color = Color.white;
             image.preserveAspect = true;
+            InvalidateRequest(image);
         }
 
         public void Dispose()
         {
+            _requestGeneration++;
+            _disposed = true;
             DisposeCachedHandles();
             _assetsRuntime = null;
+        }
+
+        public void InvalidateRequest(Image image)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            HolmasCatImageRequest request = image.GetComponent<HolmasCatImageRequest>();
+            if (request != null)
+            {
+                request.RequestKey = "invalid|" + _requestGeneration;
+            }
         }
 
         private bool TryGetLoadedSprite(string iconPath, out Sprite sprite)
@@ -154,10 +176,24 @@ namespace App.HotUpdate.Holmas.UI.Core
             string requestKey,
             string iconPath,
             string catId,
-            bool dimmed)
+            bool dimmed,
+            int generation)
         {
-            Sprite sprite = await GetOrLoadSpriteAsync(iconPath);
-            if (image == null || request == null || request.RequestKey != requestKey)
+            Sprite sprite;
+            try
+            {
+                sprite = await GetOrLoadSpriteAsync(iconPath, generation);
+            }
+            catch (Exception)
+            {
+                sprite = null;
+            }
+
+            if (image == null ||
+                request == null ||
+                request.RequestKey != requestKey ||
+                generation != _requestGeneration ||
+                _disposed)
             {
                 return;
             }
@@ -171,36 +207,44 @@ namespace App.HotUpdate.Holmas.UI.Core
             ApplyFallback(image, catId, dimmed);
         }
 
-        private Task<Sprite> GetOrLoadSpriteAsync(string iconPath)
+        private Task<Sprite> GetOrLoadSpriteAsync(string iconPath, int generation)
         {
             if (TryGetLoadedSprite(iconPath, out Sprite sprite))
             {
                 return Task.FromResult(sprite);
             }
 
-            if (_loadingTasks.TryGetValue(iconPath, out Task<Sprite> existingTask))
+            string taskKey = generation + "|" + iconPath;
+            if (_loadingTasks.TryGetValue(taskKey, out Task<Sprite> existingTask))
             {
                 return existingTask;
             }
 
-            Task<Sprite> loadTask = LoadSpriteAsync(iconPath);
-            _loadingTasks[iconPath] = loadTask;
+            Task<Sprite> loadTask = LoadSpriteAsync(iconPath, generation, taskKey);
+            _loadingTasks[taskKey] = loadTask;
             return loadTask;
         }
 
-        private async Task<Sprite> LoadSpriteAsync(string iconPath)
+        private async Task<Sprite> LoadSpriteAsync(string iconPath, int generation, string taskKey)
         {
             try
             {
-                if (_assetsRuntime == null || string.IsNullOrWhiteSpace(iconPath))
+                IAssetsRuntime assetsRuntime = _assetsRuntime;
+                if (assetsRuntime == null || string.IsNullOrWhiteSpace(iconPath) || generation != _requestGeneration || _disposed)
                 {
                     return null;
                 }
 
-                IAssetHandle handle = await _assetsRuntime.LoadAssetAsync(iconPath);
+                IAssetHandle handle = await assetsRuntime.LoadAssetAsync(iconPath);
                 if (handle == null || handle.AssetObject == null)
                 {
                     handle?.Release();
+                    return null;
+                }
+
+                if (generation != _requestGeneration || _disposed)
+                {
+                    handle.Release();
                     return null;
                 }
 
@@ -221,7 +265,7 @@ namespace App.HotUpdate.Holmas.UI.Core
             }
             finally
             {
-                _loadingTasks.Remove(iconPath);
+                _loadingTasks.Remove(taskKey);
             }
         }
 

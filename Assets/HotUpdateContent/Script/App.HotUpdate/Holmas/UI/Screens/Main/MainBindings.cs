@@ -17,6 +17,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string AddEnergyButtonKey = "main/add_energy_button";
         public const string HelpButtonKey = "main/help_button";
         public const string GmButtonKey = "main/gm_button";
+        public const string LeaderboardButtonKey = "main/leaderboard_button";
         public const string TutorialStepInputKey = "main/tutorial_step_input";
         public const string MinesGroupKey = "main/mines_group";
         public const string BoardContainerKey = "main/board_container";
@@ -42,6 +43,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public const string AddEnergyButtonNodePath = RuntimeOverlayNodePath + "/AddEnergyButton";
         public const string HelpButtonNodePath = TopToolsNodePath + "/HelpButton";
         public const string GmButtonNodePath = TopToolsNodePath + "/GmButton";
+        public const string LeaderboardButtonNodePath = RootNodePath + "/BackgroundImage/Leaderboard_btn";
         public const string TutorialStepInputNodePath = RuntimeOverlayNodePath + "/TutorialStepInput";
         public const string MinesGroupNodePath = "MainPanel/MinesGroup";
         public const string BoardContainerNodePath = MinesGroupNodePath + "/BoardContainer";
@@ -59,6 +61,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public Button AddEnergyButton;
         public Button HelpButton;
         public Button GmButton;
+        public Button LeaderboardButton;
         public TMP_InputField TutorialStepInput;
         public RectTransform MinesGroup;
         public RectTransform BoardContainer;
@@ -74,6 +77,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             PromotionButton != null &&
             HelpButton != null &&
             GmButton != null &&
+            LeaderboardButton != null &&
             MinesGroup != null &&
             BoardContainer != null &&
             TutorialBoardContainer != null &&
@@ -94,6 +98,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                    resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(HelpButtonKey, ButtonClickEvent, HelpButtonNodePath) &&
                    resolver.HasExplicitBinding<Button>(GmButtonKey, ButtonClickEvent, GmButtonNodePath) &&
+                   resolver.HasExplicitBinding<Button>(LeaderboardButtonKey, ButtonClickEvent, LeaderboardButtonNodePath) &&
                    resolver.HasExplicitBinding<RectTransform>(MinesGroupKey, nodePath: MinesGroupNodePath) &&
                    resolver.HasExplicitBinding<RectTransform>(BoardContainerKey, nodePath: BoardContainerNodePath) &&
                    resolver.HasExplicitBinding<RectTransform>(TutorialBoardContainerKey, nodePath: TutorialBoardContainerNodePath) &&
@@ -118,6 +123,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             resolver.TryResolve(AddEnergyButtonKey, out bindings.AddEnergyButton, ButtonClickEvent, AddEnergyButtonNodePath);
             resolver.TryResolve(HelpButtonKey, out bindings.HelpButton, ButtonClickEvent, HelpButtonNodePath);
             resolver.TryResolve(GmButtonKey, out bindings.GmButton, ButtonClickEvent, GmButtonNodePath);
+            resolver.TryResolve(LeaderboardButtonKey, out bindings.LeaderboardButton, ButtonClickEvent, LeaderboardButtonNodePath);
             resolver.TryResolve(TutorialStepInputKey, out bindings.TutorialStepInput, nodePath: TutorialStepInputNodePath);
             resolver.TryResolve(MinesGroupKey, out bindings.MinesGroup, nodePath: MinesGroupNodePath);
             resolver.TryResolve(BoardContainerKey, out bindings.BoardContainer, nodePath: BoardContainerNodePath);

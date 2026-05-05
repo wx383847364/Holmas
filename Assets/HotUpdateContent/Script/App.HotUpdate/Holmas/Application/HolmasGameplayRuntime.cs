@@ -265,6 +265,7 @@ namespace App.HotUpdate.Holmas.Application
             {
                 SetLastTaskRewardTip(BuildTaskRewardTip(result.ClaimedSlotIndices, result.TotalReward, result.RefilledTaskCount));
                 _logger?.LogInfo("HolmasGameplayRuntime: {0}", LastTaskRewardTip);
+                PublishLeaderboardTaskRewardClaimed(result.TotalReward);
                 NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed);
             }
 
@@ -669,6 +670,7 @@ namespace App.HotUpdate.Holmas.Application
                 return;
             }
 
+            PublishLeaderboardCatsFound(foundCats.Count);
             HolmasTaskProgressResult progressResult = _taskProgressService.ApplyFoundCats(TaskBarState, foundCats);
             if (progressResult == null)
             {
@@ -719,6 +721,7 @@ namespace App.HotUpdate.Holmas.Application
                 int generatedCount = CountSuccessfulTaskGeneration(refillResult);
                 SetLastTaskRewardTip(BuildTaskRewardTip(claimedSlotIndices, totalReward, generatedCount));
                 _logger?.LogInfo("HolmasGameplayRuntime: {0}", LastTaskRewardTip);
+                PublishLeaderboardTaskRewardClaimed(totalReward);
                 NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed);
             }
 
@@ -761,6 +764,7 @@ namespace App.HotUpdate.Holmas.Application
             _logger?.LogInfo("HolmasGameplayRuntime: 尝试领取槽位 {0} 任务奖励，成功={1}，金币 +{2}。", slotIndex, result.Success, result.Reward);
             if (result.Success)
             {
+                PublishLeaderboardTaskRewardClaimed(result.Reward);
                 NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed);
             }
             return result;
@@ -802,6 +806,7 @@ namespace App.HotUpdate.Holmas.Application
 
             if (result.Success)
             {
+                MetaProgressionState.CurrentLevelRankUpdatedAtUtcMilliseconds = _clock.UtcNowMilliseconds;
                 NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.PromotionUpgraded);
             }
 
@@ -1027,6 +1032,34 @@ namespace App.HotUpdate.Holmas.Application
             // 所以这里不能改成只发布 EventBus，也不能把新事件放到旧事件之前。
             StateChanged?.Invoke(reason);
             PublishDomainEvents(reason);
+        }
+
+        private void PublishLeaderboardTaskRewardClaimed(int rewardGold)
+        {
+            if (_eventBus == null || rewardGold <= 0)
+            {
+                return;
+            }
+
+            _eventBus.Publish(new HolmasLeaderboardTaskRewardClaimedEvent
+            {
+                Reason = HolmasGameplayRuntimeStateChangeReason.TaskRewardClaimed,
+                RewardGold = rewardGold,
+            });
+        }
+
+        private void PublishLeaderboardCatsFound(int foundCatCount)
+        {
+            if (_eventBus == null || foundCatCount <= 0)
+            {
+                return;
+            }
+
+            _eventBus.Publish(new HolmasLeaderboardCatsFoundEvent
+            {
+                Reason = HolmasGameplayRuntimeStateChangeReason.LevelRevealed,
+                FoundCatCount = foundCatCount,
+            });
         }
 
         /// <summary>

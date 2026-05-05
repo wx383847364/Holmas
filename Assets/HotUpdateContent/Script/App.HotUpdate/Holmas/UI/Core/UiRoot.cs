@@ -30,6 +30,7 @@ namespace App.HotUpdate.Holmas.UI.Core
         private GameObject _popupBackdrop;
         private Button _popupBackdropButton;
         private IAssetHandle _projectFontHandle;
+        private IAssetHandle _fontRuntimeSettingsHandle;
         private Action _popupBackdropClickAction;
         private bool _built;
         private bool _bootstrapStarted;
@@ -264,10 +265,22 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private async Task PreloadProjectChineseFontAsync()
         {
-            if (_context == null || _context.AssetsRuntime == null || _projectFontHandle != null)
+            if (_context == null || _context.AssetsRuntime == null || _projectFontHandle != null || _fontRuntimeSettingsHandle != null)
             {
                 return;
             }
+
+            IAssetHandle settingsHandle = await _context.AssetsRuntime.LoadAssetAsync(HolmasFontRuntimeSettings.DefaultAssetPath);
+            if (settingsHandle?.AssetObject is HolmasFontRuntimeSettings settings &&
+                settings.ResolvePreferredProjectFont() != null)
+            {
+                _fontRuntimeSettingsHandle = settingsHandle;
+                RuntimeTmpFontResolver.SetRuntimeSettings(settings);
+                _context.Logger?.LogInfo("UiRoot: 项目字体运行时设置已从资源加载。{0}", HolmasFontRuntimeSettings.DefaultAssetPath);
+                return;
+            }
+
+            settingsHandle?.Release();
 
             IAssetHandle fontHandle = await _context.AssetsRuntime.LoadAssetAsync(RuntimeTmpFontResolver.ProjectChineseFontAssetPath);
             if (fontHandle?.AssetObject is Font font)
@@ -354,8 +367,11 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         private void OnDestroy()
         {
+            _fontRuntimeSettingsHandle?.Release();
+            _fontRuntimeSettingsHandle = null;
             _projectFontHandle?.Release();
             _projectFontHandle = null;
+            RuntimeTmpFontResolver.SetRuntimeSettings(null);
             RuntimeTmpFontResolver.SetProjectChineseFont(null);
         }
 

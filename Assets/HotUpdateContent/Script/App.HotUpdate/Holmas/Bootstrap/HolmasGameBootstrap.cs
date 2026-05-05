@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using App.HotUpdate.Holmas.Application;
+using App.HotUpdate.Holmas.Leaderboards;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.PlayerData;
@@ -12,6 +13,7 @@ using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI;
 using App.Shared.Contracts;
+using App.Shared.Holmas.Leaderboards;
 using App.Shared.Holmas.PlayerData;
 using App.Shared.Holmas.RuntimeData;
 using IHolmasPromotionCatalog = App.HotUpdate.Holmas.Meta.IHolmasAgencyCatalog;
@@ -156,6 +158,25 @@ namespace App.HotUpdate.Holmas.Bootstrap
             serviceContainer.RegisterSingleton(archiveSyncService);
             serviceContainer.RegisterSingleton<IHolmasPlayerArchiveDrain>(archiveSyncService);
             archiveSyncService.SetTutorialSuspendedSession(archiveLoadResult.Archive?.TutorialSuspendedSession);
+
+            string playerId = archiveLoadResult.Archive != null
+                ? archiveLoadResult.Archive.PlayerId
+                : HolmasLocalMockServerGateway.DefaultPlayerId;
+            var leaderboardGateway = new HolmasLocalMockLeaderboardGateway(configBundle.Leaderboards, clock);
+            var leaderboardTracker = new HolmasLeaderboardTrackerService(
+                gameplayRuntime,
+                leaderboardGateway,
+                clock,
+                logger,
+                eventBus,
+                playerId,
+                configBundle.Leaderboards);
+            serviceContainer.RegisterSingleton(leaderboardGateway);
+            serviceContainer.RegisterSingleton<IHolmasLeaderboardGateway>(leaderboardGateway);
+            serviceContainer.RegisterSingleton(leaderboardTracker);
+            leaderboardTracker.Start();
+            archiveSyncService.MarkDirty("leaderboard_bootstrap");
+            archiveNeedsSave = true;
 
             var tutorialSessionService = new CoreFindCatTutorialSessionService(logger);
             serviceContainer.RegisterSingleton(tutorialSessionService);

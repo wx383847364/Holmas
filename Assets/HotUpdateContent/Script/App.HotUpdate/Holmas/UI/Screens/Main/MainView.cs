@@ -32,6 +32,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private UnityAction _currentAddEnergyAction;
         private UnityAction _currentHelpAction;
         private UnityAction _currentGmAction;
+        private UnityAction _currentLeaderboardAction;
         private UnityAction<bool> _currentWalkToggleAction;
         private UnityAction<bool> _currentFindToggleAction;
         private Action<int> _currentTaskSlotAction;
@@ -79,6 +80,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             Button gmButton = ResolveGmButton(topTools);
             ReparentToolButton(gmButton, topTools, 120f);
             gmButton.gameObject.SetActive(false);
+            Button leaderboardButton = ResolveLeaderboardButton(overlay);
             DestroyChildIfExists(bottomTools, "StartTutorialButton");
             DestroyChildIfExists(bottomTools, "HelpButton");
             DestroyChildIfExists(bottomTools, "GmButton");
@@ -107,6 +109,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 gmButton,
                 MainBindings.ButtonClickEvent,
                 MainBindings.GmButtonNodePath);
+            collector.RegisterOrReplace(
+                MainBindings.LeaderboardButtonKey,
+                leaderboardButton,
+                MainBindings.ButtonClickEvent,
+                MainBindings.LeaderboardButtonNodePath);
             collector.RegisterOrReplace(MainBindings.MinesGroupKey, minesGroup, nodePath: MainBindings.MinesGroupNodePath);
             collector.RegisterOrReplace(MainBindings.BoardContainerKey, boardContainer, nodePath: MainBindings.BoardContainerNodePath);
             collector.RegisterOrReplace(MainBindings.TutorialBoardContainerKey, tutorialBoardContainer, nodePath: MainBindings.TutorialBoardContainerNodePath);
@@ -206,6 +213,26 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             if (_currentGmAction != null)
             {
                 _bindings.GmButton.onClick.AddListener(_currentGmAction);
+            }
+        }
+
+        public void SetLeaderboardAction(UnityAction action)
+        {
+            if (_bindings?.LeaderboardButton == null)
+            {
+                _currentLeaderboardAction = action;
+                return;
+            }
+
+            if (_currentLeaderboardAction != null)
+            {
+                _bindings.LeaderboardButton.onClick.RemoveListener(_currentLeaderboardAction);
+            }
+
+            _currentLeaderboardAction = action;
+            if (_currentLeaderboardAction != null)
+            {
+                _bindings.LeaderboardButton.onClick.AddListener(_currentLeaderboardAction);
             }
         }
 
@@ -331,6 +358,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             {
                 _bindings.GmButton.interactable = true;
                 SetButtonLabel(_bindings.GmButton, "GM");
+            }
+
+            if (_bindings?.LeaderboardButton != null)
+            {
+                _bindings.LeaderboardButton.interactable = true;
             }
 
             SyncModeToggles(viewModel);
@@ -702,6 +734,27 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new Vector2(-60f, 96f),
                 new Vector2(240f, 96f),
                 new Color(0.28f, 0.63f, 0.89f, 0.96f));
+        }
+
+        private Button ResolveLeaderboardButton(Transform overlay)
+        {
+            Button existing = FindDescendantComponent<Button>("BackgroundImage/Leaderboard_btn")
+                ?? FindFirstDescendantByName<Button>("Leaderboard_btn");
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            return GetOrCreateRuntimeButton(
+                overlay,
+                "Leaderboard_btn",
+                "排行榜",
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(1f, 1f),
+                new Vector2(-220f, -40f),
+                new Vector2(132f, 72f),
+                new Color(0.18f, 0.43f, 0.78f, 0.96f));
         }
 
         private RectTransform ResolveBottomToolsGroup(Transform overlay)

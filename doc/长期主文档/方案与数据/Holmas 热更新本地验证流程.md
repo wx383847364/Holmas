@@ -8,7 +8,7 @@
 - YooAssets 构建 `DefaultPackage` 本地包，并能从包内加载配置、地图、UI prefab、字体、图标、HotUpdate DLL 与 AOT metadata。
 - BootstrapScene 在 PlayMode/batchmode 下走 `GameBootstrap -> YooAssetsRuntime -> HybridClrLoader -> HotUpdateEntry -> HolmasGameBootstrap -> UI/runtime`。
 
-当前阶段已接入 HybridCLR package/config 与 IL2CPP player smoke 脚本；本机验证仍受限于是否已执行 `HybridCLR/Installer...`。远端 CDN 与微信真机仍不在本地脚本覆盖范围内。
+当前阶段已接入 HybridCLR package/config 与 IL2CPP player smoke 脚本；严格 IL2CPP/player smoke 需要先保证工程无脚本编译错误，再确认 `HybridCLR/Installer...` 与目标平台 IL2CPP 环境。远端 CDN 与微信真机仍不在本地脚本覆盖范围内。
 
 ## 热更内容边界
 
@@ -28,7 +28,7 @@
 - `Packages/manifest.json`：`com.code-philosophy.hybridclr` -> `https://github.com/focus-creative-games/hybridclr_unity.git#v8.11.0`
 - `ProjectSettings/HybridCLRSettings.asset`
   - `hotUpdateAssemblies`: `App.HotUpdate`
-  - `patchAOTAssemblies`: `mscorlib`, `System`, `System.Core`, `UnityEngine.CoreModule`, `UnityEngine.UI`, `Unity.TextMeshPro`, `App.Shared`
+  - `patchAOTAssemblies`: `mscorlib`, `System`, `System.Core`, `UnityEngine.CoreModule`, `UnityEngine.UI`, `UnityEngine.UIModule`, `UnityEngine.TextRenderingModule`, `UnityEngine.JSONSerializeModule`, `UnityEngine.InputLegacyModule`, `Unity.TextMeshPro`, `App.Shared`
   - HotUpdate DLL 输出根：`HybridCLRData/HotUpdateDlls`
   - AOT metadata 输出根：`HybridCLRData/AssembliesPostIl2CppStrip`
 
@@ -105,9 +105,34 @@ bash tools/validation/run_holmas_il2cpp_player_smoke.sh --build-target Standalon
 - 失败点：临时工程已解析 HybridCLR package，但当前机器/工程尚未执行 `HybridCLR/Installer...`，严格生成报错 `HybridCLR has not been initialized. Run HybridCLR/Installer before strict generation or IL2CPP player smoke.`
 - 下一步：在可写且允许初始化 HybridCLRData 的 Unity/Tuanjie 环境执行 `HybridCLR/Installer...`，再重跑 IL2CPP smoke；通过后再推进微信真机或 CDN 验证。
 
+2026-05-05 本机尝试结果：
+
+- AOT metadata 清单从基础 App.Shared 验链路扩展到当前热更代码真实使用的保守目标平台清单：`UnityEngine.UIModule`、`UnityEngine.TextRenderingModule`、`UnityEngine.JSONSerializeModule`、`UnityEngine.InputLegacyModule` 纳入必须产出和加载的 metadata；`Library/ScriptAssemblies` 回退仅用于 Editor/OfflinePlayMode 本地验证。
+- `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_player_smoke_20260505_metadata` 未进入 HybridCLR 严格生成、YooAssets build 或 IL2CPP player 构建阶段。
+- 失败点：临时工程脚本编译失败，`/tmp/holmas_il2cpp_player_smoke_20260505_metadata_build.log` 报 `Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/Leaderboard/LeaderboardView.cs(107,21): error CS0234`，当前未提交排行榜 UI 文件中 `Application.isPlaying` 被解析到 `App.HotUpdate.Holmas.Application` 命名空间。
+- 同轮 `run_holmas_hotupdate_validation.sh` 的边界检查通过，但 batchmode 编译同样失败；日志为 `/tmp/holmas_hotupdate_validation_20260505_202538_yooassets_package.log`，临时工程保留在 `/private/tmp/holmas_hotupdate_validation_vL1oOp`。
+- 下一步：先在 UI/排行榜主线修复或隔离该编译错误，再重跑热更专项验证和 IL2CPP player smoke；若编译通过后再出现失败，再按日志区分 `HybridCLR/Installer...`、目标平台 IL2CPP toolchain、metadata 缺失或 player 启动问题。
+
+2026-05-05 23:08 复跑结果：
+
+- `run_holmas_hotupdate_validation.sh --log-prefix holmas_hotupdate_validation_20260505_230845` 已通过：YooAssets 本地包、HotUpdate DLL/metadata 验证和 BootstrapScene PlayMode/batchmode probe 全部通过。
+- 热更专项日志：`/tmp/holmas_hotupdate_validation_20260505_230845_yooassets_package.log`、`/tmp/holmas_hotupdate_validation_20260505_230845_playmode_probe.log`。
+- `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_player_smoke_20260505_230845` 第一次失败在临时工程解析 HybridCLR Git package，错误为 Git RPC partial file/early EOF，日志：`/tmp/holmas_il2cpp_player_smoke_20260505_230845_build.log`。
+- `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_player_smoke_20260505_230845_retry1` 重试后成功解析 HybridCLR package，但严格生成前检查失败：`HybridCLR has not been initialized. Run HybridCLR/Installer before strict generation or IL2CPP player smoke.` 日志：`/tmp/holmas_il2cpp_player_smoke_20260505_230845_retry1_build.log`，临时工程保留在 `/private/tmp/holmas_il2cpp_player_smoke_uG122x`。
+- 当前最新失败层级：不是脚本编译、不是 AOT metadata 清单、不是 IL2CPP toolchain 或 player 启动；阻塞在本机/临时工程尚未完成 `HybridCLR/Installer...` 初始化。下一步需要在可复用或可初始化的 Tuanjie 环境完成 Installer，再重跑 IL2CPP smoke。
+
+2026-05-06 本机 Installer 后复跑结果：
+
+- Tuanjie 中 `HybridCLR/Installer...` 已执行成功，Installer 面板显示 `Installed: True`、`Installed Version: v8.11.0`；主工程产生本地 `HybridCLRData/LocalIl2CppData-OSXEditor`。
+- 严格 HybridCLR 生成阶段会触发 Unity player script 编译，`com.unity.visualscripting` 依赖 `UnityEngine.AI`；项目已补 `Packages/manifest.json` 中的 `com.unity.modules.ai`，否则 `GenerateStripedAOTDlls` 会因 `UnityEngine.AI` 缺失失败。
+- `run_holmas_hotupdate_validation.sh --log-prefix holmas_hotupdate_validation_20260506_000122_ai` 已通过：严格 HybridCLR 生成、YooAssets 本地包、HotUpdate DLL/metadata 验证和 BootstrapScene PlayMode/batchmode probe 全部通过。日志：`/tmp/holmas_hotupdate_validation_20260506_000122_ai_yooassets_package.log`、`/tmp/holmas_hotupdate_validation_20260506_000122_ai_playmode_probe.log`。
+- `run_holmas_il2cpp_player_smoke.sh` 需要把 `HybridCLRData` 带入临时工程，否则临时工程会重新显示未初始化；脚本已改为不再排除 `HybridCLRData`，这些仍是本地临时构建产物，不提交。
+- `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_player_smoke_20260506_000122_ai_hybridclrdata` 已越过 Installer 检查、HotUpdate DLL 编译、link.xml 生成和 stripped AOT 前置流程；当前失败点为 Tuanjie StandaloneOSX IL2CPP player 模块缺失，日志报 `Currently selected scripting backend (IL2CPP) is not installed.` 日志：`/tmp/holmas_il2cpp_player_smoke_20260506_000122_ai_hybridclrdata_build.log`，临时工程保留在 `/private/tmp/holmas_il2cpp_player_smoke_smGPXO`。
+- 本机 `/Applications/Tuanjie/Hub/Editor/2022.3.62t2/Tuanjie.app/Contents/PlaybackEngines/MacStandaloneSupport/Variations` 仅发现 mono player 变体，未发现 StandaloneOSX IL2CPP player 变体。下一步需要通过 Tuanjie Hub 为当前编辑器安装 StandaloneOSX IL2CPP 支持，或改用已安装 IL2CPP 支持的目标平台继续 smoke。
+
 ## 已知边界
 
 - `HybridClrLoader` 的非 Editor 真实加载路径已固定为 `Assets/HotUpdateContent/Res/HotUpdate/App.HotUpdate.dll.bytes` 和 `Assets/HotUpdateContent/Res/HotUpdate/Metadata/*.dll.bytes`。
-- AOT metadata 清单已扩展到当前目标平台的保守真实清单：`mscorlib`、`System`、`System.Core`、`UnityEngine.CoreModule`、`UnityEngine.UI`、`Unity.TextMeshPro`、`App.Shared`。
-- 本地热更专项验证仍允许 Editor fallback；严格 IL2CPP/player smoke 必须先完成 `HybridCLR/Installer...`。
+- AOT metadata 清单已扩展到当前目标平台的保守真实清单：`mscorlib`、`System`、`System.Core`、`UnityEngine.CoreModule`、`UnityEngine.UI`、`UnityEngine.UIModule`、`UnityEngine.TextRenderingModule`、`UnityEngine.JSONSerializeModule`、`UnityEngine.InputLegacyModule`、`Unity.TextMeshPro`、`App.Shared`。
+- 本地热更专项验证仍允许 Editor fallback；严格 IL2CPP/player smoke 必须先保证脚本编译通过、完成 `HybridCLR/Installer...`，并安装目标平台 IL2CPP player 模块。
 - 真机微信环境和远端 CDN 仍是后续验收项。

@@ -127,6 +127,18 @@ namespace App.HotUpdate.Holmas.Application
         public int Version { get; set; }
     }
 
+    public sealed class HolmasLeaderboardTaskRewardClaimedEvent
+    {
+        public HolmasGameplayRuntimeStateChangeReason Reason { get; set; }
+        public int RewardGold { get; set; }
+    }
+
+    public sealed class HolmasLeaderboardCatsFoundEvent
+    {
+        public HolmasGameplayRuntimeStateChangeReason Reason { get; set; }
+        public int FoundCatCount { get; set; }
+    }
+
     /// <summary>
     /// 任务栏结构或可领奖状态变化事件。
     /// 任务补齐、广告槽解锁/过期刷新、任务领奖后补位等场景会发布它。

@@ -10,6 +10,7 @@ using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Screens.GmTool;
+using App.HotUpdate.Holmas.UI.Screens.Leaderboard;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
@@ -77,6 +78,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _view?.SetPromotionAction(OnPromotionClicked);
             _view?.SetHelpAction(OnHelpClicked);
             _view?.SetGmAction(IsTutorialDebugEnabled ? (UnityEngine.Events.UnityAction)OnGmClicked : null);
+            _view?.SetLeaderboardAction(OnLeaderboardClicked);
             _view?.SetTutorialDebugControlsVisible(IsTutorialDebugEnabled);
             _view?.SetModeToggleActions(OnWalkToggleChanged, OnFindToggleChanged);
             _view?.SetTaskSlotAction(OnTaskSlotClicked);
@@ -104,6 +106,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             _view?.SetPromotionAction(null);
             _view?.SetHelpAction(null);
             _view?.SetGmAction(null);
+            _view?.SetLeaderboardAction(null);
             _view?.SetModeToggleActions(null, null);
             _view?.SetTaskSlotAction(null);
             _view?.SetCellAction(null);
@@ -256,6 +259,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 ? 0
                 : CoreFindCatTutorialSteps.IndexOf(CoreFindCatTutorialSteps.TaskBarStepId);
             _ = HandleReplayTutorialAsync(stepIndex);
+        }
+
+        private void OnLeaderboardClicked()
+        {
+            _ = ScreenService.OpenPageAsync(LeaderboardScreenRegistration.ScreenId);
         }
 
         private void OnGmClicked()

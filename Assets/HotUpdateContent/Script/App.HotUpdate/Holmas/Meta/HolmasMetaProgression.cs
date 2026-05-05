@@ -28,6 +28,16 @@ namespace App.HotUpdate.Holmas.Meta
         public int ClaimedTaskCount;
         public long OfflineRewardTotal;
         public long LastOfflineSettlementAtUtcMilliseconds;
+        public string DisplayName = string.Empty;
+        public string WechatAvatarUrl = string.Empty;
+        public string AvatarIconPath = string.Empty;
+        public long CurrentDailyTaskIncome;
+        public string CurrentDailyPeriodKey = string.Empty;
+        public long CurrentDailyTaskIncomeUpdatedAtUtcMilliseconds;
+        public int CurrentWeeklyCatsFound;
+        public string CurrentWeeklyPeriodKey = string.Empty;
+        public long CurrentWeeklyCatsFoundUpdatedAtUtcMilliseconds;
+        public long CurrentLevelRankUpdatedAtUtcMilliseconds;
         public bool EnergyInitialized;
         public int EnergyCurrent;
         public int EnergyRecoveryLimit;

@@ -4,14 +4,14 @@
 - 当前基线：`check_boundary.sh`、`run_holmas_validation.sh`、`run_holmas_hotupdate_validation.sh` 均已通过；BootstrapScene 的 PlayMode probe 已跑到 `GameBootstrap -> YooAssetsRuntime -> HybridClrLoader -> HotUpdateEntry -> HolmasGameBootstrap -> UI/runtime`。
 - 当前真实热更新进展：已接入 HybridCLR package/config、Holmas 专用生成/复制菜单、AOT metadata 保守清单、YooAssets 本地包构建与 IL2CPP player smoke 脚本。
 - 当前真实热更新阻塞：临时工程已能解析 HybridCLR package，但本机/工程尚未执行 `HybridCLR/Installer...`，严格 IL2CPP player smoke 在生成阶段失败，未进入 player 构建。
-- 运行时 UI prefab、字体、UI 贴图依赖已迁到 `Assets/HotUpdateContent/Res/**`，本地包验证已覆盖 prefab、字体、图标、HotUpdate DLL 与 metadata。
+- 运行时 UI prefab、UI 贴图依赖已迁到 `Assets/HotUpdateContent/Res/**`，字体源文件统一放在 `Assets/Res/Font`，本地包验证已覆盖 prefab、字体、图标、HotUpdate DLL 与 metadata。
 
 ## Key Changes
 - 保持 `Assets/Scripts/App.AOT` 只做宿主、YooAssets、HybridCLR、平台与持久化；保持 `Assets/Scripts/App.Shared` 只放稳定 DTO/接口。若某个 Shared 类型需要热更改行为，迁回 `App.HotUpdate`，不要把玩法规则留在 Shared。
 - 将正式热更资源统一迁到 `Assets/HotUpdateContent`：
   - `Assets/Res/Perfabs/UI` -> `Assets/HotUpdateContent/Res/Perfabs/UI`
   - `Assets/Res/Perfabs/Generated/Holmas/Portrait` -> `Assets/HotUpdateContent/Res/Perfabs/Generated/Holmas/Portrait`
-  - `Assets/Resources/Fonts/NotoSansSC.ttf` -> `Assets/HotUpdateContent/Res/Fonts/NotoSansSC.ttf`
+  - `Assets/Resources/Fonts/NotoSansSC.ttf` -> `Assets/Res/Font/NotoSansSC.ttf`
   - 更新 generated binding 常量、UI prefab generator 模板根目录、相关测试期望。
 - 增加独立热更新工具链，不改坏现有 `bash tools/validation/run_holmas_validation.sh`：
   - 新增 `tools/validation/run_holmas_hotupdate_validation.sh`
@@ -23,7 +23,7 @@
   - `HybridClrLoader` 增加 metadata 文件清单和 `HybridCLR.RuntimeApi.LoadMetadataForAOTAssembly` 调用。
   - HotUpdate DLL 统一作为 `.bytes` 放入 `Assets/HotUpdateContent/Res/HotUpdate/App.HotUpdate.dll.bytes`，通过 YooAssets 地址加载。
 - 接入真实 YooAssets 包测试：
-  - 通过 `HolmasHybridClrBuildPipeline.ConfigureCollectors` 配置 `DefaultPackage`，收集 `Assets/HotUpdateContent/Config` 与 `Assets/HotUpdateContent/Res`。
+  - 通过 `HolmasHybridClrBuildPipeline.ConfigureCollectors` 配置 `DefaultPackage`，收集 `Assets/HotUpdateContent/Config`、`Assets/HotUpdateContent/Res` 与 `Assets/Res/Font`。
   - `YooAssetsRuntime` 增加 `HOLMAS_YOO_OFFLINE_PLAYMODE`，用于 player smoke 从内置 YooAssets 包离线启动。
   - 构建输出只落在临时目录或明确的本地 build output，不提交资源包产物。
 

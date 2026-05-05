@@ -2,6 +2,7 @@ using App.HotUpdate.Holmas.UI;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Generated;
 using App.HotUpdate.Holmas.UI.Screens.GmTool;
+using App.HotUpdate.Holmas.UI.Screens.Leaderboard;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
@@ -103,6 +104,19 @@ namespace Holmas.Tests
             Assert.That(definition.CachePolicy, Is.EqualTo(UiCachePolicy.KeepInstance));
             Assert.That(definition.ClickOutsideToClose, Is.True);
             Assert.That(definition.AssetAddress, Is.Empty);
+        }
+
+        [Test]
+        public void LeaderboardScreenRegistration_ExposesLeadbroadPage()
+        {
+            UiScreenDefinition definition = LeaderboardScreenRegistration.CreateDefinition();
+
+            Assert.That(definition.Id, Is.EqualTo(LeaderboardScreenRegistration.ScreenId));
+            Assert.That(definition.Kind, Is.EqualTo(UiScreenKind.Page));
+            Assert.That(definition.ControllerType, Is.EqualTo(typeof(LeaderboardPageController)));
+            Assert.That(definition.CachePolicy, Is.EqualTo(UiCachePolicy.KeepInstance));
+            Assert.That(definition.AssetAddress, Is.EqualTo(LeaderboardGeneratedBindings.PrefabAssetPath));
+            Assert.That(definition.BindingManifest, Is.SameAs(LeaderboardGeneratedBindings.Manifest));
         }
     }
 }
