@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 CORE_MAGIC = 0x48434F52
 CAT_META_MAGIC = 0x48434154
-CURRENT_VERSION = 8
+CURRENT_VERSION = 9
 
 
 @dataclass
@@ -84,6 +84,7 @@ class AgencyBuildingTableSheetRow:
     row_index: int = 0
     agency_stage_id: int = 0
     stage_name: str = ""
+    stage_image: str = ""
     promotion_ids: list[str] = field(default_factory=list)
     promotion_level_caps: list[int] = field(default_factory=list)
     promotion_upgrade_costs: list[AgencyBuildingTableCostSheetRow] = field(default_factory=list)
@@ -174,6 +175,7 @@ class AgencyBuildingTableCostRow:
 class AgencyBuildingTableRow:
     agency_stage_id: int = 0
     stage_name: str = ""
+    stage_image: str = ""
     promotion_ids: list[str] = field(default_factory=list)
     promotion_level_caps: list[int] = field(default_factory=list)
     promotion_upgrade_costs: list[AgencyBuildingTableCostRow] = field(default_factory=list)

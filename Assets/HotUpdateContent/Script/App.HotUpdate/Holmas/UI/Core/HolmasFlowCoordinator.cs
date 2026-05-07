@@ -110,70 +110,13 @@ namespace App.HotUpdate.Holmas.UI.Core
         }
 
         /// <summary>
-        /// 从首页进入棋盘：
-        /// MainPage -> LoadingOverlay -> BattlePage。
+        /// 兼容旧全屏棋盘入口：现在只启动 MainPanel 内嵌棋盘，并确保当前页面回到 MainPanel。
+        /// BattlePanel 已改为城市宣传地图页，不再承载找猫棋盘。
         /// </summary>
         public async Task StartBattleAsync()
         {
-            await RunExclusiveAsync(async () =>
-            {
-                if (_root.LevelLaunchGateway == null)
-                {
-                    throw new InvalidOperationException("关卡启动网关不可用。");
-                }
-
-                bool sessionStarted = false;
-                string loadingScreenId = LoadingScreenRegistration.TransitionOverlayScreenId;
-                float loadingStartedAt = await OpenTransitionLoadingAsync("正在准备棋盘...", 0.08f);
-
-                try
-                {
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在读取关卡状态...", 0.08f, 0.2f);
-                    HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
-                    bool continueExistingLevel = runtime != null && runtime.HasActiveUncompletedLevel;
-                    string battleStatus;
-                    if (continueExistingLevel)
-                    {
-                        battleStatus = $"已恢复未完成关卡，map={runtime.CurrentLevelSnapshot?.MapId ?? "unknown"}";
-                        await UpdateLoadingProgressAsync(loadingScreenId, "正在恢复未完成棋盘...", 0.2f, 0.45f);
-                    }
-                    else
-                    {
-                        // 这里的 seed 是当前局的随机入口，后续关卡数据会围绕它展开。
-                        int seed = Environment.TickCount;
-                        await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
-                        sessionStarted = true;
-                        battleStatus = $"关卡已启动，seed={seed}";
-                        await UpdateLoadingProgressAsync(loadingScreenId, "正在生成关卡数据...", 0.2f, 0.45f);
-                    }
-
-                    await _battleWorldHost.PrepareAsync(_root.Context != null && _root.Context.GameplayRuntime != null
-                        ? _root.Context.GameplayRuntime.CurrentLevelSnapshot
-                        : null);
-                    _battleWorldHost.Show();
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在摆放棋盘...", 0.45f, 0.82f);
-
-                    await _root.ScreenService.OpenPageAsync(BattleScreenRegistration.ScreenId, battleStatus);
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在打开棋盘界面...", 0.82f, 0.95f);
-                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
-                    await CompleteLoadingAsync(loadingScreenId, "棋盘已准备。");
-                }
-                catch
-                {
-                    // 进入棋盘失败时，既要回收 3D/战斗世界，也要把运行时 session 收掉。
-                    _battleWorldHost.Release();
-                    if (sessionStarted && _root.Context != null && _root.Context.GameplayRuntime != null)
-                    {
-                        _root.Context.GameplayRuntime.EndCurrentLevelSession();
-                    }
-
-                    throw;
-                }
-                finally
-                {
-                    await _root.ScreenService.CloseAsync(LoadingScreenRegistration.TransitionOverlayScreenId);
-                }
-            });
+            string status = await StartBattleInMainAsync();
+            await EnsureMainPageAsync(status);
         }
 
         /// <summary>
@@ -296,64 +239,12 @@ namespace App.HotUpdate.Holmas.UI.Core
         }
 
         /// <summary>
-        /// 当前棋盘完成后立即进入下一局。
-        /// 任务推进和结算已经由 HolmasGameplayRuntime 完成，这里只负责新关卡加载与页面刷新。
+        /// 兼容旧全屏下一局入口：现在只推进 MainPanel 内嵌棋盘，并确保当前页面回到 MainPanel。
         /// </summary>
         public async Task AdvanceToNextBattleAsync(HolmasProgressionAdvanceResult progressionResult)
         {
-            await RunExclusiveAsync(async () =>
-            {
-                if (_root.LevelLaunchGateway == null)
-                {
-                    throw new InvalidOperationException("关卡启动网关不可用。");
-                }
-
-                HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
-                if (runtime == null || runtime.CurrentLevelSnapshot == null || !runtime.CurrentLevelSnapshot.Completed)
-                {
-                    throw new InvalidOperationException("当前棋盘尚未完成，不能进入下一关。");
-                }
-
-                string completedMapId = runtime.CurrentLevelSnapshot.MapId ?? "unknown";
-                bool sessionStarted = false;
-                string loadingScreenId = LoadingScreenRegistration.TransitionOverlayScreenId;
-                float loadingStartedAt = await OpenTransitionLoadingAsync("正在进入下一关...", 0.08f);
-
-                try
-                {
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在生成下一关...", 0.08f, 0.35f);
-                    int seed = Environment.TickCount;
-                    await _root.LevelLaunchGateway.StartLevelForCurrentPlayerAsync(seed);
-                    sessionStarted = true;
-
-                    LevelSnapshot nextSnapshot = runtime.CurrentLevelSnapshot;
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在加载下一关棋盘...", 0.35f, 0.62f);
-                    await _battleWorldHost.PrepareAsync(nextSnapshot);
-                    _battleWorldHost.Show();
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在刷新棋盘界面...", 0.62f, 0.82f);
-
-                    await _root.ScreenService.OpenPageAsync(
-                        BattleScreenRegistration.ScreenId,
-                        BuildNextBattleStatus(completedMapId, nextSnapshot, seed, progressionResult));
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在完成切换...", 0.82f, 0.95f);
-                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
-                    await CompleteLoadingAsync(loadingScreenId, "下一关已准备。");
-                }
-                catch
-                {
-                    if (sessionStarted && runtime != null)
-                    {
-                        runtime.EndCurrentLevelSession();
-                    }
-
-                    _battleWorldHost.Release();
-                    throw;
-                }
-                finally
-                {
-                    await _root.ScreenService.CloseAsync(LoadingScreenRegistration.TransitionOverlayScreenId);
-                }
-            });
+            string status = await AdvanceToNextBattleInMainAsync(progressionResult);
+            await EnsureMainPageAsync(status);
         }
 
         /// <summary>
@@ -417,53 +308,38 @@ namespace App.HotUpdate.Holmas.UI.Core
         }
 
         /// <summary>
-        /// 从棋盘返回首页：
-        /// BattlePage -> LoadingOverlay -> MainPage。
+        /// 兼容旧 Battle 返回入口：BattlePanel 当前是城市宣传地图页，返回时不清理 MainPanel 棋盘 session。
         /// </summary>
         public async Task ExitBattleToMainAsync()
         {
             await RunExclusiveAsync(async () =>
             {
-                string loadingScreenId = LoadingScreenRegistration.TransitionOverlayScreenId;
-                float loadingStartedAt = await OpenTransitionLoadingAsync("正在返回侦探社...", 0.08f);
-
-                try
+                if (_root.ScreenService.IsOpen(BattleScreenRegistration.ScreenId))
                 {
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在收起棋盘...", 0.08f, 0.28f);
-                    HolmasGameplayRuntime runtime = _root.Context != null ? _root.Context.GameplayRuntime : null;
-                    bool shouldClearSession = runtime != null &&
-                                              runtime.CurrentLevelSnapshot != null &&
-                                              runtime.CurrentLevelSnapshot.Completed;
-
-                    if (_root.ScreenService.IsOpen(BattleScreenRegistration.ScreenId))
-                    {
-                        await _root.ScreenService.CloseAsync(BattleScreenRegistration.ScreenId);
-                    }
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在恢复侦探社界面...", 0.28f, 0.62f);
-
-                    if (!_root.ScreenService.IsOpen(MainScreenRegistration.ScreenId) ||
-                        _root.ScreenService.NavigationState.CurrentPage == null)
-                    {
-                        await _root.ScreenService.OpenPageAsync(
-                            MainScreenRegistration.ScreenId,
-                            shouldClearSession ? "已返回侦探社，当前棋盘已结算。" : "已返回侦探社，可继续当前棋盘。");
-                    }
-
-                    if (shouldClearSession && runtime != null)
-                    {
-                        runtime.EndCurrentLevelSession();
-                    }
-
-                    _battleWorldHost.Release();
-                    await UpdateLoadingProgressAsync(loadingScreenId, "正在完成返回...", 0.62f, 0.95f);
-                    await WaitForMinimumLoadingVisibleSecondsAsync(loadingStartedAt);
-                    await CompleteLoadingAsync(loadingScreenId, "侦探社已准备。");
+                    await _root.ScreenService.CloseAsync(BattleScreenRegistration.ScreenId);
                 }
-                finally
-                {
-                    await _root.ScreenService.CloseAsync(LoadingScreenRegistration.TransitionOverlayScreenId);
-                }
+
+                await EnsureMainPageAsync("已返回侦探社，可继续当前棋盘。");
             });
+        }
+
+        private async Task EnsureMainPageAsync(string status)
+        {
+            if (_root.ScreenService.IsOpen(BattleScreenRegistration.ScreenId))
+            {
+                await _root.ScreenService.CloseAsync(BattleScreenRegistration.ScreenId);
+            }
+
+            if (!_root.ScreenService.IsOpen(MainScreenRegistration.ScreenId) ||
+                _root.ScreenService.NavigationState.CurrentPage == null ||
+                !(_root.ScreenService.NavigationState.CurrentPage is MainPageController))
+            {
+                await _root.ScreenService.OpenPageAsync(MainScreenRegistration.ScreenId, status);
+            }
+            else
+            {
+                await _root.ScreenService.RefreshAsync(MainScreenRegistration.ScreenId, status);
+            }
         }
 
         private async Task RunExclusiveAsync(Func<Task> action)

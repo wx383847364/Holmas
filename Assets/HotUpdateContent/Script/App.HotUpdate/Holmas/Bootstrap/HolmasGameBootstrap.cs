@@ -489,6 +489,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
                     {
                         AgencyStageId = stageRow.agencyStageId,
                         StageName = stageRow.stageName,
+                        StageImage = stageRow.stageImage,
                         PromotionId = promotionId,
                         PromotionLevelCap = levelCap,
                         PromotionUpgradeCosts = costs,

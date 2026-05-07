@@ -134,6 +134,7 @@ def _agency_building_table_row_to_dict(row: AgencyBuildingTableRow) -> dict:
     return {
         "agencyStageId": row.agency_stage_id,
         "stageName": row.stage_name,
+        "stageImage": row.stage_image,
         "promotionIds": list(row.promotion_ids),
         "promotionLevelCaps": list(row.promotion_level_caps),
         "promotionUpgradeCosts": [_agency_building_table_cost_row_to_dict(cost_row) for cost_row in row.promotion_upgrade_costs],

@@ -9,6 +9,7 @@ using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
+using App.HotUpdate.Holmas.UI.Screens.Battle;
 using App.HotUpdate.Holmas.UI.Screens.GmTool;
 using App.HotUpdate.Holmas.UI.Screens.Leaderboard;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
@@ -204,28 +205,39 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         {
             if (_tutorialSessionService?.ActiveSession != null)
             {
-                Refresh("教程演示期间不能升级正式宣传。");
+                Refresh("教程演示期间不能进入城市宣传。");
                 return;
             }
 
-            string promotionId = _presenter != null ? _presenter.GetPrimaryPromotionId() : string.Empty;
-            if (string.IsNullOrWhiteSpace(promotionId))
+            _ = HandleOpenPublicityMapAsync();
+        }
+
+        private async Task HandleOpenPublicityMapAsync()
+        {
+            if (_isBusy)
             {
-                Refresh("当前阶段暂无可升级宣传项。");
                 return;
             }
 
-            HolmasApplicationContext context = Root != null ? Root.Context : null;
-            if (context == null)
+            if (ScreenService == null)
             {
-                Refresh("应用上下文不可用，无法升级宣传。");
+                Refresh("界面服务不可用，无法进入城市宣传。");
                 return;
             }
 
-            var result = context.TryUpgradePromotion(promotionId);
-            Refresh(result != null && result.Success
-                ? $"宣传 {promotionId} 升到 Lv {result.NewLevel}，金币 -{result.GoldSpent}。"
-                : $"宣传升级失败：{result?.FailureReason ?? "未知错误"}");
+            _isBusy = true;
+            try
+            {
+                await ScreenService.OpenPageAsync(BattleScreenRegistration.ScreenId, "城市宣传地图已打开。");
+            }
+            catch (Exception ex)
+            {
+                Refresh($"进入城市宣传失败：{ex.Message}");
+            }
+            finally
+            {
+                _isBusy = false;
+            }
         }
 
         private void OnAddEnergyClicked()

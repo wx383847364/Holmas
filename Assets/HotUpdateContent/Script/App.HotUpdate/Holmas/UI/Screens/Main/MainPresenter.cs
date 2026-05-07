@@ -37,7 +37,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             MainTaskItemVm[] taskItems = BuildTaskItems(visualResolver, disableInteraction: isTutorialSessionActive);
             HolmasAgencyBuildingDefinition promotion = GetPrimaryPromotionDefinition();
             string promotionId = promotion != null ? promotion.PromotionId : string.Empty;
-            bool hasConfiguredPromotions = HasConfiguredPromotionsForCurrentStage();
             return new MainVm
             {
                 LevelLabel = $"Lv {_context?.CurrentPlayerLevel ?? 1}",
@@ -45,10 +44,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 EnergyLabel = _context?.EnergyLabel ?? "50/50",
                 Summary = BuildSummary(),
                 Status = string.IsNullOrWhiteSpace(status) ? "主界面已就绪。" : status,
-                PromotionButtonLabel = string.IsNullOrWhiteSpace(promotionId)
-                    ? (hasConfiguredPromotions ? "宣传已满级" : "宣传待开放")
-                    : BuildPromotionButtonLabel(promotion),
-                PromotionButtonEnabled = !isTutorialSessionActive && !string.IsNullOrWhiteSpace(promotionId),
+                PromotionButtonLabel = "城市宣传",
+                PromotionButtonEnabled = !isTutorialSessionActive,
                 PromotionId = promotionId ?? string.Empty,
                 AddEnergyButtonLabel = "+5体力",
                 AddEnergyButtonEnabled = !isTutorialSessionActive && _context != null && _context.GameplayRuntime != null,

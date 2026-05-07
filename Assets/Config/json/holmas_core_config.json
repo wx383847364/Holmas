@@ -1,5 +1,5 @@
 {
-    "Version": 8,
+    "Version": 9,
     "Holmas_MapTable": [
         {
             "mapId": "map_0001",
@@ -10772,6 +10772,7 @@
         {
             "agencyStageId": 1,
             "stageName": "柳溪村",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -10806,16 +10807,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 2,
             "stageName": "雾林小村",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -10853,16 +10850,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 3,
             "stageName": "月光林地",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -10903,16 +10896,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 4,
             "stageName": "石港小村",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -10953,16 +10942,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 5,
             "stageName": "迷雾林小村",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11003,16 +10988,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 6,
             "stageName": "埃尔多利亚庄园",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11053,16 +11034,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 7,
             "stageName": "卵石港湾",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11103,16 +11080,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 8,
             "stageName": "灰石台地",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11153,16 +11126,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 9,
             "stageName": "烬辉小湾",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11203,16 +11172,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 10,
             "stageName": "荆木庄园",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11253,16 +11218,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 11,
             "stageName": "银荆田庄",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11303,16 +11264,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 12,
             "stageName": "荆棘林小筑",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11353,16 +11310,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 13,
             "stageName": "铁木庄园",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11403,16 +11356,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 14,
             "stageName": "低语松林村",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11453,16 +11402,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 15,
             "stageName": "琥珀谷庄园",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11503,16 +11448,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 16,
             "stageName": "玫木林苑",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11553,16 +11494,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 17,
             "stageName": "临冬台地",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11603,16 +11540,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 18,
             "stageName": "橡心村",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11653,16 +11586,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 19,
             "stageName": "金色草地小筑",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11703,16 +11632,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 20,
             "stageName": "影溪庄园",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11753,16 +11678,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 21,
             "stageName": "向阳林地",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11803,16 +11724,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 22,
             "stageName": "灰木田庄",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11853,16 +11770,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 23,
             "stageName": "柳湖港湾",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11903,16 +11816,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 24,
             "stageName": "荆丘庄园",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -11953,16 +11862,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 25,
             "stageName": "银月台地",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12003,16 +11908,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 26,
             "stageName": "荆棘林庄园",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12053,16 +11954,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 27,
             "stageName": "月溪村",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12103,16 +12000,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 28,
             "stageName": "铁丘田庄",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12153,16 +12046,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 29,
             "stageName": "低语橡林小筑",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12203,16 +12092,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 30,
             "stageName": "琥珀林小湾",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12253,16 +12138,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 31,
             "stageName": "斯通克罗夫特小村",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12303,16 +12184,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 32,
             "stageName": "玫瑰谷庄园",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12353,16 +12230,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 33,
             "stageName": "冬林村",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12403,16 +12276,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 34,
             "stageName": "橡岭庄园",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12453,16 +12322,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 35,
             "stageName": "金叶林地",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12503,16 +12368,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 36,
             "stageName": "影湖港湾",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12553,16 +12414,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 37,
             "stageName": "阳溪小筑",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12603,16 +12460,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 38,
             "stageName": "阿什福德田庄",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12653,16 +12506,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 39,
             "stageName": "威洛克罗夫特台地",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12703,16 +12552,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 40,
             "stageName": "荆林小村",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12753,16 +12598,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 41,
             "stageName": "雾谷村",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12803,16 +12644,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 42,
             "stageName": "银荆庄园",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12853,16 +12690,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 43,
             "stageName": "荆棘谷庄园",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12903,16 +12736,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 44,
             "stageName": "月光草地",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -12953,16 +12782,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 45,
             "stageName": "铁木小村",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13003,16 +12828,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 46,
             "stageName": "低语溪村",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13053,16 +12874,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 47,
             "stageName": "琥珀湾小筑",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13103,16 +12920,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 48,
             "stageName": "石林田庄",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13153,16 +12966,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 49,
             "stageName": "玫木台地",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13203,16 +13012,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 50,
             "stageName": "冬谷庄园",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13253,16 +13058,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 51,
             "stageName": "橡木小村",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13303,16 +13104,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 52,
             "stageName": "金色草地庄园",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13353,16 +13150,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 53,
             "stageName": "影林绿地",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13403,16 +13196,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 54,
             "stageName": "向阳港湾",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13453,16 +13242,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 55,
             "stageName": "阿什克罗夫特村",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13503,16 +13288,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 56,
             "stageName": "柳草地小筑",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13553,16 +13334,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 57,
             "stageName": "荆丘台地",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13603,16 +13380,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 58,
             "stageName": "雾林田庄",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13653,16 +13426,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 59,
             "stageName": "银月庄园",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13703,16 +13472,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 60,
             "stageName": "荆棘林村",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13753,16 +13518,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 61,
             "stageName": "月溪小筑",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13803,16 +13564,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 62,
             "stageName": "铁丘小村",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13853,16 +13610,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 63,
             "stageName": "低语松林田庄",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13903,16 +13656,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 64,
             "stageName": "琥珀林庄园",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -13953,16 +13702,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 65,
             "stageName": "斯通克罗夫特庄园",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14003,16 +13748,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 66,
             "stageName": "玫瑰谷村",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14053,16 +13794,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 67,
             "stageName": "冬林小筑",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14103,16 +13840,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 68,
             "stageName": "橡岭小村",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14153,16 +13886,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 69,
             "stageName": "金叶田庄",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14203,16 +13932,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 70,
             "stageName": "影湖台地",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14253,16 +13978,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 71,
             "stageName": "阳溪村",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14303,16 +14024,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 72,
             "stageName": "阿什福德庄园",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14353,16 +14070,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 73,
             "stageName": "威洛克罗夫特田庄",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14403,16 +14116,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 74,
             "stageName": "荆林小筑",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14453,16 +14162,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 75,
             "stageName": "雾谷小村",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14503,16 +14208,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 76,
             "stageName": "银荆村",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14553,16 +14254,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 77,
             "stageName": "荆棘谷小筑",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14603,16 +14300,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 78,
             "stageName": "月光庄园",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14653,16 +14346,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 79,
             "stageName": "铁木田庄",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14703,16 +14392,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 80,
             "stageName": "低语溪小村",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14753,16 +14438,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 81,
             "stageName": "琥珀湾庄园",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14803,16 +14484,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 82,
             "stageName": "石林村",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14853,16 +14530,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 83,
             "stageName": "玫木田庄",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14903,16 +14576,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 84,
             "stageName": "冬谷小筑",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -14953,16 +14622,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 85,
             "stageName": "橡木庄园",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15003,16 +14668,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 86,
             "stageName": "金色草地村",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15053,16 +14714,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 87,
             "stageName": "影林小村",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15103,16 +14760,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 88,
             "stageName": "向阳田庄",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15153,16 +14806,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 89,
             "stageName": "阿什克罗夫特庄园",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15203,16 +14852,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 90,
             "stageName": "柳草地村",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15253,16 +14898,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 91,
             "stageName": "荆丘田庄",
+            "stageImage": "Textures/buildings/building01.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15303,16 +14944,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building01.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 92,
             "stageName": "雾林小筑",
+            "stageImage": "Textures/buildings/building02.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15353,16 +14990,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building02.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 93,
             "stageName": "银月村",
+            "stageImage": "Textures/buildings/building03.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15403,16 +15036,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building03.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 94,
             "stageName": "荆棘林田庄",
+            "stageImage": "Textures/buildings/building04.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15453,16 +15082,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building04.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 95,
             "stageName": "月溪庄园",
+            "stageImage": "Textures/buildings/building05.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15503,16 +15128,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building05.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 96,
             "stageName": "铁丘庄园",
+            "stageImage": "Textures/buildings/building06.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15553,16 +15174,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building06.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 97,
             "stageName": "清月湾",
+            "stageImage": "Textures/buildings/building07.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15603,16 +15220,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building07.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 98,
             "stageName": "琥珀林小筑",
+            "stageImage": "Textures/buildings/building08.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15653,16 +15266,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building08.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 99,
             "stageName": "斯通克罗夫特村",
+            "stageImage": "Textures/buildings/building09.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15703,16 +15312,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building09.png"
-                }
-            ]
+            "extraFields": []
         },
         {
             "agencyStageId": 100,
             "stageName": "玫瑰谷田庄",
+            "stageImage": "Textures/buildings/building10.png",
             "promotionIds": [
                 "leaflet",
                 "radio",
@@ -15753,12 +15358,7 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": [
-                {
-                    "key": "stageImage",
-                    "value": "Textures/buildings/building10.png"
-                }
-            ]
+            "extraFields": []
         }
     ],
     "Holmas_LeaderboardTable": [

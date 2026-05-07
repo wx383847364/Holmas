@@ -96,7 +96,7 @@ def _export(repo_root: Path | str, config_root: Path | str, json_root: Path | st
     _normalize_player_level_rows(report, player_level_rows, task_lookup, map_lookup)
     _warn_unreferenced_map_rows(report, map_rows, player_level_rows)
     _validate_player_level_table(report, player_level_rows)
-    _validate_agency_building_table(report, agency_building_rows)
+    _validate_agency_building_table(report, agency_building_rows, repo_root)
     _validate_leaderboard_table(report, leaderboard_rows)
 
     core_package = _build_core_package(map_rows, task_rows, player_level_rows, agency_building_rows, leaderboard_rows, generic_tables)
@@ -552,11 +552,12 @@ def _parse_player_levels(report: ExportReport, source_path: str, rows: list[list
 def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[list[str]], header_map: dict[str, int]) -> list[AgencyBuildingTableSheetRow]:
     stage_id_col = _require_column(report, source_path, header_map, "agencyStageId")
     stage_name_col = _require_column(report, source_path, header_map, "stageName")
+    stage_image_col = _require_column(report, source_path, header_map, "stageImage")
     promotion_ids_col = _require_column(report, source_path, header_map, "promotionIds")
     promotion_caps_col = _require_column(report, source_path, header_map, "promotionLevelCaps")
     promotion_costs_col = _require_column(report, source_path, header_map, "promotionUpgradeCosts")
     notes_col = _get_optional_column(header_map, "notes")
-    known_columns = {"agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes"}
+    known_columns = {"agencyStageId", "stageName", "stageImage", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes"}
 
     items: list[AgencyBuildingTableSheetRow] = []
     for row_index in range(2, len(rows)):
@@ -573,6 +574,7 @@ def _parse_agency_buildings(report: ExportReport, source_path: str, rows: list[l
             row_index=len(items),
             agency_stage_id=stage_id,
             stage_name=_get_cell(row, stage_name_col),
+            stage_image=_get_cell(row, stage_image_col),
             promotion_ids=promotion_ids,
             promotion_level_caps=promotion_level_caps,
             promotion_upgrade_costs=promotion_upgrade_costs,
@@ -813,7 +815,7 @@ def _validate_player_level_table(report: ExportReport, player_rows: list[PlayerL
             return
 
 
-def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuildingTableSheetRow]) -> None:
+def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuildingTableSheetRow], repo_root: Path) -> None:
     if not rows:
         report.errors.append("缺少 Holmas_AgencyBuildingTable 数据。")
         return
@@ -836,6 +838,13 @@ def _validate_agency_building_table(report: ExportReport, rows: list[AgencyBuild
             report.errors.append(f"Holmas_AgencyBuildingTable 存在重复 stageName: {row.stage_name}。")
             return
         seen_stage_names.add(row.stage_name)
+        if not row.stage_image:
+            report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 缺少 stageImage。")
+            return
+        stage_image_path = repo_root / "Assets" / "HotUpdateContent" / "Res" / row.stage_image
+        if not stage_image_path.exists():
+            report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 的 stageImage 资源不存在: {row.stage_image}。")
+            return
         if not row.promotion_ids:
             report.errors.append(f"Holmas_AgencyBuildingTable {row.agency_stage_id} 缺少 promotionIds。")
             return
@@ -954,6 +963,7 @@ def _build_core_package(
             AgencyBuildingTableRow(
                 agency_stage_id=row.agency_stage_id,
                 stage_name=row.stage_name,
+                stage_image=row.stage_image,
                 promotion_ids=list(row.promotion_ids),
                 promotion_level_caps=list(row.promotion_level_caps),
                 promotion_upgrade_costs=[

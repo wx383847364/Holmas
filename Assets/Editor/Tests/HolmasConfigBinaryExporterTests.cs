@@ -177,7 +177,7 @@ namespace Holmas.EditorTests
                         out HolmasConfigReport runtimeReport);
 
                     Assert.That(success, Is.True, runtimeReport == null ? "runtime report missing" : string.Join("\n", runtimeReport.Errors));
-                    Assert.That(bundle.Holmas_AgencyBuildingTable[0].promotionIds.Length, Is.EqualTo(agencyRows[2][2].Split(';').Length));
+                    Assert.That(bundle.Holmas_AgencyBuildingTable[0].promotionIds.Length, Is.EqualTo(agencyRows[2][3].Split(';').Length));
                 }
             }
         }
@@ -429,8 +429,8 @@ namespace Holmas.EditorTests
         private static string[][] BuildAgencyRows(string promotionIds, string promotionCaps, string promotionCosts, int stageCount = 8)
         {
             var rows = new string[stageCount + 2][];
-            rows[0] = new[] { "城市阶段id", "城市名", "宣传功能id数组", "宣传升级级数上限数组", "宣传升级费用数组", "备注" };
-            rows[1] = new[] { "agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes" };
+            rows[0] = new[] { "城市阶段id", "城市名", "城市图片", "宣传功能id数组", "宣传升级级数上限数组", "宣传升级费用数组", "备注" };
+            rows[1] = new[] { "agencyStageId", "stageName", "stageImage", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes" };
 
             for (int stage = 1; stage <= stageCount; stage++)
             {
@@ -438,6 +438,7 @@ namespace Holmas.EditorTests
                 {
                     stage.ToString(),
                     "城市" + stage.ToString("D3"),
+                    "Textures/buildings/building" + (((stage - 1) % 5) + 1).ToString("D2") + ".png",
                     promotionIds,
                     promotionCaps,
                     promotionCosts,

@@ -83,6 +83,7 @@ def _write_agency_building_table_rows(stream: BytesIO, rows) -> None:
     for row in rows:
         _write_int32(stream, row.agency_stage_id)
         _write_string(stream, row.stage_name)
+        _write_string(stream, row.stage_image)
         _write_string_array(stream, row.promotion_ids)
         _write_int_array(stream, row.promotion_level_caps)
         _write_agency_building_table_cost_rows(stream, row.promotion_upgrade_costs)

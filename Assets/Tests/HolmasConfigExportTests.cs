@@ -37,6 +37,7 @@ namespace Holmas.Tests
             Assert.That(tables.Maps.All(item => item.CatCountMin > 0 && item.CatCountMax >= item.CatCountMin), Is.True);
             Assert.That(tables.Maps.All(item => !string.IsNullOrWhiteSpace(item.TerrainPath)), Is.True);
             Assert.That(tables.Maps.Select(item => item.MapId).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(tables.Maps.Count));
+            Assert.That(tables.Holmas_AgencyBuildingTable.All(item => !string.IsNullOrWhiteSpace(item.StageImage)), Is.True);
             Assert.That(tables.Holmas_AgencyBuildingTable.All(item => item.PromotionIds != null && item.PromotionIds.Length > 0), Is.True);
             Assert.That(tables.Holmas_AgencyBuildingTable.All(item => item.PromotionLevelCaps != null && item.PromotionLevelCaps.Length == item.PromotionIds.Length), Is.True);
             Assert.That(tables.Holmas_AgencyBuildingTable.All(item => item.PromotionUpgradeCosts != null && item.PromotionUpgradeCosts.Length == item.PromotionIds.Length), Is.True);
@@ -133,7 +134,7 @@ namespace Holmas.Tests
         public void HolmasConfigCatalogFactory_RejectsUnsupportedCoreJsonVersion()
         {
             string json = File.ReadAllText(Path.Combine(Application.dataPath, "Config", "json", "holmas_core_config.json")).TrimStart('\uFEFF');
-            json = json.Replace("\"Version\": 8", "\"Version\": 7");
+            json = json.Replace("\"Version\": 9", "\"Version\": 8");
 
             bool success = HolmasConfigBinaryCodec.TryReadCoreJson(json, out _, out string error);
 
@@ -607,6 +608,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = item.agencyStageId,
                     StageName = item.stageName,
+                    StageImage = item.stageImage,
                     PromotionIds = item.promotionIds.ToArray(),
                     PromotionLevelCaps = item.promotionLevelCaps.ToArray(),
                     PromotionUpgradeCosts = item.promotionUpgradeCosts.Select(costs => (costs?.costs ?? Array.Empty<int>()).ToArray()).ToArray(),
@@ -776,6 +778,7 @@ namespace Holmas.Tests
                 {
                     agencyStageId = item.AgencyStageId,
                     stageName = item.StageName,
+                    stageImage = item.StageImage,
                     promotionIds = item.PromotionIds.ToArray(),
                     promotionLevelCaps = item.PromotionLevelCaps.ToArray(),
                     promotionUpgradeCosts = item.PromotionUpgradeCosts.Select(costs => new HolmasAgencyBuildingTableCostRow
@@ -945,6 +948,7 @@ namespace Holmas.Tests
         {
             public int AgencyStageId;
             public string StageName = string.Empty;
+            public string StageImage = string.Empty;
             public string[] PromotionIds = Array.Empty<string>();
             public int[] PromotionLevelCaps = Array.Empty<int>();
             public int[][] PromotionUpgradeCosts = Array.Empty<int[]>();
@@ -1252,6 +1256,11 @@ namespace Holmas.Tests
                     if (!seenStageNames.Add(buildingRow.StageName))
                     {
                         errors.Add($"宣传表存在重复城市名称: {buildingRow.StageName}");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(buildingRow.StageImage))
+                    {
+                        errors.Add($"宣传表缺少城市图片: {buildingRow.AgencyStageId}");
                     }
 
                     int promotionCount = buildingRow.PromotionIds?.Length ?? 0;

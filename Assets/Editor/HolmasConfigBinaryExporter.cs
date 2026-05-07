@@ -726,11 +726,12 @@ namespace Holmas.EditorTools
         {
             int stageIdCol = RequireColumn(report, sourcePath, headerMap, "agencyStageId");
             int stageNameCol = RequireColumn(report, sourcePath, headerMap, "stageName");
+            int stageImageCol = RequireColumn(report, sourcePath, headerMap, "stageImage");
             int promotionIdsCol = RequireColumn(report, sourcePath, headerMap, "promotionIds");
             int promotionCapsCol = RequireColumn(report, sourcePath, headerMap, "promotionLevelCaps");
             int promotionCostsCol = RequireColumn(report, sourcePath, headerMap, "promotionUpgradeCosts");
             int notesCol = GetOptionalColumn(headerMap, "notes");
-            var knownColumns = BuildKnownColumns("agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes");
+            var knownColumns = BuildKnownColumns("agencyStageId", "stageName", "stageImage", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes");
 
             var list = new List<HolmasAgencyBuildingSheetRow>();
             for (int rowIndex = 2; rowIndex < rows.Count; rowIndex++)
@@ -753,6 +754,7 @@ namespace Holmas.EditorTools
                     RowIndex = list.Count,
                     AgencyStageId = stageId,
                     StageName = stageName,
+                    StageImage = GetCell(row, stageImageCol),
                     PromotionIds = promotionIds,
                     PromotionLevelCaps = levelCaps,
                     PromotionUpgradeCosts = upgradeCosts,
@@ -1027,6 +1029,19 @@ namespace Holmas.EditorTools
                 if (!seenStageNames.Add(row.StageName))
                 {
                     report.Errors.Add($"Holmas_AgencyBuildingTable 存在重复 stageName: {row.StageName}。");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(row.StageImage))
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 缺少 stageImage。");
+                    return;
+                }
+
+                string stageImagePath = CombineProjectPath("Assets/HotUpdateContent/Res", row.StageImage);
+                if (!File.Exists(stageImagePath))
+                {
+                    report.Errors.Add($"Holmas_AgencyBuildingTable {row.AgencyStageId} 的 stageImage 资源不存在: {row.StageImage}。");
                     return;
                 }
 
@@ -1373,6 +1388,7 @@ namespace Holmas.EditorTools
                 {
                     agencyStageId = row.AgencyStageId,
                     stageName = row.StageName ?? string.Empty,
+                    stageImage = row.StageImage ?? string.Empty,
                     promotionIds = row.PromotionIds ?? Array.Empty<string>(),
                     promotionLevelCaps = row.PromotionLevelCaps ?? Array.Empty<int>(),
                     promotionUpgradeCosts = (row.PromotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingCostSheetRow>())
@@ -2041,6 +2057,7 @@ namespace Holmas.EditorTools
         public int RowIndex;
         public int AgencyStageId;
         public string StageName;
+        public string StageImage;
         public string[] PromotionIds;
         public int[] PromotionLevelCaps;
         public HolmasAgencyBuildingCostSheetRow[] PromotionUpgradeCosts;

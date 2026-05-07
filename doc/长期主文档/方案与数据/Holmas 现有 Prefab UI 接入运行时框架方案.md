@@ -540,21 +540,26 @@ Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/Battle
 - `BattleBindings.cs`
 - `BattleVm.cs`
 
+> 2026-05-08 更新：本段旧职责已被城市宣传地图方案取代。`BattlePanel` 不再承担找猫棋盘页职责，不应再接 `BoardContainer`、`FindCatBoardView`、`RevealCell` 或自动下一局逻辑。
+
 `BattlePanel` 当前最小必须接的内容：
 
-- 返回按钮
-- 当前关卡摘要
-- 棋盘容器
-- 棋盘格子点击逻辑
+- 返回按钮 `Back_btn`
+- 建设按钮 `Build_btn`
+- 城市宣传阶段 `Stage1..Stage5`
+- 阶段连接进度 `StageBar1..StageBar4`
+- 等级、金币、状态文本
 
 正式数据来源固定为：
 
-- `Root.Context.GameplayRuntime.CurrentBoardRuntime`
+- 城市宣传阶段：`IHolmasAgencyCatalog.GetStagesInOrder()`
+- 当前推进状态：`Root.Context.GameplayRuntime.MetaProgressionState`
 
 建议规则：
 
-- 棋盘渲染是 UI 层职责
-- `RevealCell / ToggleFlag / 关卡完成推进` 仍由 runtime 提供
+- `BattlePanel` 只负责城市宣传地图展示、阶段选择与当前阶段建设入口
+- 找猫棋盘、教程棋盘、正式棋盘交互全部保留在 `MainPanel` 的内嵌棋盘容器中
+- 旧 `StartBattleAsync / AdvanceToNextBattleAsync / ExitBattleToMainAsync` 只做兼容转发，不应再打开 BattlePanel 棋盘
 
 ### `LoadingPanel`
 

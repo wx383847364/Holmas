@@ -609,6 +609,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 HolmasAgencyBuildingTableRow row = rows[i] ?? new HolmasAgencyBuildingTableRow();
                 writer.Write(row.agencyStageId);
                 WriteString(writer, row.stageName);
+                WriteString(writer, row.stageImage);
                 WriteStringArray(writer, row.promotionIds);
                 WriteIntArray(writer, row.promotionLevelCaps);
                 WriteAgencyBuildingTableCostRows(writer, row.promotionUpgradeCosts);
@@ -627,6 +628,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 {
                     agencyStageId = reader.ReadInt32(),
                     stageName = ReadString(reader),
+                    stageImage = ReadString(reader),
                     promotionIds = ReadStringArray(reader),
                     promotionLevelCaps = ReadIntArray(reader),
                     promotionUpgradeCosts = ReadAgencyBuildingTableCostRows(reader),

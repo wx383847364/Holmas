@@ -7,10 +7,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace App.HotUpdate.Holmas.UI.Screens.Battle
+namespace App.HotUpdate.Holmas.UI.Screens.FindCat
 {
     [RequireComponent(typeof(Image))]
-    public sealed class BattleCellView : MonoBehaviour, IPointerClickHandler
+    public sealed class FindCatCellView : MonoBehaviour, IPointerClickHandler
     {
         private BoardCellState _state;
         private Action<int, bool> _onInteract;

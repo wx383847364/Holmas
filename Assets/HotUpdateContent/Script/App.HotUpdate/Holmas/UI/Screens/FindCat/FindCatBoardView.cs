@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.UI.Core;
-using App.HotUpdate.Holmas.UI.Screens.Battle;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,7 +9,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
 {
     public sealed class FindCatBoardView : MonoBehaviour
     {
-        private readonly List<BattleCellView> _cells = new List<BattleCellView>();
+        private readonly List<FindCatCellView> _cells = new List<FindCatCellView>();
         private HolmasCatSpriteLoader _catSpriteLoader;
 
         public void SetCatSpriteLoader(HolmasCatSpriteLoader catSpriteLoader)
@@ -25,7 +24,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
                 return null;
             }
 
-            BattleCellView cell = _cells[cellIndex];
+            FindCatCellView cell = _cells[cellIndex];
             return cell != null && cell.gameObject.activeInHierarchy
                 ? cell.transform as RectTransform
                 : null;
@@ -100,9 +99,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
         {
             while (_cells.Count < requiredCount)
             {
-                GameObject cellObject = new GameObject($"Cell_{_cells.Count}", typeof(RectTransform), typeof(Image), typeof(BattleCellView));
+                GameObject cellObject = new GameObject($"Cell_{_cells.Count}", typeof(RectTransform), typeof(Image), typeof(FindCatCellView));
                 cellObject.transform.SetParent(transform, false);
-                BattleCellView cellView = cellObject.GetComponent<BattleCellView>();
+                FindCatCellView cellView = cellObject.GetComponent<FindCatCellView>();
                 _cells.Add(cellView);
             }
         }

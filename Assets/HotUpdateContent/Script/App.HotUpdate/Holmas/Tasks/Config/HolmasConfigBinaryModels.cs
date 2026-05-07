@@ -11,7 +11,9 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public const int CoreMagic = 0x48434F52; // HCOR
         public const int CatMetaMagic = 0x48434154; // HCAT
-        public const int CurrentVersion = 8;
+        // v9 把 Holmas_AgencyBuildingTable.stageImage 从 extraFields 提升为正式字段。
+        // 这是强制 schema 升级：热更 DLL、core_config.bytes、cat_meta.bytes 必须同批发布。
+        public const int CurrentVersion = 9;
         public const int MinSupportedVersion = CurrentVersion;
     }
 
@@ -166,6 +168,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
     {
         public int agencyStageId;
         public string stageName = string.Empty;
+        public string stageImage = string.Empty;
         public string[] promotionIds = Array.Empty<string>();
         public int[] promotionLevelCaps = Array.Empty<int>();
         public HolmasAgencyBuildingTableCostRow[] promotionUpgradeCosts = Array.Empty<HolmasAgencyBuildingTableCostRow>();

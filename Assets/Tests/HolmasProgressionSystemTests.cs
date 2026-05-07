@@ -323,6 +323,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 1,
                     StageName = "stage-1",
+                    StageImage = "Textures/buildings/building01.png",
                     PromotionId = "lobby",
                     PromotionLevelCap = 1,
                     PromotionUpgradeCosts = new[] { 10 },
@@ -331,6 +332,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 1,
                     StageName = "stage-1",
+                    StageImage = "Textures/buildings/building01.png",
                     PromotionId = "desk",
                     PromotionLevelCap = 1,
                     PromotionUpgradeCosts = new[] { 20 },
@@ -339,6 +341,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 2,
                     StageName = "stage-2",
+                    StageImage = "Textures/buildings/building02.png",
                     PromotionId = "archive",
                     PromotionLevelCap = 2,
                     PromotionUpgradeCosts = new[] { 30, 40 },
@@ -354,6 +357,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 1,
                     StageName = "stage-1",
+                    StageImage = "Textures/buildings/building01.png",
                     PromotionId = "lobby",
                     PromotionLevelCap = 1,
                     PromotionUpgradeCosts = new[] { 10 },
@@ -369,6 +373,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 1,
                     StageName = "stage-1",
+                    StageImage = "Textures/buildings/building01.png",
                     PromotionId = "leaflet",
                     PromotionLevelCap = 2,
                     PromotionUpgradeCosts = new[] { 10, 20 },
@@ -377,6 +382,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 2,
                     StageName = "stage-2",
+                    StageImage = "Textures/buildings/building02.png",
                     PromotionId = "leaflet",
                     PromotionLevelCap = 3,
                     PromotionUpgradeCosts = new[] { 30, 40, 50 },

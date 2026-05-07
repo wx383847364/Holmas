@@ -13,9 +13,18 @@ namespace App.HotUpdate.Holmas.Meta
     {
         public int AgencyStageId;
         public string StageName = string.Empty;
+        public string StageImage = string.Empty;
         public string PromotionId = string.Empty;
         public int PromotionLevelCap;
         public int[] PromotionUpgradeCosts = Array.Empty<int>();
+    }
+
+    [Serializable]
+    public sealed class HolmasAgencyStageDefinition
+    {
+        public int AgencyStageId;
+        public string StageName = string.Empty;
+        public string StageImage = string.Empty;
     }
 
     /// <summary>
@@ -25,6 +34,8 @@ namespace App.HotUpdate.Holmas.Meta
     {
         bool TryGetPromotion(string promotionId, out HolmasAgencyBuildingDefinition definition);
         IReadOnlyList<HolmasAgencyBuildingDefinition> GetPromotionsForStage(int agencyStageId);
+        IReadOnlyList<HolmasAgencyStageDefinition> GetStagesInOrder();
+        bool TryGetStage(int agencyStageId, out HolmasAgencyStageDefinition definition);
     }
 
     /// <summary>
@@ -34,6 +45,8 @@ namespace App.HotUpdate.Holmas.Meta
     {
         private readonly Dictionary<string, HolmasAgencyBuildingDefinition> _promotions = new Dictionary<string, HolmasAgencyBuildingDefinition>(StringComparer.Ordinal);
         private readonly Dictionary<int, List<HolmasAgencyBuildingDefinition>> _promotionsByStage = new Dictionary<int, List<HolmasAgencyBuildingDefinition>>();
+        private readonly Dictionary<int, HolmasAgencyStageDefinition> _stagesById = new Dictionary<int, HolmasAgencyStageDefinition>();
+        private readonly List<HolmasAgencyStageDefinition> _stagesInOrder = new List<HolmasAgencyStageDefinition>();
 
         public HolmasAgencyCatalog()
         {
@@ -48,6 +61,8 @@ namespace App.HotUpdate.Holmas.Meta
         {
             _promotions.Clear();
             _promotionsByStage.Clear();
+            _stagesById.Clear();
+            _stagesInOrder.Clear();
 
             if (promotions == null)
             {
@@ -71,7 +86,21 @@ namespace App.HotUpdate.Holmas.Meta
                 }
 
                 stagePromotions.Add(definition);
+
+                if (!_stagesById.ContainsKey(definition.AgencyStageId))
+                {
+                    var stage = new HolmasAgencyStageDefinition
+                    {
+                        AgencyStageId = definition.AgencyStageId,
+                        StageName = definition.StageName ?? string.Empty,
+                        StageImage = NormalizeStageImagePath(definition.StageImage),
+                    };
+                    _stagesById[definition.AgencyStageId] = stage;
+                    _stagesInOrder.Add(stage);
+                }
             }
+
+            _stagesInOrder.Sort((left, right) => left.AgencyStageId.CompareTo(right.AgencyStageId));
         }
 
         public bool TryGetPromotion(string promotionId, out HolmasAgencyBuildingDefinition definition)
@@ -87,6 +116,28 @@ namespace App.HotUpdate.Holmas.Meta
             }
 
             return stagePromotions;
+        }
+
+        public IReadOnlyList<HolmasAgencyStageDefinition> GetStagesInOrder()
+        {
+            return _stagesInOrder;
+        }
+
+        public bool TryGetStage(int agencyStageId, out HolmasAgencyStageDefinition definition)
+        {
+            return _stagesById.TryGetValue(agencyStageId, out definition);
+        }
+
+        private static string NormalizeStageImagePath(string stageImage)
+        {
+            string normalized = (stageImage ?? string.Empty).Replace('\\', '/').Trim();
+            if (string.IsNullOrWhiteSpace(normalized) ||
+                normalized.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                return normalized;
+            }
+
+            return "Assets/HotUpdateContent/Res/" + normalized.TrimStart('/');
         }
     }
 

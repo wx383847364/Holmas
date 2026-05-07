@@ -61,7 +61,7 @@ class HolmasPythonExporterTests(unittest.TestCase):
             cat_json = json.loads((json_root / "holmas_cat_meta.json").read_text(encoding="utf-8"))
             report_json = json.loads((json_root / "holmas_export_report.json").read_text(encoding="utf-8"))
 
-            self.assertEqual(core_json["Version"], 8)
+            self.assertEqual(core_json["Version"], 9)
             self.assertEqual(core_json["Holmas_PlayerLevelTable"][-1]["minExperience"], 2000)
             self.assertNotIn("MetaLevels", core_json)
             self.assertEqual(cat_json["Holmas_CatTable"][0]["catName"], "布偶猫")
@@ -283,6 +283,11 @@ def _write_fixture(
     promotion_caps: str = "5;5;5;5",
     promotion_costs: str = "100;200;300;400;500|120;240;360;480;600|140;280;420;560;700|160;320;480;640;800",
 ) -> None:
+    res_root = config_root.parent / "HotUpdateContent" / "Res" / "Textures" / "buildings"
+    res_root.mkdir(parents=True, exist_ok=True)
+    for index in range(1, 6):
+        (res_root / f"building{index:02d}.png").write_bytes(b"fake image")
+
     _write_tabular_workbook(
         config_root / "Holmas_MapTable.xlsx",
         "Sheet1",
@@ -357,9 +362,13 @@ def _write_fixture(
             )
     _write_tabular_workbook(config_root / "Holmas_PlayerLevelTable.xlsx", "Holmas_PlayerLevelTable", player_rows)
 
-    agency_rows = [["城市阶段id", "城市名", "宣传功能id数组", "宣传升级级数上限数组", "宣传升级费用数组", "备注"], ["agencyStageId", "stageName", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes"]]
+    agency_rows = [
+        ["城市阶段id", "城市名", "城市图片", "宣传功能id数组", "宣传升级级数上限数组", "宣传升级费用数组", "备注"],
+        ["agencyStageId", "stageName", "stageImage", "promotionIds", "promotionLevelCaps", "promotionUpgradeCosts", "notes"],
+    ]
     for stage in range(1, 101):
-        agency_rows.append([str(stage), f"城市{stage:03d}", promotion_ids, promotion_caps, promotion_costs, ""])
+        image_index = ((stage - 1) % 5) + 1
+        agency_rows.append([str(stage), f"城市{stage:03d}", f"Textures/buildings/building{image_index:02d}.png", promotion_ids, promotion_caps, promotion_costs, ""])
     _write_tabular_workbook(config_root / "Holmas_AgencyBuildingTable.xlsx", "Holmas_AgencyBuildingTable", agency_rows)
 
     _write_tabular_workbook(

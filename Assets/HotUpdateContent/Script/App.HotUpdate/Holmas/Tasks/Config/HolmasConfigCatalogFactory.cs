@@ -505,6 +505,13 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     return false;
                 }
 
+                string stageImage = row.stageImage ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(stageImage))
+                {
+                    report.AddError($"Holmas_AgencyBuildingTable {row.agencyStageId} 缺少 stageImage。");
+                    return false;
+                }
+
                 if (!seenStageNames.Add(stageName))
                 {
                     report.AddError($"Holmas_AgencyBuildingTable 存在重复 stageName: {stageName}。");
@@ -563,6 +570,7 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                 {
                     agencyStageId = row.agencyStageId,
                     stageName = stageName,
+                    stageImage = stageImage,
                     promotionIds = row.promotionIds.ToArray(),
                     promotionLevelCaps = row.promotionLevelCaps.ToArray(),
                     promotionUpgradeCosts = (row.promotionUpgradeCosts ?? Array.Empty<HolmasAgencyBuildingTableCostRow>())

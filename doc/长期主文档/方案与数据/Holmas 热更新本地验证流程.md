@@ -144,6 +144,7 @@ bash tools/validation/run_holmas_il2cpp_player_smoke.sh --build-target Standalon
 
 ## 已知边界
 
+- 配置协议 v9 起，`Holmas_AgencyBuildingTable.stageImage` 已从 `extraFields` 提升为正式字段；v9 runtime 会拒绝旧版 bytes。发布时必须保证 HotUpdate DLL、`holmas_core_config.bytes`、`holmas_cat_meta.bytes` 同批更新，不能让新 DLL 先加载旧配置包。
 - `HybridClrLoader` 的非 Editor 真实加载路径已固定为 `Assets/HotUpdateContent/Res/HotUpdate/App.HotUpdate.dll.bytes` 和 `Assets/HotUpdateContent/Res/HotUpdate/Metadata/*.dll.bytes`。
 - AOT metadata 清单已扩展到当前目标平台的保守真实清单：`mscorlib`、`System`、`System.Core`、`UnityEngine.CoreModule`、`UnityEngine.UI`、`UnityEngine.UIModule`、`UnityEngine.TextRenderingModule`、`UnityEngine.JSONSerializeModule`、`UnityEngine.InputLegacyModule`、`Unity.TextMeshPro`、`App.Shared`。
 - 本地热更专项验证仍允许 Editor fallback；严格 IL2CPP/player smoke 必须先保证脚本编译通过、完成 `HybridCLR/Installer...`，并安装目标平台 IL2CPP player 模块。

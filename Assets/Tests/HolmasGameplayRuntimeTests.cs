@@ -608,11 +608,12 @@ namespace Holmas.Tests
 
             Assert.That(viewModel.Summary, Does.Contain("Lv 1 | Exp 0/1 | Gold 25 | Stage 1"));
             Assert.That(viewModel.Summary, Does.Contain("宣传 lobby Lv 0/1 | Next Cost 10 | +1 Exp"));
-            Assert.That(viewModel.PromotionButtonLabel, Is.EqualTo("升级 lobby Lv 0->1 (10 Gold)"));
+            Assert.That(viewModel.PromotionButtonLabel, Is.EqualTo("城市宣传"));
+            Assert.That(viewModel.PromotionButtonEnabled, Is.True);
         }
 
         [Test]
-        public void MainPresenter_DisablesPromotionButtonWhenCurrentStageIsFullyUpgraded()
+        public void MainPresenter_AllowsPublicityMapEntryWhenCurrentStageIsFullyUpgraded()
         {
             var catalog = CreateDifficultyFlowTaskCatalog();
             var metaCatalog = CreateGrowthMetaCatalog();
@@ -644,9 +645,92 @@ namespace Holmas.Tests
             MainVm viewModel = new MainPresenter(context).Build();
 
             Assert.That(viewModel.Summary, Does.Contain("宣传 暂无可升级项"));
-            Assert.That(viewModel.PromotionButtonEnabled, Is.False);
-            Assert.That(viewModel.PromotionButtonLabel, Is.EqualTo("宣传已满级"));
+            Assert.That(viewModel.PromotionButtonEnabled, Is.True);
+            Assert.That(viewModel.PromotionButtonLabel, Is.EqualTo("城市宣传"));
             Assert.That(viewModel.PromotionId, Is.Empty);
+        }
+
+        [Test]
+        public void BattlePresenter_BuildsPublicityMapFromAgencyStages()
+        {
+            HolmasApplicationContext context = CreatePromotionMapTestContext(out _);
+            context.GameplayRuntime.MetaProgressionState.GoldBalance = 25;
+
+            BattleVm viewModel = new BattlePresenter(context).Build(selectedStageId: 1);
+
+            Assert.That(viewModel.SelectedStageId, Is.EqualTo(1));
+            Assert.That(viewModel.Stages, Has.Length.EqualTo(BattlePresenter.VisibleStageCount));
+            Assert.That(viewModel.Stages[0].Visible, Is.True);
+            Assert.That(viewModel.Stages[0].Unlocked, Is.True);
+            Assert.That(viewModel.Stages[0].Current, Is.True);
+            Assert.That(viewModel.Stages[0].Selected, Is.True);
+            Assert.That(viewModel.Stages[0].StageImage, Is.EqualTo("Assets/HotUpdateContent/Res/Textures/buildings/building01.png"));
+            Assert.That(viewModel.Stages[1].Visible, Is.True);
+            Assert.That(viewModel.Stages[1].Unlocked, Is.False);
+            Assert.That(viewModel.BuildStages, Has.Length.EqualTo(BattlePresenter.VisibleStageCount));
+            Assert.That(viewModel.BuildStages[0].AgencyStageId, Is.EqualTo(viewModel.Stages[0].AgencyStageId));
+            Assert.That(viewModel.BuildStages[0].StageImage, Is.EqualTo(viewModel.Stages[0].StageImage));
+            Assert.That(viewModel.BuildStages[0].ProgressLabel, Is.EqualTo(viewModel.Stages[0].ProgressLabel));
+            Assert.That(viewModel.BuildStages[0].Selected, Is.True);
+            Assert.That(viewModel.BuildStages[1].Unlocked, Is.False);
+            Assert.That(viewModel.BuildButtonEnabled, Is.True);
+            Assert.That(viewModel.BuildButtonLabel, Is.EqualTo("stage-1\n宣传 0->1/2\n金币 -10"));
+            Assert.That(viewModel.BuildStages[0].StarCount, Is.EqualTo(0));
+            Assert.That(viewModel.StageBars[0].Visible, Is.True);
+            Assert.That(viewModel.StageBars[0].Progress, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void BattlePresenter_BuildCardStarsFollowSelectedStageProgress()
+        {
+            HolmasApplicationContext context = CreatePromotionMapTestContext(out _);
+            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "lobby", 1);
+
+            BattleVm viewModel = new BattlePresenter(context).Build(selectedStageId: 1);
+
+            Assert.That(viewModel.BuildStages[0].StarCount, Is.EqualTo(2));
+            Assert.That(viewModel.BuildButtonLabel, Is.EqualTo("stage-1\n宣传 1->2/2\n金币 -20"));
+        }
+
+        [Test]
+        public void BattlePresenter_BuildCardShowsFiveStarsOnlyWhenStageComplete()
+        {
+            HolmasAgencyCatalog agencyCatalog = CreateFifteenCapPromotionCatalog();
+            HolmasApplicationContext context = CreatePromotionMapTestContext(agencyCatalog);
+
+            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "district", 14);
+            BattleVm almostComplete = new BattlePresenter(context).Build(selectedStageId: 1);
+
+            Assert.That(almostComplete.BuildStages[0].StarCount, Is.EqualTo(4));
+
+            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "district", 15);
+            BattleVm complete = new BattlePresenter(context).Build(selectedStageId: 1);
+
+            Assert.That(complete.BuildStages[0].StarCount, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void BattlePresenter_DisablesBuildForHistoryAndLockedStages()
+        {
+            HolmasApplicationContext context = CreatePromotionMapTestContext(out _);
+
+            BattleVm lockedStage = new BattlePresenter(context).Build(selectedStageId: 2);
+            Assert.That(lockedStage.BuildButtonEnabled, Is.False);
+            Assert.That(lockedStage.BuildButtonLabel, Is.EqualTo("城市尚未解锁"));
+            Assert.That(lockedStage.BuildStages[1].StageImage, Is.EqualTo("Assets/HotUpdateContent/Res/Textures/buildings/building02.png"));
+            Assert.That(lockedStage.BuildStages[1].Unlocked, Is.False);
+            Assert.That(lockedStage.BuildStages[1].StarCount, Is.EqualTo(0));
+
+            context.GameplayRuntime.MetaProgressionState.AgencyStageId = 2;
+            BattleVm historyStage = new BattlePresenter(context).Build(selectedStageId: 1);
+            Assert.That(historyStage.BuildButtonEnabled, Is.False);
+            Assert.That(historyStage.BuildButtonLabel, Is.EqualTo("stage-1\n已完成/仅回看"));
+            Assert.That(historyStage.SelectedStageId, Is.EqualTo(1));
+            Assert.That(historyStage.Stages[0].Completed, Is.True);
+            Assert.That(historyStage.Stages[0].Selected, Is.True);
+            Assert.That(historyStage.Stages[0].ProgressLabel, Is.EqualTo("2/2"));
+            Assert.That(historyStage.BuildStages[0].Selected, Is.True);
+            Assert.That(historyStage.BuildStages[0].StarCount, Is.EqualTo(5));
         }
 
         [Test]
@@ -1815,7 +1899,7 @@ namespace Holmas.Tests
 
             runtime.RefillAvailableTasks(1);
             BoardRuntime firstBoard = gateway.StartLevelForCurrentPlayerAsync(101).GetAwaiter().GetResult();
-            BattleVm initialViewModel = new BattlePresenter(context).Build();
+            MainVm initialViewModel = new MainPresenter(context).Build();
 
             Assert.That(firstBoard.TotalCatCount, Is.EqualTo(11));
             Assert.That(runtime.TaskBarState.GetTaskBySlot(0).Task.TargetCount, Is.EqualTo(13));
@@ -1831,7 +1915,7 @@ namespace Holmas.Tests
                 finalReveal = runtime.RevealCell(spawnedCat.CellIndex, out finalProgression);
             }
 
-            BattleVm completedViewModel = new BattlePresenter(context).Build();
+            MainVm completedViewModel = new MainPresenter(context).Build();
             HolmasTaskRuntimeInstance task = runtime.TaskBarState.GetTaskBySlot(0);
 
             Assert.That(finalReveal, Is.Not.Null);
@@ -1851,42 +1935,6 @@ namespace Holmas.Tests
             Assert.That(runtime.CurrentLevelSnapshot.Completed, Is.False);
             Assert.That(nextBoard.TotalCatCount, Is.EqualTo(11));
             Assert.That(task.Task.CurrentCount, Is.EqualTo(11));
-        }
-
-        [Test]
-        public void BattleCellView_UnrevealedValidCellIsVisiblyClickable()
-        {
-            var cellObject = new GameObject("cell", typeof(RectTransform), typeof(Image), typeof(BattleCellView));
-            try
-            {
-                BattleCellView view = cellObject.GetComponent<BattleCellView>();
-                typeof(BattleCellView)
-                    .GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
-                    ?.Invoke(view, null);
-                var state = new BoardCellState(
-                    3,
-                    true,
-                    false,
-                    false,
-                    true,
-                    "cat-a",
-                    0,
-                    new Color32(30, 60, 100, 255));
-
-                view.Bind(state, HolmasCatVisualVm.CreateFallback("cat-a"), null, null);
-
-                Image background = cellObject.GetComponent<Image>();
-                Outline outline = cellObject.GetComponent<Outline>();
-                TextMeshProUGUI label = cellObject.GetComponentInChildren<TextMeshProUGUI>();
-
-                Assert.That(background.raycastTarget, Is.True);
-                Assert.That(outline.enabled, Is.True);
-                Assert.That(label.text, Is.EqualTo("?"));
-            }
-            finally
-            {
-                Object.DestroyImmediate(cellObject);
-            }
         }
 
         [Test]
@@ -2365,6 +2413,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 1,
                     StageName = "stage-1",
+                    StageImage = "Textures/buildings/building01.png",
                     PromotionId = "lobby",
                     PromotionLevelCap = 1,
                     PromotionUpgradeCosts = new[] { 10 },
@@ -2373,6 +2422,7 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 1,
                     StageName = "stage-1",
+                    StageImage = "Textures/buildings/building01.png",
                     PromotionId = "desk",
                     PromotionLevelCap = 1,
                     PromotionUpgradeCosts = new[] { 20 },
@@ -2381,11 +2431,60 @@ namespace Holmas.Tests
                 {
                     AgencyStageId = 2,
                     StageName = "stage-2",
+                    StageImage = "Textures/buildings/building02.png",
                     PromotionId = "archive",
                     PromotionLevelCap = 2,
                     PromotionUpgradeCosts = new[] { 30, 40 },
                 },
             });
+        }
+
+        private static HolmasAgencyCatalog CreateFifteenCapPromotionCatalog()
+        {
+            return new HolmasAgencyCatalog(new[]
+            {
+                new HolmasAgencyBuildingDefinition
+                {
+                    AgencyStageId = 1,
+                    StageName = "stage-15",
+                    StageImage = "Textures/buildings/building01.png",
+                    PromotionId = "district",
+                    PromotionLevelCap = 15,
+                    PromotionUpgradeCosts = Enumerable.Repeat(10, 15).ToArray(),
+                },
+            });
+        }
+
+        private static HolmasApplicationContext CreatePromotionMapTestContext(out HolmasAgencyCatalog agencyCatalog)
+        {
+            agencyCatalog = CreatePromotionCatalog();
+            return CreatePromotionMapTestContext(agencyCatalog);
+        }
+
+        private static HolmasApplicationContext CreatePromotionMapTestContext(HolmasAgencyCatalog agencyCatalog)
+        {
+            var taskCatalog = CreateDifficultyFlowTaskCatalog();
+            var metaCatalog = CreateGrowthMetaCatalog();
+            var metaService = new HolmasMetaProgressionService(
+                metaCatalog,
+                taskCatalog,
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new HolmasDefaultMetaExperienceSource(metaCatalog),
+                new FixedUtcClock { UtcNowMilliseconds = 777_000 });
+            var agencyService = new HolmasAgencyProgressionService(agencyCatalog, metaService);
+            var taskService = new HolmasTaskProgressService(taskCatalog, new ScriptedRandomSource(0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, agencyService, new NullLogger(), null);
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(taskCatalog);
+            serviceContainer.RegisterSingleton<IHolmasAgencyCatalog>(agencyCatalog);
+            return new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
         }
 
         private static TextMeshProUGUI CreateTaskSlot(Transform parent, string name, bool withLegacyProgressText = false)

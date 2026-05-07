@@ -280,6 +280,119 @@ namespace Holmas.Tests
                 BattleBindings bindings = BattleBindings.Resolve(resolver);
                 Assert.That(bindings.HasRequiredBindings, Is.True, "BattleBindings 未能解析最小运行时 binding。");
                 Assert.That(instance.transform.Find("RuntimeOverlay/AddEnergyButton"), Is.Null, "BattlePanel 不应再创建加体力按钮。");
+                Assert.That(instance.transform.Find("RuntimeOverlay/BoardContainer"), Is.Null, "BattlePanel 不应再创建全屏找猫棋盘容器。");
+                Assert.That(bindings.BackButton.name, Is.EqualTo("Back_btn"));
+                Assert.That(bindings.BuildButton.name, Is.EqualTo("Build_btn"));
+                for (int i = 0; i < BattlePresenter.VisibleStageCount; i++)
+                {
+                    Assert.That(bindings.StageButtons[i], Is.Not.Null, $"Stage{i + 1} 按钮缺失。");
+                    Assert.That(bindings.StageImages[i], Is.Not.Null, $"Stage{i + 1} 主视觉缺失。");
+                    Assert.That(bindings.StageNameTexts[i], Is.Not.Null, $"Stage{i + 1} 名称文本缺失。");
+                    Assert.That(bindings.StageLocks[i], Is.Not.Null, $"Stage{i + 1} 锁定态缺失。");
+                    Assert.That(bindings.StageImages[i].transform, Is.EqualTo(bindings.StageButtons[i].transform), $"Stage{i + 1} 建筑主图应绑定按钮本体，不能绑定到 Image 标签底板。");
+                    Assert.That(bindings.StageLocks[i].name, Is.EqualTo("lock"), $"Stage{i + 1} 锁定态必须静态绑定 prefab 内的 lock 节点。");
+                    Assert.That(bindings.StageLocks[i].transform.parent.name, Is.EqualTo("Image"), $"Stage{i + 1} 锁定态必须来自 Stage/Image/lock，运行时不做递归查找。");
+                    Assert.That(bindings.BuildStageButtons[i], Is.Not.Null, $"BuildStage{i + 1} 按钮缺失。");
+                    Assert.That(bindings.BuildStageImages[i], Is.Not.Null, $"BuildStage{i + 1} 主视觉缺失。");
+                    Assert.That(bindings.BuildStageNameTexts[i], Is.Not.Null, $"BuildStage{i + 1} 名称文本缺失。");
+                    Assert.That(bindings.BuildStageLocks[i], Is.Not.Null, $"BuildStage{i + 1} 锁定态缺失。");
+                    Assert.That(bindings.BuildStageBaseStarGroups[i], Is.Not.Null, $"BuildStage{i + 1} 底星容器缺失。");
+                    Assert.That(bindings.BuildStageActiveStarGroups[i], Is.Not.Null, $"BuildStage{i + 1} 点亮星容器缺失。");
+                    Assert.That(bindings.BuildStageButtons[i].name, Is.EqualTo($"BuildStage{i + 1}"), $"BuildStage{i + 1} 必须静态绑定到底部城市 slot。");
+                    Assert.That(bindings.BuildStageImages[i].transform.parent, Is.EqualTo(bindings.BuildStageButtons[i].transform), $"BuildStage{i + 1}/Image 必须是底部 slot 的直接子节点。");
+                }
+
+                view.Bind(bindings);
+                var stages = new BattleStageVm[BattlePresenter.VisibleStageCount];
+                var buildStages = new BattleBuildStageVm[BattlePresenter.VisibleStageCount];
+                for (int i = 0; i < stages.Length; i++)
+                {
+                    stages[i] = new BattleStageVm
+                    {
+                        SlotIndex = i,
+                        AgencyStageId = i + 1,
+                        StageName = $"Stage {i + 1}",
+                        ProgressLabel = "1/3",
+                        StarCount = i == 0 ? 2 : 0,
+                        Visible = true,
+                        Unlocked = true,
+                        Selected = i == 0,
+                    };
+                    buildStages[i] = new BattleBuildStageVm
+                    {
+                        SlotIndex = i,
+                        AgencyStageId = i + 1,
+                        StageName = $"Stage {i + 1}",
+                        StageImage = "Assets/HotUpdateContent/Res/Textures/buildings/building01.png",
+                        ProgressLabel = "1/3",
+                        StarCount = i == 0 ? 2 : 0,
+                        Visible = true,
+                        Unlocked = true,
+                        Selected = i == 0,
+                    };
+                }
+
+                view.Render(new BattleVm
+                {
+                    BuildButtonLabel = "Stage 1\n宣传 1->2/3\n金币 -10",
+                    BuildButtonEnabled = true,
+                    BuildStages = buildStages,
+                    Stages = stages,
+                    StageBars = new[]
+                    {
+                        new BattleStageBarVm { SlotIndex = 0, Visible = true, Progress = 0.4f },
+                        new BattleStageBarVm { SlotIndex = 1, Visible = true, Progress = 0f },
+                        new BattleStageBarVm { SlotIndex = 2, Visible = true, Progress = 0f },
+                        new BattleStageBarVm { SlotIndex = 3, Visible = true, Progress = 0f },
+                    },
+                });
+
+                Assert.That(bindings.StageNameTexts[0].color, Is.Not.EqualTo(Color.white), "Stage 标签文字不能再是白色，否则会淹没在白色标签底板里。");
+                Assert.That(
+                    bindings.StageNameTexts[0].transform.GetSiblingIndex(),
+                    Is.EqualTo(bindings.StageNameTexts[0].transform.parent.childCount - 1),
+                    "Stage 标签文字必须绘制在标签底板之上。");
+                Assert.That(bindings.StageLocks[0].gameObject.activeSelf, Is.False, "已解锁 Stage 必须关闭静态绑定的 Image/lock 节点。");
+                Transform buildStarGroup = bindings.BuildStageButtons[0].transform.Find("stargroup");
+                Assert.That(buildStarGroup, Is.Not.Null, "BuildStage1 应保留 stargroup 星级容器。");
+                Assert.That(buildStarGroup.gameObject.activeSelf, Is.True, "stargroup 是常亮底星层，不应被运行时关闭。");
+                Transform buildActiveStarGroup = bindings.BuildStageButtons[0].transform.Find("stargroup_1");
+                Assert.That(buildActiveStarGroup, Is.Not.Null, "BuildStage1 应保留 stargroup_1 点亮星级容器。");
+                Assert.That(buildActiveStarGroup.gameObject.activeSelf, Is.True, "stargroup_1 是实际星级显示层，不应被运行时关闭。");
+                RectTransform buildSlotRect = bindings.BuildStageButtons[0].GetComponent<RectTransform>();
+                RectTransform buildImageRect = bindings.BuildStageImages[0].rectTransform;
+                RectTransform buildStarRect = buildStarGroup as RectTransform;
+                Assert.That(buildSlotRect.sizeDelta.y, Is.EqualTo(190f).Within(0.01f), "BuildStage slot 需要足够高度容纳星星、114x114 图标和文字。");
+                Assert.That(buildImageRect.sizeDelta, Is.EqualTo(new Vector2(114f, 114f)), "BuildStage 图标默认尺寸必须是 114x114。");
+                Assert.That(buildStarRect.anchorMin, Is.EqualTo(new Vector2(0.5f, 1f)), "星星应锚定在 slot 顶部。");
+                Assert.That(buildStarRect.anchoredPosition.y, Is.EqualTo(-20f).Within(0.01f), "星星应在图标上方，而不是压到图标中间。");
+                int activeStarCount = 0;
+                int activeSlotCount = 0;
+                for (int i = 0; i < buildActiveStarGroup.childCount; i++)
+                {
+                    Transform child = buildActiveStarGroup.GetChild(i);
+                    if (child == null || !child.name.StartsWith("star", System.StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    Assert.That(child.gameObject.activeSelf, Is.True, "星级槽位应保持 active，以避免 2 颗和 3 颗时被 Layout 重新排版。");
+                    activeSlotCount++;
+                    Image starImage = child.GetComponent<Image>();
+                    if (starImage != null && starImage.color.a > 0.5f)
+                    {
+                        activeStarCount++;
+                    }
+                }
+
+                Assert.That(activeSlotCount, Is.EqualTo(5), "stargroup_1 应保留 5 个固定星级槽位。");
+                Assert.That(activeStarCount, Is.EqualTo(2), "BuildStage 星级显示必须跟随运行时进度，不应默认显示 5 颗。");
+                Assert.That(bindings.BuildButton.transform.Find("Image").gameObject.activeSelf, Is.False, "Build_btn 旧单图标必须隐藏，底部应显示 5 个 BuildStage。");
+
+                for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
+                {
+                    Assert.That(bindings.StageBars[i], Is.Not.Null, $"StageBar{i + 1} 缺失。");
+                }
             }
             finally
             {

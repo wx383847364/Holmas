@@ -171,6 +171,7 @@ public static class HolmasHotUpdatePackageValidation
         await AssertAssetAsync<Font>(package, "Assets/Res/Font/NotoSansSC.ttf");
         await AssertAssetAsync<ScriptableObject>(package, "Assets/Res/Font/HolmasFontRuntimeSettings.asset");
         await AssertAssetAsync<Texture2D>(package, "Assets/HotUpdateContent/Res/Icons/cat_01.png");
+        await AssertAssetAsync<Texture2D>(package, "Assets/HotUpdateContent/Res/Textures/buildings/building01.png");
         await AssertAssetAsync<TextAsset>(package, state.HotUpdateDllAssetPath);
         foreach (string metadataAssetPath in state.AotMetadataAssetPaths ?? Array.Empty<string>())
         {
