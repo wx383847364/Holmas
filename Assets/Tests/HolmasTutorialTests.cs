@@ -1,10 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.Bootstrap;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.PlayerData;
 using App.HotUpdate.Holmas.Progression;
@@ -13,6 +15,7 @@ using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.HotUpdate.Holmas.UI.Screens.Tutorial;
 using App.Shared.Contracts;
+using App.Shared.Holmas.PlayerData;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
 using UnityEditor;
@@ -122,6 +125,172 @@ namespace Holmas.Tests
             Assert.That(suspended.TaskBar, Is.Not.Null);
             Assert.That(suspended.SchemaVersion, Is.EqualTo("schema-test"));
             Assert.That(suspended.CreatedAtUtcMilliseconds, Is.EqualTo(123L));
+        }
+
+        [Test]
+        public void HolmasPlayerArchiveMapper_CreateTutorialSuspendedSession_RejectsEmptyFormalBoard()
+        {
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            runtime.CurrentLevelSnapshot.TerrainPath = string.Empty;
+            var mapper = new HolmasPlayerArchiveMapper();
+
+            var suspended = mapper.CreateTutorialSuspendedSession(
+                runtime,
+                "schema-test",
+                "reason-test",
+                "source-test",
+                123L);
+
+            Assert.That(suspended, Is.Null);
+        }
+
+        [Test]
+        public void HolmasPlayerArchiveMapper_CreateTutorialSuspendedSession_RejectsTutorialBoard()
+        {
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            runtime.CurrentLevelSnapshot.MapId = CoreFindCatTutorialBoardDefinition.MapId;
+            runtime.CurrentLevelSnapshot.TerrainPath = CoreFindCatTutorialBoardDefinition.TerrainPath;
+            var mapper = new HolmasPlayerArchiveMapper();
+
+            var suspended = mapper.CreateTutorialSuspendedSession(
+                runtime,
+                "schema-test",
+                "reason-test",
+                "source-test",
+                123L);
+
+            Assert.That(suspended, Is.Null);
+        }
+
+        [Test]
+        public void HolmasPlayerArchiveMapper_CreateTutorialSuspendedSession_AllowsEmptyRevealedCells()
+        {
+            HolmasGameplayRuntime runtime = CreateRuntimeWithNormalBoard();
+            runtime.CurrentLevelSnapshot.RevealedCells = Array.Empty<bool>();
+            var mapper = new HolmasPlayerArchiveMapper();
+
+            var suspended = mapper.CreateTutorialSuspendedSession(
+                runtime,
+                "schema-test",
+                "reason-test",
+                "source-test",
+                123L);
+
+            Assert.That(suspended, Is.Not.Null);
+            Assert.That(suspended.CurrentLevel.RevealedCells, Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator HolmasGameBootstrap_TryRestoreTutorialSuspendedSession_RejectsEmptyTerrainWithoutAssetLoad()
+        {
+            return RunAsync(async () =>
+            {
+                var assetsRuntime = new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(1, 1));
+                HolmasGameplayRuntime runtime = CreateRuntimeForRestore(assetsRuntime);
+                var suspended = new HolmasTutorialSuspendedSessionArchiveData
+                {
+                    Source = "tutorial",
+                    Reason = "start_core_find_cat_tutorial",
+                    CurrentLevel = new LevelSnapshot
+                    {
+                        MapId = "normal-map",
+                        TerrainPath = string.Empty,
+                        RevealedCells = new bool[1],
+                        Completed = false,
+                        SpawnedCats = new List<SpawnedCatData>
+                        {
+                            new SpawnedCatData
+                            {
+                                CatId = "cat-a",
+                                CellIndex = 0,
+                            },
+                        },
+                    },
+                };
+
+                bool restored = await InvokeTryRestoreTutorialSuspendedSessionAsync(suspended, runtime);
+
+                Assert.That(restored, Is.False);
+                Assert.That(assetsRuntime.LoadCount, Is.EqualTo(0));
+                Assert.That(runtime.CurrentLevelSnapshot, Is.Null);
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator HolmasGameBootstrap_TryRestoreTutorialSuspendedSession_RestoresValidFormalBoard()
+        {
+            return RunAsync(async () =>
+            {
+                var assetsRuntime = new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(1, 1));
+                HolmasGameplayRuntime runtime = CreateRuntimeForRestore(assetsRuntime);
+                var suspended = new HolmasTutorialSuspendedSessionArchiveData
+                {
+                    Source = "tutorial",
+                    Reason = "start_core_find_cat_tutorial",
+                    CurrentLevel = CreateValidNormalSnapshot(),
+                };
+
+                bool restored = await InvokeTryRestoreTutorialSuspendedSessionAsync(suspended, runtime);
+
+                Assert.That(restored, Is.True);
+                Assert.That(assetsRuntime.LoadCount, Is.EqualTo(1));
+                Assert.That(runtime.CurrentLevelSnapshot.MapId, Is.EqualTo("normal-map"));
+                Assert.That(runtime.CurrentBoardRuntime, Is.Not.Null);
+            });
+        }
+
+        [Test]
+        public void HolmasGameBootstrap_ShouldDiscardRestoredCurrentLevel_RejectsTutorialBoard()
+        {
+            LevelSnapshot snapshot = CreateValidNormalSnapshot();
+            snapshot.MapId = CoreFindCatTutorialBoardDefinition.MapId;
+            snapshot.TerrainPath = CoreFindCatTutorialBoardDefinition.TerrainPath;
+
+            bool shouldDiscard = InvokeShouldDiscardRestoredCurrentLevel(snapshot, out string reason);
+
+            Assert.That(shouldDiscard, Is.True);
+            Assert.That(reason, Does.Contain("教程"));
+        }
+
+        [Test]
+        public void HolmasGameBootstrap_ShouldDiscardRestoredCurrentLevel_RejectsEmptyCurrentLevel()
+        {
+            var snapshot = new LevelSnapshot
+            {
+                MapId = string.Empty,
+                TerrainPath = string.Empty,
+                RevealedCells = Array.Empty<bool>(),
+                SpawnedCats = new List<SpawnedCatData>(),
+                Completed = false,
+            };
+
+            bool shouldDiscard = InvokeShouldDiscardRestoredCurrentLevel(snapshot, out string reason);
+
+            Assert.That(shouldDiscard, Is.True);
+            Assert.That(reason, Is.Not.Empty);
+        }
+
+        [Test]
+        public void HolmasGameBootstrap_ShouldDiscardRestoredCurrentLevel_AllowsEmptyRevealedCells()
+        {
+            LevelSnapshot snapshot = CreateValidNormalSnapshot();
+            snapshot.RevealedCells = Array.Empty<bool>();
+
+            bool shouldDiscard = InvokeShouldDiscardRestoredCurrentLevel(snapshot, out string reason);
+
+            Assert.That(shouldDiscard, Is.False, reason);
+            Assert.That(reason, Is.Empty);
+        }
+
+        [Test]
+        public void CoreFindCatTutorialSessionService_SuppressNextAutoStart_IsConsumedOnce()
+        {
+            var sessionService = new CoreFindCatTutorialSessionService(new NullLogger());
+
+            sessionService.SuppressNextAutoStart();
+
+            Assert.That(sessionService.ConsumeAutoStartSuppression(), Is.True);
+            Assert.That(sessionService.ConsumeAutoStartSuppression(), Is.False);
         }
 
         [UnityTest]
@@ -452,6 +621,85 @@ namespace Holmas.Tests
             return runtime;
         }
 
+        private static HolmasGameplayRuntime CreateRuntimeForRestore(IAssetsRuntime assetsRuntime)
+        {
+            var catalog = HolmasTestSupport.CreateStandardTaskCatalog();
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(), clock);
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource(),
+                clock);
+            var progressionCoordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            return new HolmasGameplayRuntime(
+                taskService,
+                metaService,
+                progressionCoordinator,
+                new NullLogger(),
+                assetsRuntime);
+        }
+
+        private static LevelSnapshot CreateValidNormalSnapshot()
+        {
+            return new LevelSnapshot
+            {
+                MapId = "normal-map",
+                TerrainPath = "normal-terrain",
+                Seed = 1,
+                RevealedCells = new bool[1],
+                Completed = false,
+                SpawnedCats = new List<SpawnedCatData>
+                {
+                    new SpawnedCatData
+                    {
+                        CatId = "cat-a",
+                        CellIndex = 0,
+                    },
+                },
+            };
+        }
+
+        private static async Task<bool> InvokeTryRestoreTutorialSuspendedSessionAsync(
+            HolmasTutorialSuspendedSessionArchiveData suspendedSession,
+            HolmasGameplayRuntime runtime)
+        {
+            MethodInfo method = typeof(HolmasGameBootstrap).GetMethod(
+                "TryRestoreTutorialSuspendedSessionAsync",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+
+            var task = method.Invoke(
+                null,
+                new object[]
+                {
+                    suspendedSession,
+                    new HolmasPlayerArchiveMapper(),
+                    runtime,
+                    new NullLogger(),
+                }) as Task<bool>;
+            Assert.That(task, Is.Not.Null);
+            return await task;
+        }
+
+        private static bool InvokeShouldDiscardRestoredCurrentLevel(LevelSnapshot snapshot, out string reason)
+        {
+            MethodInfo method = typeof(HolmasGameBootstrap).GetMethod(
+                "ShouldDiscardRestoredCurrentLevel",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+
+            object[] arguments =
+            {
+                snapshot,
+                null,
+            };
+            bool result = (bool)method.Invoke(null, arguments);
+            reason = arguments[1] as string ?? string.Empty;
+            return result;
+        }
+
         private static HolmasApplicationContext CreateContext(
             HolmasGameplayRuntime runtime,
             IAssetsRuntime assetsRuntime)
@@ -514,8 +762,14 @@ namespace Holmas.Tests
 
             public Task<IAssetHandle> LoadAssetAsync(string location)
             {
+                LoadCount++;
+                LastLocation = location;
                 return Task.FromResult<IAssetHandle>(new FakeAssetHandle(_asset));
             }
+
+            public int LoadCount { get; private set; }
+
+            public string LastLocation { get; private set; } = string.Empty;
 
             public void Shutdown()
             {

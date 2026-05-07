@@ -212,9 +212,13 @@ namespace App.HotUpdate.Holmas.Bootstrap
             {
                 try
                 {
-                    if (ShouldDiscardRestoredCurrentLevel(taskBarRestoreResult.State, archiveLoadResult.Archive.CurrentLevel))
+                    if (ShouldDiscardRestoredCurrentLevel(archiveLoadResult.Archive.CurrentLevel, out string discardReason))
                     {
-                        logger?.LogWarning("HolmasGameBootstrap: 恢复 currentLevel 时发现关卡快照本体无效，已丢弃旧棋盘。");
+                        logger?.LogWarning(
+                            "HolmasGameBootstrap: 恢复 currentLevel 时发现关卡快照本体无效，已丢弃旧棋盘。reason={0}, mapId={1}, terrainPath={2}",
+                            discardReason,
+                            archiveLoadResult.Archive.CurrentLevel.MapId ?? string.Empty,
+                            archiveLoadResult.Archive.CurrentLevel.TerrainPath ?? string.Empty);
                         gameplayRuntime.EndCurrentLevelSession();
                         archiveNeedsSave = true;
                     }
@@ -314,11 +318,18 @@ namespace App.HotUpdate.Holmas.Bootstrap
                 return false;
             }
 
-            if (suspendedSession.CurrentLevel == null ||
-                suspendedSession.CurrentLevel.Completed ||
-                CoreFindCatTutorialLevelService.IsTutorialLevel(suspendedSession.CurrentLevel))
+            if (!TryValidateRestorableLevelSnapshot(
+                    suspendedSession.CurrentLevel,
+                    requireFormalLevel: true,
+                    out string invalidReason))
             {
-                logger?.LogWarning("HolmasGameBootstrap: 教程挂起快照无效，已清空。");
+                logger?.LogWarning(
+                    "HolmasGameBootstrap: 教程挂起快照无效，已清空。reason={0}, mapId={1}, terrainPath={2}, source={3}, suspendReason={4}",
+                    invalidReason,
+                    suspendedSession.CurrentLevel?.MapId ?? string.Empty,
+                    suspendedSession.CurrentLevel?.TerrainPath ?? string.Empty,
+                    suspendedSession.Source ?? string.Empty,
+                    suspendedSession.Reason ?? string.Empty);
                 return false;
             }
 
@@ -346,29 +357,74 @@ namespace App.HotUpdate.Holmas.Bootstrap
             }
         }
 
-        private static bool ShouldDiscardRestoredCurrentLevel(HolmasTaskBarState taskBarState, LevelSnapshot currentLevel)
+        private static bool ShouldDiscardRestoredCurrentLevel(LevelSnapshot currentLevel, out string reason)
         {
-            if (currentLevel == null || currentLevel.Completed)
+            bool valid = TryValidateRestorableLevelSnapshot(
+                currentLevel,
+                requireFormalLevel: true,
+                out reason);
+            return !valid;
+        }
+
+        private static bool TryValidateRestorableLevelSnapshot(
+            LevelSnapshot level,
+            bool requireFormalLevel,
+            out string reason)
+        {
+            if (level == null)
             {
+                reason = "关卡快照为空。";
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(currentLevel.MapId) || string.IsNullOrWhiteSpace(currentLevel.TerrainPath))
+            if (level.Completed)
             {
-                return true;
+                reason = "关卡快照已完成。";
+                return false;
             }
 
-            if (CoreFindCatTutorialLevelService.IsTutorialLevel(currentLevel))
+            if (string.IsNullOrWhiteSpace(level.MapId))
             {
-                return true;
+                reason = "关卡快照缺少 MapId。";
+                return false;
             }
 
-            if (currentLevel.RevealedCells == null)
+            if (string.IsNullOrWhiteSpace(level.TerrainPath))
             {
-                return true;
+                reason = "关卡快照缺少 TerrainPath。";
+                return false;
             }
 
-            return currentLevel.SpawnedCats == null;
+            if (requireFormalLevel && CoreFindCatTutorialLevelService.IsTutorialLevel(level))
+            {
+                reason = "教程挂起快照不能指向教程地图。";
+                return false;
+            }
+
+            if (level.SpawnedCats == null || level.SpawnedCats.Count == 0)
+            {
+                reason = "关卡快照缺少 SpawnedCats。";
+                return false;
+            }
+
+            for (int i = 0; i < level.SpawnedCats.Count; i++)
+            {
+                SpawnedCatData cat = level.SpawnedCats[i];
+                if (cat == null)
+                {
+                    reason = $"关卡快照存在空猫条目。index={i}";
+                    return false;
+                }
+
+                if (cat.CellIndex < 0)
+                {
+                    reason = $"关卡快照猫格索引非法。index={i}, cellIndex={cat.CellIndex}";
+                    return false;
+                }
+            }
+
+            reason = string.Empty;
+            return true;
         }
 
         private static HolmasMetaCatalog CreateMetaCatalog(HolmasConfigCatalogBundle configBundle)

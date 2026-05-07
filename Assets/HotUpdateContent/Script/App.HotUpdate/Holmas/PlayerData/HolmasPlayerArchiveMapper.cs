@@ -4,6 +4,7 @@ using System.Linq;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Tasks.Runtime;
+using App.HotUpdate.Holmas.Tutorial;
 using App.Shared.Holmas.PlayerData;
 using App.Shared.Holmas.RuntimeData;
 
@@ -313,6 +314,11 @@ namespace App.HotUpdate.Holmas.PlayerData
                 return null;
             }
 
+            if (!IsRestorableFormalLevelSnapshot(runtime.CurrentLevelSnapshot))
+            {
+                return null;
+            }
+
             return new HolmasTutorialSuspendedSessionArchiveData
             {
                 SchemaVersion = string.IsNullOrWhiteSpace(schemaVersion) ? HolmasLocalMockServerGateway.DefaultSchemaVersion : schemaVersion,
@@ -340,6 +346,32 @@ namespace App.HotUpdate.Holmas.PlayerData
                 TaskBar = CloneTaskBarArchive(source.TaskBar),
                 CurrentLevel = CloneLevelSnapshot(source.CurrentLevel),
             };
+        }
+
+        private static bool IsRestorableFormalLevelSnapshot(LevelSnapshot snapshot)
+        {
+            if (snapshot == null ||
+                snapshot.Completed ||
+                string.IsNullOrWhiteSpace(snapshot.MapId) ||
+                string.IsNullOrWhiteSpace(snapshot.TerrainPath) ||
+                CoreFindCatTutorialLevelService.IsTutorialLevel(snapshot) ||
+                snapshot.SpawnedCats == null ||
+                snapshot.SpawnedCats.Count == 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < snapshot.SpawnedCats.Count; i++)
+            {
+                SpawnedCatData cat = snapshot.SpawnedCats[i];
+                if (cat == null ||
+                    cat.CellIndex < 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static HolmasProgressionArchiveData ExportProgression(HolmasMetaProgressionState state)
