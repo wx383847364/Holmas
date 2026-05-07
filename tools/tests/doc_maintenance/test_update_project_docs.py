@@ -395,6 +395,192 @@ class UpdateProjectDocsTests(unittest.TestCase):
 
             self.assertIn("[未开始] Holmas v1 方案", index_text)
 
+    def test_write_plan_progress_normalizes_block_and_updates_index_label(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            plan_path = write_file(
+                root,
+                "doc/长期主文档/方案与数据/Holmas v1 排行榜系统方案.md",
+                """
+                # Holmas v1 排行榜系统方案
+
+                ## Summary
+
+                - 排行榜首期方案。
+                """,
+            )
+
+            result = update_project_docs.write_plan_progress(
+                doc_root,
+                str(plan_path),
+                "进行中",
+                "已完成配置口径，待运行时接线。",
+                "补齐首期进度状态",
+                "2026-05-06",
+            )
+            update_project_docs.write_long_index(doc_root)
+
+            text = plan_path.read_text(encoding="utf-8")
+            index_text = (doc_root / "长期主文档" / "主文档索引.md").read_text(encoding="utf-8")
+
+            self.assertTrue(result["changed"])
+            self.assertIn("- 当前状态：进行中", text)
+            self.assertIn("- 进度说明：已完成配置口径，待运行时接线。", text)
+            self.assertIn("- 最近更新：2026-05-06，补齐首期进度状态", text)
+            self.assertIn("[进行中] Holmas v1 排行榜系统方案", index_text)
+
+    def test_validate_plan_progress_warns_for_scheme_docs_without_block_but_not_plain_notes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            write_file(
+                root,
+                "doc/长期主文档/方案与数据/Holmas v1 排行榜系统方案.md",
+                """
+                # Holmas v1 排行榜系统方案
+
+                ## Summary
+
+                - 排行榜首期方案。
+                """,
+            )
+            write_file(
+                root,
+                "doc/长期主文档/方案与数据/Holmas 字体使用与预览说明.md",
+                """
+                # Holmas 字体使用与预览说明
+
+                ## Summary
+
+                - 这里只是说明文档。
+                """,
+            )
+            write_file(
+                root,
+                "doc/长期主文档/方案与数据/Holmas 八位提交编号方案.md",
+                """
+                # Holmas 八位提交编号方案
+
+                ## Summary
+
+                - 这里只是流程规则文档。
+                """,
+            )
+            write_file(
+                root,
+                "doc/长期主文档/方案与数据/子目录/Holmas 子目录落地方案.md",
+                """
+                # Holmas 子目录落地方案
+
+                ## Summary
+
+                - 子目录里的真实方案也需要 warning。
+                """,
+            )
+
+            warnings = update_project_docs.validate_plan_progress(doc_root)
+
+            joined = "\n".join(warnings)
+            self.assertEqual(len(warnings), 2)
+            self.assertIn("Holmas v1 排行榜系统方案.md", joined)
+            self.assertIn("Holmas 子目录落地方案.md", joined)
+            self.assertNotIn("Holmas 字体使用与预览说明.md", joined)
+            self.assertNotIn("Holmas 八位提交编号方案.md", joined)
+
+    def test_validate_last_finalize_fails_when_bound_plan_content_changes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+            init_git_repo(root)
+            plan_path = write_file(
+                root,
+                "doc/长期主文档/方案与数据/Holmas v1 排行榜系统方案.md",
+                """
+                # Holmas v1 排行榜系统方案
+
+                ## 完成情况
+
+                - 当前状态：未开始
+                - 进度说明：尚未开始。
+                - 最近更新：2026-05-06，创建方案进度块
+                """,
+            )
+            subprocess.run(["git", "add", "doc"], cwd=root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "commit", "-m", "seed"], cwd=root, check=True, capture_output=True, text=True)
+
+            update_project_docs.write_plan_progress(
+                doc_root,
+                str(plan_path),
+                "进行中",
+                "已进入第一阶段。",
+                "更新为进行中",
+                "2026-05-06",
+            )
+            worktree_status_at_finalize = update_project_docs.current_worktree_status(doc_root)
+            update_project_docs.write_last_finalize_report(
+                doc_root,
+                {
+                    "summary": "绑定方案收尾",
+                    "agent6_review": "not-required",
+                    "doc_log_skipped": False,
+                    "plan_doc": plan_path.resolve().as_posix(),
+                    "plan_doc_hash": update_project_docs.file_content_hash(plan_path),
+                    "head_commit": update_project_docs.current_head_commit(doc_root),
+                    "worktree_status": worktree_status_at_finalize,
+                    "report_text": "\n".join(
+                        [
+                            "文档维护：已执行",
+                            "Git 提交建议：暂不建议提交。原因是：测试",
+                            update_project_docs.UNSUITABLE_COMMIT_CONFIRMATION,
+                            "会话建议：继续当前会话",
+                        ]
+                    ),
+                    "created_at": "2026-05-06T10:00:00",
+                },
+            )
+
+            update_project_docs.write_plan_progress(
+                doc_root,
+                str(plan_path),
+                "已完成",
+                "第一阶段已闭环。",
+                "更新为已完成",
+                "2026-05-06",
+            )
+            self.assertEqual(worktree_status_at_finalize, update_project_docs.current_worktree_status(doc_root))
+
+            result = update_project_docs.validate_last_finalize_report(doc_root)
+
+            self.assertFalse(result["valid"])
+            self.assertIn("绑定方案文档内容已变化", "\n".join(result["reasons"]))
+
+    def test_suggest_handoff_warns_when_plan_landing_lacks_plan_doc(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            doc_root = create_doc_root(root)
+
+            report = update_project_docs.suggest_handoff(
+                doc_root,
+                "按排行榜方案落地第一阶段",
+                [],
+                [],
+                [],
+                "not-required",
+                "continue",
+                "continue",
+                "",
+                "",
+                [],
+                True,
+                False,
+                0,
+            )
+            text = update_project_docs.format_handoff_report(report)
+
+            self.assertIn("方案进度：提醒", text)
+            self.assertIn("--plan-doc / --plan-status / --plan-note", text)
+
     def test_append_iteration_cli_warns_that_wrapup_is_incomplete(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

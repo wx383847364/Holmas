@@ -86,6 +86,19 @@ DOC_MODULE_PATTERNS = [
 ]
 PLAN_PROGRESS_HEADING = "完成情况"
 PLAN_STATUS_VALUES = {"未开始", "进行中", "已完成"}
+PLAN_PROGRESS_REQUIRED_PREFIXES = {
+    "status": "- 当前状态：",
+    "note": "- 进度说明：",
+    "recent_update": "- 最近更新：",
+}
+PLAN_LANDING_PATTERN = re.compile(
+    r"方案落地|落地方案|按.+方案|完成.+方案|方案阶段|plan progress|plan-doc",
+    re.IGNORECASE,
+)
+PLAN_PROGRESS_FILENAME_EXCLUDE_PATTERN = re.compile(
+    r"编号方案|使用与预览说明",
+    re.IGNORECASE,
+)
 
 
 def ensure_dirs(doc_root: Path):
@@ -212,14 +225,173 @@ def extract_prefixed_value_from_bullets(bullets, prefix: str) -> str:
 
 def extract_plan_progress(path: Path):
     bullets = extract_section_bullets(path, PLAN_PROGRESS_HEADING)
-    status = extract_prefixed_value_from_bullets(bullets, "- 当前状态：")
-    note = extract_prefixed_value_from_bullets(bullets, "- 进度说明：")
-    if status not in PLAN_STATUS_VALUES:
+    status = extract_prefixed_value_from_bullets(bullets, PLAN_PROGRESS_REQUIRED_PREFIXES["status"])
+    note = extract_prefixed_value_from_bullets(bullets, PLAN_PROGRESS_REQUIRED_PREFIXES["note"])
+    recent_update = extract_prefixed_value_from_bullets(bullets, PLAN_PROGRESS_REQUIRED_PREFIXES["recent_update"])
+    raw_status = status
+    if raw_status not in PLAN_STATUS_VALUES:
         status = "未开始"
     return {
+        "has_heading": bool(bullets),
+        "status": status,
+        "raw_status": raw_status,
+        "note": note,
+        "recent_update": recent_update,
+    }
+
+
+def plan_docs_dir(doc_root: Path) -> Path:
+    return doc_root / LONG_DIR_NAME / "方案与数据"
+
+
+def normalize_plan_doc_path(doc_root: Path, raw_path: str) -> Path:
+    if not raw_path or not raw_path.strip():
+        raise ValueError("--plan-doc 不能为空")
+
+    value = raw_path.strip()
+    repo_root = repo_root_for_doc_root(doc_root)
+    candidates = []
+    raw = Path(value)
+    if raw.is_absolute():
+        candidates.append(raw)
+    else:
+        candidates.extend(
+            [
+                repo_root / raw,
+                doc_root / raw,
+                plan_docs_dir(doc_root) / raw,
+            ]
+        )
+
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved.exists():
+            try:
+                resolved.relative_to(plan_docs_dir(doc_root).resolve())
+            except ValueError as exc:
+                raise ValueError(f"--plan-doc 必须指向 `方案与数据` 下的 md 文件：{resolved}") from exc
+            if resolved.suffix != ".md":
+                raise ValueError(f"--plan-doc 必须指向 md 文件：{resolved}")
+            return resolved
+
+    raise FileNotFoundError(f"未找到方案文档：{raw_path}")
+
+
+def plan_progress_warnings(path: Path):
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return [f"{path}: 文件不存在"]
+
+    warnings = []
+    has_heading = any(line.strip() == f"## {PLAN_PROGRESS_HEADING}" for line in text.splitlines())
+    progress = extract_plan_progress(path)
+    if not has_heading:
+        warnings.append(f"{path}: 缺少 `## {PLAN_PROGRESS_HEADING}`")
+        return warnings
+
+    if progress["raw_status"] not in PLAN_STATUS_VALUES:
+        warnings.append(f"{path}: `当前状态` 缺失或非法，应为 {' / '.join(sorted(PLAN_STATUS_VALUES))}")
+    if not progress["note"]:
+        warnings.append(f"{path}: 缺少 `进度说明`")
+    if not progress["recent_update"]:
+        warnings.append(f"{path}: 缺少 `最近更新`")
+    return warnings
+
+
+def validate_plan_progress(doc_root: Path, plan_doc: str = "", strict: bool = False):
+    paths = []
+    if plan_doc:
+        paths = [normalize_plan_doc_path(doc_root, plan_doc)]
+    else:
+        root = plan_docs_dir(doc_root)
+        if root.exists():
+            paths = [
+                path
+                for path in sorted(root.rglob("*.md"))
+                if path.is_file() and is_plan_progress_candidate(doc_root, path)
+            ]
+
+    warnings = []
+    for path in paths:
+        warnings.extend(plan_progress_warnings(path))
+
+    if strict and warnings:
+        raise ValueError("\n".join(warnings))
+    return warnings
+
+
+def is_plan_progress_candidate(doc_root: Path, path: Path) -> bool:
+    try:
+        rel = path.resolve().relative_to(doc_root.resolve()).as_posix()
+    except ValueError:
+        rel = ""
+    if rel in LEGACY_LONG_DOCS:
+        return False
+    if PLAN_PROGRESS_FILENAME_EXCLUDE_PATTERN.search(path.name):
+        return False
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        text = ""
+    if any(line.strip() == f"## {PLAN_PROGRESS_HEADING}" for line in text.splitlines()):
+        return True
+    return bool(re.search(r"方案|计划", path.name))
+
+
+def write_plan_progress(
+    doc_root: Path,
+    plan_doc: str,
+    status: str,
+    note: str,
+    plan_update: str = "",
+    date: str = "",
+):
+    if status not in PLAN_STATUS_VALUES:
+        raise ValueError(f"--plan-status 必须是 {' / '.join(sorted(PLAN_STATUS_VALUES))} 之一")
+    note = (note or "").strip()
+    if not note:
+        raise ValueError("--plan-note 不能为空")
+
+    if date and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
+        raise ValueError("--date 必须是 YYYY-MM-DD 格式")
+    date = date or datetime.now().strftime("%Y-%m-%d")
+    recent_text = (plan_update or note).strip()
+    recent_update = f"{date}，{recent_text}"
+
+    path = normalize_plan_doc_path(doc_root, plan_doc)
+    text = path.read_text(encoding="utf-8")
+    bullets = [
+        f"- 当前状态：{status}",
+        f"- 进度说明：{note}",
+        f"- 最近更新：{recent_update}",
+    ]
+    updated = replace_section_bullets(text, PLAN_PROGRESS_HEADING, bullets)
+    if updated != text:
+        path.write_text(updated, encoding="utf-8")
+    return {
+        "path": path,
         "status": status,
         "note": note,
+        "recent_update": recent_update,
+        "changed": updated != text,
     }
+
+
+def looks_like_plan_landing(summary: str, done, next_steps) -> bool:
+    combined = "\n".join([summary or "", *done, *next_steps])
+    return bool(PLAN_LANDING_PATTERN.search(combined))
+
+
+def format_plan_progress_warnings(warnings, limit: int = 20):
+    if not warnings:
+        return []
+    lines = [f"[warn] 方案完成情况格式待维护：{len(warnings)} 项"]
+    for item in warnings[:limit]:
+        lines.append(f"[warn] {item}")
+    if len(warnings) > limit:
+        lines.append(f"[warn] 其余 {len(warnings) - limit} 项已省略。")
+    return lines
 
 
 def normalize_agent_status_line(line: str) -> str:
@@ -779,6 +951,10 @@ def current_worktree_snapshot_hash(doc_root: Path) -> str:
     return hashlib.sha256(current_worktree_status_bytes(doc_root)).hexdigest()
 
 
+def file_content_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def parse_worktree_entries(doc_root: Path):
     entries = []
     parts = current_worktree_status_bytes(doc_root).split(b"\0")
@@ -1284,6 +1460,19 @@ def validate_last_finalize_report(doc_root: Path):
         reasons.append("收尾输出缺少适合提交场景的最新 `提交确认` 提示词，不能视为完整收尾。")
     if "Git 提交建议：暂不建议提交" in report_text and UNSUITABLE_COMMIT_CONFIRMATION not in report_text:
         reasons.append("收尾输出缺少暂不建议提交场景的最新 `提交确认` 提示词，不能视为完整收尾。")
+
+    plan_doc = payload.get("plan_doc", "")
+    if plan_doc:
+        try:
+            plan_path = normalize_plan_doc_path(doc_root, plan_doc)
+            validate_plan_progress(doc_root, str(plan_path), strict=True)
+            expected_plan_hash = payload.get("plan_doc_hash", "")
+            if not expected_plan_hash:
+                reasons.append("收尾状态缺少绑定方案内容指纹，无法确认方案进度是否仍匹配。")
+            elif expected_plan_hash != file_content_hash(plan_path):
+                reasons.append("绑定方案文档内容已变化，最近一次完整收尾状态不再对应当前方案进度。")
+        except (FileNotFoundError, ValueError) as exc:
+            reasons.append(f"绑定方案完成情况校验失败：{exc}")
 
     return {
         "valid": not reasons,
@@ -2080,7 +2269,23 @@ def suggest_handoff(
     doc_log_skipped: bool,
     context_compressed: bool,
     session_major_task_count: int,
+    plan_doc: str = "",
 ):
+    plan_progress = None
+    plan_progress_reminder = ""
+    if plan_doc:
+        plan_path = normalize_plan_doc_path(doc_root, plan_doc)
+        validate_plan_progress(doc_root, str(plan_path), strict=True)
+        progress = extract_plan_progress(plan_path)
+        plan_progress = {
+            "path": plan_path.resolve().as_posix(),
+            "status": progress["status"],
+            "note": progress["note"],
+            "recent_update": progress["recent_update"],
+        }
+    elif looks_like_plan_landing(summary, done, next_steps):
+        plan_progress_reminder = "本轮描述看起来涉及方案落地；如确实落地了 `方案与数据` 下的方案，请在收尾入口补传 --plan-doc / --plan-status / --plan-note。"
+
     commit = suggest_commit_message(doc_root, summary, done, risks, agent6_review, doc_log_skipped)
     if commit["suitable"]:
         write_pending_commit_suggestion(doc_root, commit)
@@ -2246,6 +2451,8 @@ def suggest_handoff(
         "docs": docs,
         "startup_prompt": startup_prompt,
         "doc_log_skipped": doc_log_skipped,
+        "plan_progress": plan_progress,
+        "plan_progress_reminder": plan_progress_reminder,
     }
 
 
@@ -2283,6 +2490,11 @@ def format_handoff_report(report):
         lines += [
             "文档落点：本次建议默认只在收尾输出中展示，不自动写入迭代记录。",
         ]
+    if report.get("plan_progress"):
+        progress = report["plan_progress"]
+        lines.append(f"方案进度：已校验 {progress['path']}（{progress['status']}）")
+    elif report.get("plan_progress_reminder"):
+        lines.append(f"方案进度：提醒。{report['plan_progress_reminder']}")
     if report["title"] and report["goal"]:
         lines += [
             f"下一会话标题：{report['title']}",
@@ -2363,6 +2575,13 @@ def main():
 
     sub.add_parser("sync", help="Regenerate long-term and iteration indexes")
 
+    update_plan = sub.add_parser("update-plan-progress", help="Update a plan document progress block")
+    update_plan.add_argument("--plan-doc", required=True, help="Plan doc under 长期主文档/方案与数据")
+    update_plan.add_argument("--plan-status", required=True, choices=sorted(PLAN_STATUS_VALUES), help="Plan landing status")
+    update_plan.add_argument("--plan-note", required=True, help="Long-lived progress summary")
+    update_plan.add_argument("--plan-update", default="", help="One-line latest update; defaults to --plan-note")
+    update_plan.add_argument("--date", default="", help="Update date in YYYY-MM-DD; defaults to today")
+
     new_iteration = sub.add_parser("new-iteration", help="Create a new iteration log")
     new_iteration.add_argument("--title", required=True, help="Iteration title")
     new_iteration.add_argument("--goal", required=True, help="Iteration goal")
@@ -2416,6 +2635,7 @@ def main():
         default=0,
         help="Explicit count of major tasks already completed in the current session",
     )
+    handoff.add_argument("--plan-doc", default="", help="Plan doc whose progress must be valid")
 
     sub.add_parser("suggest-current-commit", help="Inspect current repo state and print a direct Git commit suggestion")
     sub.add_parser("show-pending-commit", help="Show the latest cached suitable commit suggestion")
@@ -2435,6 +2655,7 @@ def main():
     record_finalize.add_argument("--summary", required=True, help="Round summary used for finalize")
     record_finalize.add_argument("--agent6-review", required=True, help="Agent 6 review state at finalize time")
     record_finalize.add_argument("--doc-log-skipped", action="store_true", help="Mark that this finalize skipped project doc logging")
+    record_finalize.add_argument("--plan-doc", default="", help="Plan doc whose progress was updated or verified")
 
     backfill = sub.add_parser("backfill-agent-status", help="Backfill default agent status into iteration logs")
     backfill.add_argument("--from", dest="from_date", required=True, help="Start date in YYYYMMDD")
@@ -2446,9 +2667,29 @@ def main():
     if args.command == "sync":
         previous_status = current_worktree_status(doc_root)
         sync_indexes(doc_root)
+        for line in format_plan_progress_warnings(validate_plan_progress(doc_root)):
+            print(line, file=sys.stderr)
         if current_worktree_status(doc_root) != previous_status:
             clear_last_finalize_report(doc_root)
         print(f"[ok] synced indexes under {doc_root}")
+        return
+
+    if args.command == "update-plan-progress":
+        previous_status = current_worktree_status(doc_root)
+        result = write_plan_progress(
+            doc_root,
+            args.plan_doc,
+            args.plan_status,
+            args.plan_note,
+            args.plan_update,
+            args.date,
+        )
+        sync_indexes(doc_root)
+        if current_worktree_status(doc_root) != previous_status:
+            clear_last_finalize_report(doc_root)
+        print(f"[ok] updated plan progress: {result['path']}")
+        print(f"status: {result['status']}")
+        print(f"recent_update: {result['recent_update']}")
         return
 
     if args.command == "new-iteration":
@@ -2490,6 +2731,7 @@ def main():
             args.doc_log_skipped,
             args.context_compressed,
             args.session_major_task_count,
+            args.plan_doc,
         )
         print(format_handoff_report(report))
         return
@@ -2558,11 +2800,20 @@ def main():
         return
 
     if args.command == "record-last-finalize":
+        plan_doc = ""
+        plan_doc_hash = ""
+        if args.plan_doc:
+            plan_path = normalize_plan_doc_path(doc_root, args.plan_doc)
+            validate_plan_progress(doc_root, str(plan_path), strict=True)
+            plan_doc = plan_path.resolve().as_posix()
+            plan_doc_hash = file_content_hash(plan_path)
         report_text = sys.stdin.read().strip()
         payload = {
             "summary": args.summary,
             "agent6_review": args.agent6_review,
             "doc_log_skipped": args.doc_log_skipped,
+            "plan_doc": plan_doc,
+            "plan_doc_hash": plan_doc_hash,
             "head_commit": current_head_commit(doc_root),
             "worktree_status": current_worktree_status(doc_root),
             "report_text": report_text,

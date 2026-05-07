@@ -26,6 +26,10 @@ SESSION_MAJOR_TASK_COUNT=0
 NEXT_SESSION_TITLE=""
 NEXT_SESSION_GOAL=""
 NEXT_SESSION_DOCS=()
+PLAN_DOC=""
+PLAN_STATUS=""
+PLAN_NOTE=""
+PLAN_UPDATE=""
 SKIP_TEMP_CLEANUP=0
 FORCE_LOG=0
 SKIP_DOC_LOGGING=0
@@ -38,6 +42,7 @@ usage() {
   tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --agent6-review passed --next "下一阶段目标"
   tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --context-compressed
   tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --session-major-task-count 2
+  tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --plan-doc "doc/长期主文档/方案与数据/xxx.md" --plan-status "进行中" --plan-note "已完成到哪一步"
   tools/doc_maintenance/finalize_task.sh --file "doc/迭代记录/迭代记录_YYYYMMDD_001.md" --summary "本轮摘要"
   tools/doc_maintenance/finalize_task.sh --summary "本轮摘要" --skip-temp-cleanup
   tools/doc_maintenance/finalize_task.sh --summary "更新提交说明" --force-log
@@ -51,6 +56,7 @@ usage() {
   - `--session-major-task-count` 用来显式声明当前会话已经连续完成了多少个大任务；脚本不再按“同一天”自动推断
   - `--session-mode` 和 `--iteration-mode` 分别控制“会话建议”和“迭代记录建议”，两者彼此独立
   - 默认会在收尾末尾输出固定三段：`文档维护`、`Git 提交建议`、`会话建议`
+  - 如果本轮明确落地某个方案，传 --plan-doc / --plan-status / --plan-note，脚本会先规范更新 `## 完成情况`
   - 如果 `Git 提交建议` 为“适合提交”，还会固定追加一条 `提交确认` 提示，提醒可直接回复 `1（提交并推送） / 2（只提交） / 确认 / 提交 / 直接提交（只提交）`
   - 如果适合提交，脚本会默认生成中文 `标题：` 和 `内容：`
   - 完整收尾后会写入 `.git/codex/last_finalize_report.json`，作为最近一次完整收尾状态
@@ -129,6 +135,22 @@ while [[ $# -gt 0 ]]; do
             NEXT_SESSION_DOCS+=("${2:-}")
             shift 2
             ;;
+        --plan-doc)
+            PLAN_DOC="${2:-}"
+            shift 2
+            ;;
+        --plan-status)
+            PLAN_STATUS="${2:-}"
+            shift 2
+            ;;
+        --plan-note)
+            PLAN_NOTE="${2:-}"
+            shift 2
+            ;;
+        --plan-update)
+            PLAN_UPDATE="${2:-}"
+            shift 2
+            ;;
         --skip-temp-cleanup)
             SKIP_TEMP_CLEANUP=1
             shift
@@ -189,6 +211,29 @@ if [[ "${TARGET_MODE}" == "file" ]]; then
     TARGET_FILE="$(normalize_target_file "${TARGET_FILE}")"
 fi
 
+has_any_plan_progress_arg() {
+    [[ -n "${PLAN_DOC}" || -n "${PLAN_STATUS}" || -n "${PLAN_NOTE}" || -n "${PLAN_UPDATE}" ]]
+}
+
+looks_like_plan_landing_task() {
+    local combined_text
+    combined_text="${SUMMARY}"$'\n'
+    if ((${#DONE_ITEMS[@]} > 0)); then
+        combined_text+=$(printf '%s\n' "${DONE_ITEMS[@]}")
+    fi
+    if ((${#NEXT_ITEMS[@]} > 0)); then
+        combined_text+=$(printf '%s\n' "${NEXT_ITEMS[@]}")
+    fi
+    printf '%s' "${combined_text}" | grep -Eqi '方案落地|落地方案|按.+方案|完成.+方案|方案阶段|plan progress|plan-doc'
+}
+
+if has_any_plan_progress_arg; then
+    if [[ -z "${PLAN_DOC}" || -z "${PLAN_STATUS}" || -z "${PLAN_NOTE}" ]]; then
+        echo "[error] 维护方案完成情况时必须同时提供 --plan-doc、--plan-status 和 --plan-note。" >&2
+        exit 1
+    fi
+fi
+
 should_skip_doc_logging() {
     if [[ "${FORCE_LOG}" -eq 1 ]]; then
         return 1
@@ -234,11 +279,34 @@ has_skill_source_changes() {
     return 1
 }
 
-if should_skip_doc_logging; then
+if should_skip_doc_logging && [[ -z "${PLAN_DOC}" ]]; then
     SKIP_DOC_LOGGING=1
     echo "[skip] 当前任务被判定为事务性协助，无需写入项目总览或迭代记录。"
     echo "[skip] 如需强制记录，请重新执行并追加 --force-log。"
 fi
+
+if [[ -z "${PLAN_DOC}" ]] && looks_like_plan_landing_task; then
+    echo "[warn] 本轮描述看起来涉及方案落地，但未传 --plan-doc；不会自动猜测方案文档。" >&2
+    echo '[warn] 如果本轮确实落地了 `方案与数据` 下的方案，请补传 --plan-doc / --plan-status / --plan-note。' >&2
+fi
+
+if [[ -n "${PLAN_DOC}" ]]; then
+    PLAN_ARGS=(
+        python3
+        "${REPO_ROOT}/tools/doc_maintenance/update_project_docs.py"
+        --doc-root "${DOC_ROOT}"
+        update-plan-progress
+        --plan-doc "${PLAN_DOC}"
+        --plan-status "${PLAN_STATUS}"
+        --plan-note "${PLAN_NOTE}"
+    )
+    if [[ -n "${PLAN_UPDATE}" ]]; then
+        PLAN_ARGS+=(--plan-update "${PLAN_UPDATE}")
+    fi
+    echo "[info] 更新方案完成情况..."
+    "${PLAN_ARGS[@]}"
+fi
+
 if [[ "${SKIP_DOC_LOGGING}" -ne 1 ]]; then
     APPEND_ARGS=(
         python3
@@ -360,6 +428,10 @@ if ((${#NEXT_SESSION_DOCS[@]} > 0)); then
     done
 fi
 
+if [[ -n "${PLAN_DOC}" ]]; then
+    HANDOFF_ARGS+=(--plan-doc "${PLAN_DOC}")
+fi
+
 if [[ "${SKIP_DOC_LOGGING}" -eq 1 ]]; then
     HANDOFF_ARGS+=(--doc-log-skipped)
 fi
@@ -388,6 +460,9 @@ if git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     )
     if [[ "${SKIP_DOC_LOGGING}" -eq 1 ]]; then
         RECORD_FINALIZE_ARGS+=(--doc-log-skipped)
+    fi
+    if [[ -n "${PLAN_DOC}" ]]; then
+        RECORD_FINALIZE_ARGS+=(--plan-doc "${PLAN_DOC}")
     fi
     printf '%s\n' "${HANDOFF_OUTPUT}" | "${RECORD_FINALIZE_ARGS[@]}"
 fi
