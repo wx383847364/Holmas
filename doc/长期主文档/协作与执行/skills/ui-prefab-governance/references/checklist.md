@@ -11,9 +11,11 @@
 - Does each subagent have a unique write scope?
 - Are `Samples~/Holmas` and `Documentation~` ownership rules explicit?
 - Is Holmas still limited to adapter, profile, and result-consumption responsibilities?
+- Do UI-writing and review agents both state that runtime node acquisition must come from static collector/manifest bindings?
 
 ## Before Finishing
 
 - Did any review history leak into long-term docs?
 - Did any legacy page remain as a second authority instead of a jump page?
 - Did any directory boundary become shared without a reason?
+- Did the reviewed UI runtime avoid `Transform.Find`, `GameObject.Find`, and recursive `GetComponentsInChildren` for node acquisition, with all touched nodes present in static bindings?

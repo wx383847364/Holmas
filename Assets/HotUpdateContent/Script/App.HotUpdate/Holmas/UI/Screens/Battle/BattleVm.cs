@@ -12,7 +12,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public string BuildButtonLabel = string.Empty;
         public bool BuildButtonEnabled;
         public int SelectedStageId;
-        public BattleBuildStageVm[] BuildStages = Array.Empty<BattleBuildStageVm>();
+        public BattlePromotionSlotVm[] PromotionSlots = Array.Empty<BattlePromotionSlotVm>();
         public BattleStageVm[] Stages = Array.Empty<BattleStageVm>();
         public BattleStageBarVm[] StageBars = Array.Empty<BattleStageBarVm>();
     }
@@ -34,18 +34,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public bool Completed;
     }
 
-    public sealed class BattleBuildStageVm
+    public sealed class BattlePromotionSlotVm
     {
         public int SlotIndex;
         public int AgencyStageId;
+        public string PromotionId = string.Empty;
         public string StageName = string.Empty;
         public string StageImage = string.Empty;
         public string ProgressLabel = string.Empty;
         public string ActionLabel = string.Empty;
+        public int StarCap;
         public int StarCount;
         public bool Visible;
         public bool Unlocked;
-        public bool Selected;
         public bool Current;
         public bool Completed;
         public bool CanBuild;

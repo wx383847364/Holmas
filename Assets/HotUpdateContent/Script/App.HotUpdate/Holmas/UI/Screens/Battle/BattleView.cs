@@ -22,7 +22,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private UnityAction _currentBackAction;
         private UnityAction _currentBuildAction;
         private Action<int> _currentStageAction;
-        private Action<int> _currentBuildStageAction;
+        private Action<int> _currentPromotionSlotAction;
         private HolmasCatSpriteLoader _stageSpriteLoader;
 
         public void EnsureBindingSurface()
@@ -103,7 +103,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
             {
-                Image stageBar = ResolveStageBar(i, overlay);
+                Slider stageBar = ResolveStageBar(i, overlay);
                 collector.RegisterOrReplace(BattleBindings.StageBarKeys[i], stageBar, nodePath: BattleBindings.StageBarNodePaths[i]);
             }
         }
@@ -159,9 +159,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             RebindStageActions();
         }
 
-        public void SetBuildStageAction(Action<int> action)
+        public void SetPromotionSlotAction(Action<int> action)
         {
-            _currentBuildStageAction = action;
+            _currentPromotionSlotAction = action;
             RebindBuildStageActions();
         }
 
@@ -221,7 +221,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
 
             RenderBuildCard(viewModel);
-            RenderBuildStages(viewModel);
+            RenderPromotionSlots(viewModel);
             RenderStages(viewModel);
             RenderStageBars(viewModel);
         }
@@ -236,17 +236,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             HideLegacyBuildCardChildren(_bindings.BuildButton.transform);
         }
 
-        private void RenderBuildStages(BattleVm viewModel)
+        private void RenderPromotionSlots(BattleVm viewModel)
         {
-            if (_bindings == null || viewModel.BuildStages == null)
+            if (_bindings == null)
             {
                 return;
             }
 
             for (int i = 0; i < _bindings.BuildStageButtons.Length; i++)
             {
-                BattleBuildStageVm stage = i < viewModel.BuildStages.Length ? viewModel.BuildStages[i] : null;
-                bool visible = stage != null && stage.Visible;
+                BattlePromotionSlotVm promotionSlot = viewModel.PromotionSlots != null && i < viewModel.PromotionSlots.Length
+                    ? viewModel.PromotionSlots[i]
+                    : null;
+                bool visible = promotionSlot != null && promotionSlot.Visible;
                 Button button = _bindings.BuildStageButtons[i];
                 if (button != null)
                 {
@@ -269,37 +271,37 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 {
                     var visual = new HolmasCatVisualVm
                     {
-                        CatId = $"build-stage-{stage.AgencyStageId}",
-                        CatName = stage.StageName ?? string.Empty,
-                        IconPath = stage.StageImage ?? string.Empty,
+                        CatId = $"promotion-{promotionSlot.AgencyStageId}-{promotionSlot.PromotionId}",
+                        CatName = promotionSlot.PromotionId ?? string.Empty,
+                        IconPath = promotionSlot.StageImage ?? string.Empty,
                     };
-                    _stageSpriteLoader?.Bind(image, visual, !stage.Unlocked);
-                    image.color = GetBuildStageImageTint(stage);
+                    _stageSpriteLoader?.Bind(image, visual, !promotionSlot.Unlocked);
+                    image.color = GetPromotionSlotImageTint(promotionSlot);
                 }
 
                 if (_bindings.BuildStageNameTexts[i] != null)
                 {
-                    string label = $"{stage.StageName}\n{stage.ProgressLabel}";
+                    string label = $"{promotionSlot.PromotionId}\n{promotionSlot.ProgressLabel}";
                     TmpGlyphCoverageReporter.SetText(_bindings.BuildStageNameTexts[i], label);
-                    ConfigureBuildStageLabel(_bindings.BuildStageNameTexts[i], stage.Selected);
+                    ConfigureBuildStageLabel(_bindings.BuildStageNameTexts[i], promotionSlot.Current && promotionSlot.CanBuild);
                 }
 
                 if (_bindings.BuildStageLocks[i] != null)
                 {
-                    _bindings.BuildStageLocks[i].gameObject.SetActive(!stage.Unlocked);
+                    _bindings.BuildStageLocks[i].gameObject.SetActive(!promotionSlot.Unlocked);
                 }
 
                 if (_bindings.BuildStageBaseStarGroups[i] != null)
                 {
                     _bindings.BuildStageBaseStarGroups[i].gameObject.SetActive(true);
-                    RenderStarGroup(_bindings.BuildStageBaseStarGroups[i], 5, new Color(0.46f, 0.48f, 0.52f, 0.72f), keepInvisibleSlots: false);
+                    RenderStarGroup(_bindings.BuildStageBaseStarGroups[i], promotionSlot.StarCap, promotionSlot.StarCap, new Color(0.46f, 0.48f, 0.52f, 0.72f), keepInvisibleSlots: false);
                 }
 
                 if (_bindings.BuildStageActiveStarGroups[i] != null)
                 {
                     _bindings.BuildStageActiveStarGroups[i].gameObject.SetActive(true);
                     _bindings.BuildStageActiveStarGroups[i].SetAsLastSibling();
-                    RenderStarGroup(_bindings.BuildStageActiveStarGroups[i], stage.StarCount, Color.white, keepInvisibleSlots: true);
+                    RenderStarGroup(_bindings.BuildStageActiveStarGroups[i], promotionSlot.StarCap, promotionSlot.StarCount, Color.white, keepInvisibleSlots: true);
                 }
             }
         }
@@ -374,7 +376,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             for (int i = 0; i < _bindings.StageBars.Length; i++)
             {
                 BattleStageBarVm barVm = i < viewModel.StageBars.Length ? viewModel.StageBars[i] : null;
-                Image bar = _bindings.StageBars[i];
+                Slider bar = _bindings.StageBars[i];
                 if (bar == null)
                 {
                     continue;
@@ -382,13 +384,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
                 bool visible = barVm != null && barVm.Visible;
                 bar.gameObject.SetActive(visible);
-                bar.type = Image.Type.Filled;
-                bar.fillMethod = Image.FillMethod.Horizontal;
-                bar.fillOrigin = (int)Image.OriginHorizontal.Left;
-                bar.fillAmount = visible ? barVm.Progress : 0f;
-                bar.color = visible && barVm.Progress >= 1f
-                    ? new Color(0.41f, 0.92f, 0.47f, 0.92f)
-                    : new Color(1f, 0.82f, 0.25f, 0.82f);
+                bar.minValue = 0f;
+                bar.maxValue = 1f;
+                bar.wholeNumbers = false;
+                bar.value = visible ? Mathf.Clamp01(barVm.Progress) : 0f;
+                bar.interactable = false;
             }
         }
 
@@ -441,7 +441,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 }
 
                 int stageSlotIndex = i;
-                _buildStageClickActions[i] = () => _currentBuildStageAction?.Invoke(stageSlotIndex);
+                _buildStageClickActions[i] = () => _currentPromotionSlotAction?.Invoke(stageSlotIndex);
                 button.onClick.AddListener(_buildStageClickActions[i]);
             }
         }
@@ -963,38 +963,42 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             return lockRect;
         }
 
-        private Image ResolveStageBar(int slotIndex, Transform overlay)
+        private Slider ResolveStageBar(int slotIndex, Transform overlay)
         {
             string objectName = "StageBar" + (slotIndex + 1);
-            Image existing = FindDescendantComponent<Image>("Map_bg/" + objectName);
-            if (existing != null)
+            Transform existingTransform = transform.Find("Map_bg/" + objectName);
+            if (existingTransform != null)
             {
-                return existing;
+                Slider existingSlider = existingTransform.GetComponent<Slider>();
+                if (existingSlider != null)
+                {
+                    return existingSlider;
+                }
             }
 
-            GameObject barObject = GetOrCreateChild(overlay, objectName);
+            Transform mapRoot = transform.Find("Map_bg");
+            Transform parent = mapRoot != null ? mapRoot : overlay;
+            GameObject barObject = GetOrCreateChild(parent, objectName);
             RectTransform rectTransform = barObject.GetComponent<RectTransform>();
             if (rectTransform == null)
             {
                 rectTransform = barObject.AddComponent<RectTransform>();
+                ConfigureRect(
+                    rectTransform,
+                    new Vector2(0.26f + slotIndex * 0.16f, 0.42f),
+                    new Vector2(0.26f + slotIndex * 0.16f, 0.42f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    new Vector2(100f, 16f));
             }
 
-            ConfigureRect(
-                rectTransform,
-                new Vector2(0.26f + slotIndex * 0.16f, 0.42f),
-                new Vector2(0.26f + slotIndex * 0.16f, 0.42f),
-                new Vector2(0.5f, 0.5f),
-                Vector2.zero,
-                new Vector2(100f, 16f));
-
-            Image image = barObject.GetComponent<Image>();
-            if (image == null)
+            Slider slider = barObject.GetComponent<Slider>();
+            if (slider == null)
             {
-                image = barObject.AddComponent<Image>();
+                slider = barObject.AddComponent<Slider>();
             }
 
-            image.color = new Color(1f, 0.82f, 0.25f, 0.82f);
-            return image;
+            return slider;
         }
 
         private TextMeshProUGUI ResolveStageNameText(Transform stageRoot)
@@ -1188,7 +1192,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             if (baseGroup != null)
             {
                 baseGroup.gameObject.SetActive(true);
-                RenderStarGroup(baseGroup, 5, new Color(0.46f, 0.48f, 0.52f, 0.72f), keepInvisibleSlots: false);
+                RenderStarGroup(baseGroup, 5, 5, new Color(0.46f, 0.48f, 0.52f, 0.72f), keepInvisibleSlots: false);
             }
 
             if (activeGroup == null)
@@ -1201,12 +1205,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             Image[] activeStars = ResolveStars(activeGroup);
             int visibleCount = Mathf.Clamp(starCount, 0, Math.Min(5, activeStars.Length));
-            RenderStarGroup(activeGroup, visibleCount, Color.white, keepInvisibleSlots: true);
+            RenderStarGroup(activeGroup, 5, visibleCount, Color.white, keepInvisibleSlots: true);
         }
 
-        private static void RenderStarGroup(Transform starGroup, int visibleCount, Color visibleColor, bool keepInvisibleSlots)
+        private static void RenderStarGroup(Transform starGroup, int slotCount, int visibleCount, Color visibleColor, bool keepInvisibleSlots)
         {
+            EnsureStarPool(starGroup, slotCount);
             Image[] stars = ResolveStars(starGroup);
+            int clampedVisibleCount = Mathf.Clamp(visibleCount, 0, Math.Max(0, slotCount));
             for (int i = 0; i < stars.Length; i++)
             {
                 if (stars[i] == null)
@@ -1214,11 +1220,56 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                     continue;
                 }
 
-                stars[i].gameObject.SetActive(true);
+                bool used = i < slotCount;
+                stars[i].gameObject.SetActive(used);
+                if (!used)
+                {
+                    continue;
+                }
+
                 stars[i].raycastTarget = false;
-                stars[i].color = i < visibleCount
+                stars[i].color = i < clampedVisibleCount
                     ? visibleColor
                     : new Color(visibleColor.r, visibleColor.g, visibleColor.b, keepInvisibleSlots ? 0f : visibleColor.a);
+            }
+        }
+
+        private static void EnsureStarPool(Transform starGroup, int slotCount)
+        {
+            if (starGroup == null || slotCount <= 0)
+            {
+                return;
+            }
+
+            Image[] existingStars = ResolveStars(starGroup);
+            Sprite sprite = existingStars.Length > 0 && existingStars[0] != null ? existingStars[0].sprite : null;
+            for (int i = existingStars.Length; i < slotCount; i++)
+            {
+                string starName = i == 0 ? "star" : $"star ({i})";
+                GameObject starObject = GetOrCreateChild(starGroup, starName);
+                RectTransform starRect = starObject.GetComponent<RectTransform>();
+                if (starRect == null)
+                {
+                    starRect = starObject.AddComponent<RectTransform>();
+                }
+
+                ConfigureRect(
+                    starRect,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f),
+                    Vector2.zero,
+                    new Vector2(18f, 18f));
+
+                Image image = starObject.GetComponent<Image>();
+                if (image == null)
+                {
+                    image = starObject.AddComponent<Image>();
+                }
+
+                image.sprite = image.sprite != null ? image.sprite : sprite;
+                image.preserveAspect = true;
+                image.raycastTarget = false;
             }
         }
 
@@ -1329,14 +1380,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             return Color.white;
         }
 
-        private static Color GetBuildStageImageTint(BattleBuildStageVm stage)
+        private static Color GetPromotionSlotImageTint(BattlePromotionSlotVm stage)
         {
             if (stage == null || !stage.Unlocked)
             {
                 return new Color(0.55f, 0.55f, 0.55f, 0.58f);
             }
 
-            if (stage.Selected)
+            if (stage.CanBuild)
             {
                 return new Color(1f, 0.95f, 0.68f, 1f);
             }

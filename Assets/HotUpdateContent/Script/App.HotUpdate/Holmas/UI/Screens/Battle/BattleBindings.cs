@@ -239,7 +239,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public readonly Image[] StageImages = new Image[BattlePresenter.VisibleStageCount];
         public readonly TextMeshProUGUI[] StageNameTexts = new TextMeshProUGUI[BattlePresenter.VisibleStageCount];
         public readonly RectTransform[] StageLocks = new RectTransform[BattlePresenter.VisibleStageCount];
-        public readonly Image[] StageBars = new Image[BattlePresenter.VisibleStageBarCount];
+        public readonly Slider[] StageBars = new Slider[BattlePresenter.VisibleStageBarCount];
         public readonly Button[] BuildStageButtons = new Button[BattlePresenter.VisibleStageCount];
         public readonly Image[] BuildStageImages = new Image[BattlePresenter.VisibleStageCount];
         public readonly TextMeshProUGUI[] BuildStageNameTexts = new TextMeshProUGUI[BattlePresenter.VisibleStageCount];

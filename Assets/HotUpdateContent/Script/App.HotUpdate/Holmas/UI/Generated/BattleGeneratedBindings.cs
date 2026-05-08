@@ -56,7 +56,7 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
             for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
             {
-                manifest.AddEntry(BattleBindings.StageBarKeys[i], "Image", BattleBindings.StageBarNodePaths[i], notes: "publicity_stage_progress_bar");
+                manifest.AddEntry(BattleBindings.StageBarKeys[i], "Slider", BattleBindings.StageBarNodePaths[i], notes: "publicity_stage_progress_bar");
             }
 
             return manifest;

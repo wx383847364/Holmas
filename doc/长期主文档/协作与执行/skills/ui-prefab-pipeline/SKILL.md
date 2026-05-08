@@ -29,6 +29,8 @@ Treat `UiPrefabSpec` as the only machine-authoritative intermediate layer.
 - The system must not auto-write business Presenter logic or gameplay wiring.
 - Validation must catch illegal nodes, illegal components, missing asset slots, and naming conflicts before promotion.
 - A local spec change should only cause local output drift.
+- 运行时 UI 业务代码只能通过 `UiReferenceCollector` / generated bindings / manifest 取得节点；禁止用 `Transform.Find`、`GameObject.Find`、递归 `GetComponentsInChildren` 等查找式取节点作为功能实现。
+- 生成器必须把 View/Controller 会触碰的全部节点、组件、事件出口、状态层、隐藏 slot 和锁定态写进 manifest 与静态绑定；缺绑定应作为生成/审核失败处理。
 
 ## Pipeline Boundaries
 
@@ -64,12 +66,14 @@ Reach for this skill when the user asks things like:
 - Do not mix spec, generation, and validation into the same ownership area.
 - Do not let generator code depend on Holmas gameplay logic.
 - Do not let adapter policy redefine core schema.
+- Do not leave runtime node lookup as a convenience fallback. One-time editor migration/authoring scripts may use explicit路径补齐静态绑定，但必须输出到 prefab/collector 后再交付，不能让页面打开时再查找节点。
 
 ## Validation
 
 Before finishing:
 - Check that generator and validator consume `UiPrefabSpec`, not raw images.
 - Check that the manifest fully describes generated nodes, components, asset slots, and manual wiring gaps.
+- Check that runtime View/Controller code consumes static bindings only, and that every referenced UI node has a manifest/collector entry.
 - Check that there is at least one repeatable sample path for validation.
 - Check that failure reporting distinguishes schema, generator, adapter, and fixture issues.
 

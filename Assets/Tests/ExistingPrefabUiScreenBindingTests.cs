@@ -270,11 +270,11 @@ namespace Holmas.Tests
             GameObject instance = Object.Instantiate(prefab);
             try
             {
-                BattleView view = instance.GetComponent<BattleView>() ?? instance.AddComponent<BattleView>();
-                view.EnsureBindingSurface();
+                BattleView view = instance.GetComponent<BattleView>();
+                Assert.That(view, Is.Not.Null, "BattlePanel prefab 必须静态挂载 BattleView，运行时不再 AddComponent 补挂。");
 
                 UiReferenceCollector collector = instance.GetComponent<UiReferenceCollector>();
-                Assert.That(collector, Is.Not.Null, "BattlePanel 运行时 collector 创建失败。");
+                Assert.That(collector, Is.Not.Null, "BattlePanel prefab 必须静态挂载 UiReferenceCollector，运行时不再查找/创建 binding surface。");
 
                 var resolver = new UiBindingResolver(collector, BattleGeneratedBindings.Manifest);
                 BattleBindings bindings = BattleBindings.Resolve(resolver);
@@ -298,13 +298,18 @@ namespace Holmas.Tests
                     Assert.That(bindings.BuildStageLocks[i], Is.Not.Null, $"BuildStage{i + 1} 锁定态缺失。");
                     Assert.That(bindings.BuildStageBaseStarGroups[i], Is.Not.Null, $"BuildStage{i + 1} 底星容器缺失。");
                     Assert.That(bindings.BuildStageActiveStarGroups[i], Is.Not.Null, $"BuildStage{i + 1} 点亮星容器缺失。");
-                    Assert.That(bindings.BuildStageButtons[i].name, Is.EqualTo($"BuildStage{i + 1}"), $"BuildStage{i + 1} 必须静态绑定到底部城市 slot。");
-                    Assert.That(bindings.BuildStageImages[i].transform.parent, Is.EqualTo(bindings.BuildStageButtons[i].transform), $"BuildStage{i + 1}/Image 必须是底部 slot 的直接子节点。");
+                    Assert.That(bindings.BuildStageButtons[i].name, Is.EqualTo($"BuildStage{i + 1}"), $"BuildStage{i + 1} 必须静态绑定到底部 promotion slot。");
+                    Assert.That(bindings.BuildStageImages[i].transform.parent, Is.EqualTo(bindings.BuildStageButtons[i].transform), $"BuildStage{i + 1}/Image 必须是底部 promotion slot 的直接子节点。");
                 }
 
                 view.Bind(bindings);
+                RectTransform stageBar1Rect = bindings.StageBars[0].GetComponent<RectTransform>();
+                Vector2 stageBar1AnchorMin = stageBar1Rect.anchorMin;
+                Vector2 stageBar1AnchorMax = stageBar1Rect.anchorMax;
+                Vector2 stageBar1AnchoredPosition = stageBar1Rect.anchoredPosition;
+                Vector2 stageBar1SizeDelta = stageBar1Rect.sizeDelta;
+                Quaternion stageBar1Rotation = stageBar1Rect.localRotation;
                 var stages = new BattleStageVm[BattlePresenter.VisibleStageCount];
-                var buildStages = new BattleBuildStageVm[BattlePresenter.VisibleStageCount];
                 for (int i = 0; i < stages.Length; i++)
                 {
                     stages[i] = new BattleStageVm
@@ -318,25 +323,60 @@ namespace Holmas.Tests
                         Unlocked = true,
                         Selected = i == 0,
                     };
-                    buildStages[i] = new BattleBuildStageVm
-                    {
-                        SlotIndex = i,
-                        AgencyStageId = i + 1,
-                        StageName = $"Stage {i + 1}",
-                        StageImage = "Assets/HotUpdateContent/Res/Textures/buildings/building01.png",
-                        ProgressLabel = "1/3",
-                        StarCount = i == 0 ? 2 : 0,
-                        Visible = true,
-                        Unlocked = true,
-                        Selected = i == 0,
-                    };
                 }
 
                 view.Render(new BattleVm
                 {
-                    BuildButtonLabel = "Stage 1\n宣传 1->2/3\n金币 -10",
+                    BuildButtonLabel = "Stage 1\n选择宣传项升级",
                     BuildButtonEnabled = true,
-                    BuildStages = buildStages,
+                    PromotionSlots = new[]
+                    {
+                        new BattlePromotionSlotVm
+                        {
+                            SlotIndex = 0,
+                            AgencyStageId = 1,
+                            PromotionId = "leaflet",
+                            StageName = "Stage 1",
+                            StageImage = "Assets/HotUpdateContent/Res/Textures/buildings/building01.png",
+                            ProgressLabel = "2/3",
+                            StarCap = 3,
+                            StarCount = 2,
+                            Visible = true,
+                            Unlocked = true,
+                            Current = true,
+                            CanBuild = true,
+                        },
+                        new BattlePromotionSlotVm
+                        {
+                            SlotIndex = 1,
+                            AgencyStageId = 1,
+                            PromotionId = "radio",
+                            StageName = "Stage 1",
+                            StageImage = "Assets/HotUpdateContent/Res/Textures/buildings/building01.png",
+                            ProgressLabel = "1/3",
+                            StarCap = 3,
+                            StarCount = 1,
+                            Visible = true,
+                            Unlocked = true,
+                            Current = true,
+                            CanBuild = true,
+                        },
+                        new BattlePromotionSlotVm
+                        {
+                            SlotIndex = 2,
+                            AgencyStageId = 1,
+                            PromotionId = "tv",
+                            StageName = "Stage 1",
+                            StageImage = "Assets/HotUpdateContent/Res/Textures/buildings/building01.png",
+                            ProgressLabel = "0/3",
+                            StarCap = 3,
+                            StarCount = 0,
+                            Visible = true,
+                            Unlocked = true,
+                            Current = true,
+                            CanBuild = true,
+                        },
+                    },
                     Stages = stages,
                     StageBars = new[]
                     {
@@ -376,7 +416,11 @@ namespace Holmas.Tests
                         continue;
                     }
 
-                    Assert.That(child.gameObject.activeSelf, Is.True, "星级槽位应保持 active，以避免 2 颗和 3 颗时被 Layout 重新排版。");
+                    if (!child.gameObject.activeSelf)
+                    {
+                        continue;
+                    }
+
                     activeSlotCount++;
                     Image starImage = child.GetComponent<Image>();
                     if (starImage != null && starImage.color.a > 0.5f)
@@ -385,14 +429,24 @@ namespace Holmas.Tests
                     }
                 }
 
-                Assert.That(activeSlotCount, Is.EqualTo(5), "stargroup_1 应保留 5 个固定星级槽位。");
-                Assert.That(activeStarCount, Is.EqualTo(2), "BuildStage 星级显示必须跟随运行时进度，不应默认显示 5 颗。");
-                Assert.That(bindings.BuildButton.transform.Find("Image").gameObject.activeSelf, Is.False, "Build_btn 旧单图标必须隐藏，底部应显示 5 个 BuildStage。");
+                Assert.That(activeSlotCount, Is.EqualTo(3), "promotion 星级槽位数量必须跟随 promotionLevelCaps，而不是固定 5 颗。");
+                Assert.That(activeStarCount, Is.EqualTo(2), "promotion 星级显示必须跟随当前 promotion 等级。");
+                Assert.That(bindings.BuildStageButtons[3].gameObject.activeSelf, Is.False, "promotionLevelCaps 只有 3 项时，第 4 个底部 slot 必须隐藏。");
+                Assert.That(bindings.BuildStageButtons[4].gameObject.activeSelf, Is.False, "promotionLevelCaps 只有 3 项时，第 5 个底部 slot 必须隐藏。");
+                Assert.That(bindings.BuildButton.transform.Find("Image").gameObject.activeSelf, Is.False, "Build_btn 旧单图标必须隐藏，底部应显示 promotion slots。");
 
                 for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
                 {
                     Assert.That(bindings.StageBars[i], Is.Not.Null, $"StageBar{i + 1} 缺失。");
                 }
+
+                Assert.That(bindings.StageBars, Has.Length.EqualTo(4), "5 个城市之间只需要 4 条 StageBar 连接线。");
+                Assert.That(bindings.StageBars[0].value, Is.EqualTo(0.4f).Within(0.0001f), "StageBar1 必须通过 Slider.value 表示连接进度。");
+                Assert.That(stageBar1Rect.anchorMin, Is.EqualTo(stageBar1AnchorMin), "运行时不能重写 prefab 内 StageBar1 的 anchorMin。");
+                Assert.That(stageBar1Rect.anchorMax, Is.EqualTo(stageBar1AnchorMax), "运行时不能重写 prefab 内 StageBar1 的 anchorMax。");
+                Assert.That(stageBar1Rect.anchoredPosition, Is.EqualTo(stageBar1AnchoredPosition), "运行时不能重写 prefab 内 StageBar1 的位置。");
+                Assert.That(stageBar1Rect.sizeDelta, Is.EqualTo(stageBar1SizeDelta), "运行时不能重写 prefab 内 StageBar1 的尺寸。");
+                Assert.That(stageBar1Rect.localRotation, Is.EqualTo(stageBar1Rotation), "运行时不能重写 prefab 内 StageBar1 的旋转。");
             }
             finally
             {

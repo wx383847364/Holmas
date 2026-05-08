@@ -24,40 +24,49 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             IReadOnlyList<HolmasAgencyStageDefinition> stages = catalog != null
                 ? catalog.GetStagesInOrder()
                 : Array.Empty<HolmasAgencyStageDefinition>();
-            int currentStageId = Math.Max(1, _context?.CurrentAgencyStageId ?? 1);
-            int normalizedSelectedStageId = NormalizeSelectedStageId(stages, selectedStageId, currentStageId);
-            BattleStageVm[] stageVms = BuildStages(stages, normalizedSelectedStageId, currentStageId);
-            BattleStageBarVm[] stageBars = BuildStageBars(stageVms, currentStageId);
-            BattleBuildStageVm[] buildStages = BuildBuildStages(catalog, stageVms, currentStageId);
-            BattleBuildStageVm selectedBuildStage = buildStages.FirstOrDefault(item => item != null && item.Selected);
+            int activeBuildStageId = Math.Max(1, _context?.CurrentAgencyStageId ?? 1);
+            int normalizedViewedStageId = NormalizeSelectedStageId(stages, selectedStageId, activeBuildStageId);
+            BattleStageVm[] stageVms = BuildStages(stages, normalizedViewedStageId, activeBuildStageId);
+            BattleStageBarVm[] stageBars = BuildStageBars(stageVms, activeBuildStageId);
+            BattlePromotionSlotVm[] promotionSlots = BuildPromotionSlots(catalog, activeBuildStageId, activeBuildStageId);
+            BattlePromotionSlotVm nextPromotionSlot = promotionSlots.FirstOrDefault(item => item != null && item.CanBuild);
 
             return new BattleVm
             {
                 LevelLabel = $"Lv {_context?.CurrentPlayerLevel ?? 1}",
                 GoldLabel = $"Gold {_context?.CurrentGoldBalance ?? 0L}",
                 EnergyLabel = _context?.EnergyLabel ?? "50/50",
-                Summary = BuildSummary(catalog, normalizedSelectedStageId, currentStageId),
+                Summary = BuildSummary(catalog, normalizedViewedStageId, activeBuildStageId),
                 Status = string.IsNullOrWhiteSpace(status) ? "选择城市阶段，推进当前宣传建设。" : status,
-                BuildButtonLabel = selectedBuildStage != null ? selectedBuildStage.ActionLabel : "城市宣传",
-                BuildButtonEnabled = selectedBuildStage != null && selectedBuildStage.CanBuild,
-                SelectedStageId = normalizedSelectedStageId,
-                BuildStages = buildStages,
+                BuildButtonLabel = BuildPromotionSummaryLabel(catalog, activeBuildStageId, activeBuildStageId, nextPromotionSlot),
+                BuildButtonEnabled = nextPromotionSlot != null,
+                SelectedStageId = normalizedViewedStageId,
+                PromotionSlots = promotionSlots,
                 Stages = stageVms,
                 StageBars = stageBars,
             };
         }
 
-        public string GetNextUpgradeablePromotionId(int selectedStageId)
+        public string GetPromotionIdForSlot(int promotionSlotIndex)
         {
             IHolmasAgencyCatalog catalog = GetCatalog();
-            int currentStageId = Math.Max(1, _context?.CurrentAgencyStageId ?? 1);
-            if (catalog == null || selectedStageId != currentStageId)
+            int activeBuildStageId = Math.Max(1, _context?.CurrentAgencyStageId ?? 1);
+            if (catalog == null ||
+                promotionSlotIndex < 0)
             {
                 return string.Empty;
             }
 
-            HolmasAgencyBuildingDefinition definition = GetNextUpgradeablePromotion(catalog, currentStageId);
-            return definition != null ? definition.PromotionId ?? string.Empty : string.Empty;
+            IReadOnlyList<HolmasAgencyBuildingDefinition> promotions = catalog.GetPromotionsForStage(activeBuildStageId);
+            if (promotions == null || promotionSlotIndex >= promotions.Count)
+            {
+                return string.Empty;
+            }
+
+            HolmasAgencyBuildingDefinition definition = promotions[promotionSlotIndex];
+            return definition != null && GetPromotionLevel(definition) < definition.PromotionLevelCap
+                ? definition.PromotionId ?? string.Empty
+                : string.Empty;
         }
 
         private IHolmasAgencyCatalog GetCatalog()
@@ -161,37 +170,57 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             return result;
         }
 
-        private BattleBuildStageVm[] BuildBuildStages(
+        private BattlePromotionSlotVm[] BuildPromotionSlots(
             IHolmasAgencyCatalog catalog,
-            BattleStageVm[] stages,
+            int selectedStageId,
             int currentStageId)
         {
-            var result = new BattleBuildStageVm[VisibleStageCount];
+            IReadOnlyList<HolmasAgencyBuildingDefinition> promotions = catalog?.GetPromotionsForStage(selectedStageId);
+            if (promotions == null || promotions.Count == 0)
+            {
+                return Array.Empty<BattlePromotionSlotVm>();
+            }
+
+            bool unlocked = selectedStageId == 1 || selectedStageId <= currentStageId;
+            bool current = selectedStageId == currentStageId;
+            bool completed = selectedStageId < currentStageId || CalculateStageProgress(selectedStageId).IsComplete;
+            string stageName = string.Empty;
+            string stageImage = string.Empty;
+            if (catalog != null && catalog.TryGetStage(selectedStageId, out HolmasAgencyStageDefinition stage) && stage != null)
+            {
+                stageName = stage.StageName ?? string.Empty;
+                stageImage = stage.StageImage ?? string.Empty;
+            }
+
+            var result = new BattlePromotionSlotVm[promotions.Count];
             for (int i = 0; i < result.Length; i++)
             {
-                BattleStageVm stage = stages != null && i < stages.Length ? stages[i] : null;
-                if (stage == null || !stage.Visible)
-                {
-                    result[i] = new BattleBuildStageVm { SlotIndex = i, Visible = false };
-                    continue;
-                }
-
-                bool canBuild = stage.Current && !stage.Completed && GetNextUpgradeablePromotion(catalog, currentStageId) != null;
-                result[i] = new BattleBuildStageVm
+                HolmasAgencyBuildingDefinition promotion = promotions[i];
+                int starCap = Math.Max(0, promotion?.PromotionLevelCap ?? 0);
+                int starCount = Math.Min(GetPromotionLevel(promotion), starCap);
+                bool canBuild = current &&
+                    !completed &&
+                    unlocked &&
+                    promotion != null &&
+                    !string.IsNullOrWhiteSpace(promotion.PromotionId) &&
+                    starCount < starCap &&
+                    GetPromotionUpgradeCost(promotion, starCount) > 0;
+                result[i] = new BattlePromotionSlotVm
                 {
                     SlotIndex = i,
-                    AgencyStageId = stage.AgencyStageId,
-                    StageName = stage.StageName ?? string.Empty,
-                    StageImage = stage.StageImage ?? string.Empty,
-                    ProgressLabel = stage.ProgressLabel ?? string.Empty,
-                    StarCount = stage.StarCount,
+                    AgencyStageId = selectedStageId,
+                    PromotionId = promotion?.PromotionId ?? string.Empty,
+                    StageName = stageName,
+                    StageImage = stageImage,
+                    ProgressLabel = $"{starCount}/{starCap}",
+                    StarCap = starCap,
+                    StarCount = starCount,
                     Visible = true,
-                    Unlocked = stage.Unlocked,
-                    Selected = stage.Selected,
-                    Current = stage.Current,
-                    Completed = stage.Completed,
+                    Unlocked = unlocked,
+                    Current = current,
+                    Completed = completed,
                     CanBuild = canBuild,
-                    ActionLabel = BuildActionLabel(catalog, stage, currentStageId),
+                    ActionLabel = BuildPromotionActionLabel(promotion, stageName, selectedStageId, currentStageId, unlocked, current, completed),
                 };
             }
 
@@ -230,41 +259,76 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             return result;
         }
 
-        private string BuildActionLabel(
-            IHolmasAgencyCatalog catalog,
-            BattleStageVm stage,
-            int currentStageId)
+        private string BuildPromotionActionLabel(
+            HolmasAgencyBuildingDefinition promotion,
+            string stageName,
+            int selectedStageId,
+            int currentStageId,
+            bool unlocked,
+            bool current,
+            bool completed)
         {
-            if (stage == null || !stage.Visible)
+            if (promotion == null)
             {
                 return "宣传待开放";
             }
 
-            if (!stage.Unlocked || stage.AgencyStageId > currentStageId)
+            if (!unlocked || selectedStageId > currentStageId)
             {
                 return "城市尚未解锁";
             }
 
-            if (stage.AgencyStageId < currentStageId)
+            if (!current)
+            {
+                return $"{promotion.PromotionId}\n已完成/仅回看";
+            }
+
+            int currentLevel = GetPromotionLevel(promotion);
+            int cap = Math.Max(0, promotion.PromotionLevelCap);
+            if (completed || currentLevel >= cap)
+            {
+                return $"{promotion.PromotionId}\n宣传已满级";
+            }
+
+            int nextCost = GetPromotionUpgradeCost(promotion, currentLevel);
+            if (nextCost <= 0)
+            {
+                return $"{promotion.PromotionId}\n宣传已满级";
+            }
+
+            int nextLevel = Math.Min(cap, currentLevel + 1);
+            return $"{promotion.PromotionId}\n{currentLevel}->{nextLevel}/{cap}\n金币 -{nextCost}";
+        }
+
+        private string BuildPromotionSummaryLabel(
+            IHolmasAgencyCatalog catalog,
+            int selectedStageId,
+            int currentStageId,
+            BattlePromotionSlotVm nextPromotionSlot)
+        {
+            if (catalog == null)
+            {
+                return "城市宣传";
+            }
+
+            if (!catalog.TryGetStage(selectedStageId, out HolmasAgencyStageDefinition stage) || stage == null)
+            {
+                return "城市宣传";
+            }
+
+            if (selectedStageId > currentStageId)
+            {
+                return "城市尚未解锁";
+            }
+
+            if (selectedStageId < currentStageId)
             {
                 return $"{stage.StageName}\n已完成/仅回看";
             }
 
-            HolmasAgencyBuildingDefinition promotion = GetNextUpgradeablePromotion(catalog, currentStageId);
-            if (promotion == null)
-            {
-                return $"{stage.StageName}\n宣传已满级";
-            }
-
-            int currentLevel = GetPromotionLevel(promotion);
-            int nextCost = GetPromotionUpgradeCost(promotion, currentLevel);
-            if (nextCost <= 0)
-            {
-                return $"{stage.StageName}\n宣传已满级";
-            }
-
-            int nextProgress = Math.Min(stage.ProgressCap, stage.ProgressCurrent + 1);
-            return $"{stage.StageName}\n宣传 {stage.ProgressCurrent}->{nextProgress}/{stage.ProgressCap}\n金币 -{nextCost}";
+            return nextPromotionSlot != null
+                ? $"{stage.StageName}\n选择宣传项升级"
+                : $"{stage.StageName}\n宣传已满级";
         }
 
         private string BuildSummary(IHolmasAgencyCatalog catalog, int selectedStageId, int currentStageId)

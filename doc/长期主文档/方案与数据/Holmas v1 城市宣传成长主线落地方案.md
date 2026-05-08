@@ -17,8 +17,8 @@
 ## 完成情况
 
 - 当前状态：进行中
-- 进度说明：已修正 BattlePanel 底部城市图标星星位置，图标固定为 114x114，星星锚在图标上方。
-- 最近更新：2026-05-08，已修正 BattlePanel 底部城市图标星星位置，图标固定为 114x114，星星锚在图标上方。
+- 进度说明：已完成 BattlePanel 地图点击、底部 promotion slots、StageBar 连接进度和静态绑定约束调整。
+- 最近更新：2026-05-08，已完成 BattlePanel 地图点击、底部 promotion slots、StageBar 连接进度和静态绑定约束调整。
 
 ## 实施目标
 

@@ -25,6 +25,8 @@ Prefer one authoritative doc zone over scattered planning notes.
 - System code belongs under `Assets/Tools/UiPrefabGenerator`.
 - Holmas is the first trial project, not the system body.
 - Holmas may only connect through adapter, profile, generated-result consumption, and trial samples.
+- UI 运行时节点获取必须走静态绑定：`UiReferenceCollector`、generated bindings、manifest 是唯一入口。禁止在 View/Controller 里用 `Transform.Find`、`GameObject.Find`、递归 `GetComponentsInChildren` 补节点。
+- 编写 UI 的 agent 必须先补齐 prefab/manifest/collector 静态绑定；审核 agent 必须把运行时查找节点视为阻断问题，除非该查找只存在于一次性 Editor authoring/migration 脚本且产物已固化到 prefab。
 - Every execution-style subagent dispatch must explicitly include:
   - goal
   - allowed write scope
@@ -63,6 +65,7 @@ Reach for this skill when the user asks things like:
 - Do not let multiple subagents co-own a high-conflict directory.
 - Do not put Holmas gameplay or App.Shared ownership into the generator system by default.
 - Do not let review-only work rewrite long-term system rules.
+- Do not accept UI runtime code that “先查找节点再绑定”。缺少静态 binding 时应修 prefab/manifest，而不是在页面打开时兜底查找。
 
 ## Validation
 
@@ -71,6 +74,7 @@ Before finishing:
 - Check that old files now act as redirects or index pages.
 - Check that each subagent has a concrete write boundary.
 - Check that Holmas is still framed as a trial adapter, not as the core system.
+- Check that UI writer/reviewer tasks explicitly include static binding acceptance: all runtime-touched nodes are in collector/manifest, and runtime lookup is absent.
 
 Read these references when needed:
 - `references/checklist.md`
