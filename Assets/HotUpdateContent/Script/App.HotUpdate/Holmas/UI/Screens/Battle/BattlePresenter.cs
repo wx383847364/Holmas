@@ -86,7 +86,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return currentStageId;
             }
 
-            if (selectedStageId > 0 && stages.Any(stage => stage != null && stage.AgencyStageId == selectedStageId))
+            int selectedIndex = FindStageIndex(stages, selectedStageId);
+            int currentPageStartIndex = CalculateStagePageStartIndex(stages, currentStageId);
+            if (selectedIndex >= currentPageStartIndex &&
+                selectedIndex < currentPageStartIndex + VisibleStageCount)
             {
                 return selectedStageId;
             }
@@ -111,27 +114,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return result;
             }
 
-            int currentIndex = FindStageIndex(stages, currentStageId);
-            if (currentIndex < 0)
-            {
-                currentIndex = 0;
-            }
-
-            int selectedIndex = FindStageIndex(stages, selectedStageId);
-            int startIndex = Math.Max(0, Math.Min(currentIndex - 2, stages.Count - VisibleStageCount));
-            if (selectedIndex >= 0)
-            {
-                if (selectedIndex < startIndex)
-                {
-                    startIndex = selectedIndex;
-                }
-                else if (selectedIndex >= startIndex + VisibleStageCount)
-                {
-                    startIndex = selectedIndex - VisibleStageCount + 1;
-                }
-
-                startIndex = Math.Max(0, Math.Min(startIndex, Math.Max(0, stages.Count - VisibleStageCount)));
-            }
+            int startIndex = CalculateStagePageStartIndex(stages, selectedStageId);
 
             for (int slotIndex = 0; slotIndex < VisibleStageCount; slotIndex++)
             {
@@ -350,20 +333,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             return $"{stage.StageName} | Stage {selectedStageId} | {viewing} | 宣传 {progress.Current}/{progress.Cap}";
         }
 
-        private HolmasAgencyBuildingDefinition GetNextUpgradeablePromotion(IHolmasAgencyCatalog catalog, int currentStageId)
-        {
-            IReadOnlyList<HolmasAgencyBuildingDefinition> promotions = catalog?.GetPromotionsForStage(currentStageId);
-            if (promotions == null || promotions.Count == 0)
-            {
-                return null;
-            }
-
-            return promotions.FirstOrDefault(item =>
-                item != null &&
-                !string.IsNullOrWhiteSpace(item.PromotionId) &&
-                GetPromotionLevel(item) < item.PromotionLevelCap);
-        }
-
         private StageProgress CalculateStageProgress(int agencyStageId)
         {
             IHolmasAgencyCatalog catalog = GetCatalog();
@@ -441,6 +410,22 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
 
             return -1;
+        }
+
+        private static int CalculateStagePageStartIndex(IReadOnlyList<HolmasAgencyStageDefinition> stages, int currentStageId)
+        {
+            if (stages == null || stages.Count == 0)
+            {
+                return 0;
+            }
+
+            int currentIndex = FindStageIndex(stages, currentStageId);
+            if (currentIndex < 0)
+            {
+                currentIndex = 0;
+            }
+
+            return Math.Max(0, currentIndex / VisibleStageCount * VisibleStageCount);
         }
 
         private struct StageProgress

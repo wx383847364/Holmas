@@ -53,7 +53,7 @@ namespace App.HotUpdate.Holmas.Application
     {
         public const int DefaultEnergyRecoveryLimit = 50;
         public const int DebugEnergyGrantAmount = 5;
-        public const int DebugGoldGrantAmount = 100_000;
+        public const int DebugGoldGrantAmount = 1_000_000;
         public const int WalkCatEnergyCost = 2;
         public const int FindRevealEnergyCost = 1;
         public const long EnergyRecoveryIntervalMilliseconds = 12L * 60L * 1000L;

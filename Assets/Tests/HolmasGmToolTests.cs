@@ -127,7 +127,7 @@ namespace Holmas.Tests
 
                 Assert.That(addGoldButton, Is.Not.Null);
                 Assert.That(addGoldButton.interactable, Is.True);
-                Assert.That(label != null ? label.text : string.Empty, Is.EqualTo("+10万金币"));
+                Assert.That(label != null ? label.text : string.Empty, Is.EqualTo("+100万金币"));
             }
             finally
             {

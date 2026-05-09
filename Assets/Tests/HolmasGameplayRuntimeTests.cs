@@ -223,7 +223,7 @@ namespace Holmas.Tests
 
             runtime.AddGold();
 
-            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(100_025));
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(1_000_025));
             CollectionAssert.AreEqual(
                 new[]
                 {
@@ -697,7 +697,7 @@ namespace Holmas.Tests
             Assert.That(viewModel.Stages[1].Unlocked, Is.False);
 
             Assert.That(viewModel.PromotionSlots, Has.Length.EqualTo(3));
-            Assert.That(viewModel.PromotionSlots.Select(item => item.StarCap).ToArray(), Is.EqualTo(new[] { 3, 3, 3 }));
+            Assert.That(viewModel.PromotionSlots.Select(item => item.StarCap).ToArray(), Is.EqualTo(new[] { 3, 5, 2 }));
             Assert.That(viewModel.PromotionSlots.Select(item => item.StarCount).ToArray(), Is.EqualTo(new[] { 0, 0, 0 }));
             Assert.That(viewModel.PromotionSlots[0].AgencyStageId, Is.EqualTo(viewModel.Stages[0].AgencyStageId));
             Assert.That(viewModel.PromotionSlots[0].StageImage, Is.EqualTo(viewModel.Stages[0].StageImage));
@@ -718,10 +718,40 @@ namespace Holmas.Tests
             BattleVm viewModel = new BattlePresenter(context).Build(selectedStageId: 1);
 
             Assert.That(viewModel.PromotionSlots, Has.Length.EqualTo(3));
-            Assert.That(viewModel.PromotionSlots.Select(item => item.StarCap).ToArray(), Is.EqualTo(new[] { 3, 3, 3 }));
+            Assert.That(viewModel.PromotionSlots.Select(item => item.StarCap).ToArray(), Is.EqualTo(new[] { 3, 5, 2 }));
             Assert.That(viewModel.PromotionSlots.Select(item => item.StarCount).ToArray(), Is.EqualTo(new[] { 3, 2, 1 }));
-            Assert.That(viewModel.PromotionSlots[1].ProgressLabel, Is.EqualTo("2/3"));
+            Assert.That(viewModel.PromotionSlots[1].ProgressLabel, Is.EqualTo("2/5"));
             Assert.That(viewModel.PromotionSlots[1].CanBuild, Is.True);
+        }
+
+        [Test]
+        public void BattlePresenter_PromotionSlotStarCountsFollowCurrentLevelUntilCap()
+        {
+            HolmasApplicationContext context = CreatePromotionMapTestContext(CreateFiveStagePromotionCatalog());
+            BattlePresenter presenter = new BattlePresenter(context);
+
+            for (int level = 0; level <= 5; level++)
+            {
+                HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "radio", level);
+
+                BattleVm viewModel = presenter.Build(selectedStageId: 1);
+
+                Assert.That(viewModel.PromotionSlots[1].StarCap, Is.EqualTo(5));
+                Assert.That(viewModel.PromotionSlots[1].StarCount, Is.EqualTo(level));
+                Assert.That(viewModel.PromotionSlots[1].ProgressLabel, Is.EqualTo($"{level}/5"));
+            }
+        }
+
+        [Test]
+        public void BattlePresenter_KeepsAllPromotionSlotsWhenCapsExceedStaticFive()
+        {
+            HolmasApplicationContext context = CreatePromotionMapTestContext(CreateSixPromotionStageCatalog());
+
+            BattleVm viewModel = new BattlePresenter(context).Build(selectedStageId: 1);
+
+            Assert.That(viewModel.PromotionSlots, Has.Length.EqualTo(6));
+            Assert.That(viewModel.PromotionSlots.Select(item => item.StarCap).ToArray(), Is.EqualTo(new[] { 1, 2, 3, 4, 5, 6 }));
+            Assert.That(viewModel.PromotionSlots.Select(item => item.PromotionId).ToArray(), Is.EqualTo(new[] { "promo-1", "promo-2", "promo-3", "promo-4", "promo-5", "promo-6" }));
         }
 
         [Test]
@@ -747,8 +777,8 @@ namespace Holmas.Tests
             HolmasApplicationContext context = CreatePromotionMapTestContext(CreateFiveStagePromotionCatalog());
             context.GameplayRuntime.MetaProgressionState.GoldBalance = 500;
             HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "leaflet", 3);
-            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "radio", 3);
-            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "tv", 2);
+            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "radio", 5);
+            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "tv", 1);
 
             HolmasAgencyUpgradeResult result = context.TryUpgradePromotion("tv");
             BattleVm viewModel = new BattlePresenter(context).Build(selectedStageId: 1);
@@ -766,7 +796,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void BattlePresenter_ViewingStageDoesNotRefreshPromotionSlots()
+        public void BattlePresenter_ViewingStageDoesNotRefreshLatestPromotionSlots()
         {
             HolmasApplicationContext context = CreatePromotionMapTestContext(CreateFiveStagePromotionCatalog());
 
@@ -777,21 +807,24 @@ namespace Holmas.Tests
             Assert.That(lockedStage.BuildButtonLabel, Is.EqualTo("stage-1\n选择宣传项升级"));
             Assert.That(lockedStage.PromotionSlots, Has.Length.EqualTo(3));
             Assert.That(lockedStage.PromotionSlots.Select(item => item.AgencyStageId).ToArray(), Is.EqualTo(new[] { 1, 1, 1 }));
-            Assert.That(lockedStage.PromotionSlots.Select(item => item.StarCap).ToArray(), Is.EqualTo(new[] { 3, 3, 3 }));
+            Assert.That(lockedStage.PromotionSlots.Select(item => item.StarCap).ToArray(), Is.EqualTo(new[] { 3, 5, 2 }));
+            Assert.That(lockedStage.PromotionSlots.All(item => item.Unlocked), Is.True);
+            Assert.That(lockedStage.PromotionSlots.Any(item => item.CanBuild), Is.True);
 
             context.GameplayRuntime.MetaProgressionState.AgencyStageId = 2;
             HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "leaflet", 3);
-            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "radio", 3);
-            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "tv", 3);
+            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "radio", 5);
+            HolmasAgencyPromotionStateKey.SetLevel(context.GameplayRuntime.MetaProgressionState, 1, "tv", 2);
             BattleVm historyStage = new BattlePresenter(context).Build(selectedStageId: 1);
             Assert.That(historyStage.BuildButtonEnabled, Is.True);
             Assert.That(historyStage.BuildButtonLabel, Is.EqualTo("stage-2\n选择宣传项升级"));
             Assert.That(historyStage.SelectedStageId, Is.EqualTo(1));
             Assert.That(historyStage.Stages[0].Completed, Is.True);
             Assert.That(historyStage.Stages[0].Selected, Is.True);
-            Assert.That(historyStage.Stages[0].ProgressLabel, Is.EqualTo("9/9"));
+            Assert.That(historyStage.Stages[0].ProgressLabel, Is.EqualTo("10/10"));
             Assert.That(historyStage.PromotionSlots.Select(item => item.AgencyStageId).ToArray(), Is.EqualTo(new[] { 2, 2, 2 }));
             Assert.That(historyStage.PromotionSlots.Select(item => item.StarCap).ToArray(), Is.EqualTo(new[] { 4, 4, 4 }));
+            Assert.That(historyStage.PromotionSlots.Select(item => item.StarCount).ToArray(), Is.EqualTo(new[] { 0, 0, 0 }));
             Assert.That(historyStage.PromotionSlots.All(item => item.CanBuild), Is.True);
         }
 
@@ -811,6 +844,37 @@ namespace Holmas.Tests
             Assert.That(viewModel.StageBars[1].Progress, Is.EqualTo(1f));
             Assert.That(viewModel.StageBars[2].Progress, Is.EqualTo(5f / 15f).Within(0.0001f));
             Assert.That(viewModel.StageBars[3].Progress, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void BattlePresenter_KeepsFiveStagePageSlotsFixedWithinMapPage()
+        {
+            HolmasApplicationContext context = CreatePromotionMapTestContext(CreateTenStagePromotionCatalog());
+            context.GameplayRuntime.MetaProgressionState.AgencyStageId = 4;
+
+            BattleVm viewModel = new BattlePresenter(context).Build(selectedStageId: 4);
+
+            Assert.That(viewModel.Stages.Select(item => item.AgencyStageId).ToArray(), Is.EqualTo(new[] { 1, 2, 3, 4, 5 }));
+            Assert.That(viewModel.Stages[3].Current, Is.True, "Stage4 应保持在当前地图第 4 个静态 slot，而不是挪到 Stage3 位置。");
+            Assert.That(viewModel.Stages[3].Selected, Is.True);
+            Assert.That(viewModel.Stages[2].AgencyStageId, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void BattlePresenter_SwitchesMapPageAfterCurrentPageCompleted()
+        {
+            HolmasApplicationContext context = CreatePromotionMapTestContext(CreateTenStagePromotionCatalog());
+            context.GameplayRuntime.MetaProgressionState.AgencyStageId = 6;
+
+            BattleVm viewModel = new BattlePresenter(context).Build(selectedStageId: 5);
+
+            Assert.That(viewModel.SelectedStageId, Is.EqualTo(6), "当前 5 城市页全部完成后，地图应刷新到最新推进城市所在页。");
+            Assert.That(viewModel.Stages.Select(item => item.AgencyStageId).ToArray(), Is.EqualTo(new[] { 6, 7, 8, 9, 10 }));
+            Assert.That(viewModel.Stages[0].Selected, Is.True);
+            Assert.That(viewModel.Stages[0].Current, Is.True);
+            Assert.That(viewModel.PromotionSlots.Select(item => item.AgencyStageId).ToArray(), Is.EqualTo(new[] { 6, 6, 6 }));
+            Assert.That(viewModel.PromotionSlots.Any(item => item.CanBuild), Is.True);
+            Assert.That(viewModel.StageBars.Select(item => item.Visible).ToArray(), Is.EqualTo(new[] { true, true, true, true }));
         }
 
         [Test]
@@ -2524,8 +2588,8 @@ namespace Holmas.Tests
             return new HolmasAgencyCatalog(new[]
             {
                 CreatePromotionStageItem(1, "stage-1", "Textures/buildings/building01.png", "leaflet", 3),
-                CreatePromotionStageItem(1, "stage-1", "Textures/buildings/building01.png", "radio", 3),
-                CreatePromotionStageItem(1, "stage-1", "Textures/buildings/building01.png", "tv", 3),
+                CreatePromotionStageItem(1, "stage-1", "Textures/buildings/building01.png", "radio", 5),
+                CreatePromotionStageItem(1, "stage-1", "Textures/buildings/building01.png", "tv", 2),
                 CreatePromotionStageItem(2, "stage-2", "Textures/buildings/building02.png", "leaflet", 4),
                 CreatePromotionStageItem(2, "stage-2", "Textures/buildings/building02.png", "radio", 4),
                 CreatePromotionStageItem(2, "stage-2", "Textures/buildings/building02.png", "tv", 4),
@@ -2539,6 +2603,38 @@ namespace Holmas.Tests
                 CreatePromotionStageItem(5, "stage-5", "Textures/buildings/building05.png", "radio", 5),
                 CreatePromotionStageItem(5, "stage-5", "Textures/buildings/building05.png", "tv", 5),
             });
+        }
+
+        private static HolmasAgencyCatalog CreateTenStagePromotionCatalog()
+        {
+            var definitions = new List<HolmasAgencyBuildingDefinition>();
+            for (int stageId = 1; stageId <= 10; stageId++)
+            {
+                int cap = stageId == 1 ? 3 : stageId == 2 ? 4 : 5;
+                string stageName = $"stage-{stageId}";
+                string stageImage = $"Textures/buildings/building{stageId:00}.png";
+                definitions.Add(CreatePromotionStageItem(stageId, stageName, stageImage, "leaflet", cap));
+                definitions.Add(CreatePromotionStageItem(stageId, stageName, stageImage, "radio", cap));
+                definitions.Add(CreatePromotionStageItem(stageId, stageName, stageImage, "tv", cap));
+            }
+
+            return new HolmasAgencyCatalog(definitions);
+        }
+
+        private static HolmasAgencyCatalog CreateSixPromotionStageCatalog()
+        {
+            var definitions = new List<HolmasAgencyBuildingDefinition>();
+            for (int i = 1; i <= 6; i++)
+            {
+                definitions.Add(CreatePromotionStageItem(1, "stage-1", "Textures/buildings/building01.png", $"promo-{i}", i));
+            }
+
+            for (int stageId = 2; stageId <= 5; stageId++)
+            {
+                definitions.Add(CreatePromotionStageItem(stageId, $"stage-{stageId}", $"Textures/buildings/building{stageId:00}.png", "leaflet", 1));
+            }
+
+            return new HolmasAgencyCatalog(definitions);
         }
 
         private static HolmasAgencyBuildingDefinition CreatePromotionStageItem(

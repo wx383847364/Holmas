@@ -68,7 +68,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _quickActionsRow = GetOrCreateRow(_quickCard, "QuickActionsRow");
             DestroyChildIfExists(_quickActionsRow, "StartTutorialButton");
             _addEnergyButton = GetOrCreateButton(_quickActionsRow, "AddEnergyButton", "+5体力");
-            _addGoldButton = GetOrCreateButton(_quickActionsRow, "AddGoldButton", "+10万金币");
+            _addGoldButton = GetOrCreateButton(_quickActionsRow, "AddGoldButton", "+100万金币");
             _replayHelpButton = GetOrCreateButton(_quickActionsRow, "ReplayHelpButton", "重看帮助");
 
             _tutorialCard = GetOrCreateCard(_content, "TutorialCard");

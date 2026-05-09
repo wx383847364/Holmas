@@ -435,6 +435,51 @@ namespace Holmas.Tests
                 Assert.That(bindings.BuildStageButtons[4].gameObject.activeSelf, Is.False, "promotionLevelCaps 只有 3 项时，第 5 个底部 slot 必须隐藏。");
                 Assert.That(bindings.BuildButton.transform.Find("Image").gameObject.activeSelf, Is.False, "Build_btn 旧单图标必须隐藏，底部应显示 promotion slots。");
 
+                int clickedPromotionSlot = -1;
+                view.SetPromotionSlotAction(slotIndex => clickedPromotionSlot = slotIndex);
+                var sixPromotionSlots = new BattlePromotionSlotVm[6];
+                for (int i = 0; i < sixPromotionSlots.Length; i++)
+                {
+                    sixPromotionSlots[i] = new BattlePromotionSlotVm
+                    {
+                        SlotIndex = i,
+                        AgencyStageId = 1,
+                        PromotionId = "promotion-" + i,
+                        StageName = "Stage 1",
+                        StageImage = "Assets/HotUpdateContent/Res/Textures/buildings/building01.png",
+                        ProgressLabel = "0/2",
+                        StarCap = 2,
+                        StarCount = 0,
+                        Visible = true,
+                        Unlocked = true,
+                        Current = true,
+                        CanBuild = true,
+                    };
+                }
+
+                view.Render(new BattleVm
+                {
+                    BuildButtonLabel = "Stage 1\n已完成/仅回看",
+                    BuildButtonEnabled = false,
+                    PromotionSlots = sixPromotionSlots,
+                    Stages = stages,
+                    StageBars = new[]
+                    {
+                        new BattleStageBarVm { SlotIndex = 0, Visible = true, Progress = 0.4f },
+                        new BattleStageBarVm { SlotIndex = 1, Visible = true, Progress = 0f },
+                        new BattleStageBarVm { SlotIndex = 2, Visible = true, Progress = 0f },
+                        new BattleStageBarVm { SlotIndex = 3, Visible = true, Progress = 0f },
+                    },
+                });
+
+                Transform dynamicBuildStage6 = bindings.BuildButton.transform.Find("BuildStage6");
+                Assert.That(dynamicBuildStage6, Is.Not.Null, "promotionLevelCaps 超过 5 项时，Build_btn 下应池化补充直接子 slot，而不是静默截断。");
+                Assert.That(dynamicBuildStage6.gameObject.activeSelf, Is.True, "第 6 个 promotion slot 必须可见。");
+                Assert.That(dynamicBuildStage6.GetComponent<Button>(), Is.Not.Null, "动态 promotion slot 必须具备点击按钮。");
+                dynamicBuildStage6.GetComponent<Button>().onClick.Invoke();
+                Assert.That(clickedPromotionSlot, Is.EqualTo(5), "动态 promotion slot 点击必须回传真实 slot index。");
+                Assert.That(bindings.BuildButton.interactable, Is.False, "Build_btn 作为底部容器时，不应在无可升级项状态给出可点击反馈。");
+
                 for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
                 {
                     Assert.That(bindings.StageBars[i], Is.Not.Null, $"StageBar{i + 1} 缺失。");
