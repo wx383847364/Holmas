@@ -9,6 +9,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
         public string MainStatus = string.Empty;
         public string StepInputText = "0";
         public bool AddEnergyEnabled;
+        public bool AddGoldEnabled;
         public bool ReplayHelpEnabled;
         public bool StartAtStepEnabled;
     }

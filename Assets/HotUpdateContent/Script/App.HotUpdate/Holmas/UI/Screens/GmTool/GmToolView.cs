@@ -28,10 +28,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
         private TMP_InputField _stepInput;
         private Button _closeButton;
         private Button _addEnergyButton;
+        private Button _addGoldButton;
         private Button _replayHelpButton;
         private Button _startAtStepButton;
         private UnityAction _closeAction;
         private UnityAction _addEnergyAction;
+        private UnityAction _addGoldAction;
         private UnityAction _replayHelpAction;
         private UnityAction _startAtStepAction;
 
@@ -66,6 +68,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _quickActionsRow = GetOrCreateRow(_quickCard, "QuickActionsRow");
             DestroyChildIfExists(_quickActionsRow, "StartTutorialButton");
             _addEnergyButton = GetOrCreateButton(_quickActionsRow, "AddEnergyButton", "+5体力");
+            _addGoldButton = GetOrCreateButton(_quickActionsRow, "AddGoldButton", "+10万金币");
             _replayHelpButton = GetOrCreateButton(_quickActionsRow, "ReplayHelpButton", "重看帮助");
 
             _tutorialCard = GetOrCreateCard(_content, "TutorialCard");
@@ -89,11 +92,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
         public void SetActions(
             UnityAction closeAction,
             UnityAction addEnergyAction,
+            UnityAction addGoldAction,
             UnityAction replayHelpAction,
             UnityAction startAtStepAction)
         {
             ReplaceAction(_closeButton, ref _closeAction, closeAction);
             ReplaceAction(_addEnergyButton, ref _addEnergyAction, addEnergyAction);
+            ReplaceAction(_addGoldButton, ref _addGoldAction, addGoldAction);
             ReplaceAction(_replayHelpButton, ref _replayHelpAction, replayHelpAction);
             ReplaceAction(_startAtStepButton, ref _startAtStepAction, startAtStepAction);
         }
@@ -103,6 +108,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             EnsureSurface();
             GmToolResponsiveMetrics metrics = ComputeResponsiveMetrics();
             _addEnergyButton.interactable = viewModel != null && viewModel.AddEnergyEnabled;
+            _addGoldButton.interactable = viewModel != null && viewModel.AddGoldEnabled;
             _replayHelpButton.interactable = viewModel != null && viewModel.ReplayHelpEnabled;
             _startAtStepButton.interactable = viewModel != null && viewModel.StartAtStepEnabled;
             TmpGlyphCoverageReporter.SetText(_statusText, viewModel != null ? viewModel.Status : string.Empty);
@@ -385,9 +391,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             ApplyCardLayout(_quickCard, metrics, metrics.QuickCardHeight);
             ApplyCardLayout(_tutorialCard, metrics, metrics.TutorialCardHeight);
             ApplyCardLayout(_runtimeCard, metrics, metrics.RuntimeCardHeight);
-            ApplyGridLayout(_quickActionsRow, metrics.ActionColumns, metrics.ActionCellWidth, metrics.ButtonHeight, metrics.SectionSpacing, 2);
+            ApplyGridLayout(_quickActionsRow, metrics.ActionColumns, metrics.ActionCellWidth, metrics.ButtonHeight, metrics.SectionSpacing, 3);
             ApplyGridLayout(_inputRow, metrics.InputColumns, metrics.InputCellWidth, metrics.ButtonHeight, metrics.SectionSpacing, 2);
             ApplyButtonLayout(_addEnergyButton, metrics.ButtonHeight, metrics.ButtonFontSize);
+            ApplyButtonLayout(_addGoldButton, metrics.ButtonHeight, metrics.ButtonFontSize);
             ApplyButtonLayout(_replayHelpButton, metrics.ButtonHeight, metrics.ButtonFontSize);
             ConfigureInputLayout(_stepInput, metrics.ButtonHeight, metrics.BodyFontSize);
             ApplyButtonLayout(_startAtStepButton, metrics.ButtonHeight, metrics.ButtonFontSize);
@@ -506,7 +513,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             float hintFontSize = Mathf.Clamp(panelWidth * 0.022f, 16f, 21f);
             float buttonFontSize = Mathf.Clamp(panelWidth * 0.026f, 18f, 24f);
             float titleLineHeight = Mathf.Clamp(titleFontSize * 1.35f, 38f, 50f);
-            float quickRows = Mathf.CeilToInt(2f / actionColumns);
+            float quickRows = Mathf.CeilToInt(3f / actionColumns);
             float inputRows = Mathf.CeilToInt(2f / inputColumns);
             float progressTextHeight = Mathf.Clamp(bodyFontSize * 5.8f, 112f, 142f);
             float hintTextHeight = Mathf.Clamp(hintFontSize * 3.2f, 58f, 76f);

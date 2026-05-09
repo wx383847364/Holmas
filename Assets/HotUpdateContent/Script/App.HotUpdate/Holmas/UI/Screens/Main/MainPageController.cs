@@ -766,6 +766,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 case HolmasGameplayRuntimeStateChangeReason.TasksRefilled:
                 case HolmasGameplayRuntimeStateChangeReason.PromotionUpgraded:
                 case HolmasGameplayRuntimeStateChangeReason.EnergyChanged:
+                case HolmasGameplayRuntimeStateChangeReason.DebugGoldChanged:
                 case HolmasGameplayRuntimeStateChangeReason.LevelStarted:
                 case HolmasGameplayRuntimeStateChangeReason.LevelRevealed:
                 case HolmasGameplayRuntimeStateChangeReason.LevelCompleted:

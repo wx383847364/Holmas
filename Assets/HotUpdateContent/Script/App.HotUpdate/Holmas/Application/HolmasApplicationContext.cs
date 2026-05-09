@@ -210,6 +210,19 @@ namespace App.HotUpdate.Holmas.Application
         }
 
         /// <summary>
+        /// 当前验证阶段的 GM 金币补给入口，不计入任务奖励排行榜。
+        /// </summary>
+        public void AddGold(int amount = HolmasGameplayRuntime.DebugGoldGrantAmount)
+        {
+            if (GameplayRuntime == null)
+            {
+                throw new System.InvalidOperationException("HolmasApplicationContext: 当前没有可用的 HolmasGameplayRuntime。");
+            }
+
+            GameplayRuntime.AddGold(amount);
+        }
+
+        /// <summary>
         /// 按当前成长配置升级城市宣传功能。
         /// </summary>
         public HolmasAgencyPromotionUpgradeResult TryUpgradePromotion(string promotionId)

@@ -50,6 +50,7 @@ namespace Holmas.Tests
                 Assert.That(root.transform.Find("Panel/Header"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/QuickActionsCard/QuickActionsRow/StartTutorialButton"), Is.Null);
+                Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/QuickActionsCard/QuickActionsRow/AddGoldButton"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/TutorialCard/StepInputRow/StartAtStepButton"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/RuntimeCard/RuntimeSummaryText"), Is.TypeOf<RectTransform>());
                 Assert.That(root.transform.Find("Panel/ScrollView/Viewport/Content/RuntimeCard/MainStatusText"), Is.TypeOf<RectTransform>());
@@ -97,6 +98,36 @@ namespace Holmas.Tests
                 Assert.That(mainStatus.text, Is.EqualTo("main status ok"));
                 Assert.That(status.text, Is.EqualTo("status ok"));
                 Assert.That(root.transform.Find("Panel/StatusText"), Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void GmToolView_Render_ControlsAddGoldButtonState()
+        {
+            var root = new GameObject("GmToolViewAddGoldTestRoot", typeof(RectTransform), typeof(GmToolView));
+            try
+            {
+                GmToolView view = root.GetComponent<GmToolView>();
+
+                view.Render(new GmToolVm
+                {
+                    AddGoldEnabled = true,
+                });
+
+                Button addGoldButton = root.transform
+                    .Find("Panel/ScrollView/Viewport/Content/QuickActionsCard/QuickActionsRow/AddGoldButton")
+                    ?.GetComponent<Button>();
+                TextMeshProUGUI label = addGoldButton != null
+                    ? addGoldButton.GetComponentInChildren<TextMeshProUGUI>(true)
+                    : null;
+
+                Assert.That(addGoldButton, Is.Not.Null);
+                Assert.That(addGoldButton.interactable, Is.True);
+                Assert.That(label != null ? label.text : string.Empty, Is.EqualTo("+10万金币"));
             }
             finally
             {

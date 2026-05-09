@@ -214,6 +214,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 case HolmasGameplayRuntimeStateChangeReason.TasksRefilled:
                 case HolmasGameplayRuntimeStateChangeReason.LevelCompleted:
                 case HolmasGameplayRuntimeStateChangeReason.PromotionUpgraded:
+                case HolmasGameplayRuntimeStateChangeReason.DebugGoldChanged:
                 case HolmasGameplayRuntimeStateChangeReason.CurrentLevelSessionEnded:
                     Refresh(null);
                     break;

@@ -41,6 +41,7 @@ namespace App.HotUpdate.Holmas.Application
         TaskRewardClaimed,
         PromotionUpgraded,
         EnergyChanged,
+        DebugGoldChanged,
         CurrentLevelSessionEnded,
     }
 
@@ -52,6 +53,7 @@ namespace App.HotUpdate.Holmas.Application
     {
         public const int DefaultEnergyRecoveryLimit = 50;
         public const int DebugEnergyGrantAmount = 5;
+        public const int DebugGoldGrantAmount = 100_000;
         public const int WalkCatEnergyCost = 2;
         public const int FindRevealEnergyCost = 1;
         public const long EnergyRecoveryIntervalMilliseconds = 12L * 60L * 1000L;
@@ -578,6 +580,18 @@ namespace App.HotUpdate.Holmas.Application
 
             _logger?.LogInfo("HolmasGameplayRuntime: 体力增加 +{0}，当前={1}/{2}。", amount, CurrentEnergy, EnergyRecoveryLimit);
             NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.EnergyChanged);
+        }
+
+        public void AddGold(int amount = DebugGoldGrantAmount)
+        {
+            if (amount <= 0 || MetaProgressionState == null)
+            {
+                return;
+            }
+
+            MetaProgressionState.GoldBalance = Math.Max(0L, MetaProgressionState.GoldBalance) + amount;
+            _logger?.LogInfo("HolmasGameplayRuntime: GM 金币增加 +{0}，当前={1}。", amount, CurrentGoldBalance);
+            NotifyStateChanged(HolmasGameplayRuntimeStateChangeReason.DebugGoldChanged);
         }
 
         public void Tick(float deltaTime)

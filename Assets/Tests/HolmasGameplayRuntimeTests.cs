@@ -208,6 +208,33 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasGameplayRuntime_AddGold_IncreasesBalanceWithoutTaskRewardEvent()
+        {
+            var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };
+            var eventBus = new EventBus();
+            var state = new HolmasMetaProgressionState { GoldBalance = 25 };
+            HolmasGameplayRuntime runtime = CreateEnergyRuntime(clock, state, eventBus);
+            var order = new List<string>();
+            int leaderboardRewardEvents = 0;
+
+            runtime.StateChanged += reason => order.Add("legacy:" + reason);
+            eventBus.SubscribeScoped<HolmasGameplayStateChangedEvent>(eventData => order.Add("domain:" + eventData.Reason));
+            eventBus.SubscribeScoped<HolmasLeaderboardTaskRewardClaimedEvent>(_ => leaderboardRewardEvents++);
+
+            runtime.AddGold();
+
+            Assert.That(runtime.CurrentGoldBalance, Is.EqualTo(100_025));
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "legacy:DebugGoldChanged",
+                    "domain:DebugGoldChanged",
+                },
+                order);
+            Assert.That(leaderboardRewardEvents, Is.EqualTo(0), "GM 加金币不应计入每日收入榜任务奖励事件。");
+        }
+
+        [Test]
         public void HolmasGameplayRuntime_RevealCell_WalkConsumesEnergyOnlyWhenCatFound()
         {
             var clock = new FixedUtcClock { UtcNowMilliseconds = 1000 };

@@ -60,6 +60,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
             _view?.SetActions(
                 OnCloseClicked,
                 OnAddEnergyClicked,
+                OnAddGoldClicked,
                 OnReplayHelpClicked,
                 OnStartTutorialAtStepClicked);
             _ = RefreshAsync();
@@ -115,6 +116,26 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
 
             context.AddEnergy();
             _status = $"体力 +{HolmasGameplayRuntime.DebugEnergyGrantAmount}。";
+            _ = RefreshAsync();
+        }
+
+        private void OnAddGoldClicked()
+        {
+            if (_isBusy)
+            {
+                return;
+            }
+
+            HolmasApplicationContext context = Root != null ? Root.Context : null;
+            if (context == null)
+            {
+                _status = "应用上下文不可用，无法增加金币。";
+                _ = RefreshAsync();
+                return;
+            }
+
+            context.AddGold();
+            _status = $"金币 +{HolmasGameplayRuntime.DebugGoldGrantAmount}。";
             _ = RefreshAsync();
         }
 
@@ -280,6 +301,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.GmTool
                 MainStatus = $"主界面状态：{mainStatus}",
                 StepInputText = _view.GetRequestedStepTextOrDefault("0"),
                 AddEnergyEnabled = !_isBusy && Root?.Context?.GameplayRuntime != null,
+                AddGoldEnabled = !_isBusy && Root?.Context?.GameplayRuntime != null,
                 ReplayHelpEnabled = !_isBusy && tutorialAvailable,
                 StartAtStepEnabled = !_isBusy && tutorialAvailable,
             });
