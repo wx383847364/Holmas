@@ -12,6 +12,7 @@
 - Does the prefab draft match the approved spec?
 - Are only allowed components used?
 - Does the manifest explain generated nodes and manual follow-up work?
+- Were original prefab colors, transparency, tint defaults, material colors, and `CanvasGroup.alpha` preserved unless the approved spec explicitly requested a visual change?
 - Are all runtime-touched nodes exported as static `UiReferenceCollector` / manifest bindings?
 - Is there no runtime `Transform.Find`, `GameObject.Find`, or recursive `GetComponentsInChildren` node acquisition left in View/Controller logic?
 

@@ -32,8 +32,19 @@
 默认策略：
 
 - 先看入口页和当前主线
+- 先判断任务属于 `纯逻辑`、`UI 相关` 还是 `UI 自动生成系统`
 - 再按任务分流去看相关文档
 - 最后才看对应代码
+
+## 任务分类与 skill 门禁
+
+每轮实现功能前，主线程必须自行判断任务分类：
+
+- 只改服务、模型、配置、算法、验证脚本，且不触碰 UI 文件：按纯逻辑任务处理。
+- 只要涉及 UGUI、prefab、View、Presenter、Controller、binding、页面流转、按钮、图片、文本、布局、动画、安全区或 `Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI`：必须先读 UI 相关 skill，再执行。
+- 只要涉及 `DesignPacket / UiPrefabSpec / PrefabBindingManifest / Assets/Tools/UiPrefabGenerator / doc/长期主文档/UI自动生成系统`：必须按 UI 自动生成系统专项处理。
+- UI 相关任务默认保护原 prefab 视觉参数：没有明确要求时，不改颜色、透明度、tint、材质颜色或 `CanvasGroup.alpha`。
+- 详细 skill 组合和 subagent 模板看 [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)。
 
 ## 最小阅读路径
 

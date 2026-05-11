@@ -28,6 +28,7 @@
 
 - 自己判断当前该走 `briefing` 还是 `execution dispatch`
 - 自己判断这轮是主线程直做、只启 helper，还是需要真实 subagent
+- 自己判断任务属于 `纯逻辑`、`UI 相关` 还是 `UI 自动生成系统`，并按 [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md) 选择 skill
 
 默认切换规则：
 
@@ -75,6 +76,7 @@
 - Agent 名称
 - 本轮目标
 - 必带 skill
+- 任务分类：`纯逻辑` / `UI 相关` / `UI 自动生成系统`
 - 允许写入范围
 - 禁止写入范围
 - 依赖前提

@@ -142,6 +142,15 @@ bash tools/validation/run_holmas_il2cpp_player_smoke.sh --build-target Standalon
 - 同轮热更专项 `run_holmas_hotupdate_validation.sh --log-prefix holmas_hotupdate_validation_20260506_013520` 已通过：YooAssets 本地包、HotUpdate DLL/metadata 验证和 BootstrapScene PlayMode/batchmode probe 全部通过。日志：`/tmp/holmas_hotupdate_validation_20260506_013520_yooassets_package.log`、`/tmp/holmas_hotupdate_validation_20260506_013520_playmode_probe.log`。
 - 当前最新本地链路结论：Editor/OfflinePlayMode 热更专项和 StandaloneOSX IL2CPP player smoke 均已跑通；下一阶段再推进远端 CDN manifest、微信真机启动链路和目标平台专属 AOT metadata 校验。
 
+2026-05-10 热更主链路复跑结果：
+
+- 验证前 `git status --short` 无输出；本轮未改 UI、Battle、GM 代码。
+- HybridCLR 安装与配置复核通过：`Packages/manifest.json` 固定 `com.code-philosophy.hybridclr` v8.11.0，`ProjectSettings/HybridCLRSettings.asset` 启用 `App.HotUpdate`，AOT metadata 清单仍为 11 项。
+- `run_holmas_hotupdate_validation.sh --log-prefix holmas_hotupdate_mainline_20260510_0425` 已通过：边界检查、严格 HybridCLR 生成、YooAssets 本地包加载验证和 BootstrapScene PlayMode/batchmode probe 全部通过。日志：`/tmp/holmas_hotupdate_mainline_20260510_0425_yooassets_package.log`、`/tmp/holmas_hotupdate_mainline_20260510_0425_playmode_probe.log`。
+- `run_holmas_il2cpp_player_smoke.sh --build-target StandaloneOSX --log-prefix holmas_il2cpp_mainline_20260510_0425` 已通过：`HybridCLRData/HotUpdateDlls/StandaloneOSX/App.HotUpdate.dll`、11 个 `HybridCLRData/AssembliesPostIl2CppStrip/StandaloneOSX/*.dll`、YooAssets buildin 包、StandaloneOSX IL2CPP BuildPlayer 与 player 启动验证全部完成。日志：`/tmp/holmas_il2cpp_mainline_20260510_0425_build.log`、`/tmp/holmas_il2cpp_mainline_20260510_0425_player.log`。
+- Player 日志确认 `YooAssetsRuntime` 初始化完成、AOT metadata `count=11`、HotUpdate DLL 加载完成、`HolmasGameBootstrap: Holmas 业务骨架已启动`、`HotUpdateEntry: Holmas 业务骨架接线完成`、`GameBootstrap: 初始化完成，进入热更层`。
+- 构建和 player 输出均位于临时工程，脚本成功后已删除；本轮不提交 DLL、metadata、YooAssets 包或 Player 产物。
+
 ## 已知边界
 
 - 配置协议 v9 起，`Holmas_AgencyBuildingTable.stageImage` 已从 `extraFields` 提升为正式字段；v9 runtime 会拒绝旧版 bytes。发布时必须保证 HotUpdate DLL、`holmas_core_config.bytes`、`holmas_cat_meta.bytes` 同批更新，不能让新 DLL 先加载旧配置包。
@@ -149,3 +158,9 @@ bash tools/validation/run_holmas_il2cpp_player_smoke.sh --build-target Standalon
 - AOT metadata 清单已扩展到当前目标平台的保守真实清单：`mscorlib`、`System`、`System.Core`、`UnityEngine.CoreModule`、`UnityEngine.UI`、`UnityEngine.UIModule`、`UnityEngine.TextRenderingModule`、`UnityEngine.JSONSerializeModule`、`UnityEngine.InputLegacyModule`、`Unity.TextMeshPro`、`App.Shared`。
 - 本地热更专项验证仍允许 Editor fallback；严格 IL2CPP/player smoke 必须先保证脚本编译通过、完成 `HybridCLR/Installer...`，并安装目标平台 IL2CPP player 模块。
 - 真机微信环境和远端 CDN 仍是后续验收项。
+
+## 完成情况
+
+- 当前状态：进行中
+- 进度说明：2026-05-10 已复跑并通过热更专项验证与 StandaloneOSX IL2CPP player smoke；下一步转向 CDN 与微信真机。
+- 最近更新：2026-05-10，2026-05-10 已复跑并通过热更专项验证与 StandaloneOSX IL2CPP player smoke；下一步转向 CDN 与微信真机。

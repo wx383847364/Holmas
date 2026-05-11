@@ -32,22 +32,31 @@
   - 涉及 UGUI、Prefab、Presenter、Controller、页面流转、UI 冒烟时叠加
   - 负责 UI 表现层边界和流程接线约束
 - `ui-prefab-governance`
-  - 涉及 `UI自动生成系统` 专区、执行派工单、旧稿跳转页、asmdef 分层、目录隔离与 Holmas 试点接入时使用
-  - 负责专区权威入口、subagent 派工格式、迁移边界和目录所有权约束
+  - 涉及 `UI自动生成系统` 专区、UI prefab binding、UI 业务逻辑实现、执行派工单、旧稿跳转页、asmdef 分层、目录隔离与 Holmas 试点接入时使用
+  - 负责专区权威入口、subagent 派工格式、静态绑定、prefab 视觉保护、迁移边界和目录所有权约束
 - `ui-prefab-pipeline`
-  - 涉及 `DesignPacket / UiPrefabSpec / PrefabBindingManifest / validation` 时使用
-  - 负责 spec 权威层、生成流程、manifest 结构、golden case 与 deterministic 回归约束
+  - 涉及 `DesignPacket / UiPrefabSpec / PrefabBindingManifest / validation`，或 UI 业务接入依赖 manifest/generated bindings 时使用
+  - 负责 spec 权威层、生成流程、manifest 结构、静态绑定完整性、golden case 与 deterministic 回归约束
 
 ## 选 skill 的固定顺序
 
+0. 先自行判断任务分类，不要把分类问题丢回给用户：
+   - `纯逻辑`：只改服务、模型、配置、算法、验证脚本，不触碰 UI 文件、prefab、场景绑定或页面流程。
+   - `UI 相关`：涉及 UGUI、prefab、View、Presenter、Controller、binding、页面流转、按钮、图片、文本、布局、动画、安全区、`CanvasGroup`、`Graphic`、`Button`、`Image`、`TMP/Text`，或路径包含 `Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI`、`Assets/Res/Perfabs/UI`。
+   - `UI 自动生成系统`：涉及 `DesignPacket / UiPrefabSpec / PrefabBindingManifest / Assets/Tools/UiPrefabGenerator / doc/长期主文档/UI自动生成系统`。
 1. 先按 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 判断这轮由哪个 `Agent` 职责承接。
-2. 如果任务属于 `doc/长期主文档/UI自动生成系统` 或 `Assets/Tools/UiPrefabGenerator`，优先切到 UI 自动生成系统专项：
+2. 如果任务属于 `UI 自动生成系统`，优先切到 UI 自动生成系统专项：
    - 规划、派工、隔离、跳转页、asmdef 分层先带 `ui-prefab-governance`
    - spec、生成、manifest、校验、回归先带 `ui-prefab-pipeline`
    - 只有触碰 Holmas 接入代码时，才额外叠加 `unity-hotupdate-boundary`
-3. 如果不是 UI 自动生成系统专项，只要属于正式功能开发、测试或审查，默认先带 `unity-hotupdate-boundary`。
-4. 涉及配置、权重、任务生成、地图生成、奖励公式时，再叠加 `findcat-config-pipeline`。
-5. 涉及 UGUI、Prefab、Presenter、页面流转和 UI 联调时，再叠加 `unity-ugui-flow-integration`。
+3. 如果任务属于 `UI 相关`，必须先读 UI 相关 skill：
+   - 默认叠加 `ui-prefab-governance`
+   - 涉及 manifest、generated bindings、collector、spec、生成或验证时再叠加 `ui-prefab-pipeline`
+   - 涉及 HotUpdate 业务边界时叠加 `unity-hotupdate-boundary`
+   - 涉及 UGUI 页面流转时叠加 `unity-ugui-flow-integration`
+   - 未经明确要求，不改原 prefab 的颜色、透明度、tint、材质颜色或 `CanvasGroup.alpha`
+4. 如果不是 UI 自动生成系统专项，也不是 UI 相关，只要属于正式功能开发、测试或审查，默认先带 `unity-hotupdate-boundary`。
+5. 涉及配置、权重、任务生成、地图生成、奖励公式时，再叠加 `findcat-config-pipeline`。
 6. 测试或审查线默认镜像被测对象的 skill 组合，而不是临时自定义一套新边界。
 
 ## 常用组合
@@ -64,10 +73,12 @@
 - `地图 / 棋盘 / 任务 / 奖励 / 配置`
   - `unity-hotupdate-boundary + findcat-config-pipeline`
 - `UI / 流程 / Presenter / Prefab`
-  - `unity-hotupdate-boundary + unity-ugui-flow-integration`
+  - `unity-hotupdate-boundary + ui-prefab-governance + unity-ugui-flow-integration`
+  - 涉及 manifest / collector / generated bindings 时再叠加 `ui-prefab-pipeline`
 - `测试 / 审查`
   - 默认 `unity-hotupdate-boundary`
   - 再按被测对象叠加 `findcat-config-pipeline` 或 `unity-ugui-flow-integration`
+  - 审查 UI 时必须叠加 `ui-prefab-governance`，检查静态绑定和 prefab 视觉保护
 
 ## 模板使用规则
 
@@ -75,7 +86,7 @@
 - 如果你要显式覆盖默认行为，直接使用本页里的“显式覆盖模板速查”。
 - 如果任务需要更明确的 skill、约束、交付格式，再补本页模板。
 - 这页的模板只补“怎么描述 skill 和任务结构”，不替代 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 中的边界和验收。
-- 模板中的 `目标 / 约束 / 交付` 都要按当前任务裁剪，不要求每次整段照抄。
+- 模板中的 `目标 / 约束 / 交付 / 验收点` 都要按当前任务裁剪，不要求每次整段照抄。
 
 ## 显式覆盖模板速查
 
@@ -191,7 +202,8 @@ Agent 6 已经退回 findings。
 ```text
 你负责本项目的……实现。请遵循 $unity-hotupdate-boundary。
 如果本轮涉及配置、生成、奖励、权重或任务栏规则，请额外遵循 $findcat-config-pipeline。
-如果本轮涉及 UGUI、Prefab、Presenter、Controller 或页面流转，请额外遵循 $unity-ugui-flow-integration。
+如果本轮涉及 UGUI、Prefab、Presenter、Controller、binding 或页面流转，请额外遵循 $ui-prefab-governance 和 $unity-ugui-flow-integration。
+如果本轮涉及 DesignPacket、UiPrefabSpec、PrefabBindingManifest、collector、generated bindings、生成或验证，请额外遵循 $ui-prefab-pipeline。
 
 目标：
 1. ……
@@ -202,12 +214,19 @@ Agent 6 已经退回 findings。
 - 以长期主文档里的 Agent 启动与验收规范为准
 - 不要越过当前 Agent 的允许写入边界
 - 如需新增跨层接口或 DTO，先保持最小化
+- UI 相关任务默认保护原 prefab 视觉参数；没有明确要求时，不改颜色、透明度、tint、材质颜色或 CanvasGroup.alpha
+- UI 运行时代码必须通过静态 binding / collector / manifest 取节点，不能用 Transform.Find、GameObject.Find 或递归 GetComponentsInChildren 兜底
 
 交付：
 - 列出你修改的文件
 - 说明输入、输出和依赖接口
 - 标出未完成项、风险和阻塞
 - 完成后按文档维护流程收尾
+
+验收点：
+- 是否符合 `App.AOT / App.Shared / App.HotUpdate` 边界。
+- UI 相关任务是否通过静态 binding / collector / manifest 取节点。
+- UI 相关任务是否保留原 prefab 颜色、透明度、tint、材质颜色和 CanvasGroup.alpha。
 ```
 
 ## 按职责划分的模板

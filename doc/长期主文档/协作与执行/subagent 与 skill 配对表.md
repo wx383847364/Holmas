@@ -8,6 +8,8 @@
 - 所有 subagent 默认都带 `unity-hotupdate-boundary`
 - 配置/生成类工作再叠加 `findcat-config-pipeline`
 - UI/流程类工作再叠加 `unity-ugui-flow-integration`
+- 任何 UI 修改、prefab 绑定或 UI 业务逻辑工作必须叠加 `ui-prefab-governance`
+- 涉及 manifest、collector、generated bindings、spec、生成或验证时再叠加 `ui-prefab-pipeline`
 - `App.Shared`、`HotUpdate` 入口、UI prefab 这 3 类高冲突区域必须独占
 
 推荐先按 **6 个 subagent** 起步；等你用顺手了，再扩成 9 个长期版编组。
@@ -159,6 +161,8 @@ skill 组合：
 skill 组合：
 - `unity-hotupdate-boundary`
 - `unity-ugui-flow-integration`
+- `ui-prefab-governance`
+- 涉及 manifest / collector / generated bindings / spec / prefab 生成或验证时再叠加 `ui-prefab-pipeline`
 
 职责：
 - 负责找猫主界面、任务栏、领奖、广告锁位、结算面板
@@ -179,11 +183,13 @@ skill 组合：
 - 核心奖励公式
 - 棋盘底层算法
 - 配置字段定义
+- 未经明确要求，不得改动原 prefab 的颜色、透明度、tint 默认值、材质颜色或 `CanvasGroup.alpha`
 
 交付物：
 - 可跑通的主流程 UI
 - 页面流转和按钮绑定
 - 冒烟验证清单
+- 静态绑定完整性说明，以及未改动 prefab 视觉参数的确认
 
 ### 5. 测试与质量保障 Agent
 
