@@ -114,6 +114,68 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void HolmasConfigCatalogFactory_PromotesBoardFrameExtraFields()
+        {
+            ExportConfigTables tables = LoadSampleTables();
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+            const string backgroundPath = "Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang.png";
+            const string overlayPath = "Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang_overlay.png";
+            corePackage.Holmas_MapTable[0].extraFields = new[]
+            {
+                new HolmasExtraField { key = "boardBackgroundPath", value = backgroundPath },
+                new HolmasExtraField { key = "boardFrameOverlayPath", value = overlayPath },
+                new HolmasExtraField { key = "boardContentInset", value = "12,8,16,10" },
+                new HolmasExtraField { key = "minCellSpacing", value = "0" },
+            };
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(
+                HolmasConfigBinaryCodec.WriteCorePackage(corePackage),
+                HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage),
+                out HolmasConfigCatalogBundle bundle,
+                out HolmasConfigReport report);
+
+            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle.Maps[0].BoardBackgroundPath, Is.EqualTo(backgroundPath));
+            Assert.That(bundle.Maps[0].BoardFrameOverlayPath, Is.EqualTo(overlayPath));
+            Assert.That(bundle.Maps[0].BoardContentInset, Is.EqualTo(new Vector4(12f, 8f, 16f, 10f)));
+            Assert.That(bundle.Maps[0].MinCellSpacing, Is.EqualTo(0f).Within(0.001f));
+
+            corePackage.Holmas_MapTable[0].extraFields = Array.Empty<HolmasExtraField>();
+            success = HolmasConfigCatalogFactory.TryCreateFromBinary(
+                HolmasConfigBinaryCodec.WriteCorePackage(corePackage),
+                HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage),
+                out bundle,
+                out report);
+
+            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle.Maps[0].BoardBackgroundPath, Is.Empty);
+            Assert.That(bundle.Maps[0].BoardFrameOverlayPath, Is.Empty);
+            Assert.That(bundle.Maps[0].BoardContentInset, Is.EqualTo(Vector4.zero));
+            Assert.That(bundle.Maps[0].MinCellSpacing, Is.EqualTo(4f).Within(0.001f));
+        }
+
+        [Test]
+        public void HolmasConfigCatalogFactory_UsesExportedBoardFrameInsets()
+        {
+            ExportConfigTables tables = LoadSampleTables();
+            HolmasCoreConfigPackage corePackage = BuildCorePackage(tables);
+            HolmasCatMetaPackage catPackage = BuildCatPackage(tables);
+
+            bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(
+                HolmasConfigBinaryCodec.WriteCorePackage(corePackage),
+                HolmasConfigBinaryCodec.WriteCatMetaPackage(catPackage),
+                out HolmasConfigCatalogBundle bundle,
+                out HolmasConfigReport report);
+
+            Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
+            Assert.That(bundle.Maps[0].BoardBackgroundPath, Is.EqualTo("Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang.png"));
+            Assert.That(bundle.Maps[0].BoardFrameOverlayPath, Is.Empty);
+            Assert.That(bundle.Maps[0].BoardContentInset, Is.EqualTo(new Vector4(22f, 24f, 22f, 19f)));
+            Assert.That(bundle.Maps[0].MinCellSpacing, Is.EqualTo(4f).Within(0.001f));
+        }
+
+        [Test]
         public void HolmasConfigCatalogFactory_RejectsMissingAgencyPromotions()
         {
             ExportConfigTables tables = LoadSampleTables();
@@ -601,6 +663,7 @@ namespace Holmas.Tests
                     TerrainPath = item.terrainPath,
                     CatCountMax = item.catCountMax,
                     CatCountMin = item.catCountMin,
+                    ExtraFields = (item.extraFields ?? Array.Empty<HolmasExtraField>()).ToArray(),
                 }).ToList(),
                 Tasks = BuildTaskRows(corePackage, catPackage),
                 Levels = BuildLevelRows(corePackage),
@@ -752,6 +815,7 @@ namespace Holmas.Tests
                     terrainPath = item.TerrainPath,
                     catCountMin = item.CatCountMin,
                     catCountMax = item.CatCountMax,
+                    extraFields = (item.ExtraFields ?? Array.Empty<HolmasExtraField>()).ToArray(),
                 }).ToArray(),
                 Holmas_TaskTable = tables.Tasks.Select(item => new HolmasTaskTableRow
                 {
@@ -919,6 +983,7 @@ namespace Holmas.Tests
             public string TerrainPath = string.Empty;
             public int CatCountMax;
             public int CatCountMin;
+            public HolmasExtraField[] ExtraFields = Array.Empty<HolmasExtraField>();
         }
 
         private sealed class ExportTaskRow
