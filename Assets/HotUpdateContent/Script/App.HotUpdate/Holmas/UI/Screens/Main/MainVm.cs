@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.UI.Core;
+using UnityEngine;
 
 namespace App.HotUpdate.Holmas.UI.Screens.Main
 {
@@ -38,6 +39,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         public bool FindToggleIsOn;
         public int Rows;
         public int Cols;
+        public string BoardBackgroundPath = string.Empty;
+        public string BoardFrameOverlayPath = string.Empty;
+        public Vector4 BoardContentInset = Vector4.zero;
+        public float MinCellSpacing = 4f;
         public IReadOnlyList<BoardCellState> Cells = new BoardCellState[0];
         public IReadOnlyDictionary<string, HolmasCatVisualVm> CatVisuals = HolmasCatVisualVm.EmptyLookup;
         public MainTaskItemVm[] TaskItems = System.Array.Empty<MainTaskItemVm>();

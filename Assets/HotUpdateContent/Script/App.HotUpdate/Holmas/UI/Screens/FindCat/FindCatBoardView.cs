@@ -37,6 +37,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
             IReadOnlyDictionary<string, HolmasCatVisualVm> catVisuals,
             Action<int, bool> onInteract)
         {
+            Render(rows, cols, cells, catVisuals, default, onInteract);
+        }
+
+        public void Render(
+            int rows,
+            int cols,
+            IReadOnlyList<BoardCellState> cells,
+            IReadOnlyDictionary<string, HolmasCatVisualVm> catVisuals,
+            BoardFrameLayout frameLayout,
+            Action<int, bool> onInteract)
+        {
             RectTransform boardRect = gameObject.GetComponent<RectTransform>();
             if (boardRect == null)
             {
@@ -60,17 +71,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
                 return;
             }
 
-            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            layout.constraintCount = cols;
-            layout.spacing = new Vector2(4f, 4f);
-            layout.childAlignment = TextAnchor.MiddleCenter;
-
-            float width = boardRect.rect.width > 0f ? boardRect.rect.width : 720f;
-            float height = boardRect.rect.height > 0f ? boardRect.rect.height : 960f;
-            float cellWidth = (width - (cols - 1) * layout.spacing.x) / cols;
-            float cellHeight = (height - (rows - 1) * layout.spacing.y) / rows;
-            float cellSize = Mathf.Max(18f, Mathf.Min(cellWidth, cellHeight));
-            layout.cellSize = new Vector2(cellSize, cellSize);
+            ApplyLayout(layout, boardRect, rows, cols, frameLayout);
 
             SetCellCount(cells.Count);
             for (int i = 0; i < _cells.Count; i++)
@@ -93,6 +94,53 @@ namespace App.HotUpdate.Holmas.UI.Screens.FindCat
                     _cells[i].gameObject.SetActive(false);
                 }
             }
+        }
+
+        public void ApplyFrameLayout(int rows, int cols, BoardFrameLayout frameLayout)
+        {
+            if (rows <= 0 || cols <= 0 || !frameLayout.IsValid)
+            {
+                return;
+            }
+
+            RectTransform boardRect = gameObject.GetComponent<RectTransform>();
+            GridLayoutGroup layout = gameObject.GetComponent<GridLayoutGroup>();
+            if (boardRect == null || layout == null)
+            {
+                return;
+            }
+
+            ApplyLayout(layout, boardRect, rows, cols, frameLayout);
+        }
+
+        private static void ApplyLayout(
+            GridLayoutGroup layout,
+            RectTransform boardRect,
+            int rows,
+            int cols,
+            BoardFrameLayout frameLayout)
+        {
+            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layout.constraintCount = cols;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.padding = new RectOffset(0, 0, 0, 0);
+
+            if (frameLayout.IsValid)
+            {
+                layout.spacing = frameLayout.Spacing;
+                layout.cellSize = frameLayout.CellSize;
+                return;
+            }
+
+            layout.spacing = new Vector2(
+                BoardFrameLayoutCalculator.DefaultMinimumSpacing,
+                BoardFrameLayoutCalculator.DefaultMinimumSpacing);
+            float width = boardRect.rect.width > 0f ? boardRect.rect.width : 720f;
+            float height = boardRect.rect.height > 0f ? boardRect.rect.height : 960f;
+            float cellWidth = (width - (cols - 1) * layout.spacing.x) / cols;
+            float cellHeight = (height - (rows - 1) * layout.spacing.y) / rows;
+            float cellSize = Mathf.Max(18f, Mathf.Min(cellWidth, cellHeight));
+            layout.cellSize = new Vector2(cellSize, cellSize);
         }
 
         private void SetCellCount(int requiredCount)

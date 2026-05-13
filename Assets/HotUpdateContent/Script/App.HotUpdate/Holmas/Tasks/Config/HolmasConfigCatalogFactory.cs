@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using UnityEngine;
 
 namespace App.HotUpdate.Holmas.Tasks.Config
 {
@@ -254,12 +256,72 @@ namespace App.HotUpdate.Holmas.Tasks.Config
                     MapIndex = i,
                     MapId = mapId,
                     TerrainPath = row.terrainPath,
+                    BoardBackgroundPath = GetExtraField(row.extraFields, "boardBackgroundPath"),
+                    BoardFrameOverlayPath = GetExtraField(row.extraFields, "boardFrameOverlayPath"),
+                    BoardContentInset = ParseBoardContentInset(GetExtraField(row.extraFields, "boardContentInset")),
+                    MinCellSpacing = ParseMinCellSpacing(GetExtraField(row.extraFields, "minCellSpacing")),
                     CatCountMin = row.catCountMin,
                     CatCountMax = row.catCountMax,
                 });
             }
 
             return true;
+        }
+
+        private static string GetExtraField(HolmasExtraField[] fields, string key)
+        {
+            if (fields == null || string.IsNullOrWhiteSpace(key))
+            {
+                return string.Empty;
+            }
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                HolmasExtraField field = fields[i];
+                if (field != null && string.Equals(field.key, key, StringComparison.Ordinal))
+                {
+                    return field.value ?? string.Empty;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static Vector4 ParseBoardContentInset(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return Vector4.zero;
+            }
+
+            string[] parts = value.Split(',');
+            if (parts.Length != 4)
+            {
+                return Vector4.zero;
+            }
+
+            return TryParseFloat(parts[0], out float left) &&
+                   TryParseFloat(parts[1], out float bottom) &&
+                   TryParseFloat(parts[2], out float right) &&
+                   TryParseFloat(parts[3], out float top)
+                ? new Vector4(Mathf.Max(0f, left), Mathf.Max(0f, bottom), Mathf.Max(0f, right), Mathf.Max(0f, top))
+                : Vector4.zero;
+        }
+
+        private static float ParseMinCellSpacing(string value)
+        {
+            return TryParseFloat(value, out float spacing)
+                ? Mathf.Max(0f, spacing)
+                : 4f;
+        }
+
+        private static bool TryParseFloat(string value, out float result)
+        {
+            return float.TryParse(
+                value,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out result);
         }
 
         private static bool TryBuildTasks(

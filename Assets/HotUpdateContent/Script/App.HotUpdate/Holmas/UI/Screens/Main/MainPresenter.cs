@@ -37,6 +37,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             MainTaskItemVm[] taskItems = BuildTaskItems(visualResolver, disableInteraction: isTutorialSessionActive);
             HolmasAgencyBuildingDefinition promotion = GetPrimaryPromotionDefinition();
             string promotionId = promotion != null ? promotion.PromotionId : string.Empty;
+            BoardFrameConfig boardFrameConfig = ResolveBoardFrameConfig(board, isTutorialSessionActive);
             return new MainVm
             {
                 LevelLabel = $"Lv {_context?.CurrentPlayerLevel ?? 1}",
@@ -53,9 +54,45 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 UseTutorialBoardLayer = isTutorialSessionActive,
                 Rows = board != null ? board.Rows : 0,
                 Cols = board != null ? board.Cols : 0,
+                BoardBackgroundPath = boardFrameConfig.BoardBackgroundPath,
+                BoardFrameOverlayPath = boardFrameConfig.BoardFrameOverlayPath,
+                BoardContentInset = boardFrameConfig.BoardContentInset,
+                MinCellSpacing = boardFrameConfig.MinCellSpacing,
                 Cells = cells,
                 CatVisuals = BuildCatVisualLookup(cells, taskItems, visualResolver),
                 TaskItems = taskItems,
+            };
+        }
+
+        private BoardFrameConfig ResolveBoardFrameConfig(BoardRuntime board, bool isTutorialSessionActive)
+        {
+            if (board == null || isTutorialSessionActive)
+            {
+                return BoardFrameConfig.Default;
+            }
+
+            string mapId = board.Snapshot != null ? board.Snapshot.MapId : string.Empty;
+            if (string.IsNullOrWhiteSpace(mapId))
+            {
+                return BoardFrameConfig.Default;
+            }
+
+            IHolmasMapCatalog catalog = _context?.ServiceContainer != null
+                ? _context.ServiceContainer.Get<IHolmasMapCatalog>()
+                : null;
+            if (catalog == null ||
+                !catalog.TryGetMap(mapId, out HolmasMapDefinition definition) ||
+                definition == null)
+            {
+                return BoardFrameConfig.Default;
+            }
+
+            return new BoardFrameConfig
+            {
+                BoardBackgroundPath = definition.BoardBackgroundPath ?? string.Empty,
+                BoardFrameOverlayPath = definition.BoardFrameOverlayPath ?? string.Empty,
+                BoardContentInset = definition.BoardContentInset,
+                MinCellSpacing = definition.MinCellSpacing >= 0f ? definition.MinCellSpacing : 4f,
             };
         }
 
@@ -412,6 +449,16 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 : 0f;
             item.IsClaimable = false;
             return item;
+        }
+
+        private sealed class BoardFrameConfig
+        {
+            public static readonly BoardFrameConfig Default = new BoardFrameConfig();
+
+            public string BoardBackgroundPath = string.Empty;
+            public string BoardFrameOverlayPath = string.Empty;
+            public UnityEngine.Vector4 BoardContentInset = UnityEngine.Vector4.zero;
+            public float MinCellSpacing = 4f;
         }
     }
 }

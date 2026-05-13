@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace App.HotUpdate.Holmas.Tasks.Config
 {
@@ -14,6 +15,10 @@ namespace App.HotUpdate.Holmas.Tasks.Config
         public int MapIndex;
         public string MapId = string.Empty;
         public string TerrainPath = string.Empty;
+        public string BoardBackgroundPath = string.Empty;
+        public string BoardFrameOverlayPath = string.Empty;
+        public Vector4 BoardContentInset = Vector4.zero;
+        public float MinCellSpacing = 4f;
         public int CatCountMin;
         public int CatCountMax;
     }

@@ -171,6 +171,10 @@ namespace App.AOT.YooRuntimeAssets
                 UnityEngine.Object asset = null;
                 foreach (var candidate in GetEditorLoadCandidates(location))
                 {
+                    asset = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Sprite>(candidate);
+                    if (asset != null)
+                        break;
+
                     asset = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(candidate);
                     if (asset != null)
                         break;
@@ -186,6 +190,18 @@ namespace App.AOT.YooRuntimeAssets
 #endif
             if (_defaultPackage == null)
                 return null;
+
+            if (IsSpriteLocation(location))
+            {
+                var spriteHandle = _defaultPackage.LoadAssetAsync<UnityEngine.Sprite>(location);
+                await spriteHandle.Task;
+                if (spriteHandle.Status == EOperationStatus.Succeed)
+                {
+                    return new AssetHandleWrapper(spriteHandle);
+                }
+
+                spriteHandle.Release();
+            }
 
             var handle = _defaultPackage.LoadAssetAsync<UnityEngine.Object>(location);
             await handle.Task;
@@ -315,5 +331,16 @@ namespace App.AOT.YooRuntimeAssets
             return $"Assets/HotUpdateContent/Res/Map/{fileName}";
         }
 #endif
+
+        private static bool IsSpriteLocation(string location)
+        {
+            if (string.IsNullOrWhiteSpace(location))
+                return false;
+
+            string normalized = location.Trim();
+            return normalized.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                   normalized.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                   normalized.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

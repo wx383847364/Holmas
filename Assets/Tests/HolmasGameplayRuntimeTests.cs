@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -12,15 +13,18 @@ using App.HotUpdate.Holmas.Tasks.Config;
 using App.HotUpdate.Holmas.Tasks.Runtime;
 using App.HotUpdate.Holmas.Tasks.Services;
 using App.HotUpdate.Holmas.Terrain;
+using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Screens.AgencyMain;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
+using App.HotUpdate.Holmas.UI.Screens.FindCat;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.Shared.Contracts;
 using App.Shared.Holmas.RuntimeData;
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityEngine.UI;
 using TerrainAssetPathUtility = App.HotUpdate.Holmas.Terrain.HolmasTerrainAssetPathUtility;
 
@@ -1458,7 +1462,7 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void MainView_RenderLockedTaskSlot_ClearsLegacyProgressText()
+        public void MainView_RenderLockedTaskSlot_UsesStaticTaskSlotBindings()
         {
             var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
             try
@@ -1470,6 +1474,7 @@ namespace Holmas.Tests
                 TextMeshProUGUI legacyTask5Text = CreateTaskSlot(root.transform, "Task5", withLegacyProgressText: true);
 
                 MainView view = root.GetComponent<MainView>();
+                view.Bind(CreateMainTaskBindings(root.transform));
                 view.Render(new MainVm
                 {
                     TaskItems = new[]
@@ -1482,7 +1487,93 @@ namespace Holmas.Tests
                     }
                 });
 
-                Assert.That(legacyTask5Text.text, Is.EqualTo(string.Empty));
+                Assert.That(root.transform.Find("Task5/Count")?.GetComponent<Text>()?.text, Is.EqualTo("未解锁"));
+                Assert.That(legacyTask5Text.text, Is.EqualTo("10/10"), "未纳入静态绑定的旧节点不应再由运行时递归清理。");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void MainView_RenderTaskSlots_PreservesPrefabTaskSlotImageColors()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            try
+            {
+                Image task1Image = CreateTaskSlotImage(root.transform, "Task1", new Color(0.2f, 0.4f, 0.8f, 0.6f));
+                Image task2Image = CreateTaskSlotImage(root.transform, "Task2", new Color(0.9f, 0.7f, 0.3f, 0.85f));
+                Image task1RewardIcon = CreateTaskRewardIcon(task1Image.transform, new Color(0.1f, 0.8f, 0.3f, 0.5f));
+                Image task2RewardIcon = CreateTaskRewardIcon(task2Image.transform, new Color(0.7f, 0.2f, 0.9f, 0.35f));
+                Image task1CatIcon = CreateTaskCatIcon(task1Image.transform, new Color(0.6f, 0.4f, 0.2f, 0.45f));
+                GameObject task1Lock = CreateTaskLock(task1Image.transform);
+                GameObject task2Lock = CreateTaskLock(task2Image.transform);
+                CreateTaskSlot(root.transform, "Task3");
+                CreateTaskSlot(root.transform, "Task4");
+                CreateTaskSlot(root.transform, "Task5");
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(CreateMainTaskBindings(root.transform));
+                view.SetAssetsRuntime(null);
+                view.Render(new MainVm
+                {
+                    TaskItems = new[]
+                    {
+                        new MainTaskItemVm { Title = "A", Progress = "1/1", Reward = "R1", ProgressNormalized = 1f, IsClaimable = true, ButtonEnabled = true, CatId = "cat-a" },
+                        new MainTaskItemVm { Title = "B", Progress = "未解锁", Reward = "广告位后续接入", ProgressNormalized = 0f, IsLocked = true, ButtonEnabled = false },
+                    }
+                });
+
+                Assert.That(task1Image.color, Is.EqualTo(new Color(0.2f, 0.4f, 0.8f, 0.6f)));
+                Assert.That(task2Image.color, Is.EqualTo(new Color(0.9f, 0.7f, 0.3f, 0.85f)));
+                Assert.That(task1RewardIcon.color, Is.EqualTo(new Color(0.1f, 0.8f, 0.3f, 0.5f)));
+                Assert.That(task2RewardIcon.color, Is.EqualTo(new Color(0.7f, 0.2f, 0.9f, 0.35f)));
+                Assert.That(task1CatIcon.color, Is.EqualTo(new Color(0.6f, 0.4f, 0.2f, 0.45f)));
+
+                Button task1Button = task1Image.GetComponent<Button>();
+                Button task2Button = task2Image.GetComponent<Button>();
+                Assert.That(task1Button.transition, Is.EqualTo(Selectable.Transition.None));
+                Assert.That(task1Button.targetGraphic, Is.Null);
+                Assert.That(task2Button.transition, Is.EqualTo(Selectable.Transition.None));
+                Assert.That(task2Button.targetGraphic, Is.Null);
+                Assert.That(task1Lock.activeSelf, Is.False, "解锁任务槽应隐藏 prefab 内 lock 节点。");
+                Assert.That(task2Lock.activeSelf, Is.True, "锁定任务槽应显示 prefab 内 lock 节点。");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void MainView_RenderTaskSlots_WritesProgressIntoPrefabCountText()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            try
+            {
+                Text task1Count = CreateTaskSlotWithCount(root.transform, "Task1");
+                CreateTaskSlot(root.transform, "Task2");
+                CreateTaskSlot(root.transform, "Task3");
+                CreateTaskSlot(root.transform, "Task4");
+                CreateTaskSlot(root.transform, "Task5");
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(CreateMainTaskBindings(root.transform));
+                view.Render(new MainVm
+                {
+                    TaskItems = new[]
+                    {
+                        new MainTaskItemVm { Title = "A", Progress = "查找猫 2/5", Reward = "R1", ProgressNormalized = 0.4f, ButtonEnabled = true },
+                    }
+                });
+
+                Assert.That(task1Count.text, Is.EqualTo("查找猫 2/5"));
+                Assert.That(root.transform.Find("Task1/RuntimeTaskProgress"), Is.Null);
+                Assert.That(root.transform.Find("Task1/RuntimeTaskTitle"), Is.Null);
+                Assert.That(root.transform.Find("Task1/RuntimeTaskReward"), Is.Null);
+                Assert.That(root.transform.Find("Task1/TaskTitle")?.GetComponent<TextMeshProUGUI>()?.text, Is.EqualTo("A"));
+                Assert.That(root.transform.Find("Task1/TaskReward")?.GetComponent<TextMeshProUGUI>()?.text, Is.EqualTo("R1"));
             }
             finally
             {
@@ -1527,6 +1618,234 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void MainPresenter_Build_IncludesBoardFrameSettingsFromCurrentMap()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a");
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-bg",
+                TerrainAssetPathUtility.BuildAssetPath("1"),
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+            runtime.StartLevel(HolmasTestSupport.CreateTerrain(1, 1), request);
+
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            serviceContainer.RegisterSingleton<IHolmasMapCatalog>(new HolmasMapCatalog(new[]
+            {
+                new HolmasMapDefinition
+                {
+                    MapId = "map-bg",
+                    TerrainPath = request.TerrainPath,
+                    BoardBackgroundPath = "Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang.png",
+                    BoardFrameOverlayPath = "Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang_overlay.png",
+                    BoardContentInset = new Vector4(12f, 8f, 16f, 10f),
+                    MinCellSpacing = 0f,
+                },
+            }));
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            MainVm viewModel = new MainPresenter(context).Build();
+
+            Assert.That(viewModel.BoardBackgroundPath, Is.EqualTo("Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang.png"));
+            Assert.That(viewModel.BoardFrameOverlayPath, Is.EqualTo("Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang_overlay.png"));
+            Assert.That(viewModel.BoardContentInset, Is.EqualTo(new Vector4(12f, 8f, 16f, 10f)));
+            Assert.That(viewModel.MinCellSpacing, Is.EqualTo(0f).Within(0.001f));
+        }
+
+        [Test]
+        public void MainPresenter_Build_UsesBoardFrameDefaultsWhenMapConfigMissing()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a");
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            var request = HolmasTestSupport.CreateRequest(
+                "map-without-config",
+                TerrainAssetPathUtility.BuildAssetPath("1"),
+                1,
+                1,
+                1,
+                new BoardSpawnEntry { CatId = "cat-a", Weight = 1 });
+            runtime.StartLevel(HolmasTestSupport.CreateTerrain(1, 1), request);
+
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            serviceContainer.RegisterSingleton<IHolmasMapCatalog>(new HolmasMapCatalog());
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            MainVm viewModel = new MainPresenter(context).Build();
+
+            Assert.That(viewModel.BoardBackgroundPath, Is.Empty);
+            Assert.That(viewModel.BoardFrameOverlayPath, Is.Empty);
+            Assert.That(viewModel.BoardContentInset, Is.EqualTo(Vector4.zero));
+            Assert.That(viewModel.MinCellSpacing, Is.EqualTo(4f).Within(0.001f));
+        }
+
+        [Test]
+        public void MainPresenter_Build_UsesBoardFrameDefaultsDuringTutorialSession()
+        {
+            var catalog = CreateMultiCatTaskCatalog("cat-a");
+            var taskService = new HolmasTaskProgressService(catalog, new ScriptedRandomSource(0), new FixedUtcClock { UtcNowMilliseconds = 1000 });
+            var metaService = new HolmasMetaProgressionService(
+                HolmasTestSupport.CreateMetaCatalog(),
+                catalog,
+                new HolmasDefaultMetaExperienceSource(),
+                new HolmasDefaultMetaExperienceSource());
+            var coordinator = new HolmasProgressionCoordinator(taskService, metaService);
+            var runtime = new HolmasGameplayRuntime(taskService, metaService, coordinator, new NullLogger(), null);
+            var tutorialSessionService = new CoreFindCatTutorialSessionService(new NullLogger());
+            tutorialSessionService.StartSessionAsync(new FakeAssetsRuntime(HolmasTestSupport.CreateTerrain(11, 8)))
+                .GetAwaiter()
+                .GetResult();
+
+            var serviceContainer = new FakeServiceContainer();
+            serviceContainer.RegisterSingleton<IHolmasTaskCatalog>(catalog);
+            serviceContainer.RegisterSingleton<IHolmasMapCatalog>(new HolmasMapCatalog(new[]
+            {
+                new HolmasMapDefinition
+                {
+                    MapId = "tutorial-map",
+                    BoardBackgroundPath = "background",
+                    BoardFrameOverlayPath = "overlay",
+                    BoardContentInset = new Vector4(1f, 2f, 3f, 4f),
+                    MinCellSpacing = 1f,
+                },
+            }));
+            var context = new HolmasApplicationContext(
+                serviceContainer,
+                new NullLogger(),
+                new FakeTickManager(),
+                new FakeEventBus(),
+                null,
+                runtime);
+
+            MainVm viewModel = new MainPresenter(context, tutorialSessionService).Build();
+
+            Assert.That(viewModel.UseTutorialBoardLayer, Is.True);
+            Assert.That(viewModel.BoardBackgroundPath, Is.Empty);
+            Assert.That(viewModel.BoardFrameOverlayPath, Is.Empty);
+            Assert.That(viewModel.BoardContentInset, Is.EqualTo(Vector4.zero));
+            Assert.That(viewModel.MinCellSpacing, Is.EqualTo(4f).Within(0.001f));
+        }
+
+        [Test]
+        public void BoardFrameLayoutCalculator_KeepsSquareCellsAndUsesAxisSpacing()
+        {
+            BoardFrameLayout layout = BoardFrameLayoutCalculator.Calculate(
+                new Vector2(950f, 775f),
+                8,
+                10);
+
+            Assert.That(layout.IsValid, Is.True);
+            Assert.That(layout.CellSize.x, Is.EqualTo(layout.CellSize.y).Within(0.001f));
+            Assert.That(layout.CellSize.x, Is.EqualTo(91.4f).Within(0.001f));
+            Assert.That(layout.Spacing.x, Is.EqualTo(4f).Within(0.001f));
+            Assert.That(layout.Spacing.y, Is.EqualTo(43.8f / 7f).Within(0.001f));
+            Assert.That(layout.ContainerOffsetMin, Is.EqualTo(Vector2.zero));
+            Assert.That(layout.ContainerOffsetMax, Is.EqualTo(Vector2.zero));
+            AssertGridFillsContent(layout, 8, 10);
+        }
+
+        [TestCase(8, 8, 720f, 720f, 0f)]
+        [TestCase(8, 10, 950f, 775f, 4f)]
+        [TestCase(10, 8, 768f, 958f, 3f)]
+        [TestCase(6, 12, 1150f, 590f, 5f)]
+        [TestCase(12, 6, 570f, 1170f, 5f)]
+        public void BoardFrameLayoutCalculator_FillsContentRectWithSquareCells(
+            int rows,
+            int cols,
+            float width,
+            float height,
+            float minSpacing)
+        {
+            BoardFrameLayout layout = BoardFrameLayoutCalculator.Calculate(
+                new Vector2(width, height),
+                rows,
+                cols,
+                minSpacing);
+
+            Assert.That(layout.IsValid, Is.True);
+            Assert.That(layout.CellSize.x, Is.EqualTo(layout.CellSize.y).Within(0.001f));
+            Assert.That(layout.Spacing.x, Is.GreaterThanOrEqualTo(minSpacing - 0.001f));
+            Assert.That(layout.Spacing.y, Is.GreaterThanOrEqualTo(minSpacing - 0.001f));
+            AssertGridFillsContent(layout, rows, cols);
+        }
+
+        [Test]
+        public void BoardFrameLayoutCalculator_AllowsZeroSpacingForTinyContentRect()
+        {
+            BoardFrameLayout layout = BoardFrameLayoutCalculator.Calculate(
+                new Vector2(30f, 24f),
+                6,
+                12,
+                4f);
+
+            Assert.That(layout.CellSize.x, Is.EqualTo(layout.CellSize.y).Within(0.001f));
+            Assert.That(layout.Spacing.x, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(layout.Spacing.y, Is.GreaterThanOrEqualTo(0f));
+            AssertGridFillsContent(layout, 6, 12);
+        }
+
+        [Test]
+        public void FindCatBoardView_Render_WithFrameLayout_DoesNotOverwriteSpacing()
+        {
+            var boardObject = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+            try
+            {
+                var boardRect = boardObject.GetComponent<RectTransform>();
+                boardRect.sizeDelta = new Vector2(1000f, 800f);
+                var cells = Enumerable.Range(0, 80)
+                    .Select(index => new BoardCellState(index, true, false, false, false, string.Empty, 0, new Color32(32, 48, 64, 255)))
+                    .ToArray();
+                var frameLayout = new BoardFrameLayout(
+                    Vector2.zero,
+                    Vector2.zero,
+                    new Vector2(40f, 40f),
+                    new Vector2(3f, 7f),
+                    new Vector2(427f, 369f));
+
+                boardObject.GetComponent<FindCatBoardView>().Render(8, 10, cells, null, frameLayout, null);
+
+                GridLayoutGroup layout = boardObject.GetComponent<GridLayoutGroup>();
+                Assert.That(layout.cellSize.x, Is.EqualTo(40f).Within(0.001f));
+                Assert.That(layout.cellSize.y, Is.EqualTo(40f).Within(0.001f));
+                Assert.That(layout.spacing.x, Is.EqualTo(3f).Within(0.001f));
+                Assert.That(layout.spacing.y, Is.EqualTo(7f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(boardObject);
+            }
+        }
+
+        [Test]
         public void MainView_RenderWithoutBoard_HidesStaticPlaceholderTiles()
         {
             var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
@@ -1536,7 +1855,7 @@ namespace Holmas.Tests
                 minesGroup.transform.SetParent(root.transform, false);
                 var placeholderTile = new GameObject("PlaceholderTile", typeof(RectTransform), typeof(Image));
                 placeholderTile.transform.SetParent(minesGroup.transform, false);
-                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform));
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
                 boardContainer.transform.SetParent(minesGroup.transform, false);
 
                 MainView view = root.GetComponent<MainView>();
@@ -1558,6 +1877,409 @@ namespace Holmas.Tests
         }
 
         [Test]
+        public void MainView_RenderBoard_UsesBoardContentRectAndKeepsRectMaskPaddingZero()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            try
+            {
+                var minesBg = new GameObject("MinesBg", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+                minesBg.transform.SetParent(root.transform, false);
+                var minesBgRect = minesBg.GetComponent<RectTransform>();
+                minesBgRect.sizeDelta = new Vector2(1000f, 800f);
+
+                var boardContentRectObject = new GameObject("BoardContentRect", typeof(RectTransform));
+                boardContentRectObject.transform.SetParent(minesBg.transform, false);
+                var boardContentRect = boardContentRectObject.GetComponent<RectTransform>();
+                boardContentRect.anchorMin = Vector2.zero;
+                boardContentRect.anchorMax = Vector2.one;
+                boardContentRect.offsetMin = new Vector2(40f, 30f);
+                boardContentRect.offsetMax = new Vector2(-60f, -50f);
+
+                var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
+                minesGroup.transform.SetParent(minesBg.transform, false);
+                var placeholderTile = new GameObject("PlaceholderTile", typeof(RectTransform), typeof(Image));
+                placeholderTile.transform.SetParent(minesGroup.transform, false);
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+                boardContainer.transform.SetParent(minesGroup.transform, false);
+                var tutorialBoardContainer = new GameObject("TutorialBoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+                tutorialBoardContainer.transform.SetParent(minesGroup.transform, false);
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(new MainBindings
+                {
+                    MinesBgImage = minesBg.GetComponent<Image>(),
+                    MinesBgMask = minesBg.GetComponent<RectMask2D>(),
+                    BoardContentRect = boardContentRect,
+                    MinesGroup = minesGroup.GetComponent<RectTransform>(),
+                    BoardContainer = boardContainer.GetComponent<RectTransform>(),
+                    TutorialBoardContainer = tutorialBoardContainer.GetComponent<RectTransform>(),
+                });
+
+                var cells = Enumerable.Range(0, 80)
+                    .Select(index => new BoardCellState(index, true, false, false, false, string.Empty, 0, new Color32(32, 48, 64, 255)))
+                    .ToArray();
+
+                view.Render(new MainVm
+                {
+                    BoardVisible = true,
+                    Rows = 8,
+                    Cols = 10,
+                    Cells = cells,
+                    BoardContentInset = new Vector4(25f, 12.5f, 25f, 12.5f),
+                    MinCellSpacing = 4f,
+                });
+
+                var boardRect = boardContainer.GetComponent<RectTransform>();
+                GridLayoutGroup boardLayout = boardContainer.GetComponent<GridLayoutGroup>();
+                Assert.That(placeholderTile.activeSelf, Is.False);
+                Assert.That(minesGroup.GetComponent<GridLayoutGroup>().enabled, Is.False);
+                Assert.That(boardRect.anchorMin, Is.EqualTo(Vector2.zero));
+                Assert.That(boardRect.anchorMax, Is.EqualTo(Vector2.one));
+                Assert.That(boardRect.offsetMin.x, Is.EqualTo(40f).Within(0.001f));
+                Assert.That(boardRect.offsetMin.y, Is.EqualTo(30f).Within(0.001f));
+                Assert.That(boardRect.offsetMax.x, Is.EqualTo(-60f).Within(0.001f));
+                Assert.That(boardRect.offsetMax.y, Is.EqualTo(-50f).Within(0.001f));
+                Assert.That(boardLayout.cellSize.x, Is.EqualTo(boardLayout.cellSize.y).Within(0.001f));
+                Assert.That(boardLayout.cellSize.x, Is.EqualTo(86.4f).Within(0.001f));
+                Assert.That(boardLayout.spacing.x, Is.EqualTo(4f).Within(0.001f));
+                Assert.That(boardLayout.spacing.y, Is.EqualTo(28.8f / 7f).Within(0.001f));
+                Assert.That(boardLayout.padding.left, Is.EqualTo(0));
+                Assert.That(boardLayout.padding.right, Is.EqualTo(0));
+                Assert.That(boardLayout.padding.top, Is.EqualTo(0));
+                Assert.That(boardLayout.padding.bottom, Is.EqualTo(0));
+                Assert.That(minesBg.GetComponent<RectMask2D>().padding, Is.EqualTo(Vector4.zero));
+
+                minesBgRect.sizeDelta = new Vector2(1200f, 900f);
+                typeof(MainView)
+                    .GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.Invoke(view, null);
+
+                Assert.That(boardRect.offsetMin.x, Is.EqualTo(40f).Within(0.001f));
+                Assert.That(boardRect.offsetMin.y, Is.EqualTo(30f).Within(0.001f));
+                Assert.That(boardRect.offsetMax.x, Is.EqualTo(-60f).Within(0.001f));
+                Assert.That(boardRect.offsetMax.y, Is.EqualTo(-50f).Within(0.001f));
+                Assert.That(boardLayout.cellSize.x, Is.EqualTo(boardLayout.cellSize.y).Within(0.001f));
+                float resizedGridWidth = boardLayout.cellSize.x * 10 + boardLayout.spacing.x * 9;
+                float resizedGridHeight = boardLayout.cellSize.y * 8 + boardLayout.spacing.y * 7;
+                Assert.That(resizedGridWidth, Is.EqualTo(1100f).Within(0.001f));
+                Assert.That(resizedGridHeight, Is.EqualTo(820f).Within(0.001f));
+
+                boardContentRect.offsetMin = new Vector2(50f, 40f);
+                boardContentRect.offsetMax = new Vector2(-70f, -65f);
+
+                view.Render(new MainVm
+                {
+                    BoardVisible = true,
+                    Rows = 8,
+                    Cols = 10,
+                    Cells = cells,
+                    BoardContentInset = new Vector4(20f, 10f, 30f, 15f),
+                    MinCellSpacing = 3f,
+                });
+
+                Assert.That(boardRect.offsetMin.x, Is.EqualTo(50f).Within(0.001f));
+                Assert.That(boardRect.offsetMin.y, Is.EqualTo(40f).Within(0.001f));
+                Assert.That(boardRect.offsetMax.x, Is.EqualTo(-70f).Within(0.001f));
+                Assert.That(boardRect.offsetMax.y, Is.EqualTo(-65f).Within(0.001f));
+                Assert.That(boardLayout.cellSize.x, Is.EqualTo(boardLayout.cellSize.y).Within(0.001f));
+                float gridWidth = boardLayout.cellSize.x * 10 + boardLayout.spacing.x * 9;
+                float gridHeight = boardLayout.cellSize.y * 8 + boardLayout.spacing.y * 7;
+                Assert.That(gridWidth, Is.EqualTo(1080f).Within(0.001f));
+                Assert.That(gridHeight, Is.EqualTo(795f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator MainView_RenderBoard_IgnoresStaleBoardBackgroundLoad()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            var defaultTexture = new Texture2D(16, 16);
+            var firstTexture = new Texture2D(16, 16);
+            var secondTexture = new Texture2D(16, 16);
+            Sprite defaultSprite = Sprite.Create(defaultTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            Sprite firstSprite = Sprite.Create(firstTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            Sprite secondSprite = Sprite.Create(secondTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            try
+            {
+                var minesBg = new GameObject("MinesBg", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+                minesBg.transform.SetParent(root.transform, false);
+                minesBg.GetComponent<RectTransform>().sizeDelta = new Vector2(100f, 100f);
+                Image minesBgImage = minesBg.GetComponent<Image>();
+                minesBgImage.sprite = defaultSprite;
+                var overlay = new GameObject("MinesBgFrameOverlayImage", typeof(RectTransform), typeof(Image));
+                overlay.transform.SetParent(minesBg.transform, false);
+                Image overlayImage = overlay.GetComponent<Image>();
+                overlayImage.sprite = defaultSprite;
+
+                var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
+                minesGroup.transform.SetParent(minesBg.transform, false);
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+                boardContainer.transform.SetParent(minesGroup.transform, false);
+                var tutorialBoardContainer = new GameObject("TutorialBoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+                tutorialBoardContainer.transform.SetParent(minesGroup.transform, false);
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(new MainBindings
+                {
+                    MinesBgImage = minesBgImage,
+                    MinesBgMask = minesBg.GetComponent<RectMask2D>(),
+                    MinesBgFrameOverlayImage = overlayImage,
+                    MinesGroup = minesGroup.GetComponent<RectTransform>(),
+                    BoardContainer = boardContainer.GetComponent<RectTransform>(),
+                    TutorialBoardContainer = tutorialBoardContainer.GetComponent<RectTransform>(),
+                });
+                var assetsRuntime = new DeferredAssetsRuntime();
+                view.SetAssetsRuntime(assetsRuntime);
+                var cells = new[]
+                {
+                    new BoardCellState(0, true, false, false, false, string.Empty, 0, new Color32(32, 48, 64, 255)),
+                };
+
+                view.Render(new MainVm { BoardVisible = true, Rows = 1, Cols = 1, Cells = cells, BoardBackgroundPath = "first" });
+                view.Render(new MainVm { BoardVisible = true, Rows = 1, Cols = 1, Cells = cells, BoardBackgroundPath = "second" });
+                assetsRuntime.Complete("first", firstSprite);
+                yield return null;
+
+                Assert.That(minesBgImage.sprite, Is.SameAs(defaultSprite), "旧请求先返回时不能覆盖当前棋盘背景。");
+                Assert.That(overlayImage.sprite, Is.SameAs(defaultSprite), "旧请求先返回时不能覆盖当前棋盘边框。");
+
+                assetsRuntime.Complete("second", secondSprite);
+                yield return null;
+
+                Assert.That(minesBgImage.sprite, Is.SameAs(secondSprite));
+                Assert.That(overlayImage.sprite, Is.SameAs(secondSprite));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(defaultSprite);
+                Object.DestroyImmediate(firstSprite);
+                Object.DestroyImmediate(secondSprite);
+                Object.DestroyImmediate(defaultTexture);
+                Object.DestroyImmediate(firstTexture);
+                Object.DestroyImmediate(secondTexture);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator MainView_RenderBoard_LoadsBackgroundAndOverlayTogether()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            var defaultTexture = new Texture2D(16, 16);
+            var backgroundTexture = new Texture2D(16, 16);
+            var overlayTexture = new Texture2D(16, 16);
+            Sprite defaultSprite = Sprite.Create(defaultTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            Sprite backgroundSprite = Sprite.Create(backgroundTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            Sprite overlaySprite = Sprite.Create(overlayTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            try
+            {
+                var minesBg = new GameObject("MinesBg", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+                minesBg.transform.SetParent(root.transform, false);
+                minesBg.GetComponent<RectTransform>().sizeDelta = new Vector2(100f, 100f);
+                Image minesBgImage = minesBg.GetComponent<Image>();
+                minesBgImage.sprite = defaultSprite;
+                var overlay = new GameObject("MinesBgFrameOverlayImage", typeof(RectTransform), typeof(Image));
+                overlay.transform.SetParent(minesBg.transform, false);
+                Image overlayImage = overlay.GetComponent<Image>();
+                overlayImage.sprite = defaultSprite;
+
+                var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
+                minesGroup.transform.SetParent(minesBg.transform, false);
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+                boardContainer.transform.SetParent(minesGroup.transform, false);
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(new MainBindings
+                {
+                    MinesBgImage = minesBgImage,
+                    MinesBgMask = minesBg.GetComponent<RectMask2D>(),
+                    MinesBgFrameOverlayImage = overlayImage,
+                    MinesGroup = minesGroup.GetComponent<RectTransform>(),
+                    BoardContainer = boardContainer.GetComponent<RectTransform>(),
+                });
+                var assetsRuntime = new DeferredAssetsRuntime();
+                view.SetAssetsRuntime(assetsRuntime);
+                var cells = new[]
+                {
+                    new BoardCellState(0, true, false, false, false, string.Empty, 0, new Color32(32, 48, 64, 255)),
+                };
+
+                view.Render(new MainVm
+                {
+                    BoardVisible = true,
+                    Rows = 1,
+                    Cols = 1,
+                    Cells = cells,
+                    BoardBackgroundPath = "background",
+                    BoardFrameOverlayPath = "overlay",
+                });
+                assetsRuntime.Complete("background", backgroundSprite);
+                yield return null;
+                Assert.That(minesBgImage.sprite, Is.SameAs(defaultSprite), "overlay 尚未返回前不能只更新底图。");
+
+                assetsRuntime.Complete("overlay", overlaySprite);
+                yield return null;
+                Assert.That(minesBgImage.sprite, Is.SameAs(backgroundSprite));
+                Assert.That(overlayImage.sprite, Is.SameAs(overlaySprite));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(defaultSprite);
+                Object.DestroyImmediate(backgroundSprite);
+                Object.DestroyImmediate(overlaySprite);
+                Object.DestroyImmediate(defaultTexture);
+                Object.DestroyImmediate(backgroundTexture);
+                Object.DestroyImmediate(overlayTexture);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator MainView_RenderBoard_LoadFailureRestoresDefaultBoardBackground()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            var defaultTexture = new Texture2D(16, 16);
+            var firstTexture = new Texture2D(16, 16);
+            var badTexture = new Texture2D(16, 16);
+            Sprite defaultSprite = Sprite.Create(defaultTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            Sprite firstSprite = Sprite.Create(firstTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            try
+            {
+                var minesBg = new GameObject("MinesBg", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+                minesBg.transform.SetParent(root.transform, false);
+                minesBg.GetComponent<RectTransform>().sizeDelta = new Vector2(100f, 100f);
+                Image minesBgImage = minesBg.GetComponent<Image>();
+                minesBgImage.sprite = defaultSprite;
+                var overlay = new GameObject("MinesBgFrameOverlayImage", typeof(RectTransform), typeof(Image));
+                overlay.transform.SetParent(minesBg.transform, false);
+                Image overlayImage = overlay.GetComponent<Image>();
+                overlayImage.sprite = defaultSprite;
+
+                var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
+                minesGroup.transform.SetParent(minesBg.transform, false);
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+                boardContainer.transform.SetParent(minesGroup.transform, false);
+                var tutorialBoardContainer = new GameObject("TutorialBoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+                tutorialBoardContainer.transform.SetParent(minesGroup.transform, false);
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(new MainBindings
+                {
+                    MinesBgImage = minesBgImage,
+                    MinesBgMask = minesBg.GetComponent<RectMask2D>(),
+                    MinesBgFrameOverlayImage = overlayImage,
+                    MinesGroup = minesGroup.GetComponent<RectTransform>(),
+                    BoardContainer = boardContainer.GetComponent<RectTransform>(),
+                    TutorialBoardContainer = tutorialBoardContainer.GetComponent<RectTransform>(),
+                });
+                var assetsRuntime = new DeferredAssetsRuntime();
+                view.SetAssetsRuntime(assetsRuntime);
+                var cells = new[]
+                {
+                    new BoardCellState(0, true, false, false, false, string.Empty, 0, new Color32(32, 48, 64, 255)),
+                };
+
+                view.Render(new MainVm { BoardVisible = true, Rows = 1, Cols = 1, Cells = cells, BoardBackgroundPath = "first-success" });
+                assetsRuntime.Complete("first-success", firstSprite);
+                yield return null;
+                Assert.That(minesBgImage.sprite, Is.SameAs(firstSprite));
+                Assert.That(overlayImage.sprite, Is.SameAs(firstSprite));
+
+                view.Render(new MainVm { BoardVisible = true, Rows = 1, Cols = 1, Cells = cells, BoardBackgroundPath = "bad-texture" });
+                LogAssert.Expect(LogType.Warning, "MainView: 棋盘背景或边框资源不是 Sprite，已回退 prefab 默认背景 bad-texture");
+                assetsRuntime.Complete("bad-texture", badTexture);
+                yield return null;
+
+                Assert.That(minesBgImage.sprite, Is.SameAs(defaultSprite));
+                Assert.That(overlayImage.sprite, Is.SameAs(defaultSprite));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(defaultSprite);
+                Object.DestroyImmediate(firstSprite);
+                Object.DestroyImmediate(defaultTexture);
+                Object.DestroyImmediate(firstTexture);
+                Object.DestroyImmediate(badTexture);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator MainView_RenderBoard_OverlayLoadFailureRestoresBothSprites()
+        {
+            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
+            var defaultTexture = new Texture2D(16, 16);
+            var backgroundTexture = new Texture2D(16, 16);
+            var badOverlayTexture = new Texture2D(16, 16);
+            Sprite defaultSprite = Sprite.Create(defaultTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            Sprite backgroundSprite = Sprite.Create(backgroundTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
+            try
+            {
+                var minesBg = new GameObject("MinesBg", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+                minesBg.transform.SetParent(root.transform, false);
+                minesBg.GetComponent<RectTransform>().sizeDelta = new Vector2(100f, 100f);
+                Image minesBgImage = minesBg.GetComponent<Image>();
+                minesBgImage.sprite = defaultSprite;
+                var overlay = new GameObject("MinesBgFrameOverlayImage", typeof(RectTransform), typeof(Image));
+                overlay.transform.SetParent(minesBg.transform, false);
+                Image overlayImage = overlay.GetComponent<Image>();
+                overlayImage.sprite = defaultSprite;
+
+                var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
+                minesGroup.transform.SetParent(minesBg.transform, false);
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
+                boardContainer.transform.SetParent(minesGroup.transform, false);
+
+                MainView view = root.GetComponent<MainView>();
+                view.Bind(new MainBindings
+                {
+                    MinesBgImage = minesBgImage,
+                    MinesBgMask = minesBg.GetComponent<RectMask2D>(),
+                    MinesBgFrameOverlayImage = overlayImage,
+                    MinesGroup = minesGroup.GetComponent<RectTransform>(),
+                    BoardContainer = boardContainer.GetComponent<RectTransform>(),
+                });
+                var assetsRuntime = new DeferredAssetsRuntime();
+                view.SetAssetsRuntime(assetsRuntime);
+                var cells = new[]
+                {
+                    new BoardCellState(0, true, false, false, false, string.Empty, 0, new Color32(32, 48, 64, 255)),
+                };
+
+                view.Render(new MainVm
+                {
+                    BoardVisible = true,
+                    Rows = 1,
+                    Cols = 1,
+                    Cells = cells,
+                    BoardBackgroundPath = "background",
+                    BoardFrameOverlayPath = "bad-overlay",
+                });
+                assetsRuntime.Complete("background", backgroundSprite);
+                yield return null;
+                LogAssert.Expect(LogType.Warning, "MainView: 棋盘背景或边框资源不是 Sprite，已回退 prefab 默认背景 background");
+                assetsRuntime.Complete("bad-overlay", badOverlayTexture);
+                yield return null;
+
+                Assert.That(minesBgImage.sprite, Is.SameAs(defaultSprite));
+                Assert.That(overlayImage.sprite, Is.SameAs(defaultSprite));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(defaultSprite);
+                Object.DestroyImmediate(backgroundSprite);
+                Object.DestroyImmediate(defaultTexture);
+                Object.DestroyImmediate(backgroundTexture);
+                Object.DestroyImmediate(badOverlayTexture);
+            }
+        }
+
+        [Test]
         public void MainView_RenderBoard_SwitchesBetweenNormalAndTutorialContainers()
         {
             var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
@@ -1565,9 +2287,9 @@ namespace Holmas.Tests
             {
                 var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
                 minesGroup.transform.SetParent(root.transform, false);
-                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform));
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
                 boardContainer.transform.SetParent(minesGroup.transform, false);
-                var tutorialBoardContainer = new GameObject("TutorialBoardContainer", typeof(RectTransform));
+                var tutorialBoardContainer = new GameObject("TutorialBoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
                 tutorialBoardContainer.transform.SetParent(minesGroup.transform, false);
 
                 MainView view = root.GetComponent<MainView>();
@@ -1605,9 +2327,9 @@ namespace Holmas.Tests
             {
                 var minesGroup = new GameObject("MinesGroup", typeof(RectTransform), typeof(GridLayoutGroup));
                 minesGroup.transform.SetParent(root.transform, false);
-                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform));
+                var boardContainer = new GameObject("BoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
                 boardContainer.transform.SetParent(minesGroup.transform, false);
-                var tutorialBoardContainer = new GameObject("TutorialBoardContainer", typeof(RectTransform));
+                var tutorialBoardContainer = new GameObject("TutorialBoardContainer", typeof(RectTransform), typeof(FindCatBoardView));
                 tutorialBoardContainer.transform.SetParent(minesGroup.transform, false);
 
                 MainView view = root.GetComponent<MainView>();
@@ -1636,22 +2358,13 @@ namespace Holmas.Tests
         }
 
         [Test]
-        public void MainView_EnsureBindingSurface_CreatesMinesGroupAtBindingPath()
+        public void MainBindings_MinesGroupPath_LivesUnderMinesBg()
         {
-            var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
-            try
-            {
-                MainView view = root.GetComponent<MainView>();
-
-                view.EnsureBindingSurface();
-
-                Assert.That(root.transform.Find("MinesGroup"), Is.Not.Null);
-                Assert.That(root.transform.Find("RuntimeOverlay/MinesGroup"), Is.Null);
-            }
-            finally
-            {
-                Object.DestroyImmediate(root);
-            }
+            Assert.That(MainBindings.MinesGroupNodePath, Is.EqualTo("MainPanel/BackgroundImage/MinesBg/MinesGroup"));
+            Assert.That(MainBindings.MinesBgFrameOverlayNodePath, Is.EqualTo("MainPanel/BackgroundImage/MinesBg/MinesBgFrameOverlayImage"));
+            Assert.That(MainBindings.BoardContentRectNodePath, Is.EqualTo("MainPanel/BackgroundImage/MinesBg/BoardContentRect"));
+            Assert.That(MainBindings.BoardContainerNodePath, Is.EqualTo("MainPanel/BackgroundImage/MinesBg/MinesGroup/BoardContainer"));
+            Assert.That(MainBindings.TutorialBoardContainerNodePath, Is.EqualTo("MainPanel/BackgroundImage/MinesBg/MinesGroup/TutorialBoardContainer"));
         }
 
         [Test]
@@ -2257,6 +2970,56 @@ namespace Holmas.Tests
             }
         }
 
+        private static void AssertGridFillsContent(BoardFrameLayout layout, int rows, int cols)
+        {
+            float gridWidth = layout.CellSize.x * cols + layout.Spacing.x * Mathf.Max(0, cols - 1);
+            float gridHeight = layout.CellSize.y * rows + layout.Spacing.y * Mathf.Max(0, rows - 1);
+            Assert.That(gridWidth, Is.EqualTo(layout.ContentSize.x).Within(0.001f), "grid width must fill content rect");
+            Assert.That(gridHeight, Is.EqualTo(layout.ContentSize.y).Within(0.001f), "grid height must fill content rect");
+        }
+
+        private sealed class DeferredAssetsRuntime : IAssetsRuntime
+        {
+            private readonly Dictionary<string, TaskCompletionSource<IAssetHandle>> _requests =
+                new Dictionary<string, TaskCompletionSource<IAssetHandle>>();
+
+            public Task InitializeAsync()
+            {
+                return Task.CompletedTask;
+            }
+
+            public Task<bool> RunPatchFlowAsync(string packageVersion = null)
+            {
+                return Task.FromResult(true);
+            }
+
+            public Task<IAssetHandle> LoadAssetAsync(string location)
+            {
+                if (!_requests.TryGetValue(location, out TaskCompletionSource<IAssetHandle> request))
+                {
+                    request = new TaskCompletionSource<IAssetHandle>();
+                    _requests[location] = request;
+                }
+
+                return request.Task;
+            }
+
+            public void Complete(string location, UnityEngine.Object asset)
+            {
+                if (!_requests.TryGetValue(location, out TaskCompletionSource<IAssetHandle> request))
+                {
+                    request = new TaskCompletionSource<IAssetHandle>();
+                    _requests[location] = request;
+                }
+
+                request.SetResult(new FakeAssetHandle(asset));
+            }
+
+            public void Shutdown()
+            {
+            }
+        }
+
         private sealed class FakeAssetHandle : IAssetHandle
         {
             public FakeAssetHandle(UnityEngine.Object asset)
@@ -2708,8 +3471,10 @@ namespace Holmas.Tests
             var slot = new GameObject(name, typeof(RectTransform));
             slot.transform.SetParent(parent, false);
 
-            var count = new GameObject("Count", typeof(RectTransform), typeof(TextMeshProUGUI));
+            var count = new GameObject("Count", typeof(RectTransform), typeof(Text));
             count.transform.SetParent(slot.transform, false);
+            CreateTaskText(slot.transform, "TaskTitle");
+            CreateTaskText(slot.transform, "TaskReward");
 
             var slider = new GameObject("Slider", typeof(RectTransform), typeof(Slider));
             slider.transform.SetParent(slot.transform, false);
@@ -2724,6 +3489,103 @@ namespace Holmas.Tests
             }
 
             return legacyText;
+        }
+
+        private static Image CreateTaskSlotImage(Transform parent, string name, Color color)
+        {
+            var slot = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            slot.transform.SetParent(parent, false);
+
+            Image image = slot.GetComponent<Image>();
+            image.color = color;
+
+            Button button = slot.GetComponent<Button>();
+            button.transition = Selectable.Transition.ColorTint;
+            button.targetGraphic = image;
+
+            var count = new GameObject("Count", typeof(RectTransform), typeof(Text));
+            count.transform.SetParent(slot.transform, false);
+            CreateTaskText(slot.transform, "TaskTitle");
+            CreateTaskText(slot.transform, "TaskReward");
+
+            return image;
+        }
+
+        private static Image CreateTaskRewardIcon(Transform parent, Color color)
+        {
+            var rewardIcon = new GameObject("RewardIcon", typeof(RectTransform), typeof(Image));
+            rewardIcon.transform.SetParent(parent, false);
+
+            Image image = rewardIcon.GetComponent<Image>();
+            image.color = color;
+            return image;
+        }
+
+        private static Image CreateTaskCatIcon(Transform parent, Color color)
+        {
+            var catIcon = new GameObject("CatIcon", typeof(RectTransform), typeof(Image));
+            catIcon.transform.SetParent(parent, false);
+
+            Image image = catIcon.GetComponent<Image>();
+            image.color = color;
+            return image;
+        }
+
+        private static GameObject CreateTaskLock(Transform parent)
+        {
+            var lockObject = new GameObject("lock", typeof(RectTransform), typeof(Image));
+            lockObject.transform.SetParent(parent, false);
+            lockObject.SetActive(false);
+            return lockObject;
+        }
+
+        private static Text CreateTaskSlotWithCount(Transform parent, string name)
+        {
+            var slot = new GameObject(name, typeof(RectTransform));
+            slot.transform.SetParent(parent, false);
+
+            var count = new GameObject("Count", typeof(RectTransform), typeof(Text));
+            count.transform.SetParent(slot.transform, false);
+            CreateTaskText(slot.transform, "TaskTitle");
+            CreateTaskText(slot.transform, "TaskReward");
+
+            var slider = new GameObject("Slider", typeof(RectTransform), typeof(Slider));
+            slider.transform.SetParent(slot.transform, false);
+
+            return count.GetComponent<Text>();
+        }
+
+        private static TextMeshProUGUI CreateTaskText(Transform parent, string name)
+        {
+            var textObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(parent, false);
+            return textObject.GetComponent<TextMeshProUGUI>();
+        }
+
+        private static MainBindings CreateMainTaskBindings(Transform root)
+        {
+            var bindings = new MainBindings();
+            for (int i = 0; i < MainBindings.TaskSlotCount; i++)
+            {
+                Transform slot = root.Find($"Task{i + 1}");
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                bindings.TaskSlotRoots[i] = slot as RectTransform;
+                bindings.TaskSlotButtons[i] = slot.GetComponent<Button>();
+                bindings.TaskSlotBackgroundImages[i] = slot.GetComponent<Image>();
+                bindings.TaskProgressTexts[i] = slot.Find("Count")?.GetComponent<Text>();
+                bindings.TaskProgressSliders[i] = slot.Find("Slider")?.GetComponent<Slider>();
+                bindings.TaskRewardIcons[i] = slot.Find("RewardIcon")?.GetComponent<Image>();
+                bindings.TaskCatIcons[i] = slot.Find("CatIcon")?.GetComponent<Image>();
+                bindings.TaskLocks[i] = slot.Find("lock") as RectTransform;
+                bindings.TaskTitleTexts[i] = slot.Find("TaskTitle")?.GetComponent<TextMeshProUGUI>();
+                bindings.TaskRewardTexts[i] = slot.Find("TaskReward")?.GetComponent<TextMeshProUGUI>();
+            }
+
+            return bindings;
         }
 
         private static HolmasGameplayRuntime CreateEnergyRuntime(

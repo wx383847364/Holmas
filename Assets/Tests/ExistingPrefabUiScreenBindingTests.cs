@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 using App.HotUpdate.Holmas.UI.Binding;
 using App.HotUpdate.Holmas.UI.Generated;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
+using App.HotUpdate.Holmas.UI.Screens.FindCat;
 using App.HotUpdate.Holmas.UI.Screens.Leaderboard;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.Shared.Contracts;
 using App.Shared.Holmas.Leaderboards;
 using NUnit.Framework;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -27,20 +29,43 @@ namespace Holmas.Tests
             GameObject instance = Object.Instantiate(prefab);
             try
             {
-                MainView view = instance.GetComponent<MainView>() ?? instance.AddComponent<MainView>();
-                view.EnsureBindingSurface();
+                MainView view = instance.GetComponent<MainView>();
+                Assert.That(view, Is.Not.Null, "MainPanel prefab 必须静态挂载 MainView，运行时不再 AddComponent 补挂。");
 
                 UiReferenceCollector collector = instance.GetComponent<UiReferenceCollector>();
-                Assert.That(collector, Is.Not.Null, "MainPanel 运行时 collector 创建失败。");
+                Assert.That(collector, Is.Not.Null, "MainPanel prefab 必须静态挂载 UiReferenceCollector，运行时不再创建 binding surface。");
 
                 var resolver = new UiBindingResolver(collector, MainGeneratedBindings.Manifest);
                 MainBindings bindings = MainBindings.Resolve(resolver);
                 Assert.That(bindings.HasRequiredBindings, Is.True, "MainBindings 未能解析最小运行时 binding。");
+                Assert.That(bindings.MinesBgImage, Is.Not.Null, "MainPanel 必须静态绑定 MinesBg Image，用于动态替换棋盘背景。");
+                Assert.That(bindings.MinesBgMask, Is.Not.Null, "MainPanel 必须静态绑定 MinesBg RectMask2D，用作矩形兜底裁剪。");
+                Assert.That(bindings.MinesBgFrameOverlayImage, Is.Not.Null, "MainPanel 必须静态绑定 MinesBgFrameOverlayImage，用于覆盖棋盘边框圆角。");
+                Assert.That(bindings.BoardContentRect, Is.Not.Null, "MainPanel 必须静态绑定 BoardContentRect，用作棋盘内容区。");
+                Assert.That(bindings.MinesBgImage.gameObject.name, Is.EqualTo("MinesBg"));
+                Assert.That(bindings.MinesBgMask.gameObject, Is.SameAs(bindings.MinesBgImage.gameObject));
                 Assert.That(bindings.MinesGroup.name, Is.EqualTo("MinesGroup"));
+                Assert.That(bindings.MinesGroup.transform.parent.name, Is.EqualTo("MinesBg"), "MinesGroup 必须静态挂在 MinesBg 下，方便背景框裁剪。");
+                Assert.That(bindings.BoardContentRect.name, Is.EqualTo("BoardContentRect"));
+                Assert.That(bindings.BoardContentRect.transform.parent, Is.SameAs(bindings.MinesBgImage.transform));
+                Assert.That(bindings.BoardContentRect.GetComponent<Image>(), Is.Null, "BoardContentRect 只定义内容区，不应参与渲染。");
+                Assert.That(bindings.BoardContentRect.GetComponent<Canvas>(), Is.Null, "BoardContentRect 不应额外挂 Canvas。");
+                Assert.That(bindings.BoardContentRect.GetComponent<UnityEngine.Rendering.SortingGroup>(), Is.Null, "BoardContentRect 不应额外挂 SortingGroup。");
+                Assert.That(bindings.MinesBgFrameOverlayImage.name, Is.EqualTo("MinesBgFrameOverlayImage"));
+                Assert.That(bindings.MinesBgFrameOverlayImage.transform.parent, Is.SameAs(bindings.MinesBgImage.transform));
+                Assert.That(bindings.MinesBgFrameOverlayImage.transform.GetSiblingIndex(), Is.GreaterThan(bindings.MinesGroup.GetSiblingIndex()), "overlay 必须盖在 MinesGroup 之后。");
+                Assert.That(bindings.MinesBgFrameOverlayImage.type, Is.EqualTo(Image.Type.Sliced));
+                Assert.That(bindings.MinesBgFrameOverlayImage.fillCenter, Is.False);
+                Assert.That(bindings.MinesBgFrameOverlayImage.raycastTarget, Is.False);
+                Assert.That(bindings.MinesBgFrameOverlayImage.GetComponent<Canvas>(), Is.Null, "overlay 不应额外挂 Canvas。");
+                Assert.That(bindings.MinesBgFrameOverlayImage.GetComponent<UnityEngine.Rendering.SortingGroup>(), Is.Null, "overlay 不应额外挂 SortingGroup。");
+                Assert.That(bindings.MinesBgMask.padding, Is.EqualTo(Vector4.zero), "RectMask2D padding 固定为 0，不再承载圆角或 inset。");
                 Assert.That(bindings.BoardContainer.name, Is.EqualTo("BoardContainer"));
                 Assert.That(bindings.BoardContainer.IsChildOf(bindings.MinesGroup), Is.True, "Main 内嵌棋盘必须挂在 MinesGroup 下。");
+                Assert.That(bindings.BoardContainer.GetComponent<FindCatBoardView>(), Is.Not.Null, "BoardContainer 必须静态挂载 FindCatBoardView，运行时不再 AddComponent。");
                 Assert.That(bindings.TutorialBoardContainer.name, Is.EqualTo("TutorialBoardContainer"));
                 Assert.That(bindings.TutorialBoardContainer.IsChildOf(bindings.MinesGroup), Is.True, "教程棋盘容器必须挂在 MinesGroup 下。");
+                Assert.That(bindings.TutorialBoardContainer.GetComponent<FindCatBoardView>(), Is.Not.Null, "TutorialBoardContainer 必须静态挂载 FindCatBoardView，运行时不再 AddComponent。");
                 Assert.That(instance.transform.Find("RuntimeOverlay/StartButton"), Is.Null, "MainPanel 不应再创建开始/继续找猫按钮。");
                 Assert.That(instance.transform.Find("RuntimeOverlay/StatusText"), Is.Null, "主界面状态文本应移入 GM 工具 Runtime 信息区。");
                 Assert.That(bindings.StatusText, Is.Null, "MainPanel 不应再绑定常驻 StatusText。");
@@ -72,6 +97,84 @@ namespace Holmas.Tests
 
                 bindings.WalkToggle.isOn = true;
                 Assert.That(bindings.FindToggle.isOn, Is.False, "WalkToggle 打开后 FindToggle 必须关闭。");
+
+                view.Bind(bindings);
+                view.SetAssetsRuntime(null);
+                Image publicityImage = instance.transform.Find("BackgroundImage/Publicity_btn")?.GetComponent<Image>();
+                Image leaderboardImage = instance.transform.Find("BackgroundImage/Leaderboard_btn")?.GetComponent<Image>();
+                Image task1Image = instance.transform.Find("BackgroundImage/TaskGroup/Task1")?.GetComponent<Image>();
+                Image task1RewardIcon = instance.transform.Find("BackgroundImage/TaskGroup/Task1/RewardIcon")?.GetComponent<Image>();
+                Image task1CatIcon = instance.transform.Find("BackgroundImage/TaskGroup/Task1/CatIcon")?.GetComponent<Image>();
+                TextMeshProUGUI task1TitleText = instance.transform.Find("BackgroundImage/TaskGroup/Task1/TaskTitle")?.GetComponent<TextMeshProUGUI>();
+                TextMeshProUGUI task1RewardText = instance.transform.Find("BackgroundImage/TaskGroup/Task1/TaskReward")?.GetComponent<TextMeshProUGUI>();
+                Transform task1Lock = instance.transform.Find("BackgroundImage/TaskGroup/Task1/lock");
+                Transform task2Lock = instance.transform.Find("BackgroundImage/TaskGroup/Task2/lock");
+                Color publicityColor = publicityImage != null ? publicityImage.color : default;
+                Color leaderboardColor = leaderboardImage != null ? leaderboardImage.color : default;
+                Color task1Color = task1Image != null ? task1Image.color : default;
+                Color task1RewardColor = task1RewardIcon != null ? task1RewardIcon.color : default;
+                Color task1CatColor = task1CatIcon != null ? task1CatIcon.color : default;
+
+                view.Render(new MainVm
+                {
+                    PromotionButtonEnabled = false,
+                    PromotionButtonLabel = "不可升级",
+                    TaskItems = new[]
+                    {
+                        new MainTaskItemVm { Title = "A", Progress = "查找猫 1/3", Reward = "R1", ProgressNormalized = 0.33f, ButtonEnabled = true, CatId = "cat-a" },
+                        new MainTaskItemVm { Title = "B", Progress = "未解锁", Reward = "R2", ProgressNormalized = 0f, IsLocked = true, ButtonEnabled = false },
+                    },
+                });
+
+                if (publicityImage != null)
+                {
+                    Assert.That(publicityImage.color, Is.EqualTo(publicityColor), "Publicity_btn prefab Image 颜色和透明度不应被运行时改写。");
+                }
+
+                if (leaderboardImage != null)
+                {
+                    Assert.That(leaderboardImage.color, Is.EqualTo(leaderboardColor), "Leaderboard_btn prefab Image 颜色和透明度不应被运行时改写。");
+                }
+
+                if (task1Image != null)
+                {
+                    Assert.That(task1Image.color, Is.EqualTo(task1Color), "Task1 prefab Image 颜色和透明度不应被运行时改写。");
+                }
+
+                if (task1RewardIcon != null)
+                {
+                    Assert.That(task1RewardIcon.color, Is.EqualTo(task1RewardColor), "Task1/RewardIcon prefab Image 颜色和透明度不应被运行时改写。");
+                }
+
+                if (task1CatIcon != null)
+                {
+                    Assert.That(task1CatIcon.color, Is.EqualTo(task1CatColor), "Task1/CatIcon prefab Image 颜色和透明度不应被运行时改写。");
+                }
+
+                Assert.That(task1TitleText, Is.Not.Null, "Task1/TaskTitle 必须来自 prefab 静态 TMP 节点。");
+                Assert.That(task1RewardText, Is.Not.Null, "Task1/TaskReward 必须来自 prefab 静态 TMP 节点。");
+                Assert.That(task1TitleText.text, Is.EqualTo("A"));
+                Assert.That(task1RewardText.text, Is.EqualTo("R1"));
+                Assert.That(bindings.TaskSlotRoots[0]?.name, Is.EqualTo("Task1"), "Task1 根节点必须进入静态 binding。");
+                Assert.That(bindings.TaskSlotButtons[0], Is.Not.Null, "Task1 Button 必须进入静态 binding。");
+                Assert.That(bindings.TaskSlotBackgroundImages[0], Is.Not.Null, "Task1 背景 Image 必须进入静态 binding。");
+                Assert.That(bindings.TaskProgressTexts[0]?.name, Is.EqualTo("Count"), "Task1 Count 必须进入静态 binding。");
+                Assert.That(bindings.TaskProgressSliders[0]?.name, Is.EqualTo("Slider"), "Task1 Slider 必须进入静态 binding。");
+                Assert.That(bindings.TaskRewardIcons[0]?.name, Is.EqualTo("RewardIcon"), "Task1 RewardIcon 必须进入静态 binding。");
+                Assert.That(bindings.TaskCatIcons[0]?.name, Is.EqualTo("CatIcon"), "Task1 CatIcon 必须进入静态 binding。");
+                Assert.That(bindings.TaskLocks[0]?.name, Is.EqualTo("lock"), "Task1 lock 必须进入静态 binding。");
+                Assert.That(instance.transform.Find("BackgroundImage/TaskGroup/Task1/RuntimeTaskTitle"), Is.Null);
+                Assert.That(instance.transform.Find("BackgroundImage/TaskGroup/Task1/RuntimeTaskReward"), Is.Null);
+
+                if (task1Lock != null)
+                {
+                    Assert.That(task1Lock.gameObject.activeSelf, Is.False, "解锁 Task1 应隐藏 prefab 内 lock 节点。");
+                }
+
+                if (task2Lock != null)
+                {
+                    Assert.That(task2Lock.gameObject.activeSelf, Is.True, "锁定 Task2 应显示 prefab 内 lock 节点。");
+                }
             }
             finally
             {
@@ -88,11 +191,11 @@ namespace Holmas.Tests
             GameObject instance = Object.Instantiate(prefab);
             try
             {
-                LeaderboardView view = instance.GetComponent<LeaderboardView>() ?? instance.AddComponent<LeaderboardView>();
-                view.EnsureBindingSurface();
+                LeaderboardView view = instance.GetComponent<LeaderboardView>();
+                Assert.That(view, Is.Not.Null, "LeadbroadPanel prefab 必须静态挂载 LeaderboardView，运行时不再 AddComponent 补挂。");
 
                 UiReferenceCollector collector = instance.GetComponent<UiReferenceCollector>();
-                Assert.That(collector, Is.Not.Null, "LeadbroadPanel 运行时 collector 创建失败。");
+                Assert.That(collector, Is.Not.Null, "LeadbroadPanel prefab 必须静态挂载 UiReferenceCollector，运行时不再创建 binding surface。");
 
                 var resolver = new UiBindingResolver(collector, LeaderboardGeneratedBindings.Manifest);
                 LeaderboardBindings bindings = LeaderboardBindings.Resolve(resolver);
@@ -303,6 +406,17 @@ namespace Holmas.Tests
                 }
 
                 view.Bind(bindings);
+                view.SetAssetsRuntime(null);
+                Image buildButtonImage = bindings.BuildButton.GetComponent<Image>();
+                Color buildButtonColor = buildButtonImage != null ? buildButtonImage.color : default;
+                var stageImageColors = new Color[BattlePresenter.VisibleStageCount];
+                var buildStageImageColors = new Color[BattlePresenter.VisibleStageCount];
+                for (int i = 0; i < BattlePresenter.VisibleStageCount; i++)
+                {
+                    stageImageColors[i] = bindings.StageImages[i].color;
+                    buildStageImageColors[i] = bindings.BuildStageImages[i].color;
+                }
+
                 RectTransform stageBar1Rect = bindings.StageBars[0].GetComponent<RectTransform>();
                 Vector2 stageBar1AnchorMin = stageBar1Rect.anchorMin;
                 Vector2 stageBar1AnchorMax = stageBar1Rect.anchorMax;
@@ -320,7 +434,7 @@ namespace Holmas.Tests
                         ProgressLabel = "1/3",
                         StarCount = i == 0 ? 2 : 0,
                         Visible = true,
-                        Unlocked = true,
+                        Unlocked = i != 1,
                         Selected = i == 0,
                     };
                 }
@@ -357,7 +471,7 @@ namespace Holmas.Tests
                             StarCap = 3,
                             StarCount = 1,
                             Visible = true,
-                            Unlocked = true,
+                            Unlocked = false,
                             Current = true,
                             CanBuild = true,
                         },
@@ -429,7 +543,7 @@ namespace Holmas.Tests
                     }
                 }
 
-                Assert.That(activeSlotCount, Is.EqualTo(3), "promotion 星级槽位数量必须跟随 promotionLevelCaps，而不是固定 5 颗。");
+                Assert.That(activeSlotCount, Is.EqualTo(2), "promotion 点亮星级应通过显隐表达，不应通过改 Image 透明度隐藏。");
                 Assert.That(activeStarCount, Is.EqualTo(2), "promotion 星级显示必须跟随当前 promotion 等级。");
                 Assert.That(bindings.BuildStageButtons[3].gameObject.activeSelf, Is.False, "promotionLevelCaps 只有 3 项时，第 4 个底部 slot 必须隐藏。");
                 Assert.That(bindings.BuildStageButtons[4].gameObject.activeSelf, Is.False, "promotionLevelCaps 只有 3 项时，第 5 个底部 slot 必须隐藏。");
@@ -473,11 +587,9 @@ namespace Holmas.Tests
                 });
 
                 Transform dynamicBuildStage6 = bindings.BuildButton.transform.Find("BuildStage6");
-                Assert.That(dynamicBuildStage6, Is.Not.Null, "promotionLevelCaps 超过 5 项时，Build_btn 下应池化补充直接子 slot，而不是静默截断。");
-                Assert.That(dynamicBuildStage6.gameObject.activeSelf, Is.True, "第 6 个 promotion slot 必须可见。");
-                Assert.That(dynamicBuildStage6.GetComponent<Button>(), Is.Not.Null, "动态 promotion slot 必须具备点击按钮。");
-                dynamicBuildStage6.GetComponent<Button>().onClick.Invoke();
-                Assert.That(clickedPromotionSlot, Is.EqualTo(5), "动态 promotion slot 点击必须回传真实 slot index。");
+                Assert.That(dynamicBuildStage6, Is.Null, "promotionLevelCaps 超过 5 项时，运行时不应再动态创建 BuildStage6；需要扩容时应先改 prefab 静态槽位。");
+                bindings.BuildStageButtons[4].onClick.Invoke();
+                Assert.That(clickedPromotionSlot, Is.EqualTo(4), "静态 promotion slot 点击必须回传真实 slot index。");
                 Assert.That(bindings.BuildButton.interactable, Is.False, "Build_btn 作为底部容器时，不应在无可升级项状态给出可点击反馈。");
 
                 for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
@@ -492,6 +604,16 @@ namespace Holmas.Tests
                 Assert.That(stageBar1Rect.anchoredPosition, Is.EqualTo(stageBar1AnchoredPosition), "运行时不能重写 prefab 内 StageBar1 的位置。");
                 Assert.That(stageBar1Rect.sizeDelta, Is.EqualTo(stageBar1SizeDelta), "运行时不能重写 prefab 内 StageBar1 的尺寸。");
                 Assert.That(stageBar1Rect.localRotation, Is.EqualTo(stageBar1Rotation), "运行时不能重写 prefab 内 StageBar1 的旋转。");
+                if (buildButtonImage != null)
+                {
+                    Assert.That(buildButtonImage.color, Is.EqualTo(buildButtonColor), "Build_btn prefab Image 颜色和透明度不应被运行时改写。");
+                }
+
+                for (int i = 0; i < BattlePresenter.VisibleStageCount; i++)
+                {
+                    Assert.That(bindings.StageImages[i].color, Is.EqualTo(stageImageColors[i]), $"Stage{i + 1} prefab Image 颜色和透明度不应被运行时改写。");
+                    Assert.That(bindings.BuildStageImages[i].color, Is.EqualTo(buildStageImageColors[i]), $"BuildStage{i + 1}/Image prefab 颜色和透明度不应被运行时改写。");
+                }
             }
             finally
             {
@@ -508,11 +630,11 @@ namespace Holmas.Tests
             GameObject instance = Object.Instantiate(prefab);
             try
             {
-                LoadingView view = instance.GetComponent<LoadingView>() ?? instance.AddComponent<LoadingView>();
-                view.EnsureBindingSurface();
+                LoadingView view = instance.GetComponent<LoadingView>();
+                Assert.That(view, Is.Not.Null, "LoadingPanel prefab 必须静态挂载 LoadingView，运行时不再 AddComponent 补挂。");
 
                 UiReferenceCollector collector = instance.GetComponent<UiReferenceCollector>();
-                Assert.That(collector, Is.Not.Null, "LoadingPanel 运行时 collector 创建失败。");
+                Assert.That(collector, Is.Not.Null, "LoadingPanel prefab 必须静态挂载 UiReferenceCollector，运行时不再创建 binding surface。");
 
                 var resolver = new UiBindingResolver(collector, LoadingGeneratedBindings.Manifest);
                 LoadingBindings bindings = LoadingBindings.Resolve(resolver);
