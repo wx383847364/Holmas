@@ -14,8 +14,12 @@ namespace Holmas.Editor.FontRole
 {
     public sealed class HolmasFontRoleToolWindow : EditorWindow
     {
+        private const float MinReportHeight = 220f;
+        private const float MaxReportHeight = 520f;
+
         private HolmasFontRoleProfile _profile;
-        private Vector2 _scroll;
+        private Vector2 _contentScroll;
+        private Vector2 _reportScroll;
         private List<HolmasFontRoleScanItem> _scanItems = new List<HolmasFontRoleScanItem>();
         private string _lastSummary = string.Empty;
         private int _expandedActionIndex = -1;
@@ -35,21 +39,30 @@ namespace Holmas.Editor.FontRole
 
         private void OnGUI()
         {
-            EditorGUILayout.Space(8f);
-            DrawProfileHeader();
-            EditorGUILayout.Space(8f);
+            _contentScroll = EditorGUILayout.BeginScrollView(_contentScroll);
 
-            if (_profile == null)
+            try
             {
-                EditorGUILayout.HelpBox("HolmasFontRoleProfile 缺失。", MessageType.Error);
-                return;
-            }
+                EditorGUILayout.Space(8f);
+                DrawProfileHeader();
+                EditorGUILayout.Space(8f);
 
-            DrawRoleEntries();
-            EditorGUILayout.Space(8f);
-            DrawActions();
-            EditorGUILayout.Space(8f);
-            DrawReport();
+                if (_profile == null)
+                {
+                    EditorGUILayout.HelpBox("HolmasFontRoleProfile 缺失。", MessageType.Error);
+                    return;
+                }
+
+                DrawRoleEntries();
+                EditorGUILayout.Space(8f);
+                DrawActions();
+                EditorGUILayout.Space(8f);
+                DrawReport();
+            }
+            finally
+            {
+                EditorGUILayout.EndScrollView();
+            }
         }
 
         private void DrawProfileHeader()
@@ -113,6 +126,7 @@ namespace Holmas.Editor.FontRole
                     HolmasFontRoleToolLogic.AssignRecommendedDefaults(_profile, overwriteExisting: false);
                     EditorUtility.SetDirty(_profile);
                     AssetDatabase.SaveAssets();
+                    _lastSummary = "Font roles scanned and recommended defaults assigned.";
                 });
 
             DrawActionButtonWithHelp(
@@ -126,6 +140,7 @@ namespace Holmas.Editor.FontRole
                     EditorUtility.SetDirty(_profile);
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
+                    _lastSummary = "TMP font assets generated/refreshed under " + HolmasFontRoleProfile.DefaultTmpAssetDirectory + ".";
                 });
 
             DrawActionButtonWithHelp(
@@ -135,9 +150,10 @@ namespace Holmas.Editor.FontRole
                 "用途：同步运行时新建文本使用的正式字体和中文兜底字体。\n会改：创建或刷新 Assets/Res/Font/HolmasFontRuntimeSettings.asset。\n不会：不修改 prefab，也不会替换已有界面字体。\n何时点：调整 FormalBody 或 Fallback 后点它，避免运行时文本和 prefab 风格不一致。",
                 () =>
                 {
-                    HolmasFontRoleToolLogic.CreateOrRefreshRuntimeSettings(_profile);
+                    HolmasFontRuntimeSettings settings = HolmasFontRoleToolLogic.CreateOrRefreshRuntimeSettings(_profile);
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
+                    _lastSummary = "Runtime settings refreshed: " + AssetDatabase.GetAssetPath(settings);
                 });
 
             DrawActionButtonWithHelp(
@@ -178,7 +194,7 @@ namespace Holmas.Editor.FontRole
                 {
                     if (GUILayout.Button(label, GUILayout.Width(280f), GUILayout.Height(28f)))
                     {
-                        onClick?.Invoke();
+                        ExecuteAction(label, onClick);
                     }
 
                     EditorGUILayout.LabelField(summary, EditorStyles.wordWrappedMiniLabel, GUILayout.MinHeight(28f));
@@ -197,6 +213,26 @@ namespace Holmas.Editor.FontRole
             }
         }
 
+        private void ExecuteAction(string label, Action onClick)
+        {
+            try
+            {
+                _lastSummary = string.Empty;
+                onClick?.Invoke();
+
+                string message = string.IsNullOrWhiteSpace(_lastSummary)
+                    ? label + " completed."
+                    : _lastSummary;
+                EditorUtility.DisplayDialog("执行成功", label + "\n\n" + message, "OK");
+            }
+            catch (Exception exception)
+            {
+                _lastSummary = label + " failed: " + exception.Message;
+                Debug.LogException(exception);
+                EditorUtility.DisplayDialog("执行失败", label + "\n\n" + exception.Message, "OK");
+            }
+        }
+
         private void DrawReport()
         {
             if (_scanItems == null || _scanItems.Count == 0)
@@ -204,8 +240,10 @@ namespace Holmas.Editor.FontRole
                 return;
             }
 
-            EditorGUILayout.LabelField("Scan Report", EditorStyles.boldLabel);
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            EditorGUILayout.LabelField($"Scan Report ({_scanItems.Count})", EditorStyles.boldLabel);
+
+            float reportHeight = Mathf.Clamp(position.height * 0.42f, MinReportHeight, MaxReportHeight);
+            _reportScroll = EditorGUILayout.BeginScrollView(_reportScroll, GUILayout.Height(reportHeight));
             for (int i = 0; i < _scanItems.Count; i++)
             {
                 HolmasFontRoleScanItem item = _scanItems[i];
