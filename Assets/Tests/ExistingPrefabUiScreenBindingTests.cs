@@ -441,6 +441,9 @@ namespace Holmas.Tests
 
                 view.Render(new BattleVm
                 {
+                    EnergyLabel = "Energy should stay hidden",
+                    Summary = "Summary should stay hidden",
+                    Status = "Status should stay hidden",
                     BuildButtonLabel = "Stage 1\n选择宣传项升级",
                     BuildButtonEnabled = true,
                     PromotionSlots = new[]
@@ -506,6 +509,12 @@ namespace Holmas.Tests
                     bindings.StageNameTexts[0].transform.GetSiblingIndex(),
                     Is.EqualTo(bindings.StageNameTexts[0].transform.parent.childCount - 1),
                     "Stage 标签文字必须绘制在标签底板之上。");
+                Assert.That(bindings.EnergyText.gameObject.activeSelf, Is.False, "BattlePanel RuntimeOverlay 体力信息应隐藏。");
+                Assert.That(bindings.SummaryText.gameObject.activeSelf, Is.False, "BattlePanel RuntimeOverlay 摘要信息应隐藏。");
+                Assert.That(bindings.StatusText.gameObject.activeSelf, Is.False, "BattlePanel RuntimeOverlay 状态信息应隐藏。");
+                Assert.That(bindings.EnergyText.text, Is.Empty, "隐藏的 RuntimeOverlay 体力信息不应残留文本。");
+                Assert.That(bindings.SummaryText.text, Is.Empty, "隐藏的 RuntimeOverlay 摘要信息不应残留文本。");
+                Assert.That(bindings.StatusText.text, Is.Empty, "隐藏的 RuntimeOverlay 状态信息不应残留文本。");
                 Assert.That(bindings.StageLocks[0].gameObject.activeSelf, Is.False, "已解锁 Stage 必须关闭静态绑定的 Image/lock 节点。");
                 Transform buildStarGroup = bindings.BuildStageButtons[0].transform.Find("stargroup");
                 Assert.That(buildStarGroup, Is.Not.Null, "BuildStage1 应保留 stargroup 星级容器。");
@@ -513,6 +522,13 @@ namespace Holmas.Tests
                 Transform buildActiveStarGroup = bindings.BuildStageButtons[0].transform.Find("stargroup_1");
                 Assert.That(buildActiveStarGroup, Is.Not.Null, "BuildStage1 应保留 stargroup_1 点亮星级容器。");
                 Assert.That(buildActiveStarGroup.gameObject.activeSelf, Is.True, "stargroup_1 是实际星级显示层，不应被运行时关闭。");
+                Assert.That(
+                    buildActiveStarGroup.GetComponent<HorizontalLayoutGroup>().childAlignment,
+                    Is.EqualTo(TextAnchor.MiddleLeft),
+                    "点亮星层必须左对齐，隐藏多余星星时才会从左到右依次点亮。");
+                Assert.That(buildActiveStarGroup.Find("star").gameObject.activeSelf, Is.True, "第 1 颗点亮星应先显示。");
+                Assert.That(buildActiveStarGroup.Find("star (1)").gameObject.activeSelf, Is.True, "第 2 颗点亮星应随后显示。");
+                Assert.That(buildActiveStarGroup.Find("star (2)").gameObject.activeSelf, Is.False, "未达到的第 3 颗点亮星应隐藏。");
                 RectTransform buildSlotRect = bindings.BuildStageButtons[0].GetComponent<RectTransform>();
                 RectTransform buildImageRect = bindings.BuildStageImages[0].rectTransform;
                 RectTransform buildStarRect = buildStarGroup as RectTransform;

@@ -115,6 +115,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _bindings = bindings ?? new BattleBindings();
             DisableButtonGraphicTint(_bindings.BackButton);
             DisableButtonGraphicTint(_bindings.BuildButton);
+            HideRuntimeOverlayInfoTexts();
             for (int i = 0; i < BattlePresenter.VisibleStageCount; i++)
             {
                 DisableButtonGraphicTint(_bindings.StageButtons[i]);
@@ -203,20 +204,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 TmpGlyphCoverageReporter.SetText(_bindings.GoldText, viewModel.GoldLabel);
             }
 
-            if (_bindings?.EnergyText != null)
-            {
-                TmpGlyphCoverageReporter.SetText(_bindings.EnergyText, viewModel.EnergyLabel);
-            }
-
-            if (_bindings?.SummaryText != null)
-            {
-                TmpGlyphCoverageReporter.SetText(_bindings.SummaryText, viewModel.Summary);
-            }
-
-            if (_bindings?.StatusText != null)
-            {
-                TmpGlyphCoverageReporter.SetText(_bindings.StatusText, viewModel.Status);
-            }
+            HideRuntimeOverlayInfoTexts();
 
             if (_bindings?.BuildButton != null)
             {
@@ -802,18 +790,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 new Vector2(0f, y),
                 new Vector2(90f, 22f));
 
-            HorizontalLayoutGroup layoutGroup = groupObject.GetComponent<HorizontalLayoutGroup>();
-            if (layoutGroup == null)
-            {
-                layoutGroup = groupObject.AddComponent<HorizontalLayoutGroup>();
-            }
-
-            layoutGroup.childAlignment = TextAnchor.MiddleCenter;
-            layoutGroup.spacing = 0f;
-            layoutGroup.childControlWidth = false;
-            layoutGroup.childControlHeight = false;
-            layoutGroup.childForceExpandWidth = false;
-            layoutGroup.childForceExpandHeight = false;
+            ConfigureStarGroupLayout(groupObject);
 
             EnsureStarPool(groupObject.transform, Math.Max(1, ResolveStars(groupObject.transform).Length), starSprite);
 
@@ -1099,6 +1076,30 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             return labelBackground;
         }
 
+        private void HideRuntimeOverlayInfoTexts()
+        {
+            if (_bindings == null)
+            {
+                return;
+            }
+
+            HideRuntimeOverlayInfoText(_bindings.EnergyText);
+            HideRuntimeOverlayInfoText(_bindings.SummaryText);
+            HideRuntimeOverlayInfoText(_bindings.StatusText);
+        }
+
+        private static void HideRuntimeOverlayInfoText(TextMeshProUGUI text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.text = string.Empty;
+            text.raycastTarget = false;
+            text.gameObject.SetActive(false);
+        }
+
         private static void ConfigureStageLabel(TextMeshProUGUI text, bool selected)
         {
             if (text == null)
@@ -1223,6 +1224,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         private static void RenderStarGroup(Transform starGroup, int slotCount, int visibleCount, Color visibleColor, bool keepInvisibleSlots)
         {
+            ConfigureStarGroupLayout(starGroup != null ? starGroup.gameObject : null);
             EnsureStarPool(starGroup, slotCount, null);
             Image[] stars = ResolveStars(starGroup);
             int clampedVisibleCount = Mathf.Clamp(visibleCount, 0, Math.Max(0, slotCount));
@@ -1246,6 +1248,27 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                     stars[i].gameObject.SetActive(i < clampedVisibleCount);
                 }
             }
+        }
+
+        private static void ConfigureStarGroupLayout(GameObject starGroupObject)
+        {
+            if (starGroupObject == null)
+            {
+                return;
+            }
+
+            HorizontalLayoutGroup layoutGroup = starGroupObject.GetComponent<HorizontalLayoutGroup>();
+            if (layoutGroup == null)
+            {
+                layoutGroup = starGroupObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            layoutGroup.childAlignment = TextAnchor.MiddleLeft;
+            layoutGroup.spacing = 0f;
+            layoutGroup.childControlWidth = false;
+            layoutGroup.childControlHeight = false;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
         }
 
         private static void EnsureStarPool(Transform starGroup, int slotCount, Sprite fallbackSprite)
