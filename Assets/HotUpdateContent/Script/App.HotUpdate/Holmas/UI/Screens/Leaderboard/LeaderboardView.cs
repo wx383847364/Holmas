@@ -29,6 +29,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
         private UnityAction<bool> _currentDailyAction;
         private bool _syncingToggles;
 
+        #if UNITY_EDITOR
         public void EnsureBindingSurface()
         {
             gameObject.name = LeaderboardBindings.RootNodePath;
@@ -79,6 +80,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             collector.RegisterOrReplace(LeaderboardBindings.Top2Key, top2, nodePath: LeaderboardBindings.Top2NodePath);
             collector.RegisterOrReplace(LeaderboardBindings.Top3Key, top3, nodePath: LeaderboardBindings.Top3NodePath);
         }
+        #endif
 
         public void Bind(LeaderboardBindings bindings)
         {

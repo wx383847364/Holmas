@@ -18,17 +18,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
         protected override void OnCreate()
         {
             _view = RootObject != null ? RootObject.GetComponent<LeaderboardView>() : null;
-            if (_view == null && RootObject != null)
+            if (_view == null)
             {
-                _view = RootObject.AddComponent<LeaderboardView>();
+                throw new System.InvalidOperationException("LeadbroadPanel prefab 缺少 LeaderboardView，请在 prefab 静态挂载。");
             }
-
-            _view?.EnsureBindingSurface();
         }
 
         protected override void OnBind()
         {
             _bindings = LeaderboardBindings.Resolve(BindingResolver);
+            if (_bindings == null || !_bindings.HasRequiredBindings)
+            {
+                throw new System.InvalidOperationException("LeadbroadPanel 缺少完整 UiReferenceCollector 静态绑定，请先在 prefab 侧补齐 LeaderboardGeneratedBindings.Manifest 对应节点。");
+            }
+
             _view?.Bind(_bindings);
             INetClient netClient = Root != null && Root.Context != null && Root.Context.ServiceContainer != null
                 ? Root.Context.ServiceContainer.Get<INetClient>()

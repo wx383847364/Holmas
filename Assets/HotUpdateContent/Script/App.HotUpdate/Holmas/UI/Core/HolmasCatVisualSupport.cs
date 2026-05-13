@@ -87,7 +87,7 @@ namespace App.HotUpdate.Holmas.UI.Core
             _assetsRuntime = assetsRuntime;
         }
 
-        public void Bind(Image image, HolmasCatVisualVm visual, bool dimmed = false)
+        public void Bind(Image image, HolmasCatVisualVm visual, bool dimmed = false, bool preserveImageColor = false)
         {
             if (image == null)
             {
@@ -97,27 +97,27 @@ namespace App.HotUpdate.Holmas.UI.Core
             string catId = visual != null ? visual.CatId : string.Empty;
             string iconPath = visual != null ? visual.IconPath : string.Empty;
             int generation = _requestGeneration;
-            string requestKey = $"{generation}|{catId}|{iconPath}|{dimmed}";
+            string requestKey = $"{generation}|{catId}|{iconPath}|{dimmed}|{preserveImageColor}";
             HolmasCatImageRequest request = image.GetComponent<HolmasCatImageRequest>() ?? image.gameObject.AddComponent<HolmasCatImageRequest>();
             request.RequestKey = requestKey;
             image.enabled = true;
 
             if (TryGetLoadedSprite(iconPath, out Sprite sprite))
             {
-                ApplyLoadedSprite(image, sprite, dimmed);
+                ApplyLoadedSprite(image, sprite, dimmed, preserveImageColor);
                 return;
             }
 
-            ApplyFallback(image, catId, dimmed);
+            ApplyFallback(image, catId, dimmed, preserveImageColor);
             if (string.IsNullOrWhiteSpace(iconPath) || _assetsRuntime == null || _disposed)
             {
                 return;
             }
 
-            _ = LoadAndApplyAsync(image, request, requestKey, iconPath, catId, dimmed, generation);
+            _ = LoadAndApplyAsync(image, request, requestKey, iconPath, catId, dimmed, preserveImageColor, generation);
         }
 
-        public void Clear(Image image)
+        public void Clear(Image image, bool preserveImageColor = false)
         {
             if (image == null)
             {
@@ -126,7 +126,11 @@ namespace App.HotUpdate.Holmas.UI.Core
 
             image.sprite = null;
             image.enabled = false;
-            image.color = Color.white;
+            if (!preserveImageColor)
+            {
+                image.color = Color.white;
+            }
+
             image.preserveAspect = true;
             InvalidateRequest(image);
         }
@@ -177,6 +181,7 @@ namespace App.HotUpdate.Holmas.UI.Core
             string iconPath,
             string catId,
             bool dimmed,
+            bool preserveImageColor,
             int generation)
         {
             Sprite sprite;
@@ -200,11 +205,11 @@ namespace App.HotUpdate.Holmas.UI.Core
 
             if (sprite != null)
             {
-                ApplyLoadedSprite(image, sprite, dimmed);
+                ApplyLoadedSprite(image, sprite, dimmed, preserveImageColor);
                 return;
             }
 
-            ApplyFallback(image, catId, dimmed);
+            ApplyFallback(image, catId, dimmed, preserveImageColor);
         }
 
         private Task<Sprite> GetOrLoadSpriteAsync(string iconPath, int generation)
@@ -287,18 +292,24 @@ namespace App.HotUpdate.Holmas.UI.Core
             return null;
         }
 
-        private static void ApplyLoadedSprite(Image image, Sprite sprite, bool dimmed)
+        private static void ApplyLoadedSprite(Image image, Sprite sprite, bool dimmed, bool preserveImageColor)
         {
             image.sprite = sprite;
             image.preserveAspect = true;
-            image.color = dimmed ? new Color(1f, 1f, 1f, 0.35f) : Color.white;
+            if (!preserveImageColor)
+            {
+                image.color = dimmed ? new Color(1f, 1f, 1f, 0.35f) : Color.white;
+            }
         }
 
-        private static void ApplyFallback(Image image, string catId, bool dimmed)
+        private static void ApplyFallback(Image image, string catId, bool dimmed, bool preserveImageColor)
         {
             image.sprite = GetFallbackSprite();
             image.preserveAspect = false;
-            image.color = GetFallbackColor(catId, dimmed);
+            if (!preserveImageColor)
+            {
+                image.color = GetFallbackColor(catId, dimmed);
+            }
         }
 
         private static Sprite GetFallbackSprite()

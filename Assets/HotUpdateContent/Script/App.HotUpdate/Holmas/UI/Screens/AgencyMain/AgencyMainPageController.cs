@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.UI.Core;
-using App.HotUpdate.Holmas.UI.Generated;
 
 namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
 {
@@ -15,7 +14,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
         private AgencyMainPresenter _presenter;
         private AgencyMainView _view;
         private AgencyMainBindings _bindings;
-        private bool _isFallbackLayout;
         private bool _isBusy;
         private HolmasGameplayRuntime _runtime;
 
@@ -24,20 +22,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             _runtime = Root != null && Root.Context != null ? Root.Context.GameplayRuntime : null;
             _presenter = new AgencyMainPresenter(Root != null ? Root.Context : null);
             _view = RootObject != null ? RootObject.GetComponent<AgencyMainView>() : null;
-            if (_view == null && RootObject != null)
+            if (_view == null)
             {
-                _view = RootObject.AddComponent<AgencyMainView>();
-            }
-
-            _isFallbackLayout = !AgencyMainBindings.HasCompleteBindings(BindingResolver);
-            if (_isFallbackLayout)
-            {
-                if (RootObject != null)
-                {
-                    RootObject.name = AgencyMainGeneratedBindings.PrefabName;
-                }
-
-                _view?.EnsureFallbackLayout();
+                throw new InvalidOperationException("AgencyMainPanel prefab 缺少 AgencyMainView，请在 prefab 静态挂载。");
             }
 
             if (_runtime != null)
@@ -49,6 +36,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
         protected override void OnBind()
         {
             _bindings = AgencyMainBindings.Resolve(BindingResolver);
+            if (_bindings == null || !_bindings.HasRequiredBindings)
+            {
+                throw new InvalidOperationException("AgencyMainPanel 缺少完整 UiReferenceCollector 静态绑定，请先在 prefab 侧补齐 AgencyMainGeneratedBindings.Manifest 对应节点。");
+            }
+
             _view?.Bind(_bindings);
             _view?.SetPrimaryAction(OnPrimaryActionClicked);
             _view?.SetTaskClaimAction(OnTaskClaimClicked);
@@ -92,7 +84,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
         private void Refresh(string status)
         {
             AgencyMainVm viewModel = _presenter != null
-                ? _presenter.Build(status, _isFallbackLayout || (LoadedHandle != null && LoadedHandle.IsPlaceholder))
+                ? _presenter.Build(status, LoadedHandle != null && LoadedHandle.IsPlaceholder)
                 : new AgencyMainVm();
             viewModel.PrimaryActionEnabled = !_isBusy && viewModel.PrimaryActionEnabled;
             if (viewModel.TaskItems != null)

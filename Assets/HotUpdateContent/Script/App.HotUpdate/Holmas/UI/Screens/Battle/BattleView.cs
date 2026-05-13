@@ -18,8 +18,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private static readonly Color StageLabelSelectedBackgroundColor = new Color(1f, 0.92f, 0.58f, 0.94f);
         private readonly UnityAction[] _stageClickActions = new UnityAction[BattlePresenter.VisibleStageCount];
         private readonly UnityAction[] _buildStageClickActions = new UnityAction[BattlePresenter.VisibleStageCount];
-        private readonly List<BuildStageSurface> _dynamicBuildStageSurfaces = new List<BuildStageSurface>();
-        private readonly List<UnityAction> _dynamicBuildStageClickActions = new List<UnityAction>();
         private BattleBindings _bindings;
         private UnityAction _currentBackAction;
         private UnityAction _currentBuildAction;
@@ -27,6 +25,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private Action<int> _currentPromotionSlotAction;
         private HolmasCatSpriteLoader _stageSpriteLoader;
 
+        #if UNITY_EDITOR
         public void EnsureBindingSurface()
         {
             gameObject.name = BattleBindings.RootNodePath;
@@ -109,10 +108,18 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 collector.RegisterOrReplace(BattleBindings.StageBarKeys[i], stageBar, nodePath: BattleBindings.StageBarNodePaths[i]);
             }
         }
+        #endif
 
         public void Bind(BattleBindings bindings)
         {
             _bindings = bindings ?? new BattleBindings();
+            DisableButtonGraphicTint(_bindings.BackButton);
+            DisableButtonGraphicTint(_bindings.BuildButton);
+            for (int i = 0; i < BattlePresenter.VisibleStageCount; i++)
+            {
+                DisableButtonGraphicTint(_bindings.StageButtons[i]);
+                DisableButtonGraphicTint(_bindings.BuildStageButtons[i]);
+            }
         }
 
         public void SetBackAction(UnityAction action)
@@ -247,8 +254,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             int staticSlotCount = _bindings.BuildStageButtons.Length;
             int promotionSlotCount = viewModel.PromotionSlots != null ? viewModel.PromotionSlots.Length : 0;
-            int layoutSlotCount = Math.Max(staticSlotCount, promotionSlotCount);
-            int renderedSlotCount = Math.Max(layoutSlotCount, staticSlotCount + _dynamicBuildStageSurfaces.Count);
+            int layoutSlotCount = staticSlotCount;
+            int renderedSlotCount = staticSlotCount;
+            if (promotionSlotCount > staticSlotCount)
+            {
+                Debug.LogWarning(
+                    $"BattleView: promotion slot 数量 {promotionSlotCount} 超过 prefab 静态槽位 {staticSlotCount}，超出部分不会动态创建。");
+            }
 
             for (int i = 0; i < renderedSlotCount; i++)
             {
@@ -268,7 +280,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 {
                     if (surface.Image != null)
                     {
-                        _stageSpriteLoader?.Clear(surface.Image);
+                        _stageSpriteLoader?.Clear(surface.Image, preserveImageColor: true);
                     }
 
                     if (surface.BaseStarGroup != null)
@@ -293,8 +305,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                         CatName = promotionSlot.PromotionId ?? string.Empty,
                         IconPath = promotionSlot.StageImage ?? string.Empty,
                     };
-                    _stageSpriteLoader?.Bind(image, visual, !promotionSlot.Unlocked);
-                    image.color = GetPromotionSlotImageTint(promotionSlot);
+                    _stageSpriteLoader?.Bind(image, visual, preserveImageColor: true);
                 }
 
                 if (surface.NameText != null)
@@ -331,33 +342,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return default;
             }
 
-            if (slotIndex < _bindings.BuildStageButtons.Length)
+            var surface = new BuildStageSurface
             {
-                var surface = new BuildStageSurface
-                {
-                    Button = _bindings.BuildStageButtons[slotIndex],
-                    Image = _bindings.BuildStageImages[slotIndex],
-                    NameText = _bindings.BuildStageNameTexts[slotIndex],
-                    LockRect = _bindings.BuildStageLocks[slotIndex],
-                    BaseStarGroup = _bindings.BuildStageBaseStarGroups[slotIndex],
-                    ActiveStarGroup = _bindings.BuildStageActiveStarGroups[slotIndex],
-                };
-                ConfigureBuildStageSurface(surface, slotIndex, layoutSlotCount);
-                return surface;
-            }
-
-            int dynamicIndex = slotIndex - _bindings.BuildStageButtons.Length;
-            while (_dynamicBuildStageSurfaces.Count <= dynamicIndex)
-            {
-                int newSlotIndex = _bindings.BuildStageButtons.Length + _dynamicBuildStageSurfaces.Count;
-                _dynamicBuildStageSurfaces.Add(ResolveBuildStageSurface(newSlotIndex, _bindings.BuildButton != null ? _bindings.BuildButton.transform : transform, layoutSlotCount));
-                _dynamicBuildStageClickActions.Add(null);
-            }
-
-            BuildStageSurface dynamicSurface = _dynamicBuildStageSurfaces[dynamicIndex];
-            ConfigureBuildStageSurface(dynamicSurface, slotIndex, layoutSlotCount);
-            BindDynamicBuildStageAction(dynamicIndex, slotIndex);
-            return dynamicSurface;
+                Button = _bindings.BuildStageButtons[slotIndex],
+                Image = _bindings.BuildStageImages[slotIndex],
+                NameText = _bindings.BuildStageNameTexts[slotIndex],
+                LockRect = _bindings.BuildStageLocks[slotIndex],
+                BaseStarGroup = _bindings.BuildStageBaseStarGroups[slotIndex],
+                ActiveStarGroup = _bindings.BuildStageActiveStarGroups[slotIndex],
+            };
+            ConfigureBuildStageSurface(surface, slotIndex, layoutSlotCount);
+            return surface;
         }
 
         private void RenderStages(BattleVm viewModel)
@@ -382,7 +377,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 {
                     if (_bindings.StageImages[i] != null)
                     {
-                        _stageSpriteLoader?.Clear(_bindings.StageImages[i]);
+                        _stageSpriteLoader?.Clear(_bindings.StageImages[i], preserveImageColor: true);
                     }
 
                     continue;
@@ -402,8 +397,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                         CatName = stage.StageName ?? string.Empty,
                         IconPath = stage.StageImage ?? string.Empty,
                     };
-                    _stageSpriteLoader?.Bind(image, visual, !stage.Unlocked);
-                    image.color = GetStageImageTint(stage);
+                    _stageSpriteLoader?.Bind(image, visual, preserveImageColor: true);
                 }
 
                 if (_bindings.StageNameTexts[i] != null)
@@ -499,38 +493,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 button.onClick.AddListener(_buildStageClickActions[i]);
             }
 
-            for (int i = 0; i < _dynamicBuildStageSurfaces.Count; i++)
-            {
-                BindDynamicBuildStageAction(i, _bindings.BuildStageButtons.Length + i);
-            }
-        }
-
-        private void BindDynamicBuildStageAction(int dynamicIndex, int slotIndex)
-        {
-            if (dynamicIndex < 0 || dynamicIndex >= _dynamicBuildStageSurfaces.Count)
-            {
-                return;
-            }
-
-            Button button = _dynamicBuildStageSurfaces[dynamicIndex].Button;
-            if (button == null)
-            {
-                return;
-            }
-
-            while (_dynamicBuildStageClickActions.Count <= dynamicIndex)
-            {
-                _dynamicBuildStageClickActions.Add(null);
-            }
-
-            if (_dynamicBuildStageClickActions[dynamicIndex] != null)
-            {
-                button.onClick.RemoveListener(_dynamicBuildStageClickActions[dynamicIndex]);
-                _dynamicBuildStageClickActions[dynamicIndex] = null;
-            }
-
-            _dynamicBuildStageClickActions[dynamicIndex] = () => _currentPromotionSlotAction?.Invoke(slotIndex);
-            button.onClick.AddListener(_dynamicBuildStageClickActions[dynamicIndex]);
         }
 
         private void EnsureFallbackBackground()
@@ -626,12 +588,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             ConfigureBuildStageSlotRect(slotRect, slotIndex, layoutSlotCount);
 
             Image buttonImage = slotObject.GetComponent<Image>();
+            bool createdButtonImage = buttonImage == null;
             if (buttonImage == null)
             {
                 buttonImage = slotObject.AddComponent<Image>();
             }
 
-            buttonImage.color = new Color(1f, 1f, 1f, 0f);
+            if (createdButtonImage)
+            {
+                buttonImage.color = new Color(1f, 1f, 1f, 0f);
+            }
+
             buttonImage.raycastTarget = true;
 
             Button button = slotObject.GetComponent<Button>();
@@ -640,7 +607,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 button = slotObject.AddComponent<Button>();
             }
 
-            button.targetGraphic = buttonImage;
+            DisableButtonGraphicTint(button);
 
             Image icon = ResolveBuildStageIcon(slotObject.transform);
             TextMeshProUGUI label = ResolveBuildStageLabel(slotObject.transform);
@@ -705,7 +672,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             Image image = buildButton.GetComponent<Image>();
             if (image != null)
             {
-                image.color = new Color(1f, 1f, 1f, 0f);
                 image.raycastTarget = false;
             }
         }
@@ -958,6 +924,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                     new Vector2(130f, 150f),
                     new Color(0.28f, 0.54f, 0.67f, 0.96f));
             }
+            else
+            {
+                DisableButtonGraphicTint(button);
+            }
 
             Image image = button.GetComponent<Image>();
             if (image == null)
@@ -1161,7 +1131,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return;
             }
 
-            labelBackground.color = selected ? StageLabelSelectedBackgroundColor : StageLabelBackgroundColor;
             labelBackground.raycastTarget = false;
 
             RectTransform labelRect = labelBackground.rectTransform;
@@ -1272,9 +1241,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 }
 
                 stars[i].raycastTarget = false;
-                stars[i].color = i < clampedVisibleCount
-                    ? visibleColor
-                    : new Color(visibleColor.r, visibleColor.g, visibleColor.b, keepInvisibleSlots ? 0f : visibleColor.a);
+                if (keepInvisibleSlots)
+                {
+                    stars[i].gameObject.SetActive(i < clampedVisibleCount);
+                }
             }
         }
 
@@ -1354,7 +1324,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             Vector2 sizeDelta,
             Color color)
         {
-            GameObject buttonObject = GetOrCreateChild(parent, objectName);
+            Transform existingTransform = parent != null ? parent.Find(objectName) : null;
+            bool createdButtonObject = existingTransform == null;
+            GameObject buttonObject = createdButtonObject ? new GameObject(objectName) : existingTransform.gameObject;
+            if (createdButtonObject)
+            {
+                buttonObject.transform.SetParent(parent, false);
+            }
+
             RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
             if (rectTransform == null)
             {
@@ -1364,18 +1341,23 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             ConfigureRect(rectTransform, anchorMin, anchorMax, pivot, anchoredPosition, sizeDelta);
 
             Image image = buttonObject.GetComponent<Image>();
+            bool createdImage = image == null;
             if (image == null)
             {
                 image = buttonObject.AddComponent<Image>();
             }
 
-            image.color = color;
+            if (createdButtonObject || createdImage)
+            {
+                image.color = color;
+            }
 
             Button button = buttonObject.GetComponent<Button>();
             if (button == null)
             {
                 button = buttonObject.AddComponent<Button>();
             }
+            DisableButtonGraphicTint(button);
 
             TextMeshProUGUI labelText = GetOrCreateRuntimeText(
                 buttonObject.transform,
@@ -1389,6 +1371,17 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 TextAlignmentOptions.Center);
             TmpGlyphCoverageReporter.SetText(labelText, label);
             return button;
+        }
+
+        private static void DisableButtonGraphicTint(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            button.transition = Selectable.Transition.None;
+            button.targetGraphic = null;
         }
 
         private void OnDestroy()
@@ -1407,36 +1400,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         {
             Transform target = transform.Find(path);
             return target != null ? target.gameObject : null;
-        }
-
-        private static Color GetStageImageTint(BattleStageVm stage)
-        {
-            if (stage == null || !stage.Unlocked)
-            {
-                return new Color(0.55f, 0.55f, 0.55f, 0.58f);
-            }
-
-            if (stage.Selected)
-            {
-                return new Color(1f, 0.95f, 0.68f, 1f);
-            }
-
-            return Color.white;
-        }
-
-        private static Color GetPromotionSlotImageTint(BattlePromotionSlotVm stage)
-        {
-            if (stage == null || !stage.Unlocked)
-            {
-                return new Color(0.55f, 0.55f, 0.55f, 0.58f);
-            }
-
-            if (stage.CanBuild)
-            {
-                return new Color(1f, 0.95f, 0.68f, 1f);
-            }
-
-            return Color.white;
         }
 
         private static GameObject GetOrCreateChild(Transform parent, string objectName)

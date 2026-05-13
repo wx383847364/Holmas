@@ -13,6 +13,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
         private UnityAction _currentPrimaryAction;
         private Action<int> _currentTaskClaimAction;
 
+        #if UNITY_EDITOR
         public void EnsureFallbackLayout()
         {
             gameObject.name = AgencyMainBindings.RootNodePath;
@@ -88,6 +89,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
 
             EnsureTaskSection(contentRect);
         }
+        #endif
 
         private RectTransform GetOrCreateContentRoot()
         {

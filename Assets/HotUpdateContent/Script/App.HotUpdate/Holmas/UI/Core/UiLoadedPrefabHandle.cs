@@ -24,20 +24,14 @@ namespace App.HotUpdate.Holmas.UI.Core
 
         public bool IsPlaceholder => PrefabAsset == null;
 
-        public UiReferenceCollector EnsureReferenceCollector()
+        public UiReferenceCollector GetReferenceCollector()
         {
             if (InstanceRoot == null)
             {
                 return null;
             }
 
-            UiReferenceCollector collector = InstanceRoot.GetComponent<UiReferenceCollector>();
-            if (collector == null)
-            {
-                collector = InstanceRoot.AddComponent<UiReferenceCollector>();
-            }
-
-            return collector;
+            return InstanceRoot.GetComponent<UiReferenceCollector>();
         }
 
         public void SetParent(Transform parent)

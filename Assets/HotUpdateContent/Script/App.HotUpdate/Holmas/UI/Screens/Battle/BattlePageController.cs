@@ -18,9 +18,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         {
             _presenter = new BattlePresenter(Root != null ? Root.Context : null);
             _view = RootObject != null ? RootObject.GetComponent<BattleView>() : null;
-            if (_view == null && RootObject != null)
+            if (_view == null)
             {
-                _view = RootObject.AddComponent<BattleView>();
+                throw new InvalidOperationException("BattlePanel prefab 缺少 BattleView，请在 prefab 静态挂载。");
             }
 
             _selectedStageId = Math.Max(1, Root?.Context?.CurrentAgencyStageId ?? 1);

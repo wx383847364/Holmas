@@ -57,12 +57,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 new CoreFindCatTutorialLevelService(),
                 _tutorialSessionService);
             _view = RootObject != null ? RootObject.GetComponent<MainView>() : null;
-            if (_view == null && RootObject != null)
+            if (_view == null)
             {
-                _view = RootObject.AddComponent<MainView>();
+                throw new InvalidOperationException("MainPanel prefab 缺少 MainView，请在 prefab 静态挂载。");
             }
 
-            _view?.EnsureBindingSurface();
             if (_runtime != null)
             {
                 _runtime.StateChanged += OnRuntimeStateChanged;
@@ -74,6 +73,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         protected override void OnBind()
         {
             _bindings = MainBindings.Resolve(BindingResolver);
+            if (_bindings == null || !_bindings.HasRequiredBindings)
+            {
+                throw new InvalidOperationException("MainPanel 缺少完整 UiReferenceCollector 静态绑定，请先在 prefab 侧补齐 MainGeneratedBindings.Manifest 对应节点。");
+            }
+
             _view?.Bind(_bindings);
             _view?.SetAssetsRuntime(Root != null && Root.Context != null ? Root.Context.AssetsRuntime : null);
             _view?.SetPromotionAction(OnPromotionClicked);

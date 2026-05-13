@@ -35,6 +35,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
             }
         }
 
+        #if UNITY_EDITOR
         public void EnsureBindingSurface()
         {
             gameObject.name = LoadingBindings.RootNodePath;
@@ -62,6 +63,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
             collector.RegisterOrReplace(LoadingBindings.LoadingBarKey, slider, nodePath: LoadingBindings.LoadingBarNodePath);
             collector.RegisterOrReplace(LoadingBindings.StatusTextKey, statusText, nodePath: LoadingBindings.StatusTextNodePath);
         }
+        #endif
 
         public void Bind(LoadingBindings bindings)
         {

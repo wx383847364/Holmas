@@ -14,7 +14,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
         public const string RootNodePath = "LoadingPanel";
         public const string RuntimeOverlayNodeName = "RuntimeOverlay";
         public const string RuntimeOverlayNodePath = RootNodePath + "/" + RuntimeOverlayNodeName;
-        public const string LoadingBarNodePath = RuntimeOverlayNodePath + "/LoadingBar";
+        public const string LoadingBarNodePath = RootNodePath + "/LoadingBar";
         public const string StatusTextNodePath = RuntimeOverlayNodePath + "/StatusText";
 
         public RectTransform RootPanel;

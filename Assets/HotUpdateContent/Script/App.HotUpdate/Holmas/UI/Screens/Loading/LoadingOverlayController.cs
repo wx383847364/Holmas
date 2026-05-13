@@ -10,17 +10,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
         protected override void OnCreate()
         {
             _view = RootObject != null ? RootObject.GetComponent<LoadingView>() : null;
-            if (_view == null && RootObject != null)
+            if (_view == null)
             {
-                _view = RootObject.AddComponent<LoadingView>();
+                throw new System.InvalidOperationException("LoadingPanel prefab 缺少 LoadingView，请在 prefab 静态挂载。");
             }
-
-            _view?.EnsureBindingSurface();
         }
 
         protected override void OnBind()
         {
             _bindings = LoadingBindings.Resolve(BindingResolver);
+            if (_bindings == null || !_bindings.HasRequiredBindings)
+            {
+                throw new System.InvalidOperationException("LoadingPanel 缺少完整 UiReferenceCollector 静态绑定，请先在 prefab 侧补齐 LoadingGeneratedBindings.Manifest 对应节点。");
+            }
+
             _view?.Bind(_bindings);
         }
 
