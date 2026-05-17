@@ -21432,7 +21432,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 3,
@@ -21463,7 +21463,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 2,
@@ -21472,7 +21477,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 4,
@@ -21506,7 +21511,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 3,
@@ -21515,7 +21525,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21552,7 +21562,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 4,
@@ -21561,7 +21576,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21598,7 +21613,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 5,
@@ -21607,7 +21627,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21644,7 +21664,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 6,
@@ -21653,7 +21678,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21690,7 +21715,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 7,
@@ -21699,7 +21729,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21736,7 +21766,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 8,
@@ -21745,7 +21780,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21782,7 +21817,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 9,
@@ -21791,7 +21831,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21828,7 +21868,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 10,
@@ -21837,7 +21882,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21874,7 +21919,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 11,
@@ -21883,7 +21933,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21920,7 +21970,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 12,
@@ -21929,7 +21984,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -21966,7 +22021,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 13,
@@ -21975,7 +22035,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22012,7 +22072,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 14,
@@ -22021,7 +22086,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22058,7 +22123,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 15,
@@ -22067,7 +22137,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22104,7 +22174,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 16,
@@ -22113,7 +22188,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22150,7 +22225,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 17,
@@ -22159,7 +22239,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22196,7 +22276,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 18,
@@ -22205,7 +22290,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22242,7 +22327,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 19,
@@ -22251,7 +22341,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22288,7 +22378,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 20,
@@ -22297,7 +22392,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22334,7 +22429,12 @@
                 }
             ],
             "notes": "新手城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 21,
@@ -22343,7 +22443,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22380,7 +22480,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 22,
@@ -22389,7 +22494,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22426,7 +22531,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 23,
@@ -22435,7 +22545,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22472,7 +22582,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 24,
@@ -22481,7 +22596,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22518,7 +22633,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 25,
@@ -22527,7 +22647,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22564,7 +22684,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 26,
@@ -22573,7 +22698,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22610,7 +22735,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 27,
@@ -22619,7 +22749,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22656,7 +22786,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 28,
@@ -22665,7 +22800,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22702,7 +22837,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 29,
@@ -22711,7 +22851,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22748,7 +22888,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 30,
@@ -22757,7 +22902,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22794,7 +22939,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 31,
@@ -22803,7 +22953,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22840,7 +22990,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 32,
@@ -22849,7 +23004,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22886,7 +23041,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 33,
@@ -22895,7 +23055,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22932,7 +23092,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 34,
@@ -22941,7 +23106,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -22978,7 +23143,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 35,
@@ -22987,7 +23157,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23024,7 +23194,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 36,
@@ -23033,7 +23208,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23070,7 +23245,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 37,
@@ -23079,7 +23259,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23116,7 +23296,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 38,
@@ -23125,7 +23310,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23162,7 +23347,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 39,
@@ -23171,7 +23361,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23208,7 +23398,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 40,
@@ -23217,7 +23412,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23254,7 +23449,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 41,
@@ -23263,7 +23463,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23300,7 +23500,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 42,
@@ -23309,7 +23514,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23346,7 +23551,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 43,
@@ -23355,7 +23565,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23392,7 +23602,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 44,
@@ -23401,7 +23616,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23438,7 +23653,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 45,
@@ -23447,7 +23667,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23484,7 +23704,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 46,
@@ -23493,7 +23718,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23530,7 +23755,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 47,
@@ -23539,7 +23769,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23576,7 +23806,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 48,
@@ -23585,7 +23820,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23622,7 +23857,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 49,
@@ -23631,7 +23871,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23668,7 +23908,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 50,
@@ -23677,7 +23922,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23714,7 +23959,12 @@
                 }
             ],
             "notes": "成长城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 51,
@@ -23723,7 +23973,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23760,7 +24010,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 52,
@@ -23769,7 +24024,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23806,7 +24061,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 53,
@@ -23815,7 +24075,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23852,7 +24112,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 54,
@@ -23861,7 +24126,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23898,7 +24163,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 55,
@@ -23907,7 +24177,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23944,7 +24214,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 56,
@@ -23953,7 +24228,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -23990,7 +24265,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 57,
@@ -23999,7 +24279,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24036,7 +24316,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 58,
@@ -24045,7 +24330,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24082,7 +24367,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 59,
@@ -24091,7 +24381,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24128,7 +24418,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 60,
@@ -24137,7 +24432,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24174,7 +24469,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 61,
@@ -24183,7 +24483,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24220,7 +24520,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 62,
@@ -24229,7 +24534,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24266,7 +24571,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 63,
@@ -24275,7 +24585,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24312,7 +24622,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 64,
@@ -24321,7 +24636,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24358,7 +24673,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 65,
@@ -24367,7 +24687,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24404,7 +24724,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 66,
@@ -24413,7 +24738,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24450,7 +24775,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 67,
@@ -24459,7 +24789,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24496,7 +24826,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 68,
@@ -24505,7 +24840,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24542,7 +24877,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 69,
@@ -24551,7 +24891,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24588,7 +24928,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 70,
@@ -24597,7 +24942,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24634,7 +24979,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 71,
@@ -24643,7 +24993,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24680,7 +25030,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 72,
@@ -24689,7 +25044,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24726,7 +25081,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 73,
@@ -24735,7 +25095,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24772,7 +25132,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 74,
@@ -24781,7 +25146,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24818,7 +25183,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 75,
@@ -24827,7 +25197,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24864,7 +25234,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 76,
@@ -24873,7 +25248,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24910,7 +25285,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 77,
@@ -24919,7 +25299,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -24956,7 +25336,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 78,
@@ -24965,7 +25350,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25002,7 +25387,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 79,
@@ -25011,7 +25401,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25048,7 +25438,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 80,
@@ -25057,7 +25452,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25094,7 +25489,12 @@
                 }
             ],
             "notes": "高阶城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 81,
@@ -25103,7 +25503,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25140,7 +25540,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 82,
@@ -25149,7 +25554,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25186,7 +25591,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 83,
@@ -25195,7 +25605,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25232,7 +25642,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 84,
@@ -25241,7 +25656,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25278,7 +25693,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 85,
@@ -25287,7 +25707,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25324,7 +25744,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 86,
@@ -25333,7 +25758,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25370,7 +25795,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 87,
@@ -25379,7 +25809,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25416,7 +25846,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 88,
@@ -25425,7 +25860,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25462,7 +25897,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 89,
@@ -25471,7 +25911,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25508,7 +25948,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 90,
@@ -25517,7 +25962,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25554,7 +25999,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 91,
@@ -25563,7 +26013,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25600,7 +26050,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 92,
@@ -25609,7 +26064,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25646,7 +26101,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 93,
@@ -25655,7 +26115,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25692,7 +26152,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 94,
@@ -25701,7 +26166,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25738,7 +26203,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 95,
@@ -25747,7 +26217,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25784,7 +26254,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 96,
@@ -25793,7 +26268,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25830,7 +26305,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 97,
@@ -25839,7 +26319,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25876,7 +26356,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 98,
@@ -25885,7 +26370,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25922,7 +26407,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 99,
@@ -25931,7 +26421,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -25968,7 +26458,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         },
         {
             "agencyStageId": 100,
@@ -25977,7 +26472,7 @@
             "promotionIds": [
                 "leaflet",
                 "radio",
-                "tv"
+                "net"
             ],
             "promotionLevelCaps": [
                 5,
@@ -26014,7 +26509,12 @@
                 }
             ],
             "notes": "核心城市",
-            "extraFields": []
+            "extraFields": [
+                {
+                    "key": "buttonImage",
+                    "value": "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;"
+                }
+            ]
         }
     ],
     "Holmas_LeaderboardTable": [
