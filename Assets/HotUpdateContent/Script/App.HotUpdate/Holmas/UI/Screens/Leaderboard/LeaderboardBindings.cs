@@ -13,6 +13,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
         public const string WeeklyCatsToggleKey = "leaderboard/weekly_cats_toggle";
         public const string DailyMoneyToggleKey = "leaderboard/daily_money_toggle";
         public const string TitleTextKey = "leaderboard/title_text";
+        public const string StatusTextKey = "leaderboard/status_text";
         public const string LeaderInfoKey = "leaderboard/leader_info";
         public const string LeaderListKey = "leaderboard/leader_list";
         public const string LeaderListContentKey = "leaderboard/leader_list_content";
@@ -31,6 +32,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
         public const string WeeklyCatsToggleNodePath = RootNodePath + "/Toggles/WeekCatCountToggle";
         public const string DailyMoneyToggleNodePath = RootNodePath + "/Toggles/DaliyMoneyToggle";
         public const string TitleTextNodePath = RootNodePath + "/Title_txt";
+        public const string StatusTextNodePath = RootNodePath + "/LeaderboardStatusText";
         public const string LeaderInfoNodePath = RootNodePath + "/LeaderInfo";
         public const string LeaderListNodePath = LeaderInfoNodePath + "/LeaderList";
         public const string LeaderListContentNodePath = LeaderListNodePath + "/GameObject";
@@ -47,6 +49,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
         public Toggle WeeklyCatsToggle;
         public Toggle DailyMoneyToggle;
         public Text TitleText;
+        public Text StatusText;
         public RectTransform LeaderInfo;
         public ScrollRect LeaderList;
         public RectTransform LeaderListContent;
@@ -64,6 +67,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             WeeklyCatsToggle != null &&
             DailyMoneyToggle != null &&
             TitleText != null &&
+            StatusText != null &&
             LeaderInfo != null &&
             LeaderList != null &&
             LeaderListContent != null &&
@@ -88,6 +92,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             resolver.TryResolve(WeeklyCatsToggleKey, out bindings.WeeklyCatsToggle, ToggleChangedEvent, WeeklyCatsToggleNodePath);
             resolver.TryResolve(DailyMoneyToggleKey, out bindings.DailyMoneyToggle, ToggleChangedEvent, DailyMoneyToggleNodePath);
             resolver.TryResolve(TitleTextKey, out bindings.TitleText, nodePath: TitleTextNodePath);
+            resolver.TryResolve(StatusTextKey, out bindings.StatusText, nodePath: StatusTextNodePath);
             resolver.TryResolve(LeaderInfoKey, out bindings.LeaderInfo, nodePath: LeaderInfoNodePath);
             resolver.TryResolve(LeaderListKey, out bindings.LeaderList, nodePath: LeaderListNodePath);
             resolver.TryResolve(LeaderListContentKey, out bindings.LeaderListContent, nodePath: LeaderListContentNodePath);

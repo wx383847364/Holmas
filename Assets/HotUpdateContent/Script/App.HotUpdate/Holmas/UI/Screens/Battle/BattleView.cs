@@ -17,10 +17,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private static readonly Color StageLabelBackgroundColor = new Color(1f, 1f, 1f, 0.9f);
         private static readonly Color StageLabelSelectedBackgroundColor = new Color(1f, 0.92f, 0.58f, 0.94f);
         private readonly UnityAction[] _stageClickActions = new UnityAction[BattlePresenter.VisibleStageCount];
-        private readonly UnityAction[] _buildStageClickActions = new UnityAction[BattlePresenter.VisibleStageCount];
+        private readonly List<BuildStageSurface> _buildStageSurfaces = new List<BuildStageSurface>();
+        private readonly List<UnityAction> _buildStageClickActions = new List<UnityAction>();
         private BattleBindings _bindings;
         private UnityAction _currentBackAction;
-        private UnityAction _currentBuildAction;
         private Action<int> _currentStageAction;
         private Action<int> _currentPromotionSlotAction;
         private HolmasCatSpriteLoader _stageSpriteLoader;
@@ -35,6 +35,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             {
                 collector = gameObject.AddComponent<UiReferenceCollector>();
             }
+
+            collector.Clear();
 
             RectTransform rootRect = gameObject.GetComponent<RectTransform>();
             if (rootRect == null)
@@ -77,7 +79,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 TextAlignmentOptions.Center);
 
             collector.RegisterOrReplace(BattleBindings.BackButtonKey, backButton, BattleBindings.ButtonClickEvent, BattleBindings.BackButtonNodePath);
-            collector.RegisterOrReplace(BattleBindings.BuildButtonKey, buildButton, BattleBindings.ButtonClickEvent, BattleBindings.BuildButtonNodePath);
+            collector.RegisterOrReplace(BattleBindings.BuildButtonKey, buildButton, nodePath: BattleBindings.BuildButtonNodePath);
             collector.RegisterOrReplace(BattleBindings.BuildButtonTextKey, buildButtonText, nodePath: BattleBindings.BuildButtonTextNodePath);
             collector.RegisterOrReplace(BattleBindings.LevelTextKey, levelText, nodePath: BattleBindings.LevelTextNodePath);
             collector.RegisterOrReplace(BattleBindings.GoldTextKey, goldText, nodePath: BattleBindings.GoldTextNodePath);
@@ -93,14 +95,18 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 collector.RegisterOrReplace(BattleBindings.StageNameTextKeys[i], surface.NameText, nodePath: BattleBindings.StageNameTextNodePaths[i]);
                 collector.RegisterOrReplace(BattleBindings.StageLockKeys[i], surface.LockRect, nodePath: BattleBindings.StageLockNodePaths[i]);
 
-                BuildStageSurface buildSurface = ResolveBuildStageSurface(i, buildButton != null ? buildButton.transform : overlay, BattlePresenter.VisibleStageCount);
-                collector.RegisterOrReplace(BattleBindings.BuildStageButtonKeys[i], buildSurface.Button, BattleBindings.ButtonClickEvent, BattleBindings.BuildStageButtonNodePaths[i]);
-                collector.RegisterOrReplace(BattleBindings.BuildStageImageKeys[i], buildSurface.Image, nodePath: BattleBindings.BuildStageImageNodePaths[i]);
-                collector.RegisterOrReplace(BattleBindings.BuildStageNameTextKeys[i], buildSurface.NameText, nodePath: BattleBindings.BuildStageNameTextNodePaths[i]);
-                collector.RegisterOrReplace(BattleBindings.BuildStageLockKeys[i], buildSurface.LockRect, nodePath: BattleBindings.BuildStageLockNodePaths[i]);
-                collector.RegisterOrReplace(BattleBindings.BuildStageBaseStarGroupKeys[i], buildSurface.BaseStarGroup, nodePath: BattleBindings.BuildStageBaseStarGroupNodePaths[i]);
-                collector.RegisterOrReplace(BattleBindings.BuildStageActiveStarGroupKeys[i], buildSurface.ActiveStarGroup, nodePath: BattleBindings.BuildStageActiveStarGroupNodePaths[i]);
             }
+
+            RemoveExtraBuildStageTemplateNodes(buildButton != null ? buildButton.transform : null);
+            int templateIndex = BattleBindings.BuildStageTemplateIndex;
+            BuildStageSurface buildSurface = ResolveBuildStageSurface(templateIndex, buildButton != null ? buildButton.transform : overlay, 1);
+            EnsureBuildStageBindingSurface(buildSurface);
+            collector.RegisterOrReplace(BattleBindings.BuildStageButtonKeys[templateIndex], buildSurface.Button, BattleBindings.ButtonClickEvent, BattleBindings.BuildStageButtonNodePaths[templateIndex]);
+            collector.RegisterOrReplace(BattleBindings.BuildStageImageKeys[templateIndex], buildSurface.Image, nodePath: BattleBindings.BuildStageImageNodePaths[templateIndex]);
+            collector.RegisterOrReplace(BattleBindings.BuildStageNameTextKeys[templateIndex], buildSurface.NameText, nodePath: BattleBindings.BuildStageNameTextNodePaths[templateIndex]);
+            collector.RegisterOrReplace(BattleBindings.BuildStageLockKeys[templateIndex], buildSurface.LockRect, nodePath: BattleBindings.BuildStageLockNodePaths[templateIndex]);
+            collector.RegisterOrReplace(BattleBindings.BuildStageBaseStarGroupKeys[templateIndex], buildSurface.BaseStarGroup, nodePath: BattleBindings.BuildStageBaseStarGroupNodePaths[templateIndex]);
+            collector.RegisterOrReplace(BattleBindings.BuildStageActiveStarGroupKeys[templateIndex], buildSurface.ActiveStarGroup, nodePath: BattleBindings.BuildStageActiveStarGroupNodePaths[templateIndex]);
 
             for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
             {
@@ -119,8 +125,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             for (int i = 0; i < BattlePresenter.VisibleStageCount; i++)
             {
                 DisableButtonGraphicTint(_bindings.StageButtons[i]);
-                DisableButtonGraphicTint(_bindings.BuildStageButtons[i]);
             }
+
+            BuildStageSurface templateSurface = ResolveTemplateBuildStageSurface();
+            DisableButtonGraphicTint(templateSurface.Button);
+            _buildStageSurfaces.Clear();
+            _buildStageSurfaces.Add(templateSurface);
+            RebindBuildStageActions();
         }
 
         public void SetBackAction(UnityAction action)
@@ -140,26 +151,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             if (_currentBackAction != null)
             {
                 _bindings.BackButton.onClick.AddListener(_currentBackAction);
-            }
-        }
-
-        public void SetBuildAction(UnityAction action)
-        {
-            if (_bindings?.BuildButton == null)
-            {
-                _currentBuildAction = action;
-                return;
-            }
-
-            if (_currentBuildAction != null)
-            {
-                _bindings.BuildButton.onClick.RemoveListener(_currentBuildAction);
-            }
-
-            _currentBuildAction = action;
-            if (_currentBuildAction != null)
-            {
-                _bindings.BuildButton.onClick.AddListener(_currentBuildAction);
             }
         }
 
@@ -217,20 +208,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 ConfigureBuildButtonText(_bindings.BuildButtonText, viewModel.BuildButtonEnabled);
             }
 
-            RenderBuildCard(viewModel);
             RenderPromotionSlots(viewModel);
             RenderStages(viewModel);
             RenderStageBars(viewModel);
-        }
-
-        private void RenderBuildCard(BattleVm viewModel)
-        {
-            if (_bindings?.BuildButton == null)
-            {
-                return;
-            }
-
-            HideLegacyBuildCardChildren(_bindings.BuildButton.transform);
         }
 
         private void RenderPromotionSlots(BattleVm viewModel)
@@ -240,23 +220,18 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return;
             }
 
-            int staticSlotCount = _bindings.BuildStageButtons.Length;
             int promotionSlotCount = viewModel.PromotionSlots != null ? viewModel.PromotionSlots.Length : 0;
-            int layoutSlotCount = staticSlotCount;
-            int renderedSlotCount = staticSlotCount;
-            if (promotionSlotCount > staticSlotCount)
-            {
-                Debug.LogWarning(
-                    $"BattleView: promotion slot 数量 {promotionSlotCount} 超过 prefab 静态槽位 {staticSlotCount}，超出部分不会动态创建。");
-            }
+            int layoutSlotCount = Math.Max(1, promotionSlotCount);
+            EnsurePromotionSlotCapacity(layoutSlotCount);
 
-            for (int i = 0; i < renderedSlotCount; i++)
+            for (int i = 0; i < _buildStageSurfaces.Count; i++)
             {
                 BattlePromotionSlotVm promotionSlot = viewModel.PromotionSlots != null && i < viewModel.PromotionSlots.Length
                     ? viewModel.PromotionSlots[i]
                     : null;
-                bool visible = promotionSlot != null && promotionSlot.Visible;
-                BuildStageSurface surface = ResolvePromotionSlotSurface(i, layoutSlotCount);
+                bool visible = i < promotionSlotCount && promotionSlot != null && promotionSlot.Visible;
+                BuildStageSurface surface = _buildStageSurfaces[i];
+                ConfigureBuildStageSurface(surface, i, layoutSlotCount);
                 Button button = surface.Button;
                 if (button != null)
                 {
@@ -323,24 +298,126 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
         }
 
-        private BuildStageSurface ResolvePromotionSlotSurface(int slotIndex, int layoutSlotCount)
+        private void EnsurePromotionSlotCapacity(int slotCount)
+        {
+            if (_bindings?.BuildButton == null)
+            {
+                return;
+            }
+
+            if (_buildStageSurfaces.Count == 0)
+            {
+                _buildStageSurfaces.Add(ResolveTemplateBuildStageSurface());
+            }
+
+            Transform parent = _bindings.BuildButton.transform;
+            BuildStageSurface templateSurface = _buildStageSurfaces[0];
+            for (int i = _buildStageSurfaces.Count; i < slotCount; i++)
+            {
+                BuildStageSurface surface = CreatePromotionSlotFromTemplate(templateSurface, parent, i);
+                _buildStageSurfaces.Add(surface);
+                _buildStageClickActions.Add(null);
+                RebindBuildStageAction(i);
+            }
+
+            for (int i = 0; i < _buildStageSurfaces.Count; i++)
+            {
+                ConfigureBuildStageSurface(_buildStageSurfaces[i], i, Math.Max(1, slotCount));
+            }
+        }
+
+        private BuildStageSurface ResolveTemplateBuildStageSurface()
         {
             if (_bindings == null)
             {
                 return default;
             }
 
-            var surface = new BuildStageSurface
+            int templateIndex = BattleBindings.BuildStageTemplateIndex;
+            return new BuildStageSurface
             {
-                Button = _bindings.BuildStageButtons[slotIndex],
-                Image = _bindings.BuildStageImages[slotIndex],
-                NameText = _bindings.BuildStageNameTexts[slotIndex],
-                LockRect = _bindings.BuildStageLocks[slotIndex],
-                BaseStarGroup = _bindings.BuildStageBaseStarGroups[slotIndex],
-                ActiveStarGroup = _bindings.BuildStageActiveStarGroups[slotIndex],
+                Button = _bindings.BuildStageButtons[templateIndex],
+                Image = _bindings.BuildStageImages[templateIndex],
+                NameText = _bindings.BuildStageNameTexts[templateIndex],
+                LockRect = _bindings.BuildStageLocks[templateIndex],
+                BaseStarGroup = _bindings.BuildStageBaseStarGroups[templateIndex],
+                ActiveStarGroup = _bindings.BuildStageActiveStarGroups[templateIndex],
             };
-            ConfigureBuildStageSurface(surface, slotIndex, layoutSlotCount);
-            return surface;
+        }
+
+        private static BuildStageSurface CreatePromotionSlotFromTemplate(
+            BuildStageSurface templateSurface,
+            Transform parent,
+            int slotIndex)
+        {
+            if (templateSurface.Button == null || parent == null)
+            {
+                return default;
+            }
+
+            GameObject instance = UnityEngine.Object.Instantiate(templateSurface.Button.gameObject, parent, false);
+            instance.name = "BuildStage" + (slotIndex + 1).ToString();
+            Button button = instance.GetComponent<Button>();
+            DisableButtonGraphicTint(button);
+            button?.onClick.RemoveAllListeners();
+
+            BattleBuildStageBindingSurface bindingSurface = instance.GetComponent<BattleBuildStageBindingSurface>();
+            if (bindingSurface != null && bindingSurface.HasRequiredBindings)
+            {
+                return BuildStageSurface.FromBindingSurface(bindingSurface);
+            }
+
+            return new BuildStageSurface
+            {
+                Button = button,
+                Image = templateSurface.Image != null ? FindCopiedChildComponent<Image>(templateSurface.Button.transform, templateSurface.Image.transform, instance.transform) : null,
+                NameText = templateSurface.NameText != null ? FindCopiedChildComponent<TextMeshProUGUI>(templateSurface.Button.transform, templateSurface.NameText.transform, instance.transform) : null,
+                LockRect = templateSurface.LockRect != null ? FindCopiedChildComponent<RectTransform>(templateSurface.Button.transform, templateSurface.LockRect.transform, instance.transform) : null,
+                BaseStarGroup = templateSurface.BaseStarGroup != null ? FindCopiedChildComponent<RectTransform>(templateSurface.Button.transform, templateSurface.BaseStarGroup.transform, instance.transform) : null,
+                ActiveStarGroup = templateSurface.ActiveStarGroup != null ? FindCopiedChildComponent<RectTransform>(templateSurface.Button.transform, templateSurface.ActiveStarGroup.transform, instance.transform) : null,
+            };
+        }
+
+        private static T FindCopiedChildComponent<T>(Transform templateRoot, Transform templateChild, Transform instanceRoot)
+            where T : Component
+        {
+            if (templateRoot == null || templateChild == null || instanceRoot == null)
+            {
+                return null;
+            }
+
+            var indices = new List<int>();
+            Transform cursor = templateChild;
+            while (cursor != null && cursor != templateRoot)
+            {
+                Transform parent = cursor.parent;
+                if (parent == null)
+                {
+                    return null;
+                }
+
+                indices.Add(cursor.GetSiblingIndex());
+                cursor = parent;
+            }
+
+            if (cursor != templateRoot)
+            {
+                return null;
+            }
+
+            Transform instanceCursor = instanceRoot;
+            for (int i = indices.Count - 1; i >= 0; i--)
+            {
+                int childIndex = indices[i];
+                if (childIndex < 0 || childIndex >= instanceCursor.childCount)
+                {
+                    return null;
+                }
+
+                instanceCursor = instanceCursor.GetChild(childIndex);
+            }
+
+            return instanceCursor != null ? instanceCursor.GetComponent<T>() : null;
         }
 
         private void RenderStages(BattleVm viewModel)
@@ -462,27 +539,40 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 return;
             }
 
-            for (int i = 0; i < _bindings.BuildStageButtons.Length; i++)
+            for (int i = 0; i < _buildStageSurfaces.Count; i++)
             {
-                Button button = _bindings.BuildStageButtons[i];
-                if (button == null)
-                {
-                    continue;
-                }
-
-                if (_buildStageClickActions[i] != null)
-                {
-                    button.onClick.RemoveListener(_buildStageClickActions[i]);
-                    _buildStageClickActions[i] = null;
-                }
-
-                int stageSlotIndex = i;
-                _buildStageClickActions[i] = () => _currentPromotionSlotAction?.Invoke(stageSlotIndex);
-                button.onClick.AddListener(_buildStageClickActions[i]);
+                RebindBuildStageAction(i);
             }
-
         }
 
+        private void RebindBuildStageAction(int slotIndex)
+        {
+            while (_buildStageClickActions.Count <= slotIndex)
+            {
+                _buildStageClickActions.Add(null);
+            }
+
+            Button button = slotIndex >= 0 && slotIndex < _buildStageSurfaces.Count
+                ? _buildStageSurfaces[slotIndex].Button
+                : null;
+            if (button == null)
+            {
+                _buildStageClickActions[slotIndex] = null;
+                return;
+            }
+
+            if (_buildStageClickActions[slotIndex] != null)
+            {
+                button.onClick.RemoveListener(_buildStageClickActions[slotIndex]);
+                _buildStageClickActions[slotIndex] = null;
+            }
+
+            int stageSlotIndex = slotIndex;
+            _buildStageClickActions[slotIndex] = () => _currentPromotionSlotAction?.Invoke(stageSlotIndex);
+            button.onClick.AddListener(_buildStageClickActions[slotIndex]);
+        }
+
+        #if UNITY_EDITOR
         private void EnsureFallbackBackground()
         {
             if (transform.Find("BackgroundImage") != null)
@@ -612,6 +702,46 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 BaseStarGroup = baseStars,
                 ActiveStarGroup = activeStars,
             };
+        }
+
+        private static void EnsureBuildStageBindingSurface(BuildStageSurface surface)
+        {
+            if (surface.Button == null)
+            {
+                return;
+            }
+
+            BattleBuildStageBindingSurface bindingSurface =
+                surface.Button.GetComponent<BattleBuildStageBindingSurface>() ??
+                surface.Button.gameObject.AddComponent<BattleBuildStageBindingSurface>();
+            bindingSurface.AssignForEditor(
+                surface.Button,
+                surface.Image,
+                surface.NameText,
+                surface.LockRect,
+                surface.BaseStarGroup,
+                surface.ActiveStarGroup);
+        }
+
+        private static void RemoveExtraBuildStageTemplateNodes(Transform buildButtonRoot)
+        {
+            if (buildButtonRoot == null)
+            {
+                return;
+            }
+
+            for (int i = buildButtonRoot.childCount - 1; i >= 0; i--)
+            {
+                Transform child = buildButtonRoot.GetChild(i);
+                if (child == null ||
+                    child.name == "BuildStage1" ||
+                    !child.name.StartsWith("BuildStage", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                UnityEngine.Object.DestroyImmediate(child.gameObject);
+            }
         }
 
         private static void ConfigureBuildStageSurface(BuildStageSurface surface, int slotIndex, int layoutSlotCount)
@@ -1075,6 +1205,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             return labelBackground;
         }
+        #endif
 
         private void HideRuntimeOverlayInfoTexts()
         {
@@ -1157,6 +1288,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             text.raycastTarget = false;
         }
 
+        #if UNITY_EDITOR
         private TextMeshProUGUI GetOrCreateRuntimeText(
             Transform parent,
             string objectName,
@@ -1190,6 +1322,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             text.raycastTarget = false;
             return text;
         }
+        #endif
 
         private static void ConfigureBuildButtonText(TextMeshProUGUI text, bool enabled)
         {
@@ -1225,7 +1358,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private static void RenderStarGroup(Transform starGroup, int slotCount, int visibleCount, Color visibleColor, bool keepInvisibleSlots)
         {
             ConfigureStarGroupLayout(starGroup != null ? starGroup.gameObject : null);
-            EnsureStarPool(starGroup, slotCount, null);
             Image[] stars = ResolveStars(starGroup);
             int clampedVisibleCount = Mathf.Clamp(visibleCount, 0, Math.Max(0, slotCount));
             for (int i = 0; i < stars.Length; i++)
@@ -1271,6 +1403,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             layoutGroup.childForceExpandHeight = false;
         }
 
+        #if UNITY_EDITOR
         private static void EnsureStarPool(Transform starGroup, int slotCount, Sprite fallbackSprite)
         {
             if (starGroup == null || slotCount <= 0)
@@ -1309,6 +1442,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 image.raycastTarget = false;
             }
         }
+        #endif
 
         private static Image[] ResolveStars(Transform starGroup)
         {
@@ -1336,6 +1470,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             return stars.ToArray();
         }
 
+        #if UNITY_EDITOR
         private Button GetOrCreateRuntimeButton(
             Transform parent,
             string objectName,
@@ -1395,6 +1530,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             TmpGlyphCoverageReporter.SetText(labelText, label);
             return button;
         }
+        #endif
 
         private static void DisableButtonGraphicTint(Button button)
         {
@@ -1413,6 +1549,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _stageSpriteLoader = null;
         }
 
+        #if UNITY_EDITOR
         private T FindDescendantComponent<T>(string path) where T : Component
         {
             Transform target = transform.Find(path);
@@ -1446,6 +1583,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             rectTransform.offsetMax = Vector2.zero;
             rectTransform.localScale = Vector3.one;
         }
+        #endif
 
         private static void ConfigureRect(
             RectTransform rectTransform,
@@ -1479,6 +1617,24 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             public RectTransform LockRect;
             public RectTransform BaseStarGroup;
             public RectTransform ActiveStarGroup;
+
+            public static BuildStageSurface FromBindingSurface(BattleBuildStageBindingSurface surface)
+            {
+                if (surface == null)
+                {
+                    return default;
+                }
+
+                return new BuildStageSurface
+                {
+                    Button = surface.Button,
+                    Image = surface.Image,
+                    NameText = surface.NameText,
+                    LockRect = surface.LockRect,
+                    BaseStarGroup = surface.BaseStarGroup,
+                    ActiveStarGroup = surface.ActiveStarGroup,
+                };
+            }
         }
     }
 }

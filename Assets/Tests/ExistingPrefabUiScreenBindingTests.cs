@@ -203,6 +203,7 @@ namespace Holmas.Tests
                 Assert.That(bindings.BackButton.name, Is.EqualTo("Back_btn"));
                 Assert.That(bindings.RewardButton.name, Is.EqualTo("RewardInfo_btn"));
                 Assert.That(bindings.DailyMoneyToggle.name, Is.EqualTo("DaliyMoneyToggle"), "资源拼写保持原样，代码 binding 负责封装。");
+                Assert.That(bindings.StatusText.name, Is.EqualTo("LeaderboardStatusText"), "新 UI 的榜单周期/状态文本必须进入静态 binding。");
                 Assert.That(bindings.LeaderInfo.name, Is.EqualTo("LeaderInfo"));
                 Assert.That(bindings.LeaderList.name, Is.EqualTo("LeaderList"));
                 Assert.That(bindings.LeaderListContent.name, Is.EqualTo("GameObject"));
@@ -216,6 +217,11 @@ namespace Holmas.Tests
                 Assert.That(HasChildImage(bindings.ItemTemplate, "HeadIcon"), Is.True, "PlayerInfo 模板应包含头像 HeadIcon。");
                 Assert.That(HasChildImage(bindings.ItemTemplate, "FrameIcon"), Is.True, "PlayerInfo 模板应包含头像框 FrameIcon。");
                 Assert.That(HasChildImage(bindings.ItemTemplate, "LeadIcon"), Is.True, "PlayerInfo 模板应包含分数图标 LeadIcon。");
+                AssertLeaderboardItemSurface(bindings.ItemTemplate, requiresRank: true);
+                AssertLeaderboardItemSurface(bindings.MyInfo, requiresRank: true);
+                AssertLeaderboardItemSurface(bindings.Top1, requiresRank: false);
+                AssertLeaderboardItemSurface(bindings.Top2, requiresRank: false);
+                AssertLeaderboardItemSurface(bindings.Top3, requiresRank: false);
                 Assert.That(instance.transform.Find("LeaderboardRuntimeOverlay"), Is.Null, "排行榜不应再创建 RuntimeOverlay 文本列表。");
 
                 view.Bind(bindings);
@@ -227,6 +233,7 @@ namespace Holmas.Tests
                     Entries = BuildLeaderboardEntries(100),
                     SelfEntry = new HolmasLeaderboardEntry { Rank = 88, DisplayName = "local-player", Score = 12, IsSelf = true },
                 });
+                Assert.That(bindings.StatusText.text, Is.EqualTo("长期榜"), "LeaderboardStatusText 应显示当前榜期/状态。");
 
                 LeaderboardLoopListView loopList = bindings.LeaderList.GetComponent<LeaderboardLoopListView>();
                 Assert.That(loopList, Is.Not.Null, "LeaderList 应挂载排行榜专用虚拟列表组件。");
@@ -274,6 +281,7 @@ namespace Holmas.Tests
                 });
 
                 Assert.That(loopList.ItemCount, Is.EqualTo(1), "切榜后旧榜列表数据不应残留。");
+                Assert.That(bindings.StatusText.text, Is.EqualTo("周期：20260505"), "切榜后状态文本应跟随业务 VM 更新。");
                 Assert.That(loopList.ActivePoolItemCount, Is.EqualTo(1), "数据少于可见数量时，多余复用 item 应隐藏。");
                 Assert.That(bindings.LeaderListContent.anchoredPosition.y, Is.EqualTo(0f).Within(0.001f), "切榜后列表应回到顶部。");
             }
@@ -395,14 +403,21 @@ namespace Holmas.Tests
                     Assert.That(bindings.StageImages[i].transform, Is.EqualTo(bindings.StageButtons[i].transform), $"Stage{i + 1} 建筑主图应绑定按钮本体，不能绑定到 Image 标签底板。");
                     Assert.That(bindings.StageLocks[i].name, Is.EqualTo("lock"), $"Stage{i + 1} 锁定态必须静态绑定 prefab 内的 lock 节点。");
                     Assert.That(bindings.StageLocks[i].transform.parent.name, Is.EqualTo("Image"), $"Stage{i + 1} 锁定态必须来自 Stage/Image/lock，运行时不做递归查找。");
-                    Assert.That(bindings.BuildStageButtons[i], Is.Not.Null, $"BuildStage{i + 1} 按钮缺失。");
-                    Assert.That(bindings.BuildStageImages[i], Is.Not.Null, $"BuildStage{i + 1} 主视觉缺失。");
-                    Assert.That(bindings.BuildStageNameTexts[i], Is.Not.Null, $"BuildStage{i + 1} 名称文本缺失。");
-                    Assert.That(bindings.BuildStageLocks[i], Is.Not.Null, $"BuildStage{i + 1} 锁定态缺失。");
-                    Assert.That(bindings.BuildStageBaseStarGroups[i], Is.Not.Null, $"BuildStage{i + 1} 底星容器缺失。");
-                    Assert.That(bindings.BuildStageActiveStarGroups[i], Is.Not.Null, $"BuildStage{i + 1} 点亮星容器缺失。");
-                    Assert.That(bindings.BuildStageButtons[i].name, Is.EqualTo($"BuildStage{i + 1}"), $"BuildStage{i + 1} 必须静态绑定到底部 promotion slot。");
-                    Assert.That(bindings.BuildStageImages[i].transform.parent, Is.EqualTo(bindings.BuildStageButtons[i].transform), $"BuildStage{i + 1}/Image 必须是底部 promotion slot 的直接子节点。");
+                }
+
+                Assert.That(bindings.BuildStageButtons[0], Is.Not.Null, "BuildStage1 模板按钮缺失。");
+                Assert.That(bindings.BuildStageImages[0], Is.Not.Null, "BuildStage1 模板主视觉缺失。");
+                Assert.That(bindings.BuildStageNameTexts[0], Is.Not.Null, "BuildStage1 模板名称文本缺失。");
+                Assert.That(bindings.BuildStageLocks[0], Is.Not.Null, "BuildStage1 模板锁定态缺失。");
+                Assert.That(bindings.BuildStageBaseStarGroups[0], Is.Not.Null, "BuildStage1 模板底星容器缺失。");
+                Assert.That(bindings.BuildStageActiveStarGroups[0], Is.Not.Null, "BuildStage1 模板点亮星容器缺失。");
+                Assert.That(bindings.BuildStageButtons[0].name, Is.EqualTo("BuildStage1"), "BuildStage1 必须作为底部动态 promotion slot 模板。");
+                Assert.That(bindings.BuildStageImages[0].transform.parent, Is.EqualTo(bindings.BuildStageButtons[0].transform), "BuildStage1/Image 必须是模板 slot 的直接子节点。");
+                Assert.That(bindings.BuildStageButtons[0].GetComponent<BattleBuildStageBindingSurface>()?.HasRequiredBindings, Is.True, "BuildStage1 必须挂载完整静态模板 surface。");
+                for (int i = 1; i < BattlePresenter.VisibleStageCount; i++)
+                {
+                    Assert.That(bindings.BuildStageButtons[i], Is.Null, $"BuildStage{i + 1} 不应再进入静态 binding，应由 BuildStage1 动态克隆。");
+                    Assert.That(bindings.BuildButton.transform.Find($"BuildStage{i + 1}"), Is.Null, $"prefab 只应保留 BuildStage1 模板，不应保留 BuildStage{i + 1}。");
                 }
 
                 view.Bind(bindings);
@@ -410,11 +425,10 @@ namespace Holmas.Tests
                 Image buildButtonImage = bindings.BuildButton.GetComponent<Image>();
                 Color buildButtonColor = buildButtonImage != null ? buildButtonImage.color : default;
                 var stageImageColors = new Color[BattlePresenter.VisibleStageCount];
-                var buildStageImageColors = new Color[BattlePresenter.VisibleStageCount];
+                Color buildStageTemplateImageColor = bindings.BuildStageImages[0].color;
                 for (int i = 0; i < BattlePresenter.VisibleStageCount; i++)
                 {
                     stageImageColors[i] = bindings.StageImages[i].color;
-                    buildStageImageColors[i] = bindings.BuildStageImages[i].color;
                 }
 
                 RectTransform stageBar1Rect = bindings.StageBars[0].GetComponent<RectTransform>();
@@ -516,6 +530,9 @@ namespace Holmas.Tests
                 Assert.That(bindings.SummaryText.text, Is.Empty, "隐藏的 RuntimeOverlay 摘要信息不应残留文本。");
                 Assert.That(bindings.StatusText.text, Is.Empty, "隐藏的 RuntimeOverlay 状态信息不应残留文本。");
                 Assert.That(bindings.StageLocks[0].gameObject.activeSelf, Is.False, "已解锁 Stage 必须关闭静态绑定的 Image/lock 节点。");
+                Assert.That(bindings.BuildButton.transform.Find("BuildStage2"), Is.Not.Null, "promotionLevelCaps 有 3 项时，应从 BuildStage1 动态克隆 BuildStage2。");
+                Assert.That(bindings.BuildButton.transform.Find("BuildStage3"), Is.Not.Null, "promotionLevelCaps 有 3 项时，应从 BuildStage1 动态克隆 BuildStage3。");
+                Assert.That(bindings.BuildButton.transform.Find("BuildStage4"), Is.Null, "promotionLevelCaps 只有 3 项时，不应创建第 4 个底部 slot。");
                 Transform buildStarGroup = bindings.BuildStageButtons[0].transform.Find("stargroup");
                 Assert.That(buildStarGroup, Is.Not.Null, "BuildStage1 应保留 stargroup 星级容器。");
                 Assert.That(buildStarGroup.gameObject.activeSelf, Is.True, "stargroup 是常亮底星层，不应被运行时关闭。");
@@ -561,9 +578,18 @@ namespace Holmas.Tests
 
                 Assert.That(activeSlotCount, Is.EqualTo(2), "promotion 点亮星级应通过显隐表达，不应通过改 Image 透明度隐藏。");
                 Assert.That(activeStarCount, Is.EqualTo(2), "promotion 星级显示必须跟随当前 promotion 等级。");
-                Assert.That(bindings.BuildStageButtons[3].gameObject.activeSelf, Is.False, "promotionLevelCaps 只有 3 项时，第 4 个底部 slot 必须隐藏。");
-                Assert.That(bindings.BuildStageButtons[4].gameObject.activeSelf, Is.False, "promotionLevelCaps 只有 3 项时，第 5 个底部 slot 必须隐藏。");
-                Assert.That(bindings.BuildButton.transform.Find("Image").gameObject.activeSelf, Is.False, "Build_btn 旧单图标必须隐藏，底部应显示 promotion slots。");
+                Transform clonedBuildStage2 = bindings.BuildButton.transform.Find("BuildStage2");
+                BattleBuildStageBindingSurface clonedSurface2 = clonedBuildStage2 != null ? clonedBuildStage2.GetComponent<BattleBuildStageBindingSurface>() : null;
+                Assert.That(clonedSurface2?.HasRequiredBindings, Is.True, "动态 BuildStage2 必须继承 BuildStage1 的静态 surface。");
+                Transform clonedActiveStarGroup2 = clonedBuildStage2 != null ? clonedBuildStage2.Find("stargroup_1") : null;
+                Assert.That(clonedActiveStarGroup2, Is.Not.Null, "动态 BuildStage2 必须继承点亮星层。");
+                Assert.That(clonedActiveStarGroup2.Find("star").gameObject.activeSelf, Is.True, "动态 BuildStage2 第 1 颗星应从左侧点亮。");
+                Assert.That(clonedActiveStarGroup2.Find("star (1)").gameObject.activeSelf, Is.False, "动态 BuildStage2 第 2 颗星应按 StarCount 隐藏。");
+                Transform legacyBuildIcon = bindings.BuildButton.transform.Find("Image");
+                if (legacyBuildIcon != null)
+                {
+                    Assert.That(legacyBuildIcon.gameObject.activeSelf, Is.False, "Build_btn 旧单图标必须隐藏，底部应显示 promotion slots。");
+                }
 
                 int clickedPromotionSlot = -1;
                 view.SetPromotionSlotAction(slotIndex => clickedPromotionSlot = slotIndex);
@@ -603,9 +629,9 @@ namespace Holmas.Tests
                 });
 
                 Transform dynamicBuildStage6 = bindings.BuildButton.transform.Find("BuildStage6");
-                Assert.That(dynamicBuildStage6, Is.Null, "promotionLevelCaps 超过 5 项时，运行时不应再动态创建 BuildStage6；需要扩容时应先改 prefab 静态槽位。");
-                bindings.BuildStageButtons[4].onClick.Invoke();
-                Assert.That(clickedPromotionSlot, Is.EqualTo(4), "静态 promotion slot 点击必须回传真实 slot index。");
+                Assert.That(dynamicBuildStage6, Is.Not.Null, "promotionLevelCaps 超过 5 项时，应继续用 BuildStage1 模板动态创建 BuildStage6。");
+                dynamicBuildStage6.GetComponent<Button>().onClick.Invoke();
+                Assert.That(clickedPromotionSlot, Is.EqualTo(5), "动态 promotion slot 点击必须回传真实 slot index。");
                 Assert.That(bindings.BuildButton.interactable, Is.False, "Build_btn 作为底部容器时，不应在无可升级项状态给出可点击反馈。");
 
                 for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
@@ -628,8 +654,8 @@ namespace Holmas.Tests
                 for (int i = 0; i < BattlePresenter.VisibleStageCount; i++)
                 {
                     Assert.That(bindings.StageImages[i].color, Is.EqualTo(stageImageColors[i]), $"Stage{i + 1} prefab Image 颜色和透明度不应被运行时改写。");
-                    Assert.That(bindings.BuildStageImages[i].color, Is.EqualTo(buildStageImageColors[i]), $"BuildStage{i + 1}/Image prefab 颜色和透明度不应被运行时改写。");
                 }
+                Assert.That(bindings.BuildStageImages[0].color, Is.EqualTo(buildStageTemplateImageColor), "BuildStage1/Image prefab 颜色和透明度不应被运行时改写。");
             }
             finally
             {
@@ -721,6 +747,15 @@ namespace Holmas.Tests
                         return child as RectTransform;
                     }
                 }
+
+                TMP_Text[] tmpTexts = child.GetComponentsInChildren<TMP_Text>(true);
+                for (int textIndex = 0; textIndex < tmpTexts.Length; textIndex++)
+                {
+                    if (tmpTexts[textIndex] != null && tmpTexts[textIndex].text == expectedText)
+                    {
+                        return child as RectTransform;
+                    }
+                }
             }
 
             return null;
@@ -777,6 +812,17 @@ namespace Holmas.Tests
         {
             Transform child = root != null ? root.Find(childName) : null;
             return child != null && child.GetComponent<Image>() != null;
+        }
+
+        private static void AssertLeaderboardItemSurface(RectTransform root, bool requiresRank)
+        {
+            LeaderboardItemBindingSurface surface = root != null ? root.GetComponent<LeaderboardItemBindingSurface>() : null;
+            Assert.That(surface, Is.Not.Null, root != null ? root.name + " 必须静态挂载 LeaderboardItemBindingSurface。" : "排行榜 item 根节点缺失。");
+            Assert.That(surface.HasRequiredBindings, Is.True, root.name + " 的头像、头像框、昵称和分数字段必须通过静态 surface 绑定。");
+            if (requiresRank)
+            {
+                Assert.That(surface.HasRankText, Is.True, root.name + " 必须静态绑定排名文本。");
+            }
         }
 
         private static float ExpectedFirstRuntimeItemY(RectTransform template)

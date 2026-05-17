@@ -11,6 +11,11 @@ namespace App.HotUpdate.Holmas.UI.Binding
 
         public int EntryCount => _entries != null ? _entries.Count : 0;
 
+        public void Clear()
+        {
+            _entries.Clear();
+        }
+
         public void RegisterOrReplace(string bindingKey, Component target, string eventName = null, string nodePath = null)
         {
             if (string.IsNullOrWhiteSpace(bindingKey) || target == null)

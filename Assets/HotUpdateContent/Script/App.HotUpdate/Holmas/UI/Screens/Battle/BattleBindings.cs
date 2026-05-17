@@ -17,6 +17,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public const string SummaryTextKey = "battle/summary_text";
         public const string StatusTextKey = "battle/status_text";
         public const string ButtonClickEvent = "on_click";
+        public const int BuildStageTemplateIndex = 0;
 
         public const string RootNodePath = "BattlePanel";
         public const string RuntimeOverlayNodeName = "RuntimeOverlay";
@@ -77,55 +78,31 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public static readonly string[] BuildStageButtonKeys =
         {
             "battle/build_stage_1_button",
-            "battle/build_stage_2_button",
-            "battle/build_stage_3_button",
-            "battle/build_stage_4_button",
-            "battle/build_stage_5_button",
         };
 
         public static readonly string[] BuildStageImageKeys =
         {
             "battle/build_stage_1_image",
-            "battle/build_stage_2_image",
-            "battle/build_stage_3_image",
-            "battle/build_stage_4_image",
-            "battle/build_stage_5_image",
         };
 
         public static readonly string[] BuildStageNameTextKeys =
         {
             "battle/build_stage_1_name_text",
-            "battle/build_stage_2_name_text",
-            "battle/build_stage_3_name_text",
-            "battle/build_stage_4_name_text",
-            "battle/build_stage_5_name_text",
         };
 
         public static readonly string[] BuildStageLockKeys =
         {
             "battle/build_stage_1_lock",
-            "battle/build_stage_2_lock",
-            "battle/build_stage_3_lock",
-            "battle/build_stage_4_lock",
-            "battle/build_stage_5_lock",
         };
 
         public static readonly string[] BuildStageBaseStarGroupKeys =
         {
             "battle/build_stage_1_base_stars",
-            "battle/build_stage_2_base_stars",
-            "battle/build_stage_3_base_stars",
-            "battle/build_stage_4_base_stars",
-            "battle/build_stage_5_base_stars",
         };
 
         public static readonly string[] BuildStageActiveStarGroupKeys =
         {
             "battle/build_stage_1_active_stars",
-            "battle/build_stage_2_active_stars",
-            "battle/build_stage_3_active_stars",
-            "battle/build_stage_4_active_stars",
-            "battle/build_stage_5_active_stars",
         };
 
         public static readonly string[] StageButtonNodePaths =
@@ -175,55 +152,31 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public static readonly string[] BuildStageButtonNodePaths =
         {
             BuildButtonNodePath + "/BuildStage1",
-            BuildButtonNodePath + "/BuildStage2",
-            BuildButtonNodePath + "/BuildStage3",
-            BuildButtonNodePath + "/BuildStage4",
-            BuildButtonNodePath + "/BuildStage5",
         };
 
         public static readonly string[] BuildStageImageNodePaths =
         {
             BuildButtonNodePath + "/BuildStage1/Image",
-            BuildButtonNodePath + "/BuildStage2/Image",
-            BuildButtonNodePath + "/BuildStage3/Image",
-            BuildButtonNodePath + "/BuildStage4/Image",
-            BuildButtonNodePath + "/BuildStage5/Image",
         };
 
         public static readonly string[] BuildStageNameTextNodePaths =
         {
             BuildButtonNodePath + "/BuildStage1/Text (TMP)",
-            BuildButtonNodePath + "/BuildStage2/Text (TMP)",
-            BuildButtonNodePath + "/BuildStage3/Text (TMP)",
-            BuildButtonNodePath + "/BuildStage4/Text (TMP)",
-            BuildButtonNodePath + "/BuildStage5/Text (TMP)",
         };
 
         public static readonly string[] BuildStageLockNodePaths =
         {
             BuildButtonNodePath + "/BuildStage1/lock",
-            BuildButtonNodePath + "/BuildStage2/lock",
-            BuildButtonNodePath + "/BuildStage3/lock",
-            BuildButtonNodePath + "/BuildStage4/lock",
-            BuildButtonNodePath + "/BuildStage5/lock",
         };
 
         public static readonly string[] BuildStageBaseStarGroupNodePaths =
         {
             BuildButtonNodePath + "/BuildStage1/stargroup",
-            BuildButtonNodePath + "/BuildStage2/stargroup",
-            BuildButtonNodePath + "/BuildStage3/stargroup",
-            BuildButtonNodePath + "/BuildStage4/stargroup",
-            BuildButtonNodePath + "/BuildStage5/stargroup",
         };
 
         public static readonly string[] BuildStageActiveStarGroupNodePaths =
         {
             BuildButtonNodePath + "/BuildStage1/stargroup_1",
-            BuildButtonNodePath + "/BuildStage2/stargroup_1",
-            BuildButtonNodePath + "/BuildStage3/stargroup_1",
-            BuildButtonNodePath + "/BuildStage4/stargroup_1",
-            BuildButtonNodePath + "/BuildStage5/stargroup_1",
         };
 
         public RectTransform RootPanel;
@@ -268,16 +221,20 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                     if (StageButtons[i] == null ||
                         StageImages[i] == null ||
                         StageNameTexts[i] == null ||
-                        StageLocks[i] == null ||
-                        BuildStageButtons[i] == null ||
-                        BuildStageImages[i] == null ||
-                        BuildStageNameTexts[i] == null ||
-                        BuildStageLocks[i] == null ||
-                        BuildStageBaseStarGroups[i] == null ||
-                        BuildStageActiveStarGroups[i] == null)
+                        StageLocks[i] == null)
                     {
                         return false;
                     }
+                }
+
+                if (BuildStageButtons[BuildStageTemplateIndex] == null ||
+                    BuildStageImages[BuildStageTemplateIndex] == null ||
+                    BuildStageNameTexts[BuildStageTemplateIndex] == null ||
+                    BuildStageLocks[BuildStageTemplateIndex] == null ||
+                    BuildStageBaseStarGroups[BuildStageTemplateIndex] == null ||
+                    BuildStageActiveStarGroups[BuildStageTemplateIndex] == null)
+                {
+                    return false;
                 }
 
                 for (int i = 0; i < StageBars.Length; i++)
@@ -302,7 +259,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
             resolver.TryResolve(RootPanelKey, out bindings.RootPanel, nodePath: RootNodePath);
             resolver.TryResolve(BackButtonKey, out bindings.BackButton, ButtonClickEvent, BackButtonNodePath);
-            resolver.TryResolve(BuildButtonKey, out bindings.BuildButton, ButtonClickEvent, BuildButtonNodePath);
+            resolver.TryResolve(BuildButtonKey, out bindings.BuildButton, nodePath: BuildButtonNodePath);
             resolver.TryResolve(BuildButtonTextKey, out bindings.BuildButtonText, nodePath: BuildButtonTextNodePath);
             resolver.TryResolve(LevelTextKey, out bindings.LevelText, nodePath: LevelTextNodePath);
             resolver.TryResolve(GoldTextKey, out bindings.GoldText, nodePath: GoldTextNodePath);
@@ -315,13 +272,15 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 resolver.TryResolve(StageImageKeys[i], out bindings.StageImages[i], nodePath: StageImageNodePaths[i]);
                 resolver.TryResolve(StageNameTextKeys[i], out bindings.StageNameTexts[i], nodePath: StageNameTextNodePaths[i]);
                 resolver.TryResolve(StageLockKeys[i], out bindings.StageLocks[i], nodePath: StageLockNodePaths[i]);
-                resolver.TryResolve(BuildStageButtonKeys[i], out bindings.BuildStageButtons[i], ButtonClickEvent, BuildStageButtonNodePaths[i]);
-                resolver.TryResolve(BuildStageImageKeys[i], out bindings.BuildStageImages[i], nodePath: BuildStageImageNodePaths[i]);
-                resolver.TryResolve(BuildStageNameTextKeys[i], out bindings.BuildStageNameTexts[i], nodePath: BuildStageNameTextNodePaths[i]);
-                resolver.TryResolve(BuildStageLockKeys[i], out bindings.BuildStageLocks[i], nodePath: BuildStageLockNodePaths[i]);
-                resolver.TryResolve(BuildStageBaseStarGroupKeys[i], out bindings.BuildStageBaseStarGroups[i], nodePath: BuildStageBaseStarGroupNodePaths[i]);
-                resolver.TryResolve(BuildStageActiveStarGroupKeys[i], out bindings.BuildStageActiveStarGroups[i], nodePath: BuildStageActiveStarGroupNodePaths[i]);
             }
+
+            int templateIndex = BuildStageTemplateIndex;
+            resolver.TryResolve(BuildStageButtonKeys[templateIndex], out bindings.BuildStageButtons[templateIndex], ButtonClickEvent, BuildStageButtonNodePaths[templateIndex]);
+            resolver.TryResolve(BuildStageImageKeys[templateIndex], out bindings.BuildStageImages[templateIndex], nodePath: BuildStageImageNodePaths[templateIndex]);
+            resolver.TryResolve(BuildStageNameTextKeys[templateIndex], out bindings.BuildStageNameTexts[templateIndex], nodePath: BuildStageNameTextNodePaths[templateIndex]);
+            resolver.TryResolve(BuildStageLockKeys[templateIndex], out bindings.BuildStageLocks[templateIndex], nodePath: BuildStageLockNodePaths[templateIndex]);
+            resolver.TryResolve(BuildStageBaseStarGroupKeys[templateIndex], out bindings.BuildStageBaseStarGroups[templateIndex], nodePath: BuildStageBaseStarGroupNodePaths[templateIndex]);
+            resolver.TryResolve(BuildStageActiveStarGroupKeys[templateIndex], out bindings.BuildStageActiveStarGroups[templateIndex], nodePath: BuildStageActiveStarGroupNodePaths[templateIndex]);
 
             for (int i = 0; i < bindings.StageBars.Length; i++)
             {

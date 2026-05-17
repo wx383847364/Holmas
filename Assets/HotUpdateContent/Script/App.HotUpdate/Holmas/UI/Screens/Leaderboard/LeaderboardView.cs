@@ -19,7 +19,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
         private LeaderboardItemView _top2View;
         private LeaderboardItemView _top3View;
         private LeaderboardItemView _myInfoView;
-        private Text _statusText;
         private HolmasCatSpriteLoader _catSpriteLoader;
         private LeaderboardAvatarSpriteLoader _avatarSpriteLoader;
         private UnityAction _currentBackAction;
@@ -45,7 +44,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             EnsureToggleGroup(levelToggle, weeklyToggle, dailyToggle);
 
             Text titleText = FindByPath<Text>(LeaderboardBindings.TitleTextNodePath) ?? CreateText(transform, "Title_txt", "等级总榜", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -82f), new Vector2(400f, 80f), 44, TextAnchor.MiddleCenter);
-            _statusText = FindFirstDescendantByName<Text>("LeaderboardStatusText") ?? CreateText(transform, "LeaderboardStatusText", string.Empty, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -132f), new Vector2(500f, 36f), 22, TextAnchor.MiddleCenter);
+            Text statusText = FindByPath<Text>(LeaderboardBindings.StatusTextNodePath) ?? CreateText(transform, "LeaderboardStatusText", string.Empty, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0f, -132f), new Vector2(500f, 36f), 22, TextAnchor.MiddleCenter);
 
             RectTransform leaderInfo = FindByPath<RectTransform>(LeaderboardBindings.LeaderInfoNodePath) ?? GetOrCreateRect(transform, "LeaderInfo");
             ScrollRect leaderList = FindByPath<ScrollRect>(LeaderboardBindings.LeaderListNodePath) ?? CreateScrollRect(leaderInfo, "LeaderList");
@@ -55,6 +54,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             RectTransform top1 = FindByPath<RectTransform>(LeaderboardBindings.Top1NodePath) ?? CreateFallbackTopInfo(leaderInfo, "No.1", new Vector2(0f, 561f));
             RectTransform top2 = FindByPath<RectTransform>(LeaderboardBindings.Top2NodePath) ?? CreateFallbackTopInfo(leaderInfo, "No.2", new Vector2(-282f, 529f));
             RectTransform top3 = FindByPath<RectTransform>(LeaderboardBindings.Top3NodePath) ?? CreateFallbackTopInfo(leaderInfo, "No.3", new Vector2(287f, 517f));
+            EnsureItemBindingSurface(itemTemplate);
+            EnsureItemBindingSurface(myInfo);
+            EnsureItemBindingSurface(top1);
+            EnsureItemBindingSurface(top2);
+            EnsureItemBindingSurface(top3);
 
             leaderList.content = leaderListContent;
             if (leaderList.viewport == null || leaderList.viewport == leaderListContent)
@@ -71,6 +75,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             collector.RegisterOrReplace(LeaderboardBindings.WeeklyCatsToggleKey, weeklyToggle, LeaderboardBindings.ToggleChangedEvent, LeaderboardBindings.WeeklyCatsToggleNodePath);
             collector.RegisterOrReplace(LeaderboardBindings.DailyMoneyToggleKey, dailyToggle, LeaderboardBindings.ToggleChangedEvent, LeaderboardBindings.DailyMoneyToggleNodePath);
             collector.RegisterOrReplace(LeaderboardBindings.TitleTextKey, titleText, nodePath: LeaderboardBindings.TitleTextNodePath);
+            collector.RegisterOrReplace(LeaderboardBindings.StatusTextKey, statusText, nodePath: LeaderboardBindings.StatusTextNodePath);
             collector.RegisterOrReplace(LeaderboardBindings.LeaderInfoKey, leaderInfo, nodePath: LeaderboardBindings.LeaderInfoNodePath);
             collector.RegisterOrReplace(LeaderboardBindings.LeaderListKey, leaderList, nodePath: LeaderboardBindings.LeaderListNodePath);
             collector.RegisterOrReplace(LeaderboardBindings.LeaderListContentKey, leaderListContent, nodePath: LeaderboardBindings.LeaderListContentNodePath);
@@ -79,6 +84,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             collector.RegisterOrReplace(LeaderboardBindings.Top1Key, top1, nodePath: LeaderboardBindings.Top1NodePath);
             collector.RegisterOrReplace(LeaderboardBindings.Top2Key, top2, nodePath: LeaderboardBindings.Top2NodePath);
             collector.RegisterOrReplace(LeaderboardBindings.Top3Key, top3, nodePath: LeaderboardBindings.Top3NodePath);
+        }
+
+        private static void EnsureItemBindingSurface(RectTransform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            LeaderboardItemBindingSurface surface =
+                root.GetComponent<LeaderboardItemBindingSurface>() ??
+                root.gameObject.AddComponent<LeaderboardItemBindingSurface>();
+            surface.AssignForEditor();
         }
         #endif
 
@@ -159,7 +177,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             }
 
             SetText(_bindings?.TitleText, vm.Title);
-            SetText(_statusText, BuildStatusText(vm));
+            SetText(_bindings?.StatusText, BuildStatusText(vm));
             SyncToggles(vm.SelectedType);
             RenderTopEntries(vm.Entries ?? Array.Empty<HolmasLeaderboardEntry>());
             RenderListEntries(vm.Entries ?? Array.Empty<HolmasLeaderboardEntry>());

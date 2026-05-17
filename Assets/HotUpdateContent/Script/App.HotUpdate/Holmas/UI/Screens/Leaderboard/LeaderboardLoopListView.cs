@@ -5,7 +5,6 @@ using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Tool;
 using App.Shared.Contracts;
 using App.Shared.Holmas.Leaderboards;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -356,13 +355,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
                 return _itemHeight * (1f - 0.5f);
             }
 
-            RectTransform[] children = _itemTemplate.GetComponentsInChildren<RectTransform>(true);
             float visualTop = float.NegativeInfinity;
             var corners = new Vector3[4];
-            for (int i = 0; i < children.Length; i++)
+            for (int i = 0; i < _itemTemplate.childCount; i++)
             {
-                RectTransform child = children[i];
-                if (child == null || child == _itemTemplate)
+                RectTransform child = _itemTemplate.GetChild(i) as RectTransform;
+                if (child == null)
                 {
                     continue;
                 }
@@ -496,9 +494,9 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
     public sealed class LeaderboardItemView
     {
         private readonly RectTransform _root;
-        private readonly TextSlot _rankText;
-        private readonly TextSlot _nameText;
-        private readonly TextSlot _scoreText;
+        private readonly LeaderboardTextSlot _rankText;
+        private readonly LeaderboardTextSlot _nameText;
+        private readonly LeaderboardTextSlot _scoreText;
         private readonly Image _headIcon;
         private readonly Image _frameIcon;
         private readonly Image _leadIcon;
@@ -508,12 +506,24 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
         public LeaderboardItemView(RectTransform root)
         {
             _root = root;
-            _rankText = TextSlot.Find(root, "MyLeadInfo");
-            _nameText = TextSlot.Find(root, "Name");
-            _scoreText = TextSlot.Find(root, "LeadCount");
-            _headIcon = FindImage(root, "HeadIcon");
-            _frameIcon = FindImage(root, "FrameIcon");
-            _leadIcon = FindImage(root, "LeadIcon");
+            LeaderboardItemBindingSurface surface = root != null ? root.GetComponent<LeaderboardItemBindingSurface>() : null;
+            if (surface == null)
+            {
+                _rankText = default;
+                _nameText = default;
+                _scoreText = default;
+                _headIcon = null;
+                _frameIcon = null;
+                _leadIcon = null;
+                return;
+            }
+
+            _rankText = surface.RankText;
+            _nameText = surface.NameText;
+            _scoreText = surface.ScoreText;
+            _headIcon = surface.HeadIcon;
+            _frameIcon = surface.FrameIcon;
+            _leadIcon = surface.LeadIcon;
         }
 
         public void SetCatSpriteLoader(HolmasCatSpriteLoader catSpriteLoader)
@@ -605,26 +615,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
                 : entry.AvatarIconPath;
         }
 
-        private static Image FindImage(Transform root, string objectName)
-        {
-            if (root == null || string.IsNullOrWhiteSpace(objectName))
-            {
-                return null;
-            }
-
-            Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < transforms.Length; i++)
-            {
-                Transform transform = transforms[i];
-                if (transform != null && transform.name == objectName)
-                {
-                    return transform.GetComponent<Image>();
-                }
-            }
-
-            return null;
-        }
-
         private static void SetImageVisible(Image image, bool visible)
         {
             if (image != null)
@@ -653,59 +643,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
             return rank > 0 ? "No." + rank : "未上榜";
         }
 
-        private readonly struct TextSlot
-        {
-            private readonly TMP_Text _tmpText;
-            private readonly Text _uiText;
-
-            private TextSlot(TMP_Text tmpText, Text uiText)
-            {
-                _tmpText = tmpText;
-                _uiText = uiText;
-            }
-
-            public static TextSlot Find(Transform root, string objectName)
-            {
-                if (root == null || string.IsNullOrWhiteSpace(objectName))
-                {
-                    return new TextSlot(null, null);
-                }
-
-                Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
-                for (int i = 0; i < transforms.Length; i++)
-                {
-                    Transform transform = transforms[i];
-                    if (transform == null || transform.name != objectName)
-                    {
-                        continue;
-                    }
-
-                    TMP_Text tmp = transform.GetComponent<TMP_Text>();
-                    Text text = transform.GetComponent<Text>();
-                    if (tmp != null || text != null)
-                    {
-                        return new TextSlot(tmp, text);
-                    }
-                }
-
-                return new TextSlot(null, null);
-            }
-
-            public void SetText(string value)
-            {
-                string safeValue = value ?? string.Empty;
-                if (_tmpText != null)
-                {
-                    TmpGlyphCoverageReporter.SetText(_tmpText, safeValue);
-                    return;
-                }
-
-                if (_uiText != null && _uiText.text != safeValue)
-                {
-                    _uiText.text = safeValue;
-                }
-            }
-        }
     }
 
     public sealed class LeaderboardAvatarSpriteLoader : IDisposable

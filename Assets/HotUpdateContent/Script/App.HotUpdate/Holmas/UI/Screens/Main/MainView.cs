@@ -52,6 +52,8 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
         private string _activeBoardFrameOverlayPath = string.Empty;
         private string _requestedBoardBackgroundPath = string.Empty;
         private string _requestedBoardFrameOverlayPath = string.Empty;
+        private string _lastFailedBoardBackgroundPath = string.Empty;
+        private string _lastFailedBoardFrameOverlayPath = string.Empty;
         private int _boardBackgroundRequestGeneration;
         private int _lastBoardRows;
         private int _lastBoardCols;
@@ -343,6 +345,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 _activeBoardFrameOverlayPath = string.Empty;
                 _requestedBoardBackgroundPath = string.Empty;
                 _requestedBoardFrameOverlayPath = string.Empty;
+                ClearBoardFrameLoadFailure();
                 _assetsRuntime = assetsRuntime;
             }
 
@@ -1478,6 +1481,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 normalizedOverlayPath = normalizedBackgroundPath;
             }
 
+            if (IsLastBoardFrameLoadFailure(normalizedBackgroundPath, normalizedOverlayPath))
+            {
+                return;
+            }
+
             if (string.Equals(_activeBoardBackgroundPath, normalizedBackgroundPath, StringComparison.Ordinal) &&
                 string.Equals(_activeBoardFrameOverlayPath, normalizedOverlayPath, StringComparison.Ordinal) &&
                 _bindings.MinesBgImage.sprite != null &&
@@ -1521,7 +1529,19 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 }
 
                 bool overlayReusesBackground = string.Equals(boardBackgroundPath, boardFrameOverlayPath, StringComparison.Ordinal);
+                if (TryReportMissingEditorBoardFrameAsset(boardBackgroundPath, boardFrameOverlayPath, null, overlayReusesBackground, false))
+                {
+                    return;
+                }
+
                 backgroundHandle = await assetsRuntime.LoadAssetAsync(boardBackgroundPath);
+                Object backgroundAssetObject = backgroundHandle != null ? backgroundHandle.AssetObject : null;
+                if (TryReportMissingEditorBoardFrameAsset(boardBackgroundPath, boardFrameOverlayPath, backgroundAssetObject, overlayReusesBackground, true))
+                {
+                    ReleaseLoadedBoardFrameHandles(backgroundHandle, overlayHandle);
+                    return;
+                }
+
                 overlayHandle = overlayReusesBackground
                     ? backgroundHandle
                     : await assetsRuntime.LoadAssetAsync(boardFrameOverlayPath);
@@ -1534,17 +1554,28 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                     return;
                 }
 
-                Sprite backgroundSprite = ExtractSprite(backgroundHandle != null ? backgroundHandle.AssetObject : null);
-                Sprite overlaySprite = ExtractSprite(overlayHandle != null ? overlayHandle.AssetObject : null);
+                Object overlayAssetObject = overlayHandle != null ? overlayHandle.AssetObject : null;
+                Sprite backgroundSprite = ExtractSprite(backgroundAssetObject);
+                Sprite overlaySprite = ExtractSprite(overlayAssetObject);
                 if (backgroundSprite == null || overlaySprite == null)
                 {
                     ReleaseLoadedBoardFrameHandles(backgroundHandle, overlayHandle);
+                    RecordBoardFrameLoadFailure(boardBackgroundPath, boardFrameOverlayPath);
                     RestoreDefaultBoardFrameSprites();
-                    Debug.LogWarning("MainView: 棋盘背景或边框资源不是 Sprite，已回退 prefab 默认背景 " + boardBackgroundPath, this);
+                    Debug.LogWarning(
+                        BuildBoardFrameSpriteWarning(
+                            boardBackgroundPath,
+                            backgroundAssetObject,
+                            boardFrameOverlayPath,
+                            overlayAssetObject,
+                            backgroundSprite == null,
+                            overlaySprite == null),
+                        this);
                     return;
                 }
 
                 ReleaseBoardFrameHandles();
+                ClearBoardFrameLoadFailure();
                 _boardBackgroundHandle = backgroundHandle;
                 _boardFrameOverlayHandle = overlayReusesBackground ? null : overlayHandle;
                 _activeBoardBackgroundPath = boardBackgroundPath;
@@ -1564,10 +1595,11 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                     string.Equals(_requestedBoardBackgroundPath, boardBackgroundPath, StringComparison.Ordinal) &&
                     string.Equals(_requestedBoardFrameOverlayPath, boardFrameOverlayPath, StringComparison.Ordinal))
                 {
+                    RecordBoardFrameLoadFailure(boardBackgroundPath, boardFrameOverlayPath);
                     RestoreDefaultBoardFrameSprites();
                 }
 
-                Debug.LogWarning("MainView: 棋盘背景或边框加载失败 " + boardBackgroundPath + "，" + exception.Message, this);
+                Debug.LogWarning(BuildBoardFrameLoadFailureWarning(boardBackgroundPath, boardFrameOverlayPath, exception), this);
             }
         }
 
@@ -1584,6 +1616,144 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             return null;
+        }
+
+        private bool TryReportMissingEditorBoardFrameAsset(
+            string boardBackgroundPath,
+            string boardFrameOverlayPath,
+            Object loadedBackgroundAssetObject,
+            bool overlayReusesBackground,
+            bool includeOverlay)
+        {
+            bool backgroundMissing = IsEditorAssetPathMissing(boardBackgroundPath);
+            bool overlayMissing = includeOverlay && !overlayReusesBackground && IsEditorAssetPathMissing(boardFrameOverlayPath);
+            if (!backgroundMissing && !overlayMissing)
+            {
+                return false;
+            }
+
+            RecordBoardFrameLoadFailure(boardBackgroundPath, boardFrameOverlayPath);
+            RestoreDefaultBoardFrameSprites();
+            Debug.LogWarning(
+                BuildBoardFrameSpriteWarning(
+                    boardBackgroundPath,
+                    backgroundMissing ? null : loadedBackgroundAssetObject,
+                    boardFrameOverlayPath,
+                    null,
+                    backgroundMissing,
+                    overlayMissing),
+                this);
+            return true;
+        }
+
+        private bool IsLastBoardFrameLoadFailure(string boardBackgroundPath, string boardFrameOverlayPath)
+        {
+            return string.Equals(_lastFailedBoardBackgroundPath, boardBackgroundPath, StringComparison.Ordinal) &&
+                   string.Equals(_lastFailedBoardFrameOverlayPath, boardFrameOverlayPath, StringComparison.Ordinal) &&
+                   IsDefaultBoardFrameSpritesApplied();
+        }
+
+        private void RecordBoardFrameLoadFailure(string boardBackgroundPath, string boardFrameOverlayPath)
+        {
+            _lastFailedBoardBackgroundPath = boardBackgroundPath ?? string.Empty;
+            _lastFailedBoardFrameOverlayPath = boardFrameOverlayPath ?? string.Empty;
+        }
+
+        private void ClearBoardFrameLoadFailure()
+        {
+            _lastFailedBoardBackgroundPath = string.Empty;
+            _lastFailedBoardFrameOverlayPath = string.Empty;
+        }
+
+        private static bool IsEditorAssetPathMissing(string assetPath)
+        {
+            #if UNITY_EDITOR
+            if (string.IsNullOrWhiteSpace(assetPath) ||
+                !assetPath.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(assetPath) == null;
+            #else
+            return false;
+            #endif
+        }
+
+        private static string BuildBoardFrameSpriteWarning(
+            string boardBackgroundPath,
+            Object backgroundAssetObject,
+            string boardFrameOverlayPath,
+            Object overlayAssetObject,
+            bool backgroundFailed,
+            bool overlayFailed)
+        {
+            string failedControls = BuildBoardFrameFailedControlList(
+                boardBackgroundPath,
+                backgroundAssetObject,
+                boardFrameOverlayPath,
+                overlayAssetObject,
+                backgroundFailed,
+                overlayFailed);
+
+            return "MainView: 棋盘背景或边框资源无法转换为 Sprite，已回退 prefab 默认背景。failed=" +
+                   failedControls +
+                   "; background={control=" + MainBindings.MinesBgNodePath +
+                   ", path=" + boardBackgroundPath +
+                   ", assetType=" + DescribeAssetObject(backgroundAssetObject) +
+                   "}; overlay={control=" + MainBindings.MinesBgFrameOverlayNodePath +
+                   ", path=" + boardFrameOverlayPath +
+                   ", assetType=" + DescribeAssetObject(overlayAssetObject) +
+                   "}";
+        }
+
+        private static string BuildBoardFrameLoadFailureWarning(
+            string boardBackgroundPath,
+            string boardFrameOverlayPath,
+            Exception exception)
+        {
+            return "MainView: 棋盘背景或边框加载异常，已回退 prefab 默认背景。" +
+                   "background={control=" + MainBindings.MinesBgNodePath +
+                   ", path=" + boardBackgroundPath +
+                   "}; overlay={control=" + MainBindings.MinesBgFrameOverlayNodePath +
+                   ", path=" + boardFrameOverlayPath +
+                   "}; exception=" + (exception != null ? exception.Message : string.Empty);
+        }
+
+        private static string BuildBoardFrameFailedControlList(
+            string boardBackgroundPath,
+            Object backgroundAssetObject,
+            string boardFrameOverlayPath,
+            Object overlayAssetObject,
+            bool backgroundFailed,
+            bool overlayFailed)
+        {
+            if (backgroundFailed && overlayFailed)
+            {
+                return MainBindings.MinesBgNodePath +
+                       "(path=" + boardBackgroundPath + ", assetType=" + DescribeAssetObject(backgroundAssetObject) + "), " +
+                       MainBindings.MinesBgFrameOverlayNodePath +
+                       "(path=" + boardFrameOverlayPath + ", assetType=" + DescribeAssetObject(overlayAssetObject) + ")";
+            }
+
+            if (backgroundFailed)
+            {
+                return MainBindings.MinesBgNodePath +
+                       "(path=" + boardBackgroundPath + ", assetType=" + DescribeAssetObject(backgroundAssetObject) + ")";
+            }
+
+            if (overlayFailed)
+            {
+                return MainBindings.MinesBgFrameOverlayNodePath +
+                       "(path=" + boardFrameOverlayPath + ", assetType=" + DescribeAssetObject(overlayAssetObject) + ")";
+            }
+
+            return "none";
+        }
+
+        private static string DescribeAssetObject(Object assetObject)
+        {
+            return assetObject != null ? assetObject.GetType().Name : "null";
         }
 
         private static void ConfigureBoardFrameOverlayImage(Image overlayImage)

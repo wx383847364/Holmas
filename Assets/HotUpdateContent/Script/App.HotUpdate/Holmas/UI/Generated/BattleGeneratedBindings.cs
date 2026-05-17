@@ -31,9 +31,7 @@ namespace App.HotUpdate.Holmas.UI.Generated
                 BattleBindings.BuildButtonKey,
                 "Button",
                 BattleBindings.BuildButtonNodePath,
-                BattleBindings.ButtonClickEvent,
-                requiresManualWiring: true,
-                notes: "controller_wires_publicity_build");
+                notes: "publicity_build_container");
             manifest.AddEntry(BattleBindings.BuildButtonTextKey, "TextMeshProUGUI", BattleBindings.BuildButtonTextNodePath, notes: "build_button_label");
             manifest.AddEntry(BattleBindings.LevelTextKey, "TextMeshProUGUI", BattleBindings.LevelTextNodePath, notes: "battle_level");
             manifest.AddEntry(BattleBindings.GoldTextKey, "TextMeshProUGUI", BattleBindings.GoldTextNodePath, notes: "battle_gold");
@@ -46,13 +44,15 @@ namespace App.HotUpdate.Holmas.UI.Generated
                 manifest.AddEntry(BattleBindings.StageImageKeys[i], "Image", BattleBindings.StageImageNodePaths[i], notes: "publicity_stage_image");
                 manifest.AddEntry(BattleBindings.StageNameTextKeys[i], "TextMeshProUGUI", BattleBindings.StageNameTextNodePaths[i], notes: "publicity_stage_label");
                 manifest.AddEntry(BattleBindings.StageLockKeys[i], "RectTransform", BattleBindings.StageLockNodePaths[i], notes: "publicity_stage_lock");
-                manifest.AddEntry(BattleBindings.BuildStageButtonKeys[i], "Button", BattleBindings.BuildStageButtonNodePaths[i], BattleBindings.ButtonClickEvent, requiresManualWiring: true, notes: "publicity_build_stage_button");
-                manifest.AddEntry(BattleBindings.BuildStageImageKeys[i], "Image", BattleBindings.BuildStageImageNodePaths[i], notes: "publicity_build_stage_image");
-                manifest.AddEntry(BattleBindings.BuildStageNameTextKeys[i], "TextMeshProUGUI", BattleBindings.BuildStageNameTextNodePaths[i], notes: "publicity_build_stage_label");
-                manifest.AddEntry(BattleBindings.BuildStageLockKeys[i], "RectTransform", BattleBindings.BuildStageLockNodePaths[i], notes: "publicity_build_stage_lock");
-                manifest.AddEntry(BattleBindings.BuildStageBaseStarGroupKeys[i], "RectTransform", BattleBindings.BuildStageBaseStarGroupNodePaths[i], notes: "publicity_build_stage_base_stars");
-                manifest.AddEntry(BattleBindings.BuildStageActiveStarGroupKeys[i], "RectTransform", BattleBindings.BuildStageActiveStarGroupNodePaths[i], notes: "publicity_build_stage_active_stars");
             }
+
+            int templateIndex = BattleBindings.BuildStageTemplateIndex;
+            manifest.AddEntry(BattleBindings.BuildStageButtonKeys[templateIndex], "Button", BattleBindings.BuildStageButtonNodePaths[templateIndex], BattleBindings.ButtonClickEvent, requiresManualWiring: true, notes: "publicity_build_stage_template_button");
+            manifest.AddEntry(BattleBindings.BuildStageImageKeys[templateIndex], "Image", BattleBindings.BuildStageImageNodePaths[templateIndex], notes: "publicity_build_stage_template_image");
+            manifest.AddEntry(BattleBindings.BuildStageNameTextKeys[templateIndex], "TextMeshProUGUI", BattleBindings.BuildStageNameTextNodePaths[templateIndex], notes: "publicity_build_stage_template_label");
+            manifest.AddEntry(BattleBindings.BuildStageLockKeys[templateIndex], "RectTransform", BattleBindings.BuildStageLockNodePaths[templateIndex], notes: "publicity_build_stage_template_lock");
+            manifest.AddEntry(BattleBindings.BuildStageBaseStarGroupKeys[templateIndex], "RectTransform", BattleBindings.BuildStageBaseStarGroupNodePaths[templateIndex], notes: "publicity_build_stage_template_base_stars");
+            manifest.AddEntry(BattleBindings.BuildStageActiveStarGroupKeys[templateIndex], "RectTransform", BattleBindings.BuildStageActiveStarGroupNodePaths[templateIndex], notes: "publicity_build_stage_template_active_stars");
 
             for (int i = 0; i < BattlePresenter.VisibleStageBarCount; i++)
             {

@@ -37,7 +37,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             _view?.Bind(_bindings);
             _view?.SetAssetsRuntime(Root != null && Root.Context != null ? Root.Context.AssetsRuntime : null);
             _view?.SetBackAction(OnBackClicked);
-            _view?.SetBuildAction(null);
             _view?.SetStageAction(OnStageClicked);
             _view?.SetPromotionSlotAction(OnPromotionSlotClicked);
         }
@@ -56,7 +55,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         protected override void OnDestroy()
         {
             _view?.SetBackAction(null);
-            _view?.SetBuildAction(null);
             _view?.SetStageAction(null);
             _view?.SetPromotionSlotAction(null);
         }
@@ -64,11 +62,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         private void OnBackClicked()
         {
             _ = HandleBackAsync();
-        }
-
-        private void OnBuildClicked()
-        {
-            _ = HandleBuildAsync();
         }
 
         private void OnStageClicked(int stageSlotIndex)
@@ -116,28 +109,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             }
 
             _ = HandlePromotionAsync(promotionSlotIndex, promotionSlot.PromotionId);
-        }
-
-        private async Task HandleBuildAsync()
-        {
-            BattleVm viewModel = _presenter != null ? _presenter.Build(_selectedStageId) : null;
-            int promotionSlotIndex = -1;
-            if (viewModel?.PromotionSlots != null)
-            {
-                for (int i = 0; i < viewModel.PromotionSlots.Length; i++)
-                {
-                    if (viewModel.PromotionSlots[i] != null && viewModel.PromotionSlots[i].CanBuild)
-                    {
-                        promotionSlotIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            string promotionId = promotionSlotIndex >= 0
-                ? viewModel.PromotionSlots[promotionSlotIndex].PromotionId
-                : string.Empty;
-            await HandlePromotionAsync(promotionSlotIndex, promotionId);
         }
 
         private async Task HandlePromotionAsync(int promotionSlotIndex, string promotionId)

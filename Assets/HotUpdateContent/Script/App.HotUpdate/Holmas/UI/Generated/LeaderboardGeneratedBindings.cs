@@ -26,6 +26,7 @@ namespace App.HotUpdate.Holmas.UI.Generated
             manifest.AddEntry(LeaderboardBindings.WeeklyCatsToggleKey, "Toggle", LeaderboardBindings.WeeklyCatsToggleNodePath, LeaderboardBindings.ToggleChangedEvent, requiresManualWiring: true, notes: "controller_wires_week_tab");
             manifest.AddEntry(LeaderboardBindings.DailyMoneyToggleKey, "Toggle", LeaderboardBindings.DailyMoneyToggleNodePath, LeaderboardBindings.ToggleChangedEvent, requiresManualWiring: true, notes: "controller_wires_day_tab");
             manifest.AddEntry(LeaderboardBindings.TitleTextKey, "Text", LeaderboardBindings.TitleTextNodePath, notes: "prefab_title");
+            manifest.AddEntry(LeaderboardBindings.StatusTextKey, "Text", LeaderboardBindings.StatusTextNodePath, notes: "prefab_period_status");
             manifest.AddEntry(LeaderboardBindings.LeaderInfoKey, "RectTransform", LeaderboardBindings.LeaderInfoNodePath, notes: "leaderboard_content_root");
             manifest.AddEntry(LeaderboardBindings.LeaderListKey, "ScrollRect", LeaderboardBindings.LeaderListNodePath, notes: "virtualized_scroll_rect");
             manifest.AddEntry(LeaderboardBindings.LeaderListContentKey, "RectTransform", LeaderboardBindings.LeaderListContentNodePath, notes: "virtualized_scroll_content");

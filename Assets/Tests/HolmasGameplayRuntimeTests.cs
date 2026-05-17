@@ -2144,7 +2144,7 @@ namespace Holmas.Tests
             var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
             var defaultTexture = new Texture2D(16, 16);
             var firstTexture = new Texture2D(16, 16);
-            var badTexture = new Texture2D(16, 16);
+            var badAsset = new TextAsset("not a sprite");
             Sprite defaultSprite = Sprite.Create(defaultTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
             Sprite firstSprite = Sprite.Create(firstTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
             try
@@ -2190,12 +2190,19 @@ namespace Holmas.Tests
                 Assert.That(overlayImage.sprite, Is.SameAs(firstSprite));
 
                 view.Render(new MainVm { BoardVisible = true, Rows = 1, Cols = 1, Cells = cells, BoardBackgroundPath = "bad-texture" });
-                LogAssert.Expect(LogType.Warning, "MainView: 棋盘背景或边框资源不是 Sprite，已回退 prefab 默认背景 bad-texture");
-                assetsRuntime.Complete("bad-texture", badTexture);
+                LogAssert.Expect(
+                    LogType.Warning,
+                    "MainView: 棋盘背景或边框资源无法转换为 Sprite，已回退 prefab 默认背景。failed=MainPanel/BackgroundImage/MinesBg(path=bad-texture, assetType=TextAsset), MainPanel/BackgroundImage/MinesBg/MinesBgFrameOverlayImage(path=bad-texture, assetType=TextAsset); background={control=MainPanel/BackgroundImage/MinesBg, path=bad-texture, assetType=TextAsset}; overlay={control=MainPanel/BackgroundImage/MinesBg/MinesBgFrameOverlayImage, path=bad-texture, assetType=TextAsset}");
+                assetsRuntime.Complete("bad-texture", badAsset);
                 yield return null;
 
                 Assert.That(minesBgImage.sprite, Is.SameAs(defaultSprite));
                 Assert.That(overlayImage.sprite, Is.SameAs(defaultSprite));
+                Assert.That(assetsRuntime.GetLoadRequestCount("bad-texture"), Is.EqualTo(1));
+
+                view.Render(new MainVm { BoardVisible = true, Rows = 1, Cols = 1, Cells = cells, BoardBackgroundPath = "bad-texture" });
+                yield return null;
+                Assert.That(assetsRuntime.GetLoadRequestCount("bad-texture"), Is.EqualTo(1), "同一路径已失败时，返回 MainPanel 后不应重复加载刷 warning。");
             }
             finally
             {
@@ -2204,7 +2211,7 @@ namespace Holmas.Tests
                 Object.DestroyImmediate(firstSprite);
                 Object.DestroyImmediate(defaultTexture);
                 Object.DestroyImmediate(firstTexture);
-                Object.DestroyImmediate(badTexture);
+                Object.DestroyImmediate(badAsset);
             }
         }
 
@@ -2214,7 +2221,7 @@ namespace Holmas.Tests
             var root = new GameObject("MainRoot", typeof(RectTransform), typeof(MainView));
             var defaultTexture = new Texture2D(16, 16);
             var backgroundTexture = new Texture2D(16, 16);
-            var badOverlayTexture = new Texture2D(16, 16);
+            var badOverlayAsset = new TextAsset("not a sprite");
             Sprite defaultSprite = Sprite.Create(defaultTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
             Sprite backgroundSprite = Sprite.Create(backgroundTexture, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f));
             try
@@ -2261,12 +2268,29 @@ namespace Holmas.Tests
                 });
                 assetsRuntime.Complete("background", backgroundSprite);
                 yield return null;
-                LogAssert.Expect(LogType.Warning, "MainView: 棋盘背景或边框资源不是 Sprite，已回退 prefab 默认背景 background");
-                assetsRuntime.Complete("bad-overlay", badOverlayTexture);
+                LogAssert.Expect(
+                    LogType.Warning,
+                    "MainView: 棋盘背景或边框资源无法转换为 Sprite，已回退 prefab 默认背景。failed=MainPanel/BackgroundImage/MinesBg/MinesBgFrameOverlayImage(path=bad-overlay, assetType=TextAsset); background={control=MainPanel/BackgroundImage/MinesBg, path=background, assetType=Sprite}; overlay={control=MainPanel/BackgroundImage/MinesBg/MinesBgFrameOverlayImage, path=bad-overlay, assetType=TextAsset}");
+                assetsRuntime.Complete("bad-overlay", badOverlayAsset);
                 yield return null;
 
                 Assert.That(minesBgImage.sprite, Is.SameAs(defaultSprite));
                 Assert.That(overlayImage.sprite, Is.SameAs(defaultSprite));
+                Assert.That(assetsRuntime.GetLoadRequestCount("background"), Is.EqualTo(1));
+                Assert.That(assetsRuntime.GetLoadRequestCount("bad-overlay"), Is.EqualTo(1));
+
+                view.Render(new MainVm
+                {
+                    BoardVisible = true,
+                    Rows = 1,
+                    Cols = 1,
+                    Cells = cells,
+                    BoardBackgroundPath = "background",
+                    BoardFrameOverlayPath = "bad-overlay",
+                });
+                yield return null;
+                Assert.That(assetsRuntime.GetLoadRequestCount("background"), Is.EqualTo(1), "同一个 overlay 失败请求不应再次加载背景。");
+                Assert.That(assetsRuntime.GetLoadRequestCount("bad-overlay"), Is.EqualTo(1), "同一个 overlay 失败请求不应再次加载 overlay。");
             }
             finally
             {
@@ -2275,7 +2299,7 @@ namespace Holmas.Tests
                 Object.DestroyImmediate(backgroundSprite);
                 Object.DestroyImmediate(defaultTexture);
                 Object.DestroyImmediate(backgroundTexture);
-                Object.DestroyImmediate(badOverlayTexture);
+                Object.DestroyImmediate(badOverlayAsset);
             }
         }
 
@@ -2982,6 +3006,8 @@ namespace Holmas.Tests
         {
             private readonly Dictionary<string, TaskCompletionSource<IAssetHandle>> _requests =
                 new Dictionary<string, TaskCompletionSource<IAssetHandle>>();
+            private readonly Dictionary<string, int> _loadRequestCounts =
+                new Dictionary<string, int>();
 
             public Task InitializeAsync()
             {
@@ -2995,6 +3021,8 @@ namespace Holmas.Tests
 
             public Task<IAssetHandle> LoadAssetAsync(string location)
             {
+                _loadRequestCounts.TryGetValue(location, out int count);
+                _loadRequestCounts[location] = count + 1;
                 if (!_requests.TryGetValue(location, out TaskCompletionSource<IAssetHandle> request))
                 {
                     request = new TaskCompletionSource<IAssetHandle>();
@@ -3013,6 +3041,11 @@ namespace Holmas.Tests
                 }
 
                 request.SetResult(new FakeAssetHandle(asset));
+            }
+
+            public int GetLoadRequestCount(string location)
+            {
+                return _loadRequestCounts.TryGetValue(location, out int count) ? count : 0;
             }
 
             public void Shutdown()
