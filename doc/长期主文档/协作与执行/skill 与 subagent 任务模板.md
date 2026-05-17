@@ -14,11 +14,11 @@
 
 详细规则分别看：
 
-- [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
-- [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
-- [线程级辅助 subagent 角色](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/线程级辅助%20subagent%20角色.md)
-- [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
-- [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
+- [Codex新会话必读](Codex新会话必读.md)
+- [Agent 启动与验收规范](Agent%20启动与验收规范.md)
+- [线程级辅助 subagent 角色](线程级辅助%20subagent%20角色.md)
+- [任务完成后自动维护文档](任务完成后自动维护文档.md)
+- [Git 提交建议与确认规则](Git%20提交建议与确认规则.md)
 
 ## 当前核心 skill
 
@@ -44,7 +44,7 @@
    - `纯逻辑`：只改服务、模型、配置、算法、验证脚本，不触碰 UI 文件、prefab、场景绑定或页面流程。
    - `UI 相关`：涉及 UGUI、prefab、View、Presenter、Controller、binding、页面流转、按钮、图片、文本、布局、动画、安全区、`CanvasGroup`、`Graphic`、`Button`、`Image`、`TMP/Text`，或路径包含 `Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI`、`Assets/Res/Perfabs/UI`。
    - `UI 自动生成系统`：涉及 `DesignPacket / UiPrefabSpec / PrefabBindingManifest / Assets/Tools/UiPrefabGenerator / doc/长期主文档/UI自动生成系统`。
-1. 先按 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 判断这轮由哪个 `Agent` 职责承接。
+1. 先按 [Agent 启动与验收规范](Agent%20启动与验收规范.md) 判断这轮由哪个 `Agent` 职责承接。
 2. 如果任务属于 `UI 自动生成系统`，优先切到 UI 自动生成系统专项：
    - 规划、派工、隔离、跳转页、asmdef 分层先带 `ui-prefab-governance`
    - spec、生成、manifest、校验、回归先带 `ui-prefab-pipeline`
@@ -82,16 +82,16 @@
 
 ## 模板使用规则
 
-- 新会话默认入口统一看 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)。
+- 新会话默认入口统一看 [Codex新会话必读](Codex新会话必读.md)。
 - 如果你要显式覆盖默认行为，直接使用本页里的“显式覆盖模板速查”。
 - 如果任务需要更明确的 skill、约束、交付格式，再补本页模板。
-- 这页的模板只补“怎么描述 skill 和任务结构”，不替代 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 中的边界和验收。
+- 这页的模板只补“怎么描述 skill 和任务结构”，不替代 [Agent 启动与验收规范](Agent%20启动与验收规范.md) 中的边界和验收。
 - 模板中的 `目标 / 约束 / 交付 / 验收点` 都要按当前任务裁剪，不要求每次整段照抄。
 
 ## 显式覆盖模板速查
 
 这组模板只在你想显式覆盖默认自动判断时使用。
-如果没有特殊限制，主线程仍应按 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md) 和 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 自主判断是否进入 `briefing`、是否启 helper、是否启真实 subagent。
+如果没有特殊限制，主线程仍应按 [Codex新会话必读](Codex新会话必读.md) 和 [Agent 启动与验收规范](Agent%20启动与验收规范.md) 自主判断是否进入 `briefing`、是否启 helper、是否启真实 subagent。
 
 ### 执行阶段确认
 
@@ -145,7 +145,7 @@
 
 ### helper role
 
-默认情况下，是否启 helper 由主线程按 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md) 和 [线程级辅助 subagent 角色](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/线程级辅助%20subagent%20角色.md) 自主判断。
+默认情况下，是否启 helper 由主线程按 [Codex新会话必读](Codex新会话必读.md) 和 [线程级辅助 subagent 角色](线程级辅助%20subagent%20角色.md) 自主判断。
 
 ```text
 这轮如果主线程判断需要 helper，请先查线程里有没有同职责 helper；有就优先复用。
@@ -398,8 +398,8 @@ Agent 6 已经退回 findings。
 
 ## 主控集成时只保留的动作提醒
 
-- 先按 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md) 判断当前应先做轻量 `briefing`，还是已经可以直接进入 `execution planning`。
-- 再按 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 决定由主线程直做、复用 helper，还是启动真实 subagent。
-- 需要 helper 时，helper 的角色、注册表、复用和压缩规则统一看 [线程级辅助 subagent 角色](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/线程级辅助 subagent 角色.md)。
-- 任务结束后，固定按 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md) 收尾。
-- 如果收尾后还要按确认词继续执行 `git commit / push`，具体格式和提示词统一看 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)。
+- 先按 [Codex新会话必读](Codex新会话必读.md) 判断当前应先做轻量 `briefing`，还是已经可以直接进入 `execution planning`。
+- 再按 [Agent 启动与验收规范](Agent%20启动与验收规范.md) 决定由主线程直做、复用 helper，还是启动真实 subagent。
+- 需要 helper 时，helper 的角色、注册表、复用和压缩规则统一看 [线程级辅助 subagent 角色](线程级辅助%20subagent%20角色.md)。
+- 任务结束后，固定按 [任务完成后自动维护文档](任务完成后自动维护文档.md) 收尾。
+- 如果收尾后还要按确认词继续执行 `git commit / push`，具体格式和提示词统一看 [Git 提交建议与确认规则](Git%20提交建议与确认规则.md)。

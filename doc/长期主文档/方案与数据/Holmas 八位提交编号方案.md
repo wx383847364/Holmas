@@ -72,13 +72,13 @@
 
 按现在仓库内容举例：
 
-- [Holmas_v1方案](/Users/bruce/work/Holmas/doc/长期主文档/方案与数据/Holmas_v1方案.md)
+- [Holmas_v1方案](Holmas_v1方案.md)
   - 更适合 `240xxxxx`
-- [Holmas v1 城市宣传成长主线落地方案](/Users/bruce/work/Holmas/doc/长期主文档/方案与数据/Holmas%20v1%20城市宣传成长主线落地方案.md)
+- [Holmas v1 城市宣传成长主线落地方案](Holmas%20v1%20城市宣传成长主线落地方案.md)
   - 更适合 `240xxxxx`
-- [Holmas v1 正式建筑内容表方案](/Users/bruce/work/Holmas/doc/长期主文档/方案与数据/Holmas%20v1%20正式建筑内容表方案.md)
+- [Holmas v1 正式建筑内容表方案](Holmas%20v1%20正式建筑内容表方案.md)
   - 更适合 `250xxxxx`
-- [Holmas v1 长期成长表方案](/Users/bruce/work/Holmas/doc/长期主文档/方案与数据/Holmas%20v1%20长期成长表方案.md)
+- [Holmas v1 长期成长表方案](Holmas%20v1%20长期成长表方案.md)
   - 更适合 `250xxxxx`
 
 ### 3. 完整推荐编号表

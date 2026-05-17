@@ -162,6 +162,6 @@ Runtime 分支：
 
 如果要理解 Holmas 当前正式业务，应优先阅读：
 
-- [Holmas 三层架构读码路线图](/Users/bruce/work/Holmas/doc/长期主文档/架构与边界/Holmas%20三层架构读码路线图.md)
-- [热更新边界规范 v1](/Users/bruce/work/Holmas/doc/长期主文档/架构与边界/热更新边界规范_v1.md)
-- [Holmas 当前游戏策划设计文档（基于现有实现）](/Users/bruce/work/Holmas/doc/长期主文档/方案与数据/Holmas%20当前游戏策划设计文档_基于现有实现.md)
+- [Holmas 三层架构读码路线图](Holmas%20三层架构读码路线图.md)
+- [热更新边界规范 v1](热更新边界规范_v1.md)
+- [Holmas 当前游戏策划设计文档（基于现有实现）](../方案与数据/Holmas%20当前游戏策划设计文档_基于现有实现.md)

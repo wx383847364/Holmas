@@ -4,9 +4,9 @@
 
 当前应优先阅读：
 
-1. [架构设计](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/02_架构设计.md)
-2. [Holmas 接入约束](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/09_Holmas接入约束.md)
-3. [竖屏 EditorWindow 与任务目录设计](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/12_竖屏EditorWindow与任务目录设计.md)
+1. [架构设计](02_架构设计.md)
+2. [Holmas 接入约束](09_Holmas接入约束.md)
+3. [竖屏 EditorWindow 与任务目录设计](12_竖屏EditorWindow与任务目录设计.md)
 
 ## 完成情况
 

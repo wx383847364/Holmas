@@ -10,10 +10,10 @@
 
 对应入口分别看：
 
-- [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)
-- [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
-- [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
-- [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
+- [Codex新会话必读](Codex新会话必读.md)
+- [skill 与 subagent 任务模板](skill%20与%20subagent%20任务模板.md)
+- [任务完成后自动维护文档](任务完成后自动维护文档.md)
+- [Git 提交建议与确认规则](Git%20提交建议与确认规则.md)
 
 ## Summary
 
@@ -22,13 +22,13 @@
 
 ## 新会话默认入口
 
-新会话只要已经读到 [Codex新会话必读](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Codex新会话必读.md)，就默认视为长期规则已生效，不需要用户再补固定口令。
+新会话只要已经读到 [Codex新会话必读](Codex新会话必读.md)，就默认视为长期规则已生效，不需要用户再补固定口令。
 
 主线程固定先做两件事：
 
 - 自己判断当前该走 `briefing` 还是 `execution dispatch`
 - 自己判断这轮是主线程直做、只启 helper，还是需要真实 subagent
-- 自己判断任务属于 `纯逻辑`、`UI 相关` 还是 `UI 自动生成系统`，并按 [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md) 选择 skill
+- 自己判断任务属于 `纯逻辑`、`UI 相关` 还是 `UI 自动生成系统`，并按 [skill 与 subagent 任务模板](skill%20与%20subagent%20任务模板.md) 选择 skill
 
 默认切换规则：
 
@@ -144,7 +144,7 @@
 
 只要当前线程使用了真实 subagent，主线程就必须维护一份线程级注册表。
 
-如果当前线程同时维护 helper role，则真实 agent 注册表应视为线程级总注册表中的 `execution` 子集；helper role 的调度、复用、关闭与压缩计数规则，统一看 [线程级辅助 subagent 角色](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/线程级辅助 subagent 角色.md)。
+如果当前线程同时维护 helper role，则真实 agent 注册表应视为线程级总注册表中的 `execution` 子集；helper role 的调度、复用、关闭与压缩计数规则，统一看 [线程级辅助 subagent 角色](线程级辅助%20subagent%20角色.md)。
 
 每个真实 agent 至少记录：
 
@@ -495,8 +495,8 @@ Agent 6 审查结果：通过
 7. 某条实现线达到阶段里程碑并通过基础验收后，默认交给 Agent 6 做挑刺与问题审查
 8. Agent 6 未通过时，先按固定路由规则退回实现方修复；修完后默认优先交回同一审查链复审
 9. 只有所有相关阶段里程碑都通过 Agent 6 后，才决定是否进入下一个阶段或做最终汇总
-10. 本轮结束后，执行 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
-11. 如果收尾后还要按确认词继续执行 `git commit / push`，再按 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md) 处理
+10. 本轮结束后，执行 [任务完成后自动维护文档](任务完成后自动维护文档.md)
+11. 如果收尾后还要按确认词继续执行 `git commit / push`，再按 [Git 提交建议与确认规则](Git%20提交建议与确认规则.md) 处理
 
 如果这轮同时有多个实现 subagent，则每条链都按下面的闭环方式执行：
 

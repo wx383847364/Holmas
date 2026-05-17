@@ -14,7 +14,7 @@
 
 ## 这页怎么用
 
-- 先看这页，再决定是否需要继续看 [项目总览](/Users/bruce/work/Holmas/doc/长期主文档/项目总览.md) 和 [迭代记录索引](/Users/bruce/work/Holmas/doc/迭代记录/迭代记录索引.md)
+- 先看这页，再决定是否需要继续看 [项目总览](../项目总览.md) 和 [迭代记录索引](../../迭代记录/迭代记录索引.md)
 - 默认不要先扫全项目代码
 - 默认不要先通读全量长期主文档
 - 默认不要先通读全部迭代记录
@@ -26,6 +26,8 @@
 - 项目名称：Holmas / 福尔猫斯-寻猫侦探社
 - 核心玩法：异形扫雷棋盘上的找猫、任务推进和侦探社成长
 - 正式业务分层：`App.AOT / App.Shared / App.HotUpdate`
+- 当前工程根：`<workspace>/Holmas/Client`。外层 `<workspace>/Holmas` 只是父目录，命令、Git、Unity 打开路径和 `doc` 都以 `Client` 为根。
+- Unity 资产路径仍使用 `Assets/...`，这是相对 `Client` 工程根的资产路径。
 - 当前高频工作区：Holmas UI runtime、UI prefab generator、配置导表与验证链
 - 编辑器判断规则：优先按 `ProjectSettings/ProjectVersion.txt` 找团结编辑器，不要先猜官方 Unity
 
@@ -44,15 +46,15 @@
 - 只要涉及 UGUI、prefab、View、Presenter、Controller、binding、页面流转、按钮、图片、文本、布局、动画、安全区或 `Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI`：必须先读 UI 相关 skill，再执行。
 - 只要涉及 `DesignPacket / UiPrefabSpec / PrefabBindingManifest / Assets/Tools/UiPrefabGenerator / doc/长期主文档/UI自动生成系统`：必须按 UI 自动生成系统专项处理。
 - UI 相关任务默认保护原 prefab 视觉参数：没有明确要求时，不改颜色、透明度、tint、材质颜色或 `CanvasGroup.alpha`。
-- 详细 skill 组合和 subagent 模板看 [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)。
+- 详细 skill 组合和 subagent 模板看 [skill 与 subagent 任务模板](skill%20与%20subagent%20任务模板.md)。
 
 ## 最小阅读路径
 
 新会话默认只读下面几份：
 
 1. 本页
-2. [项目总览](/Users/bruce/work/Holmas/doc/长期主文档/项目总览.md)
-3. [迭代记录索引](/Users/bruce/work/Holmas/doc/迭代记录/迭代记录索引.md)
+2. [项目总览](../项目总览.md)
+3. [迭代记录索引](../../迭代记录/迭代记录索引.md)
 4. 最新迭代记录里只看：
    - `当前状态`
    - `关键结论`
@@ -94,21 +96,21 @@
 如果这轮任务已经明确，按下面路径继续看：
 
 - UI runtime：
-  - 文档先看 [15_Holmas业务侧UI框架最小落地方案.md](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/15_Holmas业务侧UI框架最小落地方案.md)
+  - 文档先看 [15_Holmas业务侧UI框架最小落地方案.md](../UI自动生成系统/15_Holmas业务侧UI框架最小落地方案.md)
   - 代码再看 `Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI`
 - UI prefab generator：
-  - 先看 [UI 自动生成系统总览](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/00_总览.md)
+  - 先看 [UI 自动生成系统总览](../UI自动生成系统/00_总览.md)
   - 代码再看 `Assets/Tools/UiPrefabGenerator`
 - 配置 / 表：
   - 先看 `Assets/Config/*.xlsx`
   - 再看 `tools/config_export` 和 `tools/validation`
 - 架构边界：
-  - 先看 [热更新边界规范_v1.md](/Users/bruce/work/Holmas/doc/长期主文档/架构与边界/热更新边界规范_v1.md)
+  - 先看 [热更新边界规范_v1.md](../架构与边界/热更新边界规范_v1.md)
 - 协作 / 执行：
-  - 先看 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md)
-  - 收尾时看 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md)
-  - 如果本轮要按确认词直接提交或推送，再看 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
-  - 只要已经读了 `Git 提交建议与确认规则`，就固定视为还要联读 [Holmas 八位提交编号方案](/Users/bruce/work/Holmas/doc/长期主文档/方案与数据/Holmas%20八位提交编号方案.md)；不要输出 `[TMMSSSSS]` 这类占位标题
+  - 先看 [Agent 启动与验收规范](Agent%20启动与验收规范.md)
+  - 收尾时看 [任务完成后自动维护文档](任务完成后自动维护文档.md)
+  - 如果本轮要按确认词直接提交或推送，再看 [Git 提交建议与确认规则](Git%20提交建议与确认规则.md)
+  - 只要已经读了 `Git 提交建议与确认规则`，就固定视为还要联读 [Holmas 八位提交编号方案](../方案与数据/Holmas%20八位提交编号方案.md)；不要输出 `[TMMSSSSS]` 这类占位标题
 
 ## 执行硬规则
 
@@ -120,8 +122,8 @@
   - `主线程 + helper`
   - `主线程 + 真实 subagent`
 - 这个判断默认由主线程自己完成，不要把决定丢回给用户
-- 如果启用真实 `subagent`，再按 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 的细则执行
-- 等待真实 `subagent` 结果时，`wait_agent` 快速探测也至少等 30 秒；排查、验证、审查类默认按 [Agent 启动与验收规范](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Agent 启动与验收规范.md) 的等待时间规则执行
+- 如果启用真实 `subagent`，再按 [Agent 启动与验收规范](Agent%20启动与验收规范.md) 的细则执行
+- 等待真实 `subagent` 结果时，`wait_agent` 快速探测也至少等 30 秒；排查、验证、审查类默认按 [Agent 启动与验收规范](Agent%20启动与验收规范.md) 的等待时间规则执行
 - 如果本轮是在落地 `方案与数据` 目录下的某个方案，必须先识别对应方案文档
 - 开始执行方案内容时，将对应方案文档的 `## 完成情况` 维护为 `进行中`
 - 不真实重命名方案 `.md` 文件，也不要求改 H1 标题；状态以方案内 `## 完成情况` 和 `主文档索引.md` 的 `[状态]` 标签为准
@@ -135,8 +137,8 @@
 
 ### 任务结束后
 
-- 只要一轮任务结束，就必须进入 [任务完成后自动维护文档](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/任务完成后自动维护文档.md) 的统一收尾规范
-- 如果这轮要沿提交确认词继续执行 `git commit / push`，具体提示词和执行口径统一看 [Git 提交建议与确认规则](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/Git%20提交建议与确认规则.md)
+- 只要一轮任务结束，就必须进入 [任务完成后自动维护文档](任务完成后自动维护文档.md) 的统一收尾规范
+- 如果这轮要沿提交确认词继续执行 `git commit / push`，具体提示词和执行口径统一看 [Git 提交建议与确认规则](Git%20提交建议与确认规则.md)
 - 只要当前工作区已有本轮相关改动，且需要给 `Git 提交建议`，默认就直接给出真实八位编号标题、内容和提交确认；不要先用占位模板再回问用户
 - 收尾时必须处理：
   - 文档维护

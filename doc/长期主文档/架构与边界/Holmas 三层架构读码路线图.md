@@ -47,7 +47,7 @@
 ### 第 1 站：宿主启动入口
 
 文件：
-- [GameBootstrap.cs](/Users/bruce/work/Holmas/Assets/Scripts/App.AOT/Bootstrap/GameBootstrap.cs)
+- [GameBootstrap.cs](../../../Assets/Scripts/App.AOT/Bootstrap/GameBootstrap.cs)
 
 这一站看什么：
 - Unity 首场景启动后，第一个真正负责“把系统跑起来”的地方是谁
@@ -61,7 +61,7 @@
 ### 第 2 站：热更新装载入口
 
 文件：
-- [HybridClrLoader.cs](/Users/bruce/work/Holmas/Assets/Scripts/App.AOT/HotUpdate/HybridClrLoader.cs)
+- [HybridClrLoader.cs](../../../Assets/Scripts/App.AOT/HotUpdate/HybridClrLoader.cs)
 
 这一站看什么：
 - AOT 层是怎么把热更新程序集加载起来的
@@ -74,7 +74,7 @@
 ### 第 3 站：共享契约总入口
 
 文件：
-- [IService.cs](/Users/bruce/work/Holmas/Assets/Scripts/App.Shared/Contracts/IService.cs)
+- [IService.cs](../../../Assets/Scripts/App.Shared/Contracts/IService.cs)
 
 这一站看什么：
 - `App.Shared` 里到底放什么
@@ -96,7 +96,7 @@
 ### 第 4 站：Holmas 业务总启动入口
 
 文件：
-- [HolmasGameBootstrap.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Bootstrap/HolmasGameBootstrap.cs)
+- [HolmasGameBootstrap.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Bootstrap/HolmasGameBootstrap.cs)
 
 这一站看什么：
 - HotUpdate 层接住 AOT 提供的服务后，先组装了什么
@@ -109,7 +109,7 @@
 ### 第 5 站：业务上下文容器
 
 文件：
-- [HolmasApplicationContext.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasApplicationContext.cs)
+- [HolmasApplicationContext.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasApplicationContext.cs)
 
 这一站看什么：
 - Holmas 当前运行时到底需要持有哪些核心对象
@@ -122,7 +122,7 @@
 ### 第 6 站：配置加载入口
 
 文件：
-- [HolmasConfigRuntimeLoader.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Levels/HolmasConfigRuntimeLoader.cs)
+- [HolmasConfigRuntimeLoader.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Levels/HolmasConfigRuntimeLoader.cs)
 
 这一站看什么：
 - 配置资源是怎么在运行时被加载和转换的
@@ -135,7 +135,7 @@
 ### 第 7 站：关卡请求生成
 
 文件：
-- [HolmasLevelRequestGenerator.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Levels/HolmasLevelRequestGenerator.cs)
+- [HolmasLevelRequestGenerator.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Levels/HolmasLevelRequestGenerator.cs)
 
 这一站看什么：
 - 玩家当前状态是怎么被翻译成一次关卡生成请求的
@@ -148,7 +148,7 @@
 ### 第 8 站：关卡启动门面
 
 文件：
-- [HolmasLevelLaunchGateway.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasLevelLaunchGateway.cs)
+- [HolmasLevelLaunchGateway.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasLevelLaunchGateway.cs)
 
 这一站看什么：
 - UI 点击“开始”之后，真正进入关卡之前会经过哪个业务门面
@@ -161,7 +161,7 @@
 ### 第 9 站：玩法运行时主脑
 
 文件：
-- [HolmasGameplayRuntime.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasGameplayRuntime.cs)
+- [HolmasGameplayRuntime.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasGameplayRuntime.cs)
 
 这一站看什么：
 - 开局、推进、结算这些核心动作最终在哪个对象里发生
@@ -174,7 +174,7 @@
 ### 第 10 站：UI 启动入口
 
 文件：
-- [HolmasUiBootstrap.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Bootstrap/HolmasUiBootstrap.cs)
+- [HolmasUiBootstrap.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Bootstrap/HolmasUiBootstrap.cs)
 
 这一站看什么：
 - UI 根节点是怎么被动态创建出来的
@@ -187,7 +187,7 @@
 ### 第 11 站：UI 根节点与层级
 
 文件：
-- [UiRoot.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiRoot.cs)
+- [UiRoot.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiRoot.cs)
 
 这一站看什么：
 - `Canvas`、页面层、弹窗层、覆盖层是谁创建的
@@ -206,7 +206,7 @@
 ### 第 12 站：页面注册与打开服务
 
 文件：
-- [UiScreenService.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiScreenService.cs)
+- [UiScreenService.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiScreenService.cs)
 
 这一站看什么：
 - 页面 prefab 是如何注册、预加载、打开、关闭的
@@ -219,7 +219,7 @@
 ### 第 13 站：页面流程调度器
 
 文件：
-- [HolmasFlowCoordinator.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/HolmasFlowCoordinator.cs)
+- [HolmasFlowCoordinator.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/HolmasFlowCoordinator.cs)
 
 这一站看什么：
 - `Loading -> AgencyMain -> Battle` 的流程由谁统一调度
@@ -232,9 +232,9 @@
 ### 第 14 站：侦探社首页 MVC 读法
 
 文件：
-- [AgencyMainPageController.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/AgencyMain/AgencyMainPageController.cs)
-- [AgencyMainPresenter.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/AgencyMain/AgencyMainPresenter.cs)
-- [AgencyMainView.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/AgencyMain/AgencyMainView.cs)
+- [AgencyMainPageController.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/AgencyMain/AgencyMainPageController.cs)
+- [AgencyMainPresenter.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/AgencyMain/AgencyMainPresenter.cs)
+- [AgencyMainView.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/AgencyMain/AgencyMainView.cs)
 
 这一站看什么：
 - `Controller / Presenter / View` 在这个项目里的分工方式
@@ -248,9 +248,9 @@
 ### 第 15 站：Loading 和 Battle 页面
 
 文件：
-- [LoadingView.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/Loading/LoadingView.cs)
-- [BattlePageController.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/Battle/BattlePageController.cs)
-- [BattleView.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/Battle/BattleView.cs)
+- [LoadingView.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/Loading/LoadingView.cs)
+- [BattlePageController.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/Battle/BattlePageController.cs)
+- [BattleView.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/Battle/BattleView.cs)
 
 这一站看什么：
 - 加载页怎么负责启动态反馈
@@ -265,9 +265,9 @@
 ### 支线 1：平台桥接与安全区
 
 文件：
-- [WeChatBridge.cs](/Users/bruce/work/Holmas/Assets/Scripts/App.AOT/Platform/WeChat/WeChatBridge.cs)
-- [UiSafeAreaRuntime.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiSafeAreaRuntime.cs)
-- [UiSafeAreaFitter.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiSafeAreaFitter.cs)
+- [WeChatBridge.cs](../../../Assets/Scripts/App.AOT/Platform/WeChat/WeChatBridge.cs)
+- [UiSafeAreaRuntime.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiSafeAreaRuntime.cs)
+- [UiSafeAreaFitter.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiSafeAreaFitter.cs)
 
 为什么放在后面读：
 - 这是“平台适配细节”
@@ -276,7 +276,7 @@
 ### 支线 2：运行时字体与动态补节点
 
 文件：
-- [RuntimeTmpFontResolver.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/RuntimeTmpFontResolver.cs)
+- [RuntimeTmpFontResolver.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/RuntimeTmpFontResolver.cs)
 
 为什么放在后面读：
 - 这是运行时显示层的兜底能力
@@ -286,17 +286,17 @@
 
 如果你只有一小时，按下面顺序读：
 
-1. [GameBootstrap.cs](/Users/bruce/work/Holmas/Assets/Scripts/App.AOT/Bootstrap/GameBootstrap.cs)
-2. [HybridClrLoader.cs](/Users/bruce/work/Holmas/Assets/Scripts/App.AOT/HotUpdate/HybridClrLoader.cs)
-3. [IService.cs](/Users/bruce/work/Holmas/Assets/Scripts/App.Shared/Contracts/IService.cs)
-4. [HolmasGameBootstrap.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Bootstrap/HolmasGameBootstrap.cs)
-5. [HolmasApplicationContext.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasApplicationContext.cs)
-6. [HolmasGameplayRuntime.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasGameplayRuntime.cs)
-7. [HolmasUiBootstrap.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Bootstrap/HolmasUiBootstrap.cs)
-8. [UiRoot.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiRoot.cs)
-9. [UiScreenService.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiScreenService.cs)
-10. [HolmasFlowCoordinator.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/HolmasFlowCoordinator.cs)
-11. [AgencyMainPageController.cs](/Users/bruce/work/Holmas/Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/AgencyMain/AgencyMainPageController.cs)
+1. [GameBootstrap.cs](../../../Assets/Scripts/App.AOT/Bootstrap/GameBootstrap.cs)
+2. [HybridClrLoader.cs](../../../Assets/Scripts/App.AOT/HotUpdate/HybridClrLoader.cs)
+3. [IService.cs](../../../Assets/Scripts/App.Shared/Contracts/IService.cs)
+4. [HolmasGameBootstrap.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Bootstrap/HolmasGameBootstrap.cs)
+5. [HolmasApplicationContext.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasApplicationContext.cs)
+6. [HolmasGameplayRuntime.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/Application/HolmasGameplayRuntime.cs)
+7. [HolmasUiBootstrap.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Bootstrap/HolmasUiBootstrap.cs)
+8. [UiRoot.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiRoot.cs)
+9. [UiScreenService.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/UiScreenService.cs)
+10. [HolmasFlowCoordinator.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Core/HolmasFlowCoordinator.cs)
+11. [AgencyMainPageController.cs](../../../Assets/HotUpdateContent/Script/App.HotUpdate/Holmas/UI/Screens/AgencyMain/AgencyMainPageController.cs)
 
 这 11 个文件看通以后，项目的主脉络基本就立住了。
 

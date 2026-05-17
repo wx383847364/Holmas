@@ -3,10 +3,10 @@
 这份旧稿从本轮开始只保留跳转作用，不再承载系统正文。  
 当前权威内容已经迁入专区执行稿：
 
-- [UI 自动生成系统总览](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/00_总览.md)
-- [隔离化孵化方案 v2 执行派工单](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/10_隔离化孵化方案_v2_执行派工单.md)
-- [Agent 编组方案](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/03_Agent编组方案.md)
-- [Holmas 接入约束](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/09_Holmas接入约束.md)
+- [UI 自动生成系统总览](../UI自动生成系统/00_总览.md)
+- [隔离化孵化方案 v2 执行派工单](../UI自动生成系统/10_隔离化孵化方案_v2_执行派工单.md)
+- [Agent 编组方案](../UI自动生成系统/03_Agent编组方案.md)
+- [Holmas 接入约束](../UI自动生成系统/09_Holmas接入约束.md)
 
 ## 当前职责
 

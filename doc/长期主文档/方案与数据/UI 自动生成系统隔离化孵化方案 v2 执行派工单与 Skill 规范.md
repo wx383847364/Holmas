@@ -3,10 +3,10 @@
 这份旧稿从本轮开始只保留跳转作用，不再承载权威正文。  
 当前权威内容已经迁入专区和 repo-local skill：
 
-- [隔离化孵化方案 v2 执行派工单](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/10_隔离化孵化方案_v2_执行派工单.md)
-- [UI 自动生成系统总览](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/00_总览.md)
-- [ui-prefab-governance](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skills/ui-prefab-governance/SKILL.md)
-- [ui-prefab-pipeline](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skills/ui-prefab-pipeline/SKILL.md)
+- [隔离化孵化方案 v2 执行派工单](../UI自动生成系统/10_隔离化孵化方案_v2_执行派工单.md)
+- [UI 自动生成系统总览](../UI自动生成系统/00_总览.md)
+- [ui-prefab-governance](../协作与执行/skills/ui-prefab-governance/SKILL.md)
+- [ui-prefab-pipeline](../协作与执行/skills/ui-prefab-pipeline/SKILL.md)
 
 ## 当前职责
 

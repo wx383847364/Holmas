@@ -4,7 +4,7 @@
 
 当前项目专用 skill 的仓库真源固定放在：
 
-- `/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skills`
+- `doc/长期主文档/协作与执行/skills`
 
 本机 Codex 使用前，统一通过下面的脚本同步到 `~/.codex/skills`：
 
@@ -61,13 +61,13 @@
 它只会作为后续 skill 演进参考，不修改现有 `App.Shared` / `App.HotUpdate` / `MinesweeperTerrainData` 结构。
 
 建议与这些已有文档并列放置：
-- `/Users/bruce/work/Holmas/doc/长期主文档/架构与边界/热更新边界规范_v1.md`
-- `/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/subagent 与 skill 配对表.md`
+- `doc/长期主文档/架构与边界/热更新边界规范_v1.md`
+- `doc/长期主文档/协作与执行/subagent 与 skill 配对表.md`
 
 ## Test Plan
 
 保存后应检查：
-- 文件位于项目根目录 `doc/`
+- 文件位于 `Client` 工程根下的 `doc/`
 - 标题与内容能一眼区分“skill 草案”和“skill 优化方法”
 - 内容不重复抄前两份文档，而是专注于“如何迭代 skill”
 - 后续做完模块时，可以直接往这份文档追加项目经验

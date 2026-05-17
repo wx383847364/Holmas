@@ -72,7 +72,7 @@
 
 ### 1. 先做 layout 验证
 
-在仓库根目录执行：
+在 `Client` 工程根目录执行：
 
 ```bash
 python3 tools/ui_prefab_generator/check_ui_generator_layout.py
@@ -91,7 +91,7 @@ python3 tools/ui_prefab_generator/check_ui_generator_layout.py
 
 ### 2. 跑 UiPrefabGenerator EditMode 测试
 
-在仓库根目录执行：
+在 `Client` 工程根目录执行：
 
 ```bash
 tools/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh
@@ -114,7 +114,7 @@ tools/ui_prefab_generator/run_ui_prefab_generator_editmode_tests.sh
 
 ### 3. 跑 Holmas sample pipeline
 
-在仓库根目录执行：
+在 `Client` 工程根目录执行：
 
 ```bash
 tools/ui_prefab_generator/run_sample_ui_pipeline.sh --keep-temp-on-success --log-prefix manual_walkthrough

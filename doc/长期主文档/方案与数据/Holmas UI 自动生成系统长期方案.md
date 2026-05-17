@@ -1,14 +1,14 @@
 # Holmas UI 自动生成系统长期方案
 
 这份聚合文档从本轮开始只保留入口作用，不再承载系统正文。  
-系统本体方案、接口、Agent 编组、输入输出规格和 Holmas 接入约束，统一拆分到 [UI 自动生成系统总览](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/00_总览.md) 所在专区。
+系统本体方案、接口、Agent 编组、输入输出规格和 Holmas 接入约束，统一拆分到 [UI 自动生成系统总览](../UI自动生成系统/00_总览.md) 所在专区。
 
 ## 建议阅读
 
-- [UI 自动生成系统总览](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/00_总览.md)
-- [架构设计](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/02_架构设计.md)
-- [Agent 编组方案](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/03_Agent编组方案.md)
-- [Holmas 接入约束](/Users/bruce/work/Holmas/doc/长期主文档/UI自动生成系统/09_Holmas接入约束.md)
+- [UI 自动生成系统总览](../UI自动生成系统/00_总览.md)
+- [架构设计](../UI自动生成系统/02_架构设计.md)
+- [Agent 编组方案](../UI自动生成系统/03_Agent编组方案.md)
+- [Holmas 接入约束](../UI自动生成系统/09_Holmas接入约束.md)
 
 ## 当前职责
 

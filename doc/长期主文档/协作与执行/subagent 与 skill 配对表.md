@@ -407,7 +407,7 @@ skill 组合：
 
 如需可直接复制的模板或覆盖模板，统一跳到：
 
-- [skill 与 subagent 任务模板](/Users/bruce/work/Holmas/doc/长期主文档/协作与执行/skill%20与%20subagent%20任务模板.md)
+- [skill 与 subagent 任务模板](skill%20与%20subagent%20任务模板.md)
 
 ## Test Plan
 
