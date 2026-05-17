@@ -16,7 +16,7 @@ namespace Holmas.Editor.Build
         public const string OutputPath = "Builds/WeixinMiniGame/Preview";
         public const string BootstrapScenePath = "Assets/Scenes/BootstrapScene.scene";
 
-        private const string OfflineDefine = "HOLMAS_YOO_OFFLINE_PLAYMODE";
+        private const string CdnSettingsPath = "Assets/Settings/HolmasWeixinMiniGameCdnSettings.json";
         private const string ProfileTypeName = "UnityEditor.Build.Profile.BuildProfile";
         private const string MiniGameSubplatformArg = "-minigamesubplatform weixin";
 
@@ -34,19 +34,28 @@ namespace Holmas.Editor.Build
         public static void BuildPreview()
         {
             UnityEngine.Object profile = EnsurePreviewProfile();
+            string profilePath = AssetDatabase.GetAssetPath(profile);
+            WeixinCdnSettings cdnSettings = LoadWeixinCdnSettings();
+            EnsureWeixinCdnSettings(cdnSettings);
+            ApplyWeixinCdnSettings(profilePath, cdnSettings);
+            ApplyWeixinCdnSettings("Assets/WX-WASM-SDK-V2/Editor/MiniGameConfig.asset", cdnSettings);
 
             EnsureBootstrapSceneOnly();
             EnsureReleaseBuildOptions();
-            EnsureOfflineDefine();
+            EnsureNoOfflineDefine();
             EnsureWeixinPlayerSettings();
             EnsureHotUpdateBuildinAssets();
 
+            profile = ReloadProfileForBuild(profilePath);
             object result = BuildMiniGame(profile);
             if (result != null && !IsMiniGameBuildSuccess(result))
             {
                 throw new BuildFailedException("Weixin MiniGame build failed: " + result);
             }
 
+            PatchExportedMiniGameAppId(profilePath);
+            PatchExportedMiniGameDataCdn(cdnSettings.CdnRoot);
+            PatchExportedMiniGameProjectConfig();
             Debug.Log("[HolmasWeixinMiniGameBuild] Weixin MiniGame preview build finished. output=" + Path.GetFullPath(OutputPath));
         }
 
@@ -98,7 +107,7 @@ namespace Holmas.Editor.Build
             }
 
             Debug.LogWarning(
-                "[HolmasWeixinMiniGameBuild] Please verify the generated Build Profile in Inspector: subplatform=Weixin, AppID=test AppID, build path=" +
+                "[HolmasWeixinMiniGameBuild] Please verify the generated Build Profile in Inspector: subplatform=Weixin, AppID comes from the active profile/config, build path=" +
                 OutputPath + ". Reflection configured common fields where available. Slim metadata is disabled because HybridCLR does not support it.");
         }
 
@@ -150,6 +159,101 @@ namespace Holmas.Editor.Build
             return true;
         }
 
+        private static WeixinCdnSettings LoadWeixinCdnSettings()
+        {
+            if (!File.Exists(CdnSettingsPath))
+            {
+                throw new BuildFailedException(
+                    "Weixin MiniGame CDN settings are missing. Create " + CdnSettingsPath +
+                    " and set weixinPreviewCdnRoot to an HTTPS CDN root, for example https://cdn.example.com/Holmas/WeixinPreview");
+            }
+
+            var dto = JsonUtility.FromJson<WeixinCdnSettingsDto>(File.ReadAllText(CdnSettingsPath));
+            string cdnRoot = NormalizeCdnRoot(dto?.weixinPreviewCdnRoot);
+            string fallbackRoot = NormalizeCdnRoot(dto?.weixinPreviewFallbackCdnRoot);
+            if (string.IsNullOrEmpty(fallbackRoot))
+            {
+                fallbackRoot = cdnRoot;
+            }
+
+            return new WeixinCdnSettings(cdnRoot, fallbackRoot);
+        }
+
+        private static void EnsureWeixinCdnSettings(WeixinCdnSettings settings)
+        {
+            ValidateHttpsCdnRoot(settings.CdnRoot, "weixinPreviewCdnRoot");
+            ValidateHttpsCdnRoot(settings.FallbackCdnRoot, "weixinPreviewFallbackCdnRoot");
+        }
+
+        private static void ValidateHttpsCdnRoot(string url, string fieldName)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new BuildFailedException(
+                    fieldName + " is empty. Weixin MiniGame YooAssets requires an HTTPS CDN root. Expected version URL: " +
+                    "{CDN_ROOT}/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version");
+            }
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri) ||
+                !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BuildFailedException(fieldName + " must be an HTTPS CDN root, current value=" + url);
+            }
+
+            if (IsLocalOrPrivateHost(uri.Host))
+            {
+                throw new BuildFailedException(fieldName + " must be a public HTTPS download domain configured in the Weixin backend, current value=" + url);
+            }
+        }
+
+        private static bool IsLocalOrPrivateHost(string host)
+        {
+            if (string.IsNullOrWhiteSpace(host))
+            {
+                return true;
+            }
+
+            string normalized = host.Trim().Trim('[', ']').ToLowerInvariant();
+            if (normalized == "localhost" || normalized.EndsWith(".localhost", StringComparison.Ordinal) ||
+                normalized == "::1" || normalized == "0.0.0.0" || normalized.StartsWith("127.", StringComparison.Ordinal) ||
+                normalized.StartsWith("10.", StringComparison.Ordinal) || normalized.StartsWith("192.168.", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            return IsPrivate172Host(normalized);
+        }
+
+        private static bool IsPrivate172Host(string host)
+        {
+            string[] parts = host.Split('.');
+            if (parts.Length != 4 || parts[0] != "172")
+            {
+                return false;
+            }
+
+            return int.TryParse(parts[1], out int secondOctet) && secondOctet >= 16 && secondOctet <= 31;
+        }
+
+        private static string NormalizeCdnRoot(string url)
+        {
+            return string.IsNullOrWhiteSpace(url) ? string.Empty : url.Trim().TrimEnd('/');
+        }
+
+        private static void ApplyWeixinCdnSettings(string assetPath, WeixinCdnSettings settings)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath) || !File.Exists(assetPath))
+            {
+                return;
+            }
+
+            if (ReplaceFileText(assetPath, text => ReplaceYamlScalarLine(text, "CDN", settings.CdnRoot)))
+            {
+                AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+                Debug.Log("[HolmasWeixinMiniGameBuild] Patched Weixin CDN root. asset=" + assetPath + ", CDN=" + settings.CdnRoot);
+            }
+        }
+
         private static string ReplaceYamlScalarLine(string text, string key, string value)
         {
             string[] lines = text.Replace("\r\n", "\n").Split('\n');
@@ -163,6 +267,191 @@ namespace Holmas.Editor.Build
 
                 string indentation = lines[i].Substring(0, lines[i].Length - trimmed.Length);
                 lines[i] = indentation + key + ": " + value;
+            }
+
+            return string.Join("\n", lines);
+        }
+
+        private static void PatchExportedMiniGameAppId(string profilePath)
+        {
+            string appId = ReadWeixinProfileAppId(profilePath);
+            if (string.IsNullOrWhiteSpace(appId))
+            {
+                return;
+            }
+
+            string miniGameRoot = Path.Combine(OutputPath, "minigame");
+            string projectConfigPath = Path.Combine(miniGameRoot, "project.config.json");
+            string gameJsPath = Path.Combine(miniGameRoot, "game.js");
+
+            if (ReplaceFileText(projectConfigPath, text => ReplaceJsonStringScalarLine(text, "appid", appId)))
+            {
+                Debug.Log("[HolmasWeixinMiniGameBuild] Patched exported project.config.json appid=" + appId);
+            }
+
+            if (ReplaceFileText(gameJsPath, text => ReplaceJsStringPropertyLine(text, "APPID", appId)))
+            {
+                Debug.Log("[HolmasWeixinMiniGameBuild] Patched exported game.js APPID=" + appId);
+            }
+        }
+
+        private static void PatchExportedMiniGameDataCdn(string cdnRoot)
+        {
+            string gameJsPath = Path.Combine(OutputPath, "minigame", "game.js");
+            if (ReplaceFileText(gameJsPath, text => ReplaceJsStringPropertyLine(text, "DATA_CDN", cdnRoot)))
+            {
+                Debug.Log("[HolmasWeixinMiniGameBuild] Patched exported game.js DATA_CDN=" + cdnRoot);
+            }
+        }
+
+        private static void PatchExportedMiniGameProjectConfig()
+        {
+            string projectConfigPath = Path.Combine(OutputPath, "minigame", "project.config.json");
+            if (!ReplaceFileText(projectConfigPath, PatchMiniGameProjectConfigText))
+            {
+                return;
+            }
+
+            Debug.Log("[HolmasWeixinMiniGameBuild] Patched exported project.config.json for stable Weixin DevTools preview.");
+        }
+
+        private static string PatchMiniGameProjectConfigText(string text)
+        {
+            string next = text;
+            next = ReplaceJsonStringScalarLine(next, "libVersion", "3.15.2");
+            next = ReplaceJsonBooleanScalarLine(next, "useIsolateContext", false);
+            next = ReplaceJsonBooleanScalarLine(next, "useCompilerModule", false);
+            next = ReplaceJsonBooleanScalarLine(next, "userConfirmedUseCompilerModuleSwitch", true);
+            next = ReplaceJsonKeyLine(next, "currentL", "current");
+            return next;
+        }
+
+        private static string ReadWeixinProfileAppId(string profilePath)
+        {
+            if (string.IsNullOrWhiteSpace(profilePath) || !File.Exists(profilePath))
+            {
+                return null;
+            }
+
+            foreach (string line in File.ReadAllLines(profilePath))
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("Appid:", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                return trimmed.Substring("Appid:".Length).Trim();
+            }
+
+            return null;
+        }
+
+        private static bool ReplaceFileText(string path, Func<string, string> replace)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                return false;
+            }
+
+            string text = File.ReadAllText(path);
+            string next = replace(text);
+            if (text == next)
+            {
+                return false;
+            }
+
+            File.WriteAllText(path, next);
+            return true;
+        }
+
+        private static string ReplaceJsonStringScalarLine(string text, string key, string value)
+        {
+            string[] lines = text.Replace("\r\n", "\n").Split('\n');
+            string prefix = "\"" + key + "\"";
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string trimmed = lines[i].TrimStart();
+                if (!trimmed.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                int colonIndex = trimmed.IndexOf(':');
+                if (colonIndex < 0)
+                {
+                    continue;
+                }
+
+                string indentation = lines[i].Substring(0, lines[i].Length - trimmed.Length);
+                string suffix = trimmed.TrimEnd().EndsWith(",", StringComparison.Ordinal) ? "," : string.Empty;
+                lines[i] = indentation + prefix + ": \"" + value + "\"" + suffix;
+            }
+
+            return string.Join("\n", lines);
+        }
+
+        private static string ReplaceJsonBooleanScalarLine(string text, string key, bool value)
+        {
+            string[] lines = text.Replace("\r\n", "\n").Split('\n');
+            string prefix = "\"" + key + "\"";
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string trimmed = lines[i].TrimStart();
+                if (!trimmed.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                int colonIndex = trimmed.IndexOf(':');
+                if (colonIndex < 0)
+                {
+                    continue;
+                }
+
+                string indentation = lines[i].Substring(0, lines[i].Length - trimmed.Length);
+                string suffix = trimmed.TrimEnd().EndsWith(",", StringComparison.Ordinal) ? "," : string.Empty;
+                lines[i] = indentation + prefix + ": " + (value ? "true" : "false") + suffix;
+            }
+
+            return string.Join("\n", lines);
+        }
+
+        private static string ReplaceJsonKeyLine(string text, string oldKey, string newKey)
+        {
+            string[] lines = text.Replace("\r\n", "\n").Split('\n');
+            string oldPrefix = "\"" + oldKey + "\"";
+            string newPrefix = "\"" + newKey + "\"";
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string trimmed = lines[i].TrimStart();
+                if (!trimmed.StartsWith(oldPrefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                string indentation = lines[i].Substring(0, lines[i].Length - trimmed.Length);
+                lines[i] = indentation + newPrefix + trimmed.Substring(oldPrefix.Length);
+            }
+
+            return string.Join("\n", lines);
+        }
+
+        private static string ReplaceJsStringPropertyLine(string text, string key, string value)
+        {
+            string[] lines = text.Replace("\r\n", "\n").Split('\n');
+            string prefix = key + ":";
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string trimmed = lines[i].TrimStart();
+                if (!trimmed.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                string indentation = lines[i].Substring(0, lines[i].Length - trimmed.Length);
+                string suffix = trimmed.TrimEnd().EndsWith(",", StringComparison.Ordinal) ? "," : string.Empty;
+                lines[i] = indentation + prefix + " '" + value + "'" + suffix;
             }
 
             return string.Join("\n", lines);
@@ -223,19 +512,21 @@ namespace Holmas.Editor.Build
             EditorBuildSettings.scenes = new[] { scene };
         }
 
-        private static void EnsureOfflineDefine()
+        private static void EnsureNoOfflineDefine()
         {
             NamedBuildTarget buildTarget = NamedBuildTarget.FromBuildTargetGroup(BuildTargetGroup.WebGL);
             string oldDefines = PlayerSettings.GetScriptingDefineSymbols(buildTarget);
-            if (oldDefines.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Contains(OfflineDefine))
-            {
-                return;
-            }
+            const string offlineDefine = "HOLMAS_YOO_OFFLINE_PLAYMODE";
+            string nextDefines = string.Join(
+                ";",
+                oldDefines
+                    .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(define => !string.Equals(define, offlineDefine, StringComparison.Ordinal)));
 
-            string nextDefines = string.IsNullOrWhiteSpace(oldDefines)
-                ? OfflineDefine
-                : oldDefines + ";" + OfflineDefine;
-            PlayerSettings.SetScriptingDefineSymbols(buildTarget, nextDefines);
+            if (!string.Equals(oldDefines, nextDefines, StringComparison.Ordinal))
+            {
+                PlayerSettings.SetScriptingDefineSymbols(buildTarget, nextDefines);
+            }
         }
 
         private static void EnsureHotUpdateBuildinAssets()
@@ -254,6 +545,26 @@ namespace Holmas.Editor.Build
             }
 
             return BuildWithWeixinSubplatform(profile);
+        }
+
+        private static UnityEngine.Object ReloadProfileForBuild(string profilePath)
+        {
+            string path = string.IsNullOrWhiteSpace(profilePath) ? ProfilePath : profilePath;
+            UnityEngine.Object profile = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
+            if (profile == null)
+            {
+                throw new BuildFailedException("Weixin MiniGame Build Profile could not be loaded before build. path=" + path);
+            }
+
+            Type buildProfileType = FindType(ProfileTypeName);
+            if (buildProfileType != null && !buildProfileType.IsInstanceOfType(profile))
+            {
+                throw new BuildFailedException(
+                    "Weixin MiniGame Build Profile asset has unexpected type. path=" + path +
+                    ", actualType=" + profile.GetType().FullName);
+            }
+
+            return profile;
         }
 
         private static MethodInfo FindBuildPipelineBuildMiniGameMethod()
@@ -357,6 +668,25 @@ namespace Holmas.Editor.Build
         private static bool IsAssignableValue(Type targetType, object value)
         {
             return value == null || targetType.IsInstanceOfType(value);
+        }
+
+        private sealed class WeixinCdnSettings
+        {
+            public readonly string CdnRoot;
+            public readonly string FallbackCdnRoot;
+
+            public WeixinCdnSettings(string cdnRoot, string fallbackCdnRoot)
+            {
+                CdnRoot = cdnRoot;
+                FallbackCdnRoot = fallbackCdnRoot;
+            }
+        }
+
+        [Serializable]
+        private sealed class WeixinCdnSettingsDto
+        {
+            public string weixinPreviewCdnRoot;
+            public string weixinPreviewFallbackCdnRoot;
         }
 
         private static Type FindType(string fullName)

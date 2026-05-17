@@ -1,6 +1,6 @@
 ---
 name: unity-hotupdate-boundary
-description: Use for this Unity + HybridCLR + YooAssets project when implementing or reviewing gameplay code, architecture boundaries, cross-layer DTOs, runtime asset loading, or subagent task splits. Enforces App.AOT/App.Shared/App.HotUpdate ownership, keeps gameplay logic out of UI and AOT, and treats MinesweeperTerrainData as a board template instead of runtime state.
+description: Use for this Unity + HybridCLR + YooAssets project when implementing or reviewing gameplay code, architecture boundaries, cross-layer DTOs, runtime asset loading, WeChat MiniGame resource initialization/CDN flow, or subagent task splits. Enforces App.AOT/App.Shared/App.HotUpdate ownership, keeps gameplay logic out of UI and AOT, and treats MinesweeperTerrainData as a board template instead of runtime state.
 ---
 
 # Unity HotUpdate Boundary
@@ -10,6 +10,7 @@ Use this skill for any task that touches:
 - `App.AOT`
 - `App.HotUpdate`
 - YooAssets loading
+- WeChat MiniGame resource initialization, `DATA_CDN`, `WechatFileSystem`, or CDN upload flow
 - `MinesweeperTerrainData`
 - gameplay architecture
 - subagent task assignment for this project
@@ -45,6 +46,13 @@ Prioritize clear ownership over local convenience.
 - Do not introduce new `Resources.Load` calls for formal runtime features.
 - Do not use editor-only APIs in runtime gameplay code.
 
+- WeChat MiniGame must use `WebPlayModeParameters` with `WechatFileSystem`, not `OfflinePlayMode`.
+- WeChat MiniGame `WechatFileSystemCreater.CreateFileSystemParameters(...)` must receive a non-null `IRemoteServices`.
+- WeChat MiniGame YooAssets remote root must come from an explicit HTTPS CDN root such as `DATA_CDN`, and must resolve version files under `{CDN_ROOT}/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version`.
+- Do not use empty `DATA_CDN`, `Application.streamingAssetsPath`, local HTTP, localhost, or LAN IPs as the WeChat MiniGame YooAssets remote service.
+- `packageRoot` for `WechatFileSystem` is the WeChat cache root under `WX.env.USER_DATA_PATH`, not the CDN path and not the exported minigame folder.
+- Any C# runtime or `.jslib` change for WeChat MiniGame must be followed by a fresh minigame export before claiming the issue is fixed.
+
 ## Required Workflow
 
 When implementing a feature:
@@ -53,7 +61,8 @@ When implementing a feature:
 3. Keep domain logic in pure C# services and models.
 4. Keep Unity object code thin.
 5. Verify resource access path and persistence ownership.
-6. Review for boundary violations before finishing.
+6. For WeChat MiniGame resource changes, verify CDN URL construction, `DATA_CDN`, AppID, and exported `game.js`.
+7. Review for boundary violations before finishing.
 
 ## Ownership Guide
 
@@ -77,6 +86,8 @@ For this project:
 - Prefer domain-specific names such as `progression`, `progress`, `agency`, `catalog`, `definition`, `state`, or the concrete gameplay term.
 - Unity-generated `.meta` files are not part of this naming rule.
 - Keep `meta` only when matching an external contract, third-party API, or an already-fixed upstream identifier.
+- WeChat MiniGame AppID is environment configuration; do not hardcode or change it casually. If touched, preserve the current build profile/config value unless the task explicitly asks to change it.
+- Treat copying `StreamingAssets` into the minigame root as a local packaging aid only; it is not a substitute for the YooAssets remote CDN path.
 
 ## Subagent Rules
 
@@ -93,6 +104,9 @@ When splitting work across subagents:
 - Do not place runtime mutable state in config assets.
 - Do not put gameplay formulas in UI scripts.
 - Do not bypass YooAssets for formal runtime content.
+- Do not pass `remoteServices: null` to WeChat MiniGame YooAssets file-system creation.
+- Do not let WeChat MiniGame YooAssets fall back to `Application.streamingAssetsPath` or request `game.weixin.qq.com/StreamingAssets/yoo/...`.
+- Do not use local HTTP such as `http://192.168.x.x` or `http://127.0.0.1` as the WeChat MiniGame CDN.
 - Do not let multiple agents edit `App.Shared` casually.
 - Do not expand prototype `Minesweeper` UI scripts directly into the final production architecture without refactoring ownership.
 
@@ -104,10 +118,13 @@ Before finishing:
 - Check that Unity views stay thin.
 - Check that mutable runtime state is not stored in template or config assets.
 - Check that cross-layer types in `App.Shared` are minimal and stable.
+- For WeChat MiniGame, check `WebPlayModeParameters + WechatFileSystem + non-null IRemoteServices`.
+- For WeChat MiniGame, check `DATA_CDN` is a real HTTPS CDN root and AppID changes are intentional/config-driven.
+- For WeChat MiniGame, only claim fixed after re-exporting and verifying logs no longer request `game.weixin.qq.com/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version`.
 
 Read these references when needed:
 - `references/boundaries.md`
 - `references/checklist.md`
 
 Run this for boundary-sensitive changes:
-- `tools/validation/check_boundary.sh`
+- `scripts/check_boundary.sh` from this skill, or the project `tools/validation/check_boundary.sh` when working inside the repo.

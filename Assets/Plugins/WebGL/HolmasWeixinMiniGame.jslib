@@ -1,6 +1,7 @@
-mergeInto(LibraryManager.library, {
+var HolmasWeixinMiniGameLibrary = {
   $HolmasWeixinMiniGameState: {
-    windowInfoBuffer: 0
+    windowInfoBuffer: 0,
+    dataCdnBuffer: 0
   },
 
   HolmasWeixinMiniGame_IsAvailable: function () {
@@ -63,5 +64,30 @@ mergeInto(LibraryManager.library, {
     HolmasWeixinMiniGameState.windowInfoBuffer = _malloc(length);
     stringToUTF8(json, HolmasWeixinMiniGameState.windowInfoBuffer, length);
     return HolmasWeixinMiniGameState.windowInfoBuffer;
+  },
+
+  HolmasWeixinMiniGame_GetDataCdn: function () {
+    var value = "";
+    try {
+      if (typeof GameGlobal !== "undefined" && GameGlobal.managerConfig && GameGlobal.managerConfig.DATA_CDN) {
+        value = GameGlobal.managerConfig.DATA_CDN;
+      } else if (typeof GameGlobal !== "undefined" && GameGlobal.DATA_CDN) {
+        value = GameGlobal.DATA_CDN;
+      }
+    } catch (err) {
+      value = "";
+    }
+
+    var length = lengthBytesUTF8(value) + 1;
+    if (HolmasWeixinMiniGameState.dataCdnBuffer) {
+      _free(HolmasWeixinMiniGameState.dataCdnBuffer);
+    }
+
+    HolmasWeixinMiniGameState.dataCdnBuffer = _malloc(length);
+    stringToUTF8(value, HolmasWeixinMiniGameState.dataCdnBuffer, length);
+    return HolmasWeixinMiniGameState.dataCdnBuffer;
   }
-});
+};
+
+autoAddDeps(HolmasWeixinMiniGameLibrary, "$HolmasWeixinMiniGameState");
+mergeInto(LibraryManager.library, HolmasWeixinMiniGameLibrary);

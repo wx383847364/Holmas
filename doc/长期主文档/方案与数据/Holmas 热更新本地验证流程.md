@@ -151,6 +151,204 @@ bash tools/validation/run_holmas_il2cpp_player_smoke.sh --build-target Standalon
 - Player 日志确认 `YooAssetsRuntime` 初始化完成、AOT metadata `count=11`、HotUpdate DLL 加载完成、`HolmasGameBootstrap: Holmas 业务骨架已启动`、`HotUpdateEntry: Holmas 业务骨架接线完成`、`GameBootstrap: 初始化完成，进入热更层`。
 - 构建和 player 输出均位于临时工程，脚本成功后已删除；本轮不提交 DLL、metadata、YooAssets 包或 Player 产物。
 
+## 微信小游戏远端热更资源流程
+
+本节记录 Unity/Tuanjie + WeChat MiniGame + YooAssets 的远端热更资源链路。核心结论：微信小游戏包负责启动代码，YooAssets 资源放在 HTTPS CDN，`WechatFileSystem` 通过非空 `IRemoteServices` 从 CDN 下载版本、清单和 AssetBundle，并缓存到微信 `USER_DATA_PATH`。
+
+```mermaid
+flowchart TD
+    A["Unity/Tuanjie 工程<br/>Client"] --> B["构建 HotUpdate DLL / AOT metadata"]
+    B --> C["构建 YooAssets DefaultPackage"]
+    C --> D["生成 Assets/StreamingAssets/yoo/DefaultPackage"]
+    D --> E["导出微信小游戏工程"]
+
+    E --> F["minigame/game.js"]
+    E --> G["minigame wasm/js 代码"]
+    E --> H["webgl/StreamingAssets 资源产物"]
+
+    H --> I["上传到 HTTPS CDN"]
+    I --> J["CDN_ROOT/StreamingAssets/yoo/DefaultPackage"]
+
+    F --> K["DATA_CDN = CDN_ROOT"]
+    G --> L["YooAssetsRuntime 初始化"]
+
+    L --> M["WebPlayModeParameters"]
+    M --> N["WechatFileSystem"]
+    N --> O["IRemoteServices 非空"]
+    O --> P["远端根地址<br/>CDN_ROOT/StreamingAssets/yoo/DefaultPackage"]
+
+    P --> Q["请求 DefaultPackage.version"]
+    Q --> R["请求 DefaultPackage_版本.hash"]
+    R --> S["请求 DefaultPackage_版本.bundle"]
+    S --> T["加载 Manifest"]
+
+    T --> U["计算需要下载的 Bundle"]
+    U --> V["wx.downloadFile / UnityWebRequest"]
+    V --> W["微信 USER_DATA_PATH 缓存"]
+    W --> X["YooAssets 从微信缓存加载 AssetBundle"]
+    X --> Y["HotUpdate 代码加载资源"]
+```
+
+### 构建与导出产物
+
+构建热更内容时，YooAssets 会生成 `DefaultPackage`。本地源产物通常位于：
+
+```text
+Assets/StreamingAssets/yoo/DefaultPackage/
+  DefaultPackage.version
+  DefaultPackage_xxx.hash
+  DefaultPackage_xxx.bundle
+  *.bundle
+```
+
+导出微信小游戏后，供上传的资源目录通常位于：
+
+```text
+Builds/WeixinMiniGame/Preview/webgl/StreamingAssets/yoo/DefaultPackage
+```
+
+这批文件是微信小游戏远端热更资源。不要把“复制 `StreamingAssets` 到 `minigame` 根目录”当成最终方案；那最多解释本地文件存在，不能解决 YooAssets 远端地址解析和真机下载域名问题。
+
+### CDN 布局
+
+假设 CDN 根地址为：
+
+```text
+https://cdn.example.com/Holmas/WeixinPreview
+```
+
+则上传后必须能访问：
+
+```text
+https://cdn.example.com/Holmas/WeixinPreview/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version
+```
+
+也就是说本地目录：
+
+```text
+Builds/WeixinMiniGame/Preview/webgl/StreamingAssets
+```
+
+应映射到 CDN：
+
+```text
+{CDN_ROOT}/StreamingAssets
+```
+
+正式/真机/体验版必须使用 HTTPS CDN，并且 CDN 域名必须在微信后台配置为合法下载域名。不要使用 `http://192.168.x.x`、`http://127.0.0.1` 或空 `DATA_CDN` 作为微信小游戏远端热更方案。
+
+### 导出配置
+
+CDN 根地址由编辑器配置提供：
+
+```text
+Assets/Settings/HolmasWeixinMiniGameCdnSettings.json
+```
+
+示例：
+
+```json
+{
+  "weixinPreviewCdnRoot": "https://cdn.example.com/Holmas/WeixinPreview",
+  "weixinPreviewFallbackCdnRoot": ""
+}
+```
+
+微信小游戏导出脚本应把该值写入导出产物：
+
+```js
+DATA_CDN: 'https://cdn.example.com/Holmas/WeixinPreview'
+```
+
+`DATA_CDN` 是微信插件加载资源的基础地址，也是 Holmas 的 C# 运行时读取 CDN 根地址的来源。修改 C# runtime、`.jslib` 或导出脚本后，必须重新导出微信小游戏；旧导出产物不会自动包含新逻辑。
+
+AppID 属于环境配置，应来自微信小游戏 Build Profile 或导出配置。不要在通用流程、skill 或导出脚本里写死某个具体 AppID；如果需要切换 AppID，必须是明确的环境切换，并通过配置体现。
+
+### 运行时初始化
+
+微信小游戏环境必须走 `WebPlayModeParameters + WechatFileSystem`，不能使用 `OfflinePlayMode`。初始化形态应保持为：
+
+```csharp
+var webModeParameters = new WebPlayModeParameters();
+var remoteServices = CreateWeixinPackageRemoteServices("DefaultPackage");
+string packageRoot = WechatFileSystemCreater.CreateDefaultPackageRoot("DefaultPackage");
+webModeParameters.WebServerFileSystemParameters =
+    WechatFileSystemCreater.CreateFileSystemParameters(packageRoot, remoteServices);
+```
+
+其中 `remoteServices` 必须非空，并把 YooAssets 文件名拼成：
+
+```text
+{DATA_CDN}/StreamingAssets/yoo/DefaultPackage/{fileName}
+```
+
+因此版本文件请求应为：
+
+```text
+{CDN_ROOT}/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version
+```
+
+`packageRoot` 是微信用户目录下的缓存路径，形如：
+
+```text
+WX.env.USER_DATA_PATH/__GAME_FILE_CACHE/yoo/DefaultPackage
+```
+
+它不是 CDN 路径，也不是小游戏包内路径。它用于存放微信下载并缓存后的 AssetBundle。整体加载链路是：
+
+```text
+CDN HTTPS URL
+  -> 微信 downloadFile / UnityWebRequest
+  -> USER_DATA_PATH 本地缓存
+  -> YooAssets 加载缓存里的 AssetBundle
+```
+
+### 旧错误根因
+
+曾出现的错误请求：
+
+```text
+https://game.weixin.qq.com/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version
+```
+
+根因是微信分支曾把 `remoteServices` 传成 `null`：
+
+```csharp
+WechatFileSystemCreater.CreateFileSystemParameters(packageRoot, null);
+```
+
+YooAssets MiniGame 示例里的 `WechatFileSystem` 在 `RemoteServices == null` 时会回退到：
+
+```csharp
+Application.streamingAssetsPath/yoo/DefaultPackage
+```
+
+微信小游戏插件在 `DATA_CDN` 为空或未正确配置时，会把该路径解析到类似：
+
+```text
+https://game.weixin.qq.com/StreamingAssets
+```
+
+于是最终请求到：
+
+```text
+https://game.weixin.qq.com/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version
+```
+
+这不是 CDN，也不是 Holmas 的资源目录，所以会 404。
+
+### 验收清单
+
+- `Assets/Settings/HolmasWeixinMiniGameCdnSettings.json` 已配置真实 HTTPS CDN 根地址。
+- 微信后台已配置 CDN 域名为合法下载域名。
+- `Builds/WeixinMiniGame/Preview/webgl/StreamingAssets` 已上传到 `{CDN_ROOT}/StreamingAssets`。
+- `{CDN_ROOT}/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version` 可直接访问。
+- 导出产物 `minigame/game.js` 中 `DATA_CDN` 非空，且等于 CDN 根地址。
+- 导出产物 `project.config.json` 和 `game.js` 中 AppID 与当前 Build Profile / 环境配置一致。
+- 微信小游戏运行日志不再出现 `game.weixin.qq.com/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version`。
+- 微信小游戏运行日志中的版本文件请求变为 `{CDN_ROOT}/StreamingAssets/yoo/DefaultPackage/DefaultPackage.version`。
+- 修改 C# runtime 或 `.jslib` 后已重新导出微信小游戏。
+
 ## 已知边界
 
 - 配置协议 v9 起，`Holmas_AgencyBuildingTable.stageImage` 已从 `extraFields` 提升为正式字段；v9 runtime 会拒绝旧版 bytes。发布时必须保证 HotUpdate DLL、`holmas_core_config.bytes`、`holmas_cat_meta.bytes` 同批更新，不能让新 DLL 先加载旧配置包。
@@ -162,5 +360,5 @@ bash tools/validation/run_holmas_il2cpp_player_smoke.sh --build-target Standalon
 ## 完成情况
 
 - 当前状态：进行中
-- 进度说明：2026-05-10 已复跑并通过热更专项验证与 StandaloneOSX IL2CPP player smoke；下一步转向 CDN 与微信真机。
-- 最近更新：2026-05-10，2026-05-10 已复跑并通过热更专项验证与 StandaloneOSX IL2CPP player smoke；下一步转向 CDN 与微信真机。
+- 进度说明：2026-05-18 已补充微信小游戏远端热更资源流程；下一步配置真实 HTTPS CDN、上传 `StreamingAssets` 并重新导出微信小游戏验证。
+- 最近更新：2026-05-18，补充 Unity/Tuanjie + WeChat MiniGame + YooAssets 的 CDN、`DATA_CDN`、`WechatFileSystem`、缓存路径和验收清单。

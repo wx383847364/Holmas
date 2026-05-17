@@ -1,11 +1,9 @@
 {
-    "name": "App.AOT",
-    "rootNamespace": "App.AOT",
+    "name": "YooAsset.MiniGame",
+    "rootNamespace": "",
     "references": [
-        "App.Shared",
-        "HybridCLR.Runtime",
         "YooAsset",
-        "YooAsset.MiniGame"
+        "Wx"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
