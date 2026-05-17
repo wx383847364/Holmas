@@ -1118,13 +1118,13 @@ MonoBehaviour:
           rid: 8932292120402460678
         ProjectConf:
           projectName: HolmasPreview
-          Appid: wx272f65eebdd5e317
+          Appid: wxb9140ff4d3b0715e
           CDN: 
           assetLoadType: 1
           compressDataPackage: 0
           VideoUrl: 
-          relativeDST: Builds/WeixinMiniGame/Preview
-          DST: /Users/bruce/work/Holmas/Client/
+          relativeDST: /Users/bruce/work/Holmas/Client/Builds/WeixinMiniGame/Preview
+          DST: /Users/bruce/work/Holmas/Client/Builds/WeixinMiniGame/Preview
           StreamCDN: 
           bundleHashLength: 32
           bundlePathIdentifier: StreamingAssets;
