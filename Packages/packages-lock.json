@@ -1,11 +1,34 @@
 {
   "dependencies": {
+    "cn.tuanjie.wx-uploader": {
+      "version": "0.1.4",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.nuget.mono-cecil": "1.10.1",
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      },
+      "url": "https://packages.tuanjie.cn"
+    },
+    "com.bytedance.starksdk": {
+      "version": "file:../Assets/../LocalPackages/com.bytedance.starksdk@6.7.4",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "com.code-philosophy.hybridclr": {
       "version": "https://github.com/focus-creative-games/hybridclr_unity.git#v8.11.0",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "4feac30cb2e105992986c737f7f54992b8300e1a"
+    },
+    "com.qq.weixin.minigame": {
+      "version": "https://gitee.com/wechat-minigame/minigame-tuanjie-transform-sdk.git#v0.1.31",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "9de9b8d7730f65a617d9992f07c3ecfae8b9858a"
     },
     "com.tuyoogame.yooasset": {
       "version": "2.3.18",
@@ -80,6 +103,20 @@
     },
     "com.unity.ide.vscode": {
       "version": "1.2.5",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.tuanjie.cn"
+    },
+    "com.unity.nuget.mono-cecil": {
+      "version": "1.11.4",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.tuanjie.cn"
+    },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.2.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {},

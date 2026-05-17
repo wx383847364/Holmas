@@ -53,10 +53,10 @@ namespace App.AOT.HotUpdate
             {
                 _logger?.LogInfo("HybridClrLoader: 开始加载HybridCLR热更代码...");
 
-#if UNITY_EDITOR
-                // 编辑器模式：代码已经编译，直接调用入口
-                _logger?.LogInfo("HybridClrLoader: 编辑器模式 - 直接调用热更入口");
-                await InvokeHotUpdateEntryEditorAsync();
+#if UNITY_EDITOR || MINIGAME_SUBPLATFORM_WEIXIN
+                // 编辑器和微信小游戏首版：代码已经静态编入 Player，直接调用入口。
+                _logger?.LogInfo("HybridClrLoader: 静态程序集模式 - 直接调用热更入口");
+                await InvokeHotUpdateEntryFromLoadedAssembliesAsync();
 #else
                 // 1. 加载AOT元数据补充文件
                 await LoadAOTMetadataAsync();
@@ -181,21 +181,20 @@ namespace App.AOT.HotUpdate
             }
         }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || MINIGAME_SUBPLATFORM_WEIXIN
         /// <summary>
-        /// 编辑器模式下直接调用热更入口（代码已编译，无需加载 DLL）
+        /// 静态程序集模式下直接调用热更入口（代码已编译进当前 Player，无需加载 DLL）。
         /// </summary>
-        private async Task InvokeHotUpdateEntryEditorAsync()
+        private async Task InvokeHotUpdateEntryFromLoadedAssembliesAsync()
         {
-            _logger?.LogInfo("HybridClrLoader: 编辑器模式调用热更入口...");
+            _logger?.LogInfo("HybridClrLoader: 静态程序集模式调用热更入口...");
 
             try
             {
-                // 在编辑器中，所有程序集都已加载，通过反射查找类型
+                // 在编辑器 / 微信小游戏首版中，App.HotUpdate 会随 Player 编译并加载。
                 var entryType = Type.GetType("App.HotUpdate.Entry.HotUpdateEntry, App.HotUpdate");
                 if (entryType == null)
                 {
-                    // 尝试从所有已加载的程序集中查找
                     foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                     {
                         entryType = assembly.GetType("App.HotUpdate.Entry.HotUpdateEntry");
@@ -216,11 +215,11 @@ namespace App.AOT.HotUpdate
 
                 await InvokeHotUpdateEntryStartMethodAsync(startMethod);
 
-                _logger?.LogInfo("HybridClrLoader: 编辑器模式热更入口调用成功");
+                _logger?.LogInfo("HybridClrLoader: 静态程序集模式热更入口调用成功");
             }
             catch (Exception ex)
             {
-                _logger?.LogError("HybridClrLoader: 编辑器模式调用热更入口失败: {0}", ex);
+                _logger?.LogError("HybridClrLoader: 静态程序集模式调用热更入口失败: {0}", ex);
                 throw;
             }
         }

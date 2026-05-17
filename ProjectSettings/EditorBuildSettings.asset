@@ -8,4 +8,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/BootstrapScene.scene
     guid: 813c813c831842e9bd6dc507dee6127f
+  m_BuildProfiles:
+  - enabled: 1
+    path: Assets/Settings/Build Profiles/WeChat Profile.asset
+    guid: d42d1033bf5144e69b03f523e125eae3
   m_configObjects: {}
+  m_SlimFeaturesWeixinMiniGame:
+    ACLDecompression: 0
+    AllocateOverhead: 1
+    DecompressASTC: 0
+    DecompressDXT: 0
+    DecompressETC: 1
+    FreeTypeSfntPng: 1
+    LightProbe: 2
+    RootMotion: 0
+    UseStringInternPool: 2

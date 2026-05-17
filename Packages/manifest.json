@@ -1,6 +1,9 @@
 {
   "dependencies": {
+    "cn.tuanjie.wx-uploader": "0.1.4",
+    "com.bytedance.starksdk": "file:../Assets/../LocalPackages/com.bytedance.starksdk@6.7.4",
     "com.code-philosophy.hybridclr": "https://github.com/focus-creative-games/hybridclr_unity.git#v8.11.0",
+    "com.qq.weixin.minigame": "https://gitee.com/wechat-minigame/minigame-tuanjie-transform-sdk.git#v0.1.31",
     "com.tuyoogame.yooasset": "2.3.18",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.collab-proxy": "2.5.1",

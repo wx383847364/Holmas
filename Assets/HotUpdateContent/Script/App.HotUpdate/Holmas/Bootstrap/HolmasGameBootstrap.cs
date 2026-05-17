@@ -468,6 +468,7 @@ namespace App.HotUpdate.Holmas.Bootstrap
                     continue;
                 }
 
+                string[] buttonImages = SplitArray(GetExtraField(stageRow.extraFields, "buttonImage"));
                 for (int promotionIndex = 0; promotionIndex < stageRow.promotionIds.Length; promotionIndex++)
                 {
                     string promotionId = stageRow.promotionIds[promotionIndex];
@@ -490,12 +491,46 @@ namespace App.HotUpdate.Holmas.Bootstrap
                         AgencyStageId = stageRow.agencyStageId,
                         StageName = stageRow.stageName,
                         StageImage = stageRow.stageImage,
+                        ButtonImage = buttonImages.Length > promotionIndex ? buttonImages[promotionIndex] : string.Empty,
                         PromotionId = promotionId,
                         PromotionLevelCap = levelCap,
                         PromotionUpgradeCosts = costs,
                     };
                 }
             }
+        }
+
+        private static string GetExtraField(HolmasExtraField[] fields, string key)
+        {
+            if (fields == null || string.IsNullOrWhiteSpace(key))
+            {
+                return string.Empty;
+            }
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                HolmasExtraField field = fields[i];
+                if (field != null && string.Equals(field.key, key, StringComparison.Ordinal))
+                {
+                    return field.value ?? string.Empty;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string[] SplitArray(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return Array.Empty<string>();
+            }
+
+            return value
+                .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(item => item.Trim())
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .ToArray();
         }
 
         private static HolmasTaskCatalog CreateFallbackTaskCatalog()

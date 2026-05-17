@@ -195,6 +195,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                     PromotionId = promotion?.PromotionId ?? string.Empty,
                     StageName = stageName,
                     StageImage = stageImage,
+                    ButtonImage = !string.IsNullOrWhiteSpace(promotion?.ButtonImage) ? promotion.ButtonImage : stageImage,
                     ProgressLabel = $"{starCount}/{starCap}",
                     StarCap = starCap,
                     StarCount = starCount,

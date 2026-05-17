@@ -70,8 +70,8 @@ namespace App.AOT.YooRuntimeAssets
                 // 设置资源包
                 YooAssets.SetDefaultPackage(_defaultPackage);
 
-#if HOLMAS_YOO_OFFLINE_PLAYMODE
-                // Player smoke 使用内置包离线初始化，避免依赖 CDN。
+#if HOLMAS_YOO_OFFLINE_PLAYMODE || MINIGAME_SUBPLATFORM_WEIXIN
+                // Player smoke 与微信小游戏首版预览使用内置包离线初始化，避免依赖 CDN。
                 var offlineModeParameters = new OfflinePlayModeParameters();
                 offlineModeParameters.BuildinFileSystemParameters = FileSystemParameters.CreateDefaultBuildinFileSystemParameters();
                 var initOperation = _defaultPackage.InitializeAsync(offlineModeParameters);
@@ -95,7 +95,7 @@ namespace App.AOT.YooRuntimeAssets
                     }
                 }
 
-#if HOLMAS_YOO_OFFLINE_PLAYMODE
+#if HOLMAS_YOO_OFFLINE_PLAYMODE || MINIGAME_SUBPLATFORM_WEIXIN
                 var versionOperation = _defaultPackage.RequestPackageVersionAsync();
                 await versionOperation.Task;
                 if (versionOperation.Status != EOperationStatus.Succeed)

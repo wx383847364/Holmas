@@ -28,6 +28,9 @@ namespace App.AOT.Platform.WeChat
         public void Initialize()
         {
             _logger?.LogInfo("WeChatBridge: 初始化微信桥接...");
+#if MINIGAME_SUBPLATFORM_WEIXIN && !UNITY_EDITOR
+            WeixinMiniGameJsBridge.Initialize(_logger);
+#endif
             RefreshWindowInfo();
         }
 
@@ -38,6 +41,9 @@ namespace App.AOT.Platform.WeChat
 
         public void Shutdown()
         {
+#if MINIGAME_SUBPLATFORM_WEIXIN && !UNITY_EDITOR
+            WeixinMiniGameJsBridge.Shutdown();
+#endif
             _logger?.LogInfo("WeChatBridge: 已关闭");
         }
 
@@ -61,7 +67,14 @@ namespace App.AOT.Platform.WeChat
         public async System.Threading.Tasks.Task<string> LoginAsync()
         {
             _logger?.LogInfo("WeChatBridge: 开始微信登录...");
-            // TODO: 调用微信登录API
+#if MINIGAME_SUBPLATFORM_WEIXIN && !UNITY_EDITOR
+            if (WeixinMiniGameJsBridge.IsAvailable)
+            {
+                return await WeixinMiniGameJsBridge.LoginAsync();
+            }
+
+            _logger?.LogWarning("WeChatBridge: 微信小游戏 JSBridge 不可用，返回本地预览 mock code。");
+#endif
             await System.Threading.Tasks.Task.Delay(100);
             return "mock_code"; // 返回临时code
         }
@@ -99,6 +112,29 @@ namespace App.AOT.Platform.WeChat
 
         private void RefreshWindowInfo()
         {
+#if MINIGAME_SUBPLATFORM_WEIXIN && !UNITY_EDITOR
+            if (WeixinMiniGameJsBridge.TryGetWindowInfo(out WeChatWindowInfo miniGameWindowInfo))
+            {
+                if (!HasWindowInfoChanged(miniGameWindowInfo))
+                {
+                    return;
+                }
+
+                _windowInfo = miniGameWindowInfo;
+                _logger?.LogDebug(
+                    "WeChatBridge: weixin minigame window info refreshed. screen={0}x{1}, window={2}x{3}, safeArea={4},{5},{6},{7}, pixelRatio={8}",
+                    _windowInfo.ScreenWidth,
+                    _windowInfo.ScreenHeight,
+                    _windowInfo.WindowWidth,
+                    _windowInfo.WindowHeight,
+                    _windowInfo.SafeArea?.Left ?? 0,
+                    _windowInfo.SafeArea?.Top ?? 0,
+                    _windowInfo.SafeArea?.Width ?? 0,
+                    _windowInfo.SafeArea?.Height ?? 0,
+                    _windowInfo.PixelRatio);
+                return;
+            }
+#endif
             // 先把 Unity Screen.safeArea 转成项目内部统一的 WeChatWindowInfo 结构，
             // 后续接真实 JSBridge 时，这层接口可以保持不变。
             Rect safeArea = Screen.safeArea;
@@ -177,6 +213,31 @@ namespace App.AOT.Platform.WeChat
                    safeArea.Bottom != bottom ||
                    safeArea.Width != safeWidth ||
                    safeArea.Height != safeHeight;
+        }
+
+        private bool HasWindowInfoChanged(WeChatWindowInfo next)
+        {
+            if (next == null || next.SafeArea == null || _windowInfo == null || _windowInfo.SafeArea == null)
+            {
+                return true;
+            }
+
+            UiSafeAreaInfo current = _windowInfo.SafeArea;
+            UiSafeAreaInfo safeArea = next.SafeArea;
+            return _windowInfo.ScreenWidth != next.ScreenWidth ||
+                   _windowInfo.ScreenHeight != next.ScreenHeight ||
+                   _windowInfo.WindowWidth != next.WindowWidth ||
+                   _windowInfo.WindowHeight != next.WindowHeight ||
+                   Math.Abs(_windowInfo.PixelRatio - next.PixelRatio) > 0.001f ||
+                   _windowInfo.StatusBarHeight != next.StatusBarHeight ||
+                   _windowInfo.IsFallback != next.IsFallback ||
+                   _windowInfo.IsAvailable != next.IsAvailable ||
+                   current.Left != safeArea.Left ||
+                   current.Right != safeArea.Right ||
+                   current.Top != safeArea.Top ||
+                   current.Bottom != safeArea.Bottom ||
+                   current.Width != safeArea.Width ||
+                   current.Height != safeArea.Height;
         }
     }
 

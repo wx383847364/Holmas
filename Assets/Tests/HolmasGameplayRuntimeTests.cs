@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using App.AOT.Infrastructure.EventBus;
 using App.HotUpdate.Holmas.Application;
 using App.HotUpdate.Holmas.Board;
+using App.HotUpdate.Holmas.Bootstrap;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Meta;
 using App.HotUpdate.Holmas.Progression;
@@ -705,10 +706,74 @@ namespace Holmas.Tests
             Assert.That(viewModel.PromotionSlots.Select(item => item.StarCount).ToArray(), Is.EqualTo(new[] { 0, 0, 0 }));
             Assert.That(viewModel.PromotionSlots[0].AgencyStageId, Is.EqualTo(viewModel.Stages[0].AgencyStageId));
             Assert.That(viewModel.PromotionSlots[0].StageImage, Is.EqualTo(viewModel.Stages[0].StageImage));
+            Assert.That(
+                viewModel.PromotionSlots.Select(item => item.ButtonImage).ToArray(),
+                Is.EqualTo(new[]
+                {
+                    "Assets/HotUpdateContent/Res/Textures/NewUIRes/leaflet.png",
+                    "Assets/HotUpdateContent/Res/Textures/NewUIRes/radio.png",
+                    "Assets/HotUpdateContent/Res/Textures/NewUIRes/tv.png",
+                }));
             Assert.That(viewModel.BuildButtonEnabled, Is.True);
             Assert.That(viewModel.BuildButtonLabel, Is.EqualTo("stage-1\n选择宣传项升级"));
             Assert.That(viewModel.StageBars[0].Visible, Is.True);
             Assert.That(viewModel.StageBars[0].Progress, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void HolmasGameBootstrap_ReadsAgencyButtonImagesFromExtraField()
+        {
+            MethodInfo method = typeof(HolmasGameBootstrap).GetMethod(
+                "BuildPromotionDefinitions",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+
+            var rows = new[]
+            {
+                new HolmasAgencyBuildingTableRow
+                {
+                    agencyStageId = 1,
+                    stageName = "stage-1",
+                    stageImage = "Textures/buildings/building01.png",
+                    promotionIds = new[] { "leaflet", "radio", "net" },
+                    promotionLevelCaps = new[] { 3, 3, 3 },
+                    promotionUpgradeCosts = new[]
+                    {
+                        new HolmasAgencyBuildingTableCostRow { costs = new[] { 10, 10, 10 } },
+                        new HolmasAgencyBuildingTableCostRow { costs = new[] { 10, 10, 10 } },
+                        new HolmasAgencyBuildingTableCostRow { costs = new[] { 10, 10, 10 } },
+                    },
+                    extraFields = new[]
+                    {
+                        new HolmasExtraField
+                        {
+                            key = "buttonImage",
+                            value = "Textures/NewUIRes/leaflet.png;Textures/NewUIRes/radio.png;Textures/NewUIRes/net.png;",
+                        },
+                    },
+                },
+            };
+
+            var definitions = ((IEnumerable<HolmasAgencyBuildingDefinition>)method.Invoke(null, new object[] { rows })).ToArray();
+
+            Assert.That(
+                definitions.Select(item => item.ButtonImage).ToArray(),
+                Is.EqualTo(new[]
+                {
+                    "Textures/NewUIRes/leaflet.png",
+                    "Textures/NewUIRes/radio.png",
+                    "Textures/NewUIRes/net.png",
+                }));
+
+            var catalog = new HolmasAgencyCatalog(definitions);
+            Assert.That(
+                catalog.GetPromotionsForStage(1).Select(item => item.ButtonImage).ToArray(),
+                Is.EqualTo(new[]
+                {
+                    "Assets/HotUpdateContent/Res/Textures/NewUIRes/leaflet.png",
+                    "Assets/HotUpdateContent/Res/Textures/NewUIRes/radio.png",
+                    "Assets/HotUpdateContent/Res/Textures/NewUIRes/net.png",
+                }));
         }
 
         [Test]
@@ -3445,6 +3510,7 @@ namespace Holmas.Tests
                 AgencyStageId = agencyStageId,
                 StageName = stageName,
                 StageImage = stageImage,
+                ButtonImage = $"Textures/NewUIRes/{promotionId}.png",
                 PromotionId = promotionId,
                 PromotionLevelCap = levelCap,
                 PromotionUpgradeCosts = Enumerable.Repeat(10, levelCap).ToArray(),

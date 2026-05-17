@@ -262,11 +262,14 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
                 Image image = surface.Image;
                 if (image != null)
                 {
+                    string buttonImage = !string.IsNullOrWhiteSpace(promotionSlot.ButtonImage)
+                        ? promotionSlot.ButtonImage
+                        : promotionSlot.StageImage;
                     var visual = new HolmasCatVisualVm
                     {
                         CatId = $"promotion-{promotionSlot.AgencyStageId}-{promotionSlot.PromotionId}",
                         CatName = promotionSlot.PromotionId ?? string.Empty,
-                        IconPath = promotionSlot.StageImage ?? string.Empty,
+                        IconPath = buttonImage ?? string.Empty,
                     };
                     _stageSpriteLoader?.Bind(image, visual, preserveImageColor: true);
                 }
@@ -742,30 +745,6 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
                 UnityEngine.Object.DestroyImmediate(child.gameObject);
             }
-        }
-
-        private static void ConfigureBuildStageSurface(BuildStageSurface surface, int slotIndex, int layoutSlotCount)
-        {
-            RectTransform slotRect = surface.Button != null ? surface.Button.GetComponent<RectTransform>() : null;
-            ConfigureBuildStageSlotRect(slotRect, slotIndex, layoutSlotCount);
-        }
-
-        private static void ConfigureBuildStageSlotRect(RectTransform slotRect, int slotIndex, int layoutSlotCount)
-        {
-            if (slotRect == null)
-            {
-                return;
-            }
-
-            int safeSlotCount = Math.Max(1, layoutSlotCount);
-            float anchorX = (slotIndex + 0.5f) / safeSlotCount;
-            ConfigureRect(
-                slotRect,
-                new Vector2(anchorX, 0.5f),
-                new Vector2(anchorX, 0.5f),
-                new Vector2(0.5f, 0.5f),
-                Vector2.zero,
-                new Vector2(124f, 190f));
         }
 
         private static void ConfigureBuildContainer(Button buildButton)
@@ -1584,6 +1563,30 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             rectTransform.localScale = Vector3.one;
         }
         #endif
+
+        private static void ConfigureBuildStageSurface(BuildStageSurface surface, int slotIndex, int layoutSlotCount)
+        {
+            RectTransform slotRect = surface.Button != null ? surface.Button.GetComponent<RectTransform>() : null;
+            ConfigureBuildStageSlotRect(slotRect, slotIndex, layoutSlotCount);
+        }
+
+        private static void ConfigureBuildStageSlotRect(RectTransform slotRect, int slotIndex, int layoutSlotCount)
+        {
+            if (slotRect == null)
+            {
+                return;
+            }
+
+            int safeSlotCount = Math.Max(1, layoutSlotCount);
+            float anchorX = (slotIndex + 0.5f) / safeSlotCount;
+            ConfigureRect(
+                slotRect,
+                new Vector2(anchorX, 0.5f),
+                new Vector2(anchorX, 0.5f),
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(124f, 190f));
+        }
 
         private static void ConfigureRect(
             RectTransform rectTransform,

@@ -41,6 +41,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
         public string PromotionId = string.Empty;
         public string StageName = string.Empty;
         public string StageImage = string.Empty;
+        public string ButtonImage = string.Empty;
         public string ProgressLabel = string.Empty;
         public string ActionLabel = string.Empty;
         public int StarCap;

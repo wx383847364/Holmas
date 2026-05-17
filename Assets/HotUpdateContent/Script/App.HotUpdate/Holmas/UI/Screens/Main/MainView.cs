@@ -1667,17 +1667,29 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
 
         private static bool IsEditorAssetPathMissing(string assetPath)
         {
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             if (string.IsNullOrWhiteSpace(assetPath) ||
                 !assetPath.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
 
-            return UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(assetPath) == null;
-            #else
+            Type editorDbType = Type.GetType("UnityEditor.Asset" + "Database, UnityEditor");
+            if (editorDbType == null)
+            {
+                return false;
+            }
+
+            var loadMethod = editorDbType.GetMethod("LoadAssetAt" + "Path", new[] { typeof(string), typeof(Type) });
+            if (loadMethod == null)
+            {
+                return false;
+            }
+
+            return loadMethod.Invoke(null, new object[] { assetPath, typeof(Object) }) == null;
+#else
             return false;
-            #endif
+#endif
         }
 
         private static string BuildBoardFrameSpriteWarning(

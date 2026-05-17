@@ -14,6 +14,7 @@ namespace App.HotUpdate.Holmas.Meta
         public int AgencyStageId;
         public string StageName = string.Empty;
         public string StageImage = string.Empty;
+        public string ButtonImage = string.Empty;
         public string PromotionId = string.Empty;
         public int PromotionLevelCap;
         public int[] PromotionUpgradeCosts = Array.Empty<int>();
@@ -77,6 +78,8 @@ namespace App.HotUpdate.Holmas.Meta
                     continue;
                 }
 
+                definition.StageImage = NormalizeResourcePath(definition.StageImage);
+                definition.ButtonImage = NormalizeResourcePath(definition.ButtonImage);
                 _promotions[promotionId] = definition;
 
                 if (!_promotionsByStage.TryGetValue(definition.AgencyStageId, out List<HolmasAgencyBuildingDefinition> stagePromotions))
@@ -93,7 +96,7 @@ namespace App.HotUpdate.Holmas.Meta
                     {
                         AgencyStageId = definition.AgencyStageId,
                         StageName = definition.StageName ?? string.Empty,
-                        StageImage = NormalizeStageImagePath(definition.StageImage),
+                        StageImage = definition.StageImage ?? string.Empty,
                     };
                     _stagesById[definition.AgencyStageId] = stage;
                     _stagesInOrder.Add(stage);
@@ -128,9 +131,9 @@ namespace App.HotUpdate.Holmas.Meta
             return _stagesById.TryGetValue(agencyStageId, out definition);
         }
 
-        private static string NormalizeStageImagePath(string stageImage)
+        private static string NormalizeResourcePath(string resourcePath)
         {
-            string normalized = (stageImage ?? string.Empty).Replace('\\', '/').Trim();
+            string normalized = (resourcePath ?? string.Empty).Replace('\\', '/').Trim();
             if (string.IsNullOrWhiteSpace(normalized) ||
                 normalized.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
             {
