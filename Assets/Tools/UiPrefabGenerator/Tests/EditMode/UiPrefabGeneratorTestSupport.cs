@@ -1,5 +1,6 @@
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -104,7 +105,7 @@ namespace UiPrefabGenerator.Tests.EditMode
                     Directory.CreateDirectory(directory);
                 }
 
-                File.WriteAllText(absolutePath, content);
+                File.WriteAllText(absolutePath, content, new UTF8Encoding(false));
             }
         }
 

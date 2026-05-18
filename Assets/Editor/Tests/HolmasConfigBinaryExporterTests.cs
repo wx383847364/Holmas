@@ -326,8 +326,8 @@ namespace Holmas.EditorTests
                     new[] { "customId", "payload" },
                     new[] { "row_001", "abc;not-a-reference" },
                 });
-            File.WriteAllText(Path.Combine(configRoot, "~$Holmas_MapTable.xlsx"), "not a real workbook");
-            File.WriteAllText(Path.Combine(configRoot, ".HiddenConfig.xlsx"), "not a real workbook");
+            File.WriteAllText(Path.Combine(configRoot, "~$Holmas_MapTable.xlsx"), "not a real workbook", new UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(configRoot, ".HiddenConfig.xlsx"), "not a real workbook", new UTF8Encoding(false));
 
             return new ExportFixture(root, configRoot, jsonRoot, binaryRoot);
         }

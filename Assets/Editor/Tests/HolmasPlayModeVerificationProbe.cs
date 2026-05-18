@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using App.HotUpdate.Holmas.Application;
@@ -23,6 +24,7 @@ public static class HolmasPlayModeVerificationProbe
 {
     private const string RequestPath = "Library/holmas_playmode_probe_request.json";
     private const string BootstrapScenePath = "Assets/Scenes/BootstrapScene.scene";
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
     private static readonly Regex MapRegex = new Regex(@"Map\s+([^\s|]+)", RegexOptions.Compiled);
     private static readonly Regex TerrainRegex = new Regex(@"Terrain\s+([^\s|]+)", RegexOptions.Compiled);
@@ -42,7 +44,7 @@ public static class HolmasPlayModeVerificationProbe
         if (!File.Exists(RequestPath))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(RequestPath) ?? "Temp");
-            File.WriteAllText(RequestPath, JsonUtility.ToJson(new ProbeRequest(), true));
+            File.WriteAllText(RequestPath, JsonUtility.ToJson(new ProbeRequest(), true), Utf8NoBom);
         }
 
         _request = LoadRequest();
@@ -220,7 +222,7 @@ public static class HolmasPlayModeVerificationProbe
             OutputDirectory = outputDirectory,
         };
         result.Events.Add("Probe failed before completion: " + ex.Message);
-        File.WriteAllText(Path.Combine(outputDirectory, "result.json"), JsonUtility.ToJson(result, true));
+        File.WriteAllText(Path.Combine(outputDirectory, "result.json"), JsonUtility.ToJson(result, true), Utf8NoBom);
     }
 
     private static void Cleanup()
@@ -757,7 +759,7 @@ public static class HolmasPlayModeVerificationProbe
 
         private void WriteResult()
         {
-            File.WriteAllText(Path.Combine(_outputDirectory, "result.json"), JsonUtility.ToJson(_result, true));
+            File.WriteAllText(Path.Combine(_outputDirectory, "result.json"), JsonUtility.ToJson(_result, true), Utf8NoBom);
         }
 
     }

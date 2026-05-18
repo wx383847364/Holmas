@@ -52,7 +52,7 @@ namespace Holmas.Tests
             string basePath = Path.Combine(Path.GetTempPath(), $"holmas-persistence-blocked-{Guid.NewGuid():N}");
             string key = $"holmas/fallback/{Guid.NewGuid():N}";
             byte[] expected = Encoding.UTF8.GetBytes("fallback-data");
-            File.WriteAllText(basePath, "not-a-directory");
+            File.WriteAllText(basePath, "not-a-directory", new UTF8Encoding(false));
 
             try
             {

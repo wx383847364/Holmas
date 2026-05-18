@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -19,6 +20,7 @@ namespace Holmas.Editor.Build
         private const string CdnSettingsPath = "Assets/Settings/HolmasWeixinMiniGameCdnSettings.json";
         private const string ProfileTypeName = "UnityEditor.Build.Profile.BuildProfile";
         private const string MiniGameSubplatformArg = "-minigamesubplatform weixin";
+        private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
         static HolmasWeixinMiniGameBuild()
         {
@@ -154,7 +156,7 @@ namespace Holmas.Editor.Build
                 return false;
             }
 
-            File.WriteAllText(assetPath, next);
+            File.WriteAllText(assetPath, next, Utf8NoBom);
             AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
             return true;
         }
@@ -361,7 +363,7 @@ namespace Holmas.Editor.Build
                 return false;
             }
 
-            File.WriteAllText(path, next);
+            File.WriteAllText(path, next, Utf8NoBom);
             return true;
         }
 

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -11,6 +12,7 @@ public static class HolmasHotUpdatePackageValidation
 {
     private const string PackageName = "DefaultPackage";
     private const string StatePath = "Temp/HolmasHotUpdate/package_validation_state.json";
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
     private static Task _playModeValidationTask;
     private static int? _pendingBatchExitCode;
@@ -126,7 +128,7 @@ public static class HolmasHotUpdatePackageValidation
             AotMetadataAssetPaths = assetsResult.AotMetadataAssetPaths.ToArray(),
             AssetSource = assetsResult.Source,
         };
-        File.WriteAllText(StatePath, JsonUtility.ToJson(state, true));
+        File.WriteAllText(StatePath, JsonUtility.ToJson(state, true), Utf8NoBom);
     }
 
     private static async Task VerifyLocalPackageAsync(string packageRoot)

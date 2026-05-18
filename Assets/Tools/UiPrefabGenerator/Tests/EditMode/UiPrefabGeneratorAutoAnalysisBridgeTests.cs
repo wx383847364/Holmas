@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using NUnit.Framework;
 using UiPrefabGenerator.Core.Request;
 using UiPrefabGenerator.Core.Result;
@@ -138,7 +139,7 @@ namespace UiPrefabGenerator.Tests.EditMode
         private void WriteSuccessScript(string body)
         {
             _scriptPath = Path.Combine(Path.GetTempPath(), "ui_prefab_generator_auto_analysis_bridge_test.sh");
-            File.WriteAllText(_scriptPath, "#!/usr/bin/env bash\nset -euo pipefail\n" + body);
+            File.WriteAllText(_scriptPath, "#!/usr/bin/env bash\nset -euo pipefail\n" + body, new UTF8Encoding(false));
             Environment.SetEnvironmentVariable(ScriptOverrideEnvironmentVariable, _scriptPath);
         }
 

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Holmas.EditorTools;
 using UnityEditor;
 using UnityEditor.Build;
@@ -116,6 +117,7 @@ namespace Holmas.Editor.Build
         private const string OfflineDefine = "HOLMAS_YOO_OFFLINE_PLAYMODE";
         private const string FullFlowYooBuildRoot = "Library/HolmasAndroidBuild/FullFlow/YooBuild";
         private const string FirstPackageYooBuildRoot = "Library/HolmasAndroidBuild/FirstPackage/YooBuild";
+        private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
         [MenuItem("Holmas/Build/Build Android Full Flow Offline Debug-Signed APK")]
         public static void BuildFullFlowMenu()
@@ -372,13 +374,13 @@ namespace Holmas.Editor.Build
         {
             string path = GetSingleResultPath(result.Mode);
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "Library");
-            File.WriteAllText(path, JsonUtility.ToJson(result, true));
+            File.WriteAllText(path, JsonUtility.ToJson(result, true), Utf8NoBom);
         }
 
         private static void WriteBatchResult(HolmasAndroidBuildBatchResult result)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(BatchResultPath) ?? "Library");
-            File.WriteAllText(BatchResultPath, JsonUtility.ToJson(result, true));
+            File.WriteAllText(BatchResultPath, JsonUtility.ToJson(result, true), Utf8NoBom);
         }
 
         private static string GetSingleResultPath(string mode)

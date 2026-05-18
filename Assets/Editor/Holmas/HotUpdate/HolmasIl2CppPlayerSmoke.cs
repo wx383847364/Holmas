@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -12,6 +13,7 @@ public static class HolmasIl2CppPlayerSmoke
     private const string RequestPath = "Library/holmas_il2cpp_player_smoke_request.json";
     private const string ResultPath = "Library/holmas_il2cpp_player_smoke_result.json";
     private const string OfflineDefine = "HOLMAS_YOO_OFFLINE_PLAYMODE";
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
     [MenuItem("Holmas/Validation/Build IL2CPP Player Smoke")]
     public static void RunRequestedSmoke()
@@ -108,7 +110,7 @@ public static class HolmasIl2CppPlayerSmoke
     private static void WriteResult(SmokeResult result)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(ResultPath) ?? "Library");
-        File.WriteAllText(ResultPath, JsonUtility.ToJson(result, true));
+        File.WriteAllText(ResultPath, JsonUtility.ToJson(result, true), Utf8NoBom);
     }
 
     private static BuildTarget ParseBuildTarget(string buildTargetName)

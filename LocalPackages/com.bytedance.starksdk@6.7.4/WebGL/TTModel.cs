@@ -1,4 +1,4 @@
-﻿namespace TTSDK
+namespace TTSDK
 {
     public class TTBaseResponse
     {
