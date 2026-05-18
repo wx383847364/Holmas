@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Scenes/BootstrapScene.scene
     guid: 813c813c831842e9bd6dc507dee6127f
   m_BuildProfiles:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Settings/Build Profiles/WeChat Profile.asset
     guid: d42d1033bf5144e69b03f523e125eae3
   m_configObjects: {}
