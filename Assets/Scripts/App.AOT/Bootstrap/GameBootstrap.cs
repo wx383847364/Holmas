@@ -143,6 +143,7 @@ namespace App.AOT.Bootstrap
         private void OnDestroy()
         {
             FlushPlayerArchive("OnDestroy");
+            FlushLogger();
             _hybridClrLoader?.Shutdown();
             _yooAssets?.Shutdown();
             _netClient?.Shutdown();
@@ -156,12 +157,19 @@ namespace App.AOT.Bootstrap
             if (pauseStatus)
             {
                 FlushPlayerArchive("OnApplicationPause");
+                FlushLogger();
             }
         }
 
         private void OnApplicationQuit()
         {
             FlushPlayerArchive("OnApplicationQuit");
+            FlushLogger();
+        }
+
+        private void FlushLogger()
+        {
+            _logger?.Flush();
         }
 
         private void FlushPlayerArchive(string trigger)
