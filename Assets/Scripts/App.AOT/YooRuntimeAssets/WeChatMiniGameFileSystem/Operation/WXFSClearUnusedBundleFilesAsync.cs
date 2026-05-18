@@ -1,4 +1,4 @@
-﻿#if UNITY_WEBGL && (WEIXINMINIGAME || MINIGAME_SUBPLATFORM_WEIXIN)
+#if UNITY_WEBGL && (WEIXINMINIGAME || MINIGAME_SUBPLATFORM_WEIXIN)
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;

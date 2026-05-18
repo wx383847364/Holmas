@@ -29,6 +29,7 @@ namespace Holmas.EditorTools
         private const string CorePreviewName = "holmas_core_config.json";
         private const string CatPreviewName = "holmas_cat_meta.json";
         private const string ReportName = "holmas_export_report.json";
+        private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
         [MenuItem("Holmas/配置/备用：Editor内Xlsx导出二进制")]
         public static void ExportFromMenu()
@@ -131,11 +132,11 @@ namespace Holmas.EditorTools
             File.WriteAllText(
                 CombineProjectPath(jsonRoot, CorePreviewName),
                 HolmasConfigBinaryCodec.ToCoreJson(corePackage, prettyPrint: true),
-                new UTF8Encoding(true));
+                Utf8NoBom);
             File.WriteAllText(
                 CombineProjectPath(jsonRoot, CatPreviewName),
                 HolmasConfigBinaryCodec.ToCatMetaJson(catPackage, prettyPrint: true),
-                new UTF8Encoding(true));
+                Utf8NoBom);
 
             bool hasFatalErrors = report.Errors.Count > 0;
             if (!hasFatalErrors)
@@ -1906,7 +1907,7 @@ namespace Holmas.EditorTools
         {
             EnsureDirectory(Path.GetDirectoryName(path));
             string json = JsonUtility.ToJson(value, true);
-            File.WriteAllText(path, json, new UTF8Encoding(false));
+            File.WriteAllText(path, json, Utf8NoBom);
         }
 
         private static string CombineProjectPath(string first, string second)

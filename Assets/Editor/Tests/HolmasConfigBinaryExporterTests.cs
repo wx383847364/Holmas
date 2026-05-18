@@ -27,11 +27,18 @@ namespace Holmas.EditorTests
 
                 string corePath = Path.Combine(fixture.BinaryRoot, "holmas_core_config.bytes");
                 string catPath = Path.Combine(fixture.BinaryRoot, "holmas_cat_meta.bytes");
+                string coreJsonPath = Path.Combine(fixture.JsonRoot, "holmas_core_config.json");
+                string catJsonPath = Path.Combine(fixture.JsonRoot, "holmas_cat_meta.json");
                 string reportPath = Path.Combine(fixture.JsonRoot, "holmas_export_report.json");
 
                 Assert.That(File.Exists(corePath), Is.True, corePath);
                 Assert.That(File.Exists(catPath), Is.True, catPath);
+                Assert.That(File.Exists(coreJsonPath), Is.True, coreJsonPath);
+                Assert.That(File.Exists(catJsonPath), Is.True, catJsonPath);
                 Assert.That(File.Exists(reportPath), Is.True, reportPath);
+                AssertFileDoesNotStartWithUtf8Bom(coreJsonPath);
+                AssertFileDoesNotStartWithUtf8Bom(catJsonPath);
+                AssertFileDoesNotStartWithUtf8Bom(reportPath);
 
                 bool success = HolmasConfigCatalogFactory.TryCreateFromBinary(
                     File.ReadAllBytes(corePath),
@@ -51,12 +58,22 @@ namespace Holmas.EditorTests
                 Assert.That(HolmasConfigBinaryCodec.TryReadCorePackage(File.ReadAllBytes(corePath), out HolmasCoreConfigPackage corePackage, out string coreReadError), Is.True, coreReadError);
                 Assert.That(corePackage.Holmas_MapTable[0].extraFields.Any(field => field.key == "designerNote" && field.value.Contains("不校验")), Is.True);
                 Assert.That(corePackage.Holmas_GenericTables.Any(table => table.tableName == "Holmas_CustomTable"), Is.True);
-                string coreJson = File.ReadAllText(Path.Combine(fixture.JsonRoot, "holmas_core_config.json"));
+                string coreJson = File.ReadAllText(coreJsonPath);
                 Assert.That(coreJson.Contains("\"MetaLevels\""), Is.False);
                 Assert.That(coreJson.Contains("\"AgencyBuildings\""), Is.False);
                 Assert.That(coreJson.Contains("\"Holmas_AgencyBuildingTable\""), Is.True);
                 Assert.That(coreJson.Contains("\"Holmas_LeaderboardTable\""), Is.True);
             }
+        }
+
+        private static void AssertFileDoesNotStartWithUtf8Bom(string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            bool hasUtf8Bom = bytes.Length >= 3
+                && bytes[0] == 0xEF
+                && bytes[1] == 0xBB
+                && bytes[2] == 0xBF;
+            Assert.That(hasUtf8Bom, Is.False, path + " must be UTF-8 without BOM.");
         }
 
         [Test]
