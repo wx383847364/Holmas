@@ -1123,8 +1123,8 @@ MonoBehaviour:
           assetLoadType: 1
           compressDataPackage: 0
           VideoUrl: 
-          relativeDST: /Users/bruce/work/Holmas/Client/Builds/WeixinMiniGame/Preview
-          DST: /Users/bruce/work/Holmas/Client/Builds/WeixinMiniGame/Preview
+          relativeDST: /Users/bruce/work/Holmas/Builds/WeixinMiniGame/Preview
+          DST: /Users/bruce/work/Holmas/Builds/WeixinMiniGame/Preview
           StreamCDN: 
           bundleHashLength: 32
           bundlePathIdentifier: StreamingAssets;
