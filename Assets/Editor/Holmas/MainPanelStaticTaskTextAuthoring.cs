@@ -20,7 +20,12 @@ namespace Holmas.Editor
 
             try
             {
-                UiReferenceCollector collector = root.GetComponent<UiReferenceCollector>() ?? root.AddComponent<UiReferenceCollector>();
+                UiReferenceCollector collector = root.GetComponent<UiReferenceCollector>();
+                if (collector == null)
+                {
+                    throw new System.InvalidOperationException("MainPanel prefab 必须静态挂载 UiReferenceCollector。");
+                }
+
                 for (int i = 0; i < MainBindings.TaskSlotCount; i++)
                 {
                     string slotPath = $"BackgroundImage/TaskGroup/Task{i + 1}";

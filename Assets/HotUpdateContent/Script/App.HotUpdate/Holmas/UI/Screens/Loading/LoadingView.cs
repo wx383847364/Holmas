@@ -43,7 +43,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
             UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>();
             if (collector == null)
             {
-                collector = gameObject.AddComponent<UiReferenceCollector>();
+                throw new System.InvalidOperationException("LoadingPanel prefab 必须静态挂载 UiReferenceCollector。");
             }
 
             RectTransform rootRect = gameObject.GetComponent<RectTransform>();

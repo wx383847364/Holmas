@@ -32,7 +32,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
         public void EnsureBindingSurface()
         {
             gameObject.name = LeaderboardBindings.RootNodePath;
-            UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>() ?? gameObject.AddComponent<UiReferenceCollector>();
+            UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>();
+            if (collector == null)
+            {
+                throw new InvalidOperationException("LeadbroadPanel prefab 必须静态挂载 UiReferenceCollector。");
+            }
+
             RectTransform root = gameObject.GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
             Stretch(root);
 

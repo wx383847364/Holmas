@@ -21,7 +21,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
             UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>();
             if (collector == null)
             {
-                collector = gameObject.AddComponent<UiReferenceCollector>();
+                throw new InvalidOperationException("AgencyMainPanel prefab 必须静态挂载 UiReferenceCollector。");
             }
 
             RectTransform rootRect = gameObject.GetComponent<RectTransform>();

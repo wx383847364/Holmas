@@ -33,7 +33,7 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
             UiReferenceCollector collector = gameObject.GetComponent<UiReferenceCollector>();
             if (collector == null)
             {
-                collector = gameObject.AddComponent<UiReferenceCollector>();
+                throw new InvalidOperationException("BattlePanel prefab 必须静态挂载 UiReferenceCollector。");
             }
 
             collector.Clear();

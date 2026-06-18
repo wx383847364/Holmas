@@ -3,8 +3,8 @@
 ## 完成情况
 
 - 当前状态：已完成
-- 进度说明：Holmas UI binding 第二阶段已完成 prefab 序列化层迁移。正式 UI prefab 已从旧 Holmas `UiReferenceCollector` 迁移到 `WX.Foundation.UI.Binding.UiReferenceCollector`，旧 Holmas binding adapter 已删除。
-- 最近更新：2026-06-18 完成第二阶段迁移提交 `[26000010] UI：迁移 prefab 绑定到 Foundation collector`，并补充本文档作为后续工作入口。
+- 进度说明：Foundation UI binding prefab 第二阶段已完成；本轮补充静态 collector 强校验和下一阶段 UI flow/Foundation 边界评估。
+- 最近更新：2026-06-18，Foundation UI binding prefab 第二阶段已完成；本轮补充静态 collector 强校验和下一阶段 UI flow/Foundation 边界评估。
 
 ## 目标
 
@@ -112,6 +112,16 @@
 
 当前用途是 Holmas 第二阶段迁移专用工具，不是通用 Foundation 发布工具。
 
+### 6. 静态 collector 强校验
+
+正式 UI prefab 的 binding surface 进入强约束：
+
+- Main / Battle / Loading / Leaderboard / AgencyMain View 的 editor authoring 入口遇到缺失 `UiReferenceCollector` 时直接报错。
+- `MainPanelStaticTaskTextAuthoring` 刷新静态任务文本时要求 MainPanel 已有静态 collector。
+- `AgencyMainFormalPrefabAuthoring` 保留新建正式 prefab 时显式创建 collector 的能力，因为这是 prefab 构建步骤，不是运行时或刷新兜底。
+
+运行时页面 Controller 已继续通过完整 binding 校验保护正式 UI，缺 collector、entry target 丢失或 manifest 不匹配都会在页面绑定阶段暴露。
+
 ## 当前验收口径
 
 后续接手时先检查：
@@ -155,10 +165,43 @@ tools/validation/run_holmas_playmode_probe.sh
 
 1. 在 GitHub ruleset 中保留本地 hook 为主、CI check 为提示的策略，避免直接 push main 时被 PR 流程打断。
 2. 继续观察 `tools/migrate_ui_binding_collectors.py` 是否还需要保留。若迁移完成后长期不再需要，可在后续清理批次删除。
-3. 审查 Main / Battle / Loading / Leaderboard / AgencyMain View 中 `GetComponent<UiReferenceCollector>() ?? AddComponent<UiReferenceCollector>()` 的兜底逻辑：
-   - 如果仍需要支持测试或临时运行时创建的 View，可以保留。
-   - 如果决定强制所有正式 UI 都必须 prefab 静态挂载 collector，可以把兜底改成明确报错。
-4. 后续若要继续抽公共 UI 能力，应另开阶段评估 `UiRoot`、`UiScreenService`、screen flow 是否适合进入 Foundation。不要把这件事混入 binding prefab 迁移。
+3. 后续若要继续抽公共 UI 能力，应另开阶段评估 `UiRoot`、`UiScreenService`、screen flow 是否适合进入 Foundation。不要把这件事混入 binding prefab 迁移。
+
+## 下一阶段 UI flow / Foundation 边界评估
+
+评估结论：下一阶段可以开始，但不建议直接把 Holmas 的 `UiRoot`、`UiScreenService` 和 screen flow 整体搬入 Foundation。更稳妥的方向是先抽通用契约和适配边界，再让 Holmas 按阶段替换内部实现。
+
+### 建议进入 Foundation 的部分
+
+- `UiScreenKind`、`UiCachePolicy`、`UiNavigationState` 这类纯 UI 导航状态和枚举。
+- `UiScreenDefinition` 的通用字段：screen id、prefab location、kind、cache policy、sheet group、transition input lock、click outside close。
+- `IUiPrefabLoader` / loaded prefab handle 的通用加载契约。
+- `UiScreenService` 的通用能力：注册 definition、按 kind 打开/关闭、缓存策略、导航状态更新、layer resolver。
+
+这些部分与 Holmas 业务上下文关系较弱，Foundation 仓也已经存在同名或相近实现，适合做 API 对齐和增量增强。
+
+### 暂时留在 Holmas 的部分
+
+- `UiRoot` 的项目级 Canvas 参数、安全区结构、字体预加载、GM 手势、popup backdrop 视觉和 input blocker 具体层级。
+- `HolmasFlowCoordinator`、启动默认页流程、Loading 到 Main 的业务切换。
+- Page / Popup / Overlay Controller 的具体业务行为，例如 Main 打开 Battle / Leaderboard、Tutorial、GM 工具。
+- YooAssets、HybridCLR、Archive、Config、Leaderboard 业务、玩法、棋盘、找猫、新手引导。
+
+这些逻辑要么依赖 `HolmasApplicationContext` 和项目服务，要么直接承载游戏流程，不适合作为 Foundation 通用 API 的第一批迁移对象。
+
+### 推荐阶段拆分
+
+1. Foundation screen contract 对齐：比较 Holmas `UiScreenDefinition` / `UiScreenKind` / `UiCachePolicy` / `UiNavigationState` 与 `WX.Foundation.UI.Screens` 现有 API，补齐 Holmas 需要但通用的字段，保持向后兼容。
+2. Holmas adapter 层试接：在 Holmas 内用小适配层消费 Foundation screen contract，但暂不替换 `UiRoot` 的业务搭建、字体、安全区和启动流程。
+3. Service 行为对齐：把 Holmas `UiScreenService` 的 payload、controller attach、input lock、popup backdrop、overlay 单例语义逐项拆分，能通用的进入 Foundation，业务回调留在 Holmas。
+4. 最后再评估 `UiRoot`：只有当 layer resolver、安全区、input blocker、popup backdrop 都形成通用扩展点后，才考虑 Foundation 化 root builder。
+
+### 下一阶段验收口径
+
+- Holmas 仍能复跑 `check_boundary.sh`、`run_holmas_validation.sh`、`run_holmas_playmode_probe.sh`。
+- Foundation API 不要求 Holmas 引入 YokiFrame，不要求迁移 YooAssets / HybridCLR / Archive / Config / 玩法逻辑。
+- UI screen flow 迁移必须能逐项回滚，不和 prefab collector、binding entry、视觉 prefab 修改混在一起。
+- 若 Foundation 需要新增 API，应先在 ScrollworksFoundationKit 单独提交和验证，再在 Holmas 通过 package 版本或明确引用接入。
 
 ## 风险与注意事项
 
@@ -167,4 +210,3 @@ tools/validation/run_holmas_playmode_probe.sh
 - 不要在 View / Controller 中新增运行时节点查找来绕过 binding 缺失。
 - 如果 prefab 上出现 Missing Script，优先检查 Foundation package 是否正确解析到 `com.wx.foundation.ui#v0.1.5` 或后续明确版本。
 - 如果 GitHub ruleset 后续开启 PR required check，Codex 工作流需要改为分支 + PR，不再直接 push main。
-
