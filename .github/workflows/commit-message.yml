@@ -1,0 +1,56 @@
+name: Commit Message
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Validate commit titles
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit title format
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            before="${{ github.event.before }}"
+            after="${{ github.sha }}"
+            if [[ -z "${before}" || "${before}" =~ ^0+$ ]]; then
+              range="${after}"
+            else
+              range="${before}..${after}"
+            fi
+          fi
+
+          mapfile -t commits < <(git rev-list --no-merges "${range}")
+          if [[ "${#commits[@]}" -eq 0 ]]; then
+            echo "No non-merge commits to validate."
+            exit 0
+          fi
+
+          failed=0
+          for commit in "${commits[@]}"; do
+            subject="$(git log -1 --format=%s "${commit}")"
+            if [[ ! "${subject}" =~ ^\[[0-9]{8}\][[:space:]]+.+ ]]; then
+              echo "::error title=Invalid commit title::${commit} subject must start with [TMMSSSSS], got: ${subject}"
+              failed=1
+            else
+              echo "ok ${commit} ${subject}"
+            fi
+          done
+
+          exit "${failed}"
