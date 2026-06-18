@@ -1,5 +1,5 @@
 using System;
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using App.HotUpdate.Holmas.UI.Core;
 using UnityEngine;
 using UnityEngine.Events;

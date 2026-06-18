@@ -698,7 +698,7 @@ GameObject:
   - component: {fileID: 8584795531390759980}
   - component: {fileID: 1712836986683467231}
   - component: {fileID: 3653213112959193004}
-  - component: {fileID: 3146188445761247618}
+  - component: {fileID: 549705167626708206}
   m_Layer: 0
   m_HasEditorInfo: 1
   m_Name: AgencyMainPanel
@@ -777,7 +777,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c852299934745cc84be2dba1c49064c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &3146188445761247618
+--- !u!114 &549705167626708206
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -786,42 +786,63 @@ MonoBehaviour:
   m_GameObject: {fileID: 5414045252422259124}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1693f6cae3cf4a04a1db136bfe640668, type: 3}
+  m_Script: {fileID: 11500000, guid: 0248dd89852e42a3a8995da77973a8ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _entries:
-  - _bindingKey: agency_main/root_panel
-    _componentType: RectTransform
-    _nodePath: AgencyMainPanel
-    _eventName: 
-    _target: {fileID: 1235804057591173934}
-  - _bindingKey: agency_main/title_text
-    _componentType: Text
-    _nodePath: AgencyMainPanel/SafeAreaContent/TitleText
-    _eventName: 
-    _target: {fileID: 1168131836761296805}
-  - _bindingKey: agency_main/summary_text
-    _componentType: Text
-    _nodePath: AgencyMainPanel/SafeAreaContent/SummaryText
-    _eventName: 
-    _target: {fileID: 6990504914037212289}
-  - _bindingKey: agency_main/task_summary_text
-    _componentType: Text
-    _nodePath: AgencyMainPanel/SafeAreaContent/TaskSummaryText
-    _eventName: 
-    _target: {fileID: 8820512019723162250}
-  - _bindingKey: agency_main/board_summary_text
-    _componentType: Text
-    _nodePath: AgencyMainPanel/SafeAreaContent/BoardSummaryText
-    _eventName: 
-    _target: {fileID: 6952051696990977326}
-  - _bindingKey: agency_main/status_text
-    _componentType: Text
-    _nodePath: AgencyMainPanel/SafeAreaContent/StatusText
-    _eventName: 
-    _target: {fileID: 239771663551378537}
-  - _bindingKey: agency_main/primary_action_button
-    _componentType: Button
-    _nodePath: AgencyMainPanel/SafeAreaContent/PrimaryActionButton
-    _eventName: on_click
-    _target: {fileID: 6780400928426796247}
+  - Id: agency_main/root_panel
+    Path: AgencyMainPanel
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1235804057591173934}
+  - Id: agency_main/title_text
+    Path: AgencyMainPanel/SafeAreaContent/TitleText
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1168131836761296805}
+  - Id: agency_main/summary_text
+    Path: AgencyMainPanel/SafeAreaContent/SummaryText
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6990504914037212289}
+  - Id: agency_main/task_summary_text
+    Path: AgencyMainPanel/SafeAreaContent/TaskSummaryText
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8820512019723162250}
+  - Id: agency_main/board_summary_text
+    Path: AgencyMainPanel/SafeAreaContent/BoardSummaryText
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6952051696990977326}
+  - Id: agency_main/status_text
+    Path: AgencyMainPanel/SafeAreaContent/StatusText
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 239771663551378537}
+  - Id: agency_main/primary_action_button
+    Path: AgencyMainPanel/SafeAreaContent/PrimaryActionButton
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6780400928426796247}

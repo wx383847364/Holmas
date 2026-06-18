@@ -2173,7 +2173,7 @@ GameObject:
   - component: {fileID: 5892310169085199376}
   - component: {fileID: 7023740548103946561}
   - component: {fileID: 5800828321745764059}
-  - component: {fileID: 474686534038400034}
+  - component: {fileID: 895159939987755930}
   - component: {fileID: 8862584401587733563}
   m_Layer: 5
   m_HasEditorInfo: 1
@@ -2242,7 +2242,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &474686534038400034
+--- !u!114 &895159939987755930
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2251,350 +2251,546 @@ MonoBehaviour:
   m_GameObject: {fileID: 2015240906802198975}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1693f6cae3cf4a04a1db136bfe640668, type: 3}
+  m_Script: {fileID: 11500000, guid: 0248dd89852e42a3a8995da77973a8ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _entries:
-  - _bindingKey: main/task1_title_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1/TaskTitle
-    _eventName: 
-    _target: {fileID: 2794607749348076170}
-  - _bindingKey: main/task1_reward_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1/TaskReward
-    _eventName: 
-    _target: {fileID: 1556986763425410778}
-  - _bindingKey: main/task2_title_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2/TaskTitle
-    _eventName: 
-    _target: {fileID: 8841209114854531227}
-  - _bindingKey: main/task2_reward_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2/TaskReward
-    _eventName: 
-    _target: {fileID: 6623574583840088397}
-  - _bindingKey: main/task3_title_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3/TaskTitle
-    _eventName: 
-    _target: {fileID: 8479092475534305423}
-  - _bindingKey: main/task3_reward_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3/TaskReward
-    _eventName: 
-    _target: {fileID: 877590290759933799}
-  - _bindingKey: main/task4_title_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4/TaskTitle
-    _eventName: 
-    _target: {fileID: 3775729211653845579}
-  - _bindingKey: main/task4_reward_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4/TaskReward
-    _eventName: 
-    _target: {fileID: 273369757591151325}
-  - _bindingKey: main/task5_title_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5/TaskTitle
-    _eventName: 
-    _target: {fileID: 5952026104790008611}
-  - _bindingKey: main/task5_reward_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5/TaskReward
-    _eventName: 
-    _target: {fileID: 9087342581104371972}
-  - _bindingKey: main/root_panel
-    _componentType: RectTransform
-    _nodePath: MainPanel
-    _eventName: 
-    _target: {fileID: 5892310169085199376}
-  - _bindingKey: main/level_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/Headicon_btn/Level
-    _eventName: 
-    _target: {fileID: 4940119868062800164}
-  - _bindingKey: main/gold_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/Money_btn/Text (TMP)
-    _eventName: 
-    _target: {fileID: 5924795759056079232}
-  - _bindingKey: main/energy_text
-    _componentType: TextMeshProUGUI
-    _nodePath: MainPanel/BackgroundImage/Energy_btn/Text (TMP)
-    _eventName: 
-    _target: {fileID: 159703149210063652}
-  - _bindingKey: main/promotion_button
-    _componentType: Button
-    _nodePath: MainPanel/BackgroundImage/Publicity_btn
-    _eventName: on_click
-    _target: {fileID: 3235215285312102941}
-  - _bindingKey: main/help_button
-    _componentType: Button
-    _nodePath: MainPanel/RuntimeOverlay/TopTools/HelpButton
-    _eventName: on_click
-    _target: {fileID: 1402885563956665509}
-  - _bindingKey: main/gm_button
-    _componentType: Button
-    _nodePath: MainPanel/RuntimeOverlay/TopTools/GmButton
-    _eventName: on_click
-    _target: {fileID: 1727209473561042237}
-  - _bindingKey: main/leaderboard_button
-    _componentType: Button
-    _nodePath: MainPanel/BackgroundImage/Leaderboard_btn
-    _eventName: on_click
-    _target: {fileID: 8440272005138326215}
-  - _bindingKey: main/mines_bg_image
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/MinesBg
-    _eventName: 
-    _target: {fileID: 3139974359793281651}
-  - _bindingKey: main/mines_bg_mask
-    _componentType: RectMask2D
-    _nodePath: MainPanel/BackgroundImage/MinesBg
-    _eventName: 
-    _target: {fileID: 9048995546883177247}
-  - _bindingKey: main/mines_bg_frame_overlay_image
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/MinesBg/MinesBgFrameOverlayImage
-    _eventName: 
-    _target: {fileID: 912345670100000004}
-  - _bindingKey: main/board_content_rect
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/MinesBg/BoardContentRect
-    _eventName: 
-    _target: {fileID: 912345670200000002}
-  - _bindingKey: main/mines_group
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/MinesBg/MinesGroup
-    _eventName: 
-    _target: {fileID: 6432375257274667809}
-  - _bindingKey: main/board_container
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/MinesBg/MinesGroup/BoardContainer
-    _eventName: 
-    _target: {fileID: 8784239596971523803}
-  - _bindingKey: main/tutorial_board_container
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/MinesBg/MinesGroup/TutorialBoardContainer
-    _eventName: 
-    _target: {fileID: 4818349778868673560}
-  - _bindingKey: main/walk_toggle
-    _componentType: Toggle
-    _nodePath: MainPanel/WalkToggle
-    _eventName: on_value_changed
-    _target: {fileID: 2424955137249223476}
-  - _bindingKey: main/find_toggle
-    _componentType: Toggle
-    _nodePath: MainPanel/FindToggle
-    _eventName: on_value_changed
-    _target: {fileID: 552331962726054534}
-  - _bindingKey: main/task1_root
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1
-    _eventName: 
-    _target: {fileID: 9114446736510930471}
-  - _bindingKey: main/task1_button
-    _componentType: Button
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1
-    _eventName: on_click
-    _target: {fileID: 8897168564642574526}
-  - _bindingKey: main/task1_background_image
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1
-    _eventName: 
-    _target: {fileID: 1321321093721436179}
-  - _bindingKey: main/task1_progress_text
-    _componentType: Text
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1/Image/Count
-    _eventName: 
-    _target: {fileID: 8575768898660781959}
-  - _bindingKey: main/task1_progress_slider
-    _componentType: Slider
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1/Image/Slider
-    _eventName: 
-    _target: {fileID: 357561458961396206}
-  - _bindingKey: main/task1_reward_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1/RewardIcon
-    _eventName: 
-    _target: {fileID: 2514230772843859039}
-  - _bindingKey: main/task1_cat_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1/CatIcon
-    _eventName: 
-    _target: {fileID: 4183717795724332877}
-  - _bindingKey: main/task1_lock
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1/lock
-    _eventName: 
-    _target: {fileID: 8011552428380041652}
-  - _bindingKey: main/task2_root
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2
-    _eventName: 
-    _target: {fileID: 7893615007157999899}
-  - _bindingKey: main/task2_button
-    _componentType: Button
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2
-    _eventName: on_click
-    _target: {fileID: 1293544853292247529}
-  - _bindingKey: main/task2_background_image
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2
-    _eventName: 
-    _target: {fileID: 7322466277263654241}
-  - _bindingKey: main/task2_progress_text
-    _componentType: Text
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2/Image/Count
-    _eventName: 
-    _target: {fileID: 3290538599316213161}
-  - _bindingKey: main/task2_progress_slider
-    _componentType: Slider
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2/Image/Slider
-    _eventName: 
-    _target: {fileID: 5942249306296807260}
-  - _bindingKey: main/task2_reward_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2/RewardIcon
-    _eventName: 
-    _target: {fileID: 8053372359526249375}
-  - _bindingKey: main/task2_cat_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2/CatIcon
-    _eventName: 
-    _target: {fileID: 5514789102041754497}
-  - _bindingKey: main/task2_lock
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task2/lock
-    _eventName: 
-    _target: {fileID: 3253919064630504983}
-  - _bindingKey: main/task3_root
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3
-    _eventName: 
-    _target: {fileID: 1876514022305295500}
-  - _bindingKey: main/task3_button
-    _componentType: Button
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3
-    _eventName: on_click
-    _target: {fileID: 8823531597802351565}
-  - _bindingKey: main/task3_background_image
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3
-    _eventName: 
-    _target: {fileID: 8877967058326228070}
-  - _bindingKey: main/task3_progress_text
-    _componentType: Text
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3/Image/Count
-    _eventName: 
-    _target: {fileID: 7745407515773220570}
-  - _bindingKey: main/task3_progress_slider
-    _componentType: Slider
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3/Image/Slider
-    _eventName: 
-    _target: {fileID: 3560027492290922722}
-  - _bindingKey: main/task3_reward_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3/RewardIcon
-    _eventName: 
-    _target: {fileID: 3236836448103267441}
-  - _bindingKey: main/task3_cat_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3/CatIcon
-    _eventName: 
-    _target: {fileID: 1919178406072610486}
-  - _bindingKey: main/task3_lock
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task3/lock
-    _eventName: 
-    _target: {fileID: 2502474046145604144}
-  - _bindingKey: main/task4_root
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4
-    _eventName: 
-    _target: {fileID: 1504798933791275853}
-  - _bindingKey: main/task4_button
-    _componentType: Button
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4
-    _eventName: on_click
-    _target: {fileID: 4237472782141356570}
-  - _bindingKey: main/task4_background_image
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4
-    _eventName: 
-    _target: {fileID: 4959296473658800026}
-  - _bindingKey: main/task4_progress_text
-    _componentType: Text
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4/Image/Count
-    _eventName: 
-    _target: {fileID: 1469343441500550947}
-  - _bindingKey: main/task4_progress_slider
-    _componentType: Slider
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4/Image/Slider
-    _eventName: 
-    _target: {fileID: 7635682508305456689}
-  - _bindingKey: main/task4_reward_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4/RewardIcon
-    _eventName: 
-    _target: {fileID: 798404663018555978}
-  - _bindingKey: main/task4_cat_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4/CatIcon
-    _eventName: 
-    _target: {fileID: 7147856071122223336}
-  - _bindingKey: main/task4_lock
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task4/lock
-    _eventName: 
-    _target: {fileID: 1888997191283619641}
-  - _bindingKey: main/task5_root
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5
-    _eventName: 
-    _target: {fileID: 2413703324753486801}
-  - _bindingKey: main/task5_button
-    _componentType: Button
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5
-    _eventName: on_click
-    _target: {fileID: 3828280863606776707}
-  - _bindingKey: main/task5_background_image
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5
-    _eventName: 
-    _target: {fileID: 7024491845374506760}
-  - _bindingKey: main/task5_progress_text
-    _componentType: Text
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5/Image/Count
-    _eventName: 
-    _target: {fileID: 1338113585357167327}
-  - _bindingKey: main/task5_progress_slider
-    _componentType: Slider
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5/Image/Slider
-    _eventName: 
-    _target: {fileID: 8156241042546833943}
-  - _bindingKey: main/task5_reward_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5/RewardIcon
-    _eventName: 
-    _target: {fileID: 456304541688297076}
-  - _bindingKey: main/task5_cat_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5/CatIcon
-    _eventName: 
-    _target: {fileID: 7669026357702212820}
-  - _bindingKey: main/task5_lock
-    _componentType: RectTransform
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task5/lock
-    _eventName: 
-    _target: {fileID: 3650606489901946549}
-  - _bindingKey: main/task1_reward_icon
-    _componentType: Image
-    _nodePath: MainPanel/BackgroundImage/TaskGroup/Task1/RewardIcon
-    _eventName: 
-    _target: {fileID: 2514230772843859039}
+  - Id: main/task1_title_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1/TaskTitle
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2794607749348076170}
+  - Id: main/task1_reward_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1/TaskReward
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1556986763425410778}
+  - Id: main/task2_title_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2/TaskTitle
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8841209114854531227}
+  - Id: main/task2_reward_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2/TaskReward
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6623574583840088397}
+  - Id: main/task3_title_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3/TaskTitle
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8479092475534305423}
+  - Id: main/task3_reward_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3/TaskReward
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 877590290759933799}
+  - Id: main/task4_title_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4/TaskTitle
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3775729211653845579}
+  - Id: main/task4_reward_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4/TaskReward
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 273369757591151325}
+  - Id: main/task5_title_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5/TaskTitle
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5952026104790008611}
+  - Id: main/task5_reward_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5/TaskReward
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 9087342581104371972}
+  - Id: main/root_panel
+    Path: MainPanel
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5892310169085199376}
+  - Id: main/level_text
+    Path: MainPanel/BackgroundImage/Headicon_btn/Level
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4940119868062800164}
+  - Id: main/gold_text
+    Path: MainPanel/BackgroundImage/Money_btn/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5924795759056079232}
+  - Id: main/energy_text
+    Path: MainPanel/BackgroundImage/Energy_btn/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 159703149210063652}
+  - Id: main/promotion_button
+    Path: MainPanel/BackgroundImage/Publicity_btn
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3235215285312102941}
+  - Id: main/help_button
+    Path: MainPanel/RuntimeOverlay/TopTools/HelpButton
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1402885563956665509}
+  - Id: main/gm_button
+    Path: MainPanel/RuntimeOverlay/TopTools/GmButton
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1727209473561042237}
+  - Id: main/leaderboard_button
+    Path: MainPanel/BackgroundImage/Leaderboard_btn
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8440272005138326215}
+  - Id: main/mines_bg_image
+    Path: MainPanel/BackgroundImage/MinesBg
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3139974359793281651}
+  - Id: main/mines_bg_mask
+    Path: MainPanel/BackgroundImage/MinesBg
+    ComponentType: RectMask2D
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 9048995546883177247}
+  - Id: main/mines_bg_frame_overlay_image
+    Path: MainPanel/BackgroundImage/MinesBg/MinesBgFrameOverlayImage
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 912345670100000004}
+  - Id: main/board_content_rect
+    Path: MainPanel/BackgroundImage/MinesBg/BoardContentRect
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 912345670200000002}
+  - Id: main/mines_group
+    Path: MainPanel/BackgroundImage/MinesBg/MinesGroup
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6432375257274667809}
+  - Id: main/board_container
+    Path: MainPanel/BackgroundImage/MinesBg/MinesGroup/BoardContainer
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8784239596971523803}
+  - Id: main/tutorial_board_container
+    Path: MainPanel/BackgroundImage/MinesBg/MinesGroup/TutorialBoardContainer
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4818349778868673560}
+  - Id: main/walk_toggle
+    Path: MainPanel/WalkToggle
+    ComponentType: Toggle
+    EventName: on_value_changed
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2424955137249223476}
+  - Id: main/find_toggle
+    Path: MainPanel/FindToggle
+    ComponentType: Toggle
+    EventName: on_value_changed
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 552331962726054534}
+  - Id: main/task1_root
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 9114446736510930471}
+  - Id: main/task1_button
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8897168564642574526}
+  - Id: main/task1_background_image
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1321321093721436179}
+  - Id: main/task1_progress_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1/Image/Count
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8575768898660781959}
+  - Id: main/task1_progress_slider
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1/Image/Slider
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 357561458961396206}
+  - Id: main/task1_reward_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1/RewardIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2514230772843859039}
+  - Id: main/task1_cat_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1/CatIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4183717795724332877}
+  - Id: main/task1_lock
+    Path: MainPanel/BackgroundImage/TaskGroup/Task1/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8011552428380041652}
+  - Id: main/task2_root
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7893615007157999899}
+  - Id: main/task2_button
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1293544853292247529}
+  - Id: main/task2_background_image
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7322466277263654241}
+  - Id: main/task2_progress_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2/Image/Count
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3290538599316213161}
+  - Id: main/task2_progress_slider
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2/Image/Slider
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5942249306296807260}
+  - Id: main/task2_reward_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2/RewardIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8053372359526249375}
+  - Id: main/task2_cat_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2/CatIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5514789102041754497}
+  - Id: main/task2_lock
+    Path: MainPanel/BackgroundImage/TaskGroup/Task2/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3253919064630504983}
+  - Id: main/task3_root
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1876514022305295500}
+  - Id: main/task3_button
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8823531597802351565}
+  - Id: main/task3_background_image
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8877967058326228070}
+  - Id: main/task3_progress_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3/Image/Count
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7745407515773220570}
+  - Id: main/task3_progress_slider
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3/Image/Slider
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3560027492290922722}
+  - Id: main/task3_reward_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3/RewardIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3236836448103267441}
+  - Id: main/task3_cat_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3/CatIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1919178406072610486}
+  - Id: main/task3_lock
+    Path: MainPanel/BackgroundImage/TaskGroup/Task3/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2502474046145604144}
+  - Id: main/task4_root
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1504798933791275853}
+  - Id: main/task4_button
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4237472782141356570}
+  - Id: main/task4_background_image
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4959296473658800026}
+  - Id: main/task4_progress_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4/Image/Count
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1469343441500550947}
+  - Id: main/task4_progress_slider
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4/Image/Slider
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7635682508305456689}
+  - Id: main/task4_reward_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4/RewardIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 798404663018555978}
+  - Id: main/task4_cat_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4/CatIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7147856071122223336}
+  - Id: main/task4_lock
+    Path: MainPanel/BackgroundImage/TaskGroup/Task4/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1888997191283619641}
+  - Id: main/task5_root
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2413703324753486801}
+  - Id: main/task5_button
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3828280863606776707}
+  - Id: main/task5_background_image
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7024491845374506760}
+  - Id: main/task5_progress_text
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5/Image/Count
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1338113585357167327}
+  - Id: main/task5_progress_slider
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5/Image/Slider
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8156241042546833943}
+  - Id: main/task5_reward_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5/RewardIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 456304541688297076}
+  - Id: main/task5_cat_icon
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5/CatIcon
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7669026357702212820}
+  - Id: main/task5_lock
+    Path: MainPanel/BackgroundImage/TaskGroup/Task5/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3650606489901946549}
 --- !u!114 &8862584401587733563
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,4 +1,4 @@
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -48,13 +48,13 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 return false;
             }
 
-            return resolver.HasExplicitBinding<RectTransform>(RootPanelKey, nodePath: RootNodePath) &&
-                   resolver.HasExplicitBinding<Text>(TitleTextKey, nodePath: TitleTextNodePath) &&
-                   resolver.HasExplicitBinding<Text>(SummaryTextKey, nodePath: SummaryTextNodePath) &&
-                   resolver.HasExplicitBinding<Text>(TaskSummaryTextKey, nodePath: TaskSummaryTextNodePath) &&
-                   resolver.HasExplicitBinding<Text>(BoardSummaryTextKey, nodePath: BoardSummaryTextNodePath) &&
-                   resolver.HasExplicitBinding<Text>(StatusTextKey, nodePath: StatusTextNodePath) &&
-                   resolver.HasExplicitBinding<Button>(
+            return HasExplicitBinding<RectTransform>(resolver, RootPanelKey, nodePath: RootNodePath) &&
+                   HasExplicitBinding<Text>(resolver, TitleTextKey, nodePath: TitleTextNodePath) &&
+                   HasExplicitBinding<Text>(resolver, SummaryTextKey, nodePath: SummaryTextNodePath) &&
+                   HasExplicitBinding<Text>(resolver, TaskSummaryTextKey, nodePath: TaskSummaryTextNodePath) &&
+                   HasExplicitBinding<Text>(resolver, BoardSummaryTextKey, nodePath: BoardSummaryTextNodePath) &&
+                   HasExplicitBinding<Text>(resolver, StatusTextKey, nodePath: StatusTextNodePath) &&
+                   HasExplicitBinding<Button>(resolver,
                        PrimaryActionButtonKey,
                        PrimaryActionButtonClickEvent,
                        PrimaryActionButtonNodePath);
@@ -80,6 +80,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
                 PrimaryActionButtonClickEvent,
                 PrimaryActionButtonNodePath);
             return bindings;
+        }
+
+        private static bool HasExplicitBinding<T>(UiBindingResolver resolver, string bindingKey, string eventName = null, string nodePath = null)
+            where T : Component
+        {
+            return resolver.TryResolve<T>(bindingKey, out _, eventName, nodePath);
         }
     }
 }

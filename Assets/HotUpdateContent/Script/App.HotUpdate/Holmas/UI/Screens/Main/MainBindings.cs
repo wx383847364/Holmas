@@ -1,4 +1,4 @@
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -279,39 +279,39 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
                 return false;
             }
 
-            if (!resolver.HasExplicitBinding<RectTransform>(RootPanelKey, nodePath: RootNodePath) ||
-                !resolver.HasExplicitBinding<TextMeshProUGUI>(LevelTextKey, nodePath: LevelTextNodePath) ||
-                !resolver.HasExplicitBinding<TextMeshProUGUI>(GoldTextKey, nodePath: GoldTextNodePath) ||
-                !resolver.HasExplicitBinding<TextMeshProUGUI>(EnergyTextKey, nodePath: EnergyTextNodePath) ||
-                !resolver.HasExplicitBinding<Button>(PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath) ||
-                !resolver.HasExplicitBinding<Button>(HelpButtonKey, ButtonClickEvent, HelpButtonNodePath) ||
-                !resolver.HasExplicitBinding<Button>(GmButtonKey, ButtonClickEvent, GmButtonNodePath) ||
-                !resolver.HasExplicitBinding<Button>(LeaderboardButtonKey, ButtonClickEvent, LeaderboardButtonNodePath) ||
-                !resolver.HasExplicitBinding<Image>(MinesBgImageKey, nodePath: MinesBgNodePath) ||
-                !resolver.HasExplicitBinding<RectMask2D>(MinesBgMaskKey, nodePath: MinesBgNodePath) ||
-                !resolver.HasExplicitBinding<Image>(MinesBgFrameOverlayImageKey, nodePath: MinesBgFrameOverlayNodePath) ||
-                !resolver.HasExplicitBinding<RectTransform>(BoardContentRectKey, nodePath: BoardContentRectNodePath) ||
-                !resolver.HasExplicitBinding<RectTransform>(MinesGroupKey, nodePath: MinesGroupNodePath) ||
-                !resolver.HasExplicitBinding<RectTransform>(BoardContainerKey, nodePath: BoardContainerNodePath) ||
-                !resolver.HasExplicitBinding<RectTransform>(TutorialBoardContainerKey, nodePath: TutorialBoardContainerNodePath) ||
-                !resolver.HasExplicitBinding<Toggle>(WalkToggleKey, ToggleChangedEvent, WalkToggleNodePath) ||
-                !resolver.HasExplicitBinding<Toggle>(FindToggleKey, ToggleChangedEvent, FindToggleNodePath))
+            if (!HasExplicitBinding<RectTransform>(resolver, RootPanelKey, nodePath: RootNodePath) ||
+                !HasExplicitBinding<TextMeshProUGUI>(resolver, LevelTextKey, nodePath: LevelTextNodePath) ||
+                !HasExplicitBinding<TextMeshProUGUI>(resolver, GoldTextKey, nodePath: GoldTextNodePath) ||
+                !HasExplicitBinding<TextMeshProUGUI>(resolver, EnergyTextKey, nodePath: EnergyTextNodePath) ||
+                !HasExplicitBinding<Button>(resolver, PromotionButtonKey, ButtonClickEvent, PromotionButtonNodePath) ||
+                !HasExplicitBinding<Button>(resolver, HelpButtonKey, ButtonClickEvent, HelpButtonNodePath) ||
+                !HasExplicitBinding<Button>(resolver, GmButtonKey, ButtonClickEvent, GmButtonNodePath) ||
+                !HasExplicitBinding<Button>(resolver, LeaderboardButtonKey, ButtonClickEvent, LeaderboardButtonNodePath) ||
+                !HasExplicitBinding<Image>(resolver, MinesBgImageKey, nodePath: MinesBgNodePath) ||
+                !HasExplicitBinding<RectMask2D>(resolver, MinesBgMaskKey, nodePath: MinesBgNodePath) ||
+                !HasExplicitBinding<Image>(resolver, MinesBgFrameOverlayImageKey, nodePath: MinesBgFrameOverlayNodePath) ||
+                !HasExplicitBinding<RectTransform>(resolver, BoardContentRectKey, nodePath: BoardContentRectNodePath) ||
+                !HasExplicitBinding<RectTransform>(resolver, MinesGroupKey, nodePath: MinesGroupNodePath) ||
+                !HasExplicitBinding<RectTransform>(resolver, BoardContainerKey, nodePath: BoardContainerNodePath) ||
+                !HasExplicitBinding<RectTransform>(resolver, TutorialBoardContainerKey, nodePath: TutorialBoardContainerNodePath) ||
+                !HasExplicitBinding<Toggle>(resolver, WalkToggleKey, ToggleChangedEvent, WalkToggleNodePath) ||
+                !HasExplicitBinding<Toggle>(resolver, FindToggleKey, ToggleChangedEvent, FindToggleNodePath))
             {
                 return false;
             }
 
             for (int i = 0; i < TaskSlotCount; i++)
             {
-                if (!resolver.HasExplicitBinding<RectTransform>(TaskSlotRootKeys[i], nodePath: TaskSlotRootNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<Button>(TaskSlotButtonKeys[i], ButtonClickEvent, TaskSlotRootNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<Image>(TaskSlotBackgroundImageKeys[i], nodePath: TaskSlotRootNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<Text>(TaskProgressTextKeys[i], nodePath: TaskProgressTextNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<Slider>(TaskProgressSliderKeys[i], nodePath: TaskProgressSliderNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<Image>(TaskRewardIconKeys[i], nodePath: TaskRewardIconNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<Image>(TaskCatIconKeys[i], nodePath: TaskCatIconNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<RectTransform>(TaskLockKeys[i], nodePath: TaskLockNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<TextMeshProUGUI>(TaskTitleTextKeys[i], nodePath: TaskTitleTextNodePaths[i]) ||
-                    !resolver.HasExplicitBinding<TextMeshProUGUI>(TaskRewardTextKeys[i], nodePath: TaskRewardTextNodePaths[i]))
+                if (!HasExplicitBinding<RectTransform>(resolver, TaskSlotRootKeys[i], nodePath: TaskSlotRootNodePaths[i]) ||
+                    !HasExplicitBinding<Button>(resolver, TaskSlotButtonKeys[i], ButtonClickEvent, TaskSlotRootNodePaths[i]) ||
+                    !HasExplicitBinding<Image>(resolver, TaskSlotBackgroundImageKeys[i], nodePath: TaskSlotRootNodePaths[i]) ||
+                    !HasExplicitBinding<Text>(resolver, TaskProgressTextKeys[i], nodePath: TaskProgressTextNodePaths[i]) ||
+                    !HasExplicitBinding<Slider>(resolver, TaskProgressSliderKeys[i], nodePath: TaskProgressSliderNodePaths[i]) ||
+                    !HasExplicitBinding<Image>(resolver, TaskRewardIconKeys[i], nodePath: TaskRewardIconNodePaths[i]) ||
+                    !HasExplicitBinding<Image>(resolver, TaskCatIconKeys[i], nodePath: TaskCatIconNodePaths[i]) ||
+                    !HasExplicitBinding<RectTransform>(resolver, TaskLockKeys[i], nodePath: TaskLockNodePaths[i]) ||
+                    !HasExplicitBinding<TextMeshProUGUI>(resolver, TaskTitleTextKeys[i], nodePath: TaskTitleTextNodePaths[i]) ||
+                    !HasExplicitBinding<TextMeshProUGUI>(resolver, TaskRewardTextKeys[i], nodePath: TaskRewardTextNodePaths[i]))
                 {
                     return false;
                 }
@@ -363,6 +363,12 @@ namespace App.HotUpdate.Holmas.UI.Screens.Main
             }
 
             return bindings;
+        }
+
+        private static bool HasExplicitBinding<T>(UiBindingResolver resolver, string bindingKey, string eventName = null, string nodePath = null)
+            where T : Component
+        {
+            return resolver.TryResolve<T>(bindingKey, out _, eventName, nodePath);
         }
 
         private bool HasAllTaskSlotBindings()

@@ -6171,7 +6171,7 @@ GameObject:
   - component: {fileID: 7477285959238026773}
   - component: {fileID: 7249356621465260421}
   - component: {fileID: 2973425872997429652}
-  - component: {fileID: 9143014249160896481}
+  - component: {fileID: 1121064437880732625}
   m_Layer: 5
   m_HasEditorInfo: 1
   m_Name: BattlePanel
@@ -6256,7 +6256,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 958ab55755354251bacc9acae888cd2a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
---- !u!114 &9143014249160896481
+--- !u!114 &1121064437880732625
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -6265,205 +6265,322 @@ MonoBehaviour:
   m_GameObject: {fileID: 7138046092176469071}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1693f6cae3cf4a04a1db136bfe640668, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Script: {fileID: 11500000, guid: 0248dd89852e42a3a8995da77973a8ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   _entries:
-  - _bindingKey: battle/root_panel
-    _componentType: RectTransform
-    _nodePath: BattlePanel
-    _eventName:
-    _target: {fileID: 7301931682258182326}
-  - _bindingKey: battle/back_button
-    _componentType: Button
-    _nodePath: BattlePanel/Back_btn
-    _eventName: on_click
-    _target: {fileID: 4487582335423734684}
-  - _bindingKey: battle/build_button
-    _componentType: Button
-    _nodePath: BattlePanel/Build_btn
-    _eventName:
-    _target: {fileID: 5913769072975688113}
-  - _bindingKey: battle/build_button_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Build_btn/Text (TMP)
-    _eventName:
-    _target: {fileID: 2061744015337467901}
-  - _bindingKey: battle/level_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Headicon_btn/Level
-    _eventName:
-    _target: {fileID: 6884668125123017912}
-  - _bindingKey: battle/gold_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Money_btn/Text (TMP)
-    _eventName:
-    _target: {fileID: 5557207722694381507}
-  - _bindingKey: battle/energy_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/RuntimeOverlay/EnergyText
-    _eventName:
-    _target: {fileID: 5814382662799406562}
-  - _bindingKey: battle/summary_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/RuntimeOverlay/SummaryText
-    _eventName:
-    _target: {fileID: 1093061977296495102}
-  - _bindingKey: battle/status_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/RuntimeOverlay/StatusText
-    _eventName:
-    _target: {fileID: 3491848557355435465}
-  - _bindingKey: battle/stage_1_button
-    _componentType: Button
-    _nodePath: BattlePanel/Map_bg/Stage1
-    _eventName: on_click
-    _target: {fileID: 28067922052287224}
-  - _bindingKey: battle/stage_1_image
-    _componentType: Image
-    _nodePath: BattlePanel/Map_bg/Stage1
-    _eventName:
-    _target: {fileID: 6803624659545847324}
-  - _bindingKey: battle/stage_1_name_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Map_bg/Stage1/Image/Text (TMP)
-    _eventName:
-    _target: {fileID: 947888127287805840}
-  - _bindingKey: battle/stage_1_lock
-    _componentType: RectTransform
-    _nodePath: BattlePanel/Map_bg/Stage1/Image/lock
-    _eventName:
-    _target: {fileID: 6968425842314627461}
-  - _bindingKey: battle/stage_2_button
-    _componentType: Button
-    _nodePath: BattlePanel/Map_bg/Stage2
-    _eventName: on_click
-    _target: {fileID: 4362134517615147506}
-  - _bindingKey: battle/stage_2_image
-    _componentType: Image
-    _nodePath: BattlePanel/Map_bg/Stage2
-    _eventName:
-    _target: {fileID: 1728818349857605792}
-  - _bindingKey: battle/stage_2_name_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Map_bg/Stage2/Image/Text (TMP)
-    _eventName:
-    _target: {fileID: 999847873272990163}
-  - _bindingKey: battle/stage_2_lock
-    _componentType: RectTransform
-    _nodePath: BattlePanel/Map_bg/Stage2/Image/lock
-    _eventName:
-    _target: {fileID: 2661109302186898301}
-  - _bindingKey: battle/stage_3_button
-    _componentType: Button
-    _nodePath: BattlePanel/Map_bg/Stage3
-    _eventName: on_click
-    _target: {fileID: 442821574211875750}
-  - _bindingKey: battle/stage_3_image
-    _componentType: Image
-    _nodePath: BattlePanel/Map_bg/Stage3
-    _eventName:
-    _target: {fileID: 3747526242688248549}
-  - _bindingKey: battle/stage_3_name_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Map_bg/Stage3/Image/Text (TMP)
-    _eventName:
-    _target: {fileID: 131449780718826965}
-  - _bindingKey: battle/stage_3_lock
-    _componentType: RectTransform
-    _nodePath: BattlePanel/Map_bg/Stage3/Image/lock
-    _eventName:
-    _target: {fileID: 3537451081460293397}
-  - _bindingKey: battle/stage_4_button
-    _componentType: Button
-    _nodePath: BattlePanel/Map_bg/Stage4
-    _eventName: on_click
-    _target: {fileID: 4682111560490008010}
-  - _bindingKey: battle/stage_4_image
-    _componentType: Image
-    _nodePath: BattlePanel/Map_bg/Stage4
-    _eventName:
-    _target: {fileID: 1905486322005701331}
-  - _bindingKey: battle/stage_4_name_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Map_bg/Stage4/Image/Text (TMP)
-    _eventName:
-    _target: {fileID: 650867517997600132}
-  - _bindingKey: battle/stage_4_lock
-    _componentType: RectTransform
-    _nodePath: BattlePanel/Map_bg/Stage4/Image/lock
-    _eventName:
-    _target: {fileID: 4785831574481398537}
-  - _bindingKey: battle/stage_5_button
-    _componentType: Button
-    _nodePath: BattlePanel/Map_bg/Stage5
-    _eventName: on_click
-    _target: {fileID: 3176049184634543905}
-  - _bindingKey: battle/stage_5_image
-    _componentType: Image
-    _nodePath: BattlePanel/Map_bg/Stage5
-    _eventName:
-    _target: {fileID: 2097047571946380135}
-  - _bindingKey: battle/stage_5_name_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Map_bg/Stage5/Image/Text (TMP)
-    _eventName:
-    _target: {fileID: 3185888049267856101}
-  - _bindingKey: battle/stage_5_lock
-    _componentType: RectTransform
-    _nodePath: BattlePanel/Map_bg/Stage5/Image/lock
-    _eventName:
-    _target: {fileID: 3203576246851805728}
-  - _bindingKey: battle/build_stage_1_button
-    _componentType: Button
-    _nodePath: BattlePanel/Build_btn/BuildStage1
-    _eventName: on_click
-    _target: {fileID: 4321353431136148225}
-  - _bindingKey: battle/build_stage_1_image
-    _componentType: Image
-    _nodePath: BattlePanel/Build_btn/BuildStage1/Image
-    _eventName:
-    _target: {fileID: 1081926609370234999}
-  - _bindingKey: battle/build_stage_1_name_text
-    _componentType: TextMeshProUGUI
-    _nodePath: BattlePanel/Build_btn/BuildStage1/Text (TMP)
-    _eventName:
-    _target: {fileID: 5249144003866399301}
-  - _bindingKey: battle/build_stage_1_lock
-    _componentType: RectTransform
-    _nodePath: BattlePanel/Build_btn/BuildStage1/lock
-    _eventName:
-    _target: {fileID: 6442628053300124304}
-  - _bindingKey: battle/build_stage_1_base_stars
-    _componentType: RectTransform
-    _nodePath: BattlePanel/Build_btn/BuildStage1/stargroup
-    _eventName:
-    _target: {fileID: 8211117838111061864}
-  - _bindingKey: battle/build_stage_1_active_stars
-    _componentType: RectTransform
-    _nodePath: BattlePanel/Build_btn/BuildStage1/stargroup_1
-    _eventName:
-    _target: {fileID: 1618712523081440488}
-  - _bindingKey: battle/stage_bar_1
-    _componentType: Slider
-    _nodePath: BattlePanel/Map_bg/StageBar1
-    _eventName:
-    _target: {fileID: 5160337408274428438}
-  - _bindingKey: battle/stage_bar_2
-    _componentType: Slider
-    _nodePath: BattlePanel/Map_bg/StageBar2
-    _eventName:
-    _target: {fileID: 2636856398023574512}
-  - _bindingKey: battle/stage_bar_3
-    _componentType: Slider
-    _nodePath: BattlePanel/Map_bg/StageBar3
-    _eventName:
-    _target: {fileID: 7459781889708042131}
-  - _bindingKey: battle/stage_bar_4
-    _componentType: Slider
-    _nodePath: BattlePanel/Map_bg/StageBar4
-    _eventName:
-    _target: {fileID: 2096301707706101548}
+  - Id: battle/root_panel
+    Path: BattlePanel
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7301931682258182326}
+  - Id: battle/back_button
+    Path: BattlePanel/Back_btn
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4487582335423734684}
+  - Id: battle/build_button
+    Path: BattlePanel/Build_btn
+    ComponentType: Button
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5913769072975688113}
+  - Id: battle/build_button_text
+    Path: BattlePanel/Build_btn/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2061744015337467901}
+  - Id: battle/level_text
+    Path: BattlePanel/Headicon_btn/Level
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6884668125123017912}
+  - Id: battle/gold_text
+    Path: BattlePanel/Money_btn/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5557207722694381507}
+  - Id: battle/energy_text
+    Path: BattlePanel/RuntimeOverlay/EnergyText
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5814382662799406562}
+  - Id: battle/summary_text
+    Path: BattlePanel/RuntimeOverlay/SummaryText
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1093061977296495102}
+  - Id: battle/status_text
+    Path: BattlePanel/RuntimeOverlay/StatusText
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3491848557355435465}
+  - Id: battle/stage_1_button
+    Path: BattlePanel/Map_bg/Stage1
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 28067922052287224}
+  - Id: battle/stage_1_image
+    Path: BattlePanel/Map_bg/Stage1
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6803624659545847324}
+  - Id: battle/stage_1_name_text
+    Path: BattlePanel/Map_bg/Stage1/Image/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 947888127287805840}
+  - Id: battle/stage_1_lock
+    Path: BattlePanel/Map_bg/Stage1/Image/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6968425842314627461}
+  - Id: battle/stage_2_button
+    Path: BattlePanel/Map_bg/Stage2
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4362134517615147506}
+  - Id: battle/stage_2_image
+    Path: BattlePanel/Map_bg/Stage2
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1728818349857605792}
+  - Id: battle/stage_2_name_text
+    Path: BattlePanel/Map_bg/Stage2/Image/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 999847873272990163}
+  - Id: battle/stage_2_lock
+    Path: BattlePanel/Map_bg/Stage2/Image/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2661109302186898301}
+  - Id: battle/stage_3_button
+    Path: BattlePanel/Map_bg/Stage3
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 442821574211875750}
+  - Id: battle/stage_3_image
+    Path: BattlePanel/Map_bg/Stage3
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3747526242688248549}
+  - Id: battle/stage_3_name_text
+    Path: BattlePanel/Map_bg/Stage3/Image/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 131449780718826965}
+  - Id: battle/stage_3_lock
+    Path: BattlePanel/Map_bg/Stage3/Image/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3537451081460293397}
+  - Id: battle/stage_4_button
+    Path: BattlePanel/Map_bg/Stage4
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4682111560490008010}
+  - Id: battle/stage_4_image
+    Path: BattlePanel/Map_bg/Stage4
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1905486322005701331}
+  - Id: battle/stage_4_name_text
+    Path: BattlePanel/Map_bg/Stage4/Image/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 650867517997600132}
+  - Id: battle/stage_4_lock
+    Path: BattlePanel/Map_bg/Stage4/Image/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4785831574481398537}
+  - Id: battle/stage_5_button
+    Path: BattlePanel/Map_bg/Stage5
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3176049184634543905}
+  - Id: battle/stage_5_image
+    Path: BattlePanel/Map_bg/Stage5
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2097047571946380135}
+  - Id: battle/stage_5_name_text
+    Path: BattlePanel/Map_bg/Stage5/Image/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3185888049267856101}
+  - Id: battle/stage_5_lock
+    Path: BattlePanel/Map_bg/Stage5/Image/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3203576246851805728}
+  - Id: battle/build_stage_1_button
+    Path: BattlePanel/Build_btn/BuildStage1
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4321353431136148225}
+  - Id: battle/build_stage_1_image
+    Path: BattlePanel/Build_btn/BuildStage1/Image
+    ComponentType: Image
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1081926609370234999}
+  - Id: battle/build_stage_1_name_text
+    Path: BattlePanel/Build_btn/BuildStage1/Text (TMP)
+    ComponentType: TextMeshProUGUI
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5249144003866399301}
+  - Id: battle/build_stage_1_lock
+    Path: BattlePanel/Build_btn/BuildStage1/lock
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6442628053300124304}
+  - Id: battle/build_stage_1_base_stars
+    Path: BattlePanel/Build_btn/BuildStage1/stargroup
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8211117838111061864}
+  - Id: battle/build_stage_1_active_stars
+    Path: BattlePanel/Build_btn/BuildStage1/stargroup_1
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1618712523081440488}
+  - Id: battle/stage_bar_1
+    Path: BattlePanel/Map_bg/StageBar1
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 5160337408274428438}
+  - Id: battle/stage_bar_2
+    Path: BattlePanel/Map_bg/StageBar2
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2636856398023574512}
+  - Id: battle/stage_bar_3
+    Path: BattlePanel/Map_bg/StageBar3
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7459781889708042131}
+  - Id: battle/stage_bar_4
+    Path: BattlePanel/Map_bg/StageBar4
+    ComponentType: Slider
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2096301707706101548}
 --- !u!1 &7220924786430302354
 GameObject:
   m_ObjectHideFlags: 0

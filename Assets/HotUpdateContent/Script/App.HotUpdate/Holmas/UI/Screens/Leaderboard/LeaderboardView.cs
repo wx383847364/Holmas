@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using App.HotUpdate.Holmas.UI.Core;
 using App.Shared.Contracts;
 using App.Shared.Holmas.Leaderboards;

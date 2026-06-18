@@ -1,4 +1,4 @@
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

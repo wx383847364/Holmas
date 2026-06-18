@@ -1,4 +1,4 @@
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using UnityEngine;
 
 namespace App.HotUpdate.Holmas.UI.Core

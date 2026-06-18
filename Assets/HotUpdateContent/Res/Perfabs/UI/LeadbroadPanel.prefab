@@ -2509,7 +2509,7 @@ GameObject:
   - component: {fileID: 7877921253923120719}
   - component: {fileID: 6376197255496788985}
   - component: {fileID: 8174790841989845321}
-  - component: {fileID: 421009932017266347}
+  - component: {fileID: 741367864507406527}
   m_Layer: 5
   m_HasEditorInfo: 1
   m_Name: LeadbroadPanel
@@ -2594,7 +2594,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fbb119e71624882899391fb377ef7af, type: 3}
   m_Name:
   m_EditorClassIdentifier:
---- !u!114 &421009932017266347
+--- !u!114 &741367864507406527
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2603,90 +2603,138 @@ MonoBehaviour:
   m_GameObject: {fileID: 4999705508699848777}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1693f6cae3cf4a04a1db136bfe640668, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Script: {fileID: 11500000, guid: 0248dd89852e42a3a8995da77973a8ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   _entries:
-  - _bindingKey: leaderboard/root_panel
-    _componentType: RectTransform
-    _nodePath: LeadbroadPanel
-    _eventName:
-    _target: {fileID: 2529303258779712075}
-  - _bindingKey: leaderboard/back_button
-    _componentType: Button
-    _nodePath: LeadbroadPanel/Back_btn
-    _eventName: on_click
-    _target: {fileID: 3934901009106802407}
-  - _bindingKey: leaderboard/reward_button
-    _componentType: Button
-    _nodePath: LeadbroadPanel/RewardInfo_btn
-    _eventName: on_click
-    _target: {fileID: 8943752452844239104}
-  - _bindingKey: leaderboard/level_toggle
-    _componentType: Toggle
-    _nodePath: LeadbroadPanel/Toggles/LevelToggle
-    _eventName: on_value_changed
-    _target: {fileID: 6456624378174777829}
-  - _bindingKey: leaderboard/weekly_cats_toggle
-    _componentType: Toggle
-    _nodePath: LeadbroadPanel/Toggles/WeekCatCountToggle
-    _eventName: on_value_changed
-    _target: {fileID: 4625549413994524505}
-  - _bindingKey: leaderboard/daily_money_toggle
-    _componentType: Toggle
-    _nodePath: LeadbroadPanel/Toggles/DaliyMoneyToggle
-    _eventName: on_value_changed
-    _target: {fileID: 8864713489768699942}
-  - _bindingKey: leaderboard/title_text
-    _componentType: Text
-    _nodePath: LeadbroadPanel/Title_txt
-    _eventName:
-    _target: {fileID: 8036360637215277404}
-  - _bindingKey: leaderboard/leader_info
-    _componentType: RectTransform
-    _nodePath: LeadbroadPanel/LeaderInfo
-    _eventName:
-    _target: {fileID: 3893511525517292557}
-  - _bindingKey: leaderboard/leader_list
-    _componentType: ScrollRect
-    _nodePath: LeadbroadPanel/LeaderInfo/LeaderList
-    _eventName:
-    _target: {fileID: 7550075322873362419}
-  - _bindingKey: leaderboard/leader_list_content
-    _componentType: RectTransform
-    _nodePath: LeadbroadPanel/LeaderInfo/LeaderList/GameObject
-    _eventName:
-    _target: {fileID: 1101145040241972001}
-  - _bindingKey: leaderboard/item_template
-    _componentType: RectTransform
-    _nodePath: LeadbroadPanel/LeaderInfo/LeaderList/GameObject/PlayerInfo
-    _eventName:
-    _target: {fileID: 2430727003151247685}
-  - _bindingKey: leaderboard/my_info
-    _componentType: RectTransform
-    _nodePath: LeadbroadPanel/LeaderInfo/MyInfo
-    _eventName:
-    _target: {fileID: 7091543355382234652}
-  - _bindingKey: leaderboard/top_1
-    _componentType: RectTransform
-    _nodePath: LeadbroadPanel/LeaderInfo/No.1
-    _eventName:
-    _target: {fileID: 7777161973705109104}
-  - _bindingKey: leaderboard/top_2
-    _componentType: RectTransform
-    _nodePath: LeadbroadPanel/LeaderInfo/No.2
-    _eventName:
-    _target: {fileID: 8767252351201330333}
-  - _bindingKey: leaderboard/top_3
-    _componentType: RectTransform
-    _nodePath: LeadbroadPanel/LeaderInfo/No.3
-    _eventName:
-    _target: {fileID: 3036067592544330104}
-  - _bindingKey: leaderboard/status_text
-    _componentType: Text
-    _nodePath: LeadbroadPanel/LeaderboardStatusText
-    _eventName:
-    _target: {fileID: 8484006966106566287}
+  - Id: leaderboard/root_panel
+    Path: LeadbroadPanel
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2529303258779712075}
+  - Id: leaderboard/back_button
+    Path: LeadbroadPanel/Back_btn
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3934901009106802407}
+  - Id: leaderboard/reward_button
+    Path: LeadbroadPanel/RewardInfo_btn
+    ComponentType: Button
+    EventName: on_click
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8943752452844239104}
+  - Id: leaderboard/level_toggle
+    Path: LeadbroadPanel/Toggles/LevelToggle
+    ComponentType: Toggle
+    EventName: on_value_changed
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 6456624378174777829}
+  - Id: leaderboard/weekly_cats_toggle
+    Path: LeadbroadPanel/Toggles/WeekCatCountToggle
+    ComponentType: Toggle
+    EventName: on_value_changed
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 4625549413994524505}
+  - Id: leaderboard/daily_money_toggle
+    Path: LeadbroadPanel/Toggles/DaliyMoneyToggle
+    ComponentType: Toggle
+    EventName: on_value_changed
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8864713489768699942}
+  - Id: leaderboard/title_text
+    Path: LeadbroadPanel/Title_txt
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8036360637215277404}
+  - Id: leaderboard/leader_info
+    Path: LeadbroadPanel/LeaderInfo
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3893511525517292557}
+  - Id: leaderboard/leader_list
+    Path: LeadbroadPanel/LeaderInfo/LeaderList
+    ComponentType: ScrollRect
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7550075322873362419}
+  - Id: leaderboard/leader_list_content
+    Path: LeadbroadPanel/LeaderInfo/LeaderList/GameObject
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 1101145040241972001}
+  - Id: leaderboard/item_template
+    Path: LeadbroadPanel/LeaderInfo/LeaderList/GameObject/PlayerInfo
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 2430727003151247685}
+  - Id: leaderboard/my_info
+    Path: LeadbroadPanel/LeaderInfo/MyInfo
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7091543355382234652}
+  - Id: leaderboard/top_1
+    Path: LeadbroadPanel/LeaderInfo/No.1
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 7777161973705109104}
+  - Id: leaderboard/top_2
+    Path: LeadbroadPanel/LeaderInfo/No.2
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8767252351201330333}
+  - Id: leaderboard/top_3
+    Path: LeadbroadPanel/LeaderInfo/No.3
+    ComponentType: RectTransform
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 3036067592544330104}
+  - Id: leaderboard/status_text
+    Path: LeadbroadPanel/LeaderboardStatusText
+    ComponentType: Text
+    EventName: 
+    Notes: 
+    RequiresManualWiring: 0
+    Required: 1
+    Target: {fileID: 8484006966106566287}
 --- !u!1 &5023563304547283191
 GameObject:
   m_ObjectHideFlags: 0
