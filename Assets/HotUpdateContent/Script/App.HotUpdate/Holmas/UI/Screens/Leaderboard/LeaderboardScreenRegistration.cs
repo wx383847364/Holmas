@@ -9,10 +9,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Leaderboard
 
         public static UiScreenDefinition CreateDefinition()
         {
-            UiRuntimeScreenDescriptor descriptor = LeaderboardGeneratedBindings.Descriptor;
+            var descriptor = LeaderboardGeneratedBindings.Descriptor;
             return new UiScreenDefinition(
                 ScreenId,
-                descriptor.PrefabAssetPath,
+                descriptor.PrefabLocation,
                 UiScreenKind.Page,
                 typeof(LeaderboardPageController))
             {

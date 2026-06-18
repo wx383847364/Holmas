@@ -204,6 +204,31 @@
       },
       "url": "https://packages.tuanjie.cn"
     },
+    "com.wx.foundation.shared": {
+      "version": "git@github.com:wx383847364/ScrollworksFoundationKit.git?path=/Packages/com.wx.foundation.shared#v0.1.5",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "4de11f1986ce79709301dce84a5aa4ac2259164f"
+    },
+    "com.wx.foundation.ui": {
+      "version": "git@github.com:wx383847364/ScrollworksFoundationKit.git?path=/Packages/com.wx.foundation.ui#v0.1.5",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.wx.foundation.shared": "0.1.5",
+        "com.wx.foundation.unity-contracts": "0.1.5",
+        "com.unity.ugui": "1.0.0"
+      },
+      "hash": "4de11f1986ce79709301dce84a5aa4ac2259164f"
+    },
+    "com.wx.foundation.unity-contracts": {
+      "version": "git@github.com:wx383847364/ScrollworksFoundationKit.git?path=/Packages/com.wx.foundation.unity-contracts#v0.1.5",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "4de11f1986ce79709301dce84a5aa4ac2259164f"
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,

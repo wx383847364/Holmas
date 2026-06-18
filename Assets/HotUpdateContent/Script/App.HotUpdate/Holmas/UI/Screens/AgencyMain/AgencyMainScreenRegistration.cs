@@ -13,10 +13,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.AgencyMain
 
         public static UiScreenDefinition CreateDefinition()
         {
-            UiRuntimeScreenDescriptor descriptor = AgencyMainGeneratedBindings.Descriptor;
+            var descriptor = AgencyMainGeneratedBindings.Descriptor;
             return new UiScreenDefinition(
                 ScreenId,
-                descriptor.PrefabAssetPath,
+                descriptor.PrefabLocation,
                 UiScreenKind.Page,
                 typeof(AgencyMainPageController))
             {

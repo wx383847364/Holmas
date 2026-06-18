@@ -5,7 +5,8 @@
         "App.Shared",
         "App.HotUpdate",
         "App.AOT",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "WX.Foundation.UI"
     ],
     "includePlatforms": [
         "Editor"

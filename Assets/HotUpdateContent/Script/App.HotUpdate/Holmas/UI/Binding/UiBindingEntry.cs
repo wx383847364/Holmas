@@ -3,6 +3,10 @@ using UnityEngine;
 
 namespace App.HotUpdate.Holmas.UI.Binding
 {
+    /// <summary>
+    /// Legacy serialized entry retained for existing Holmas prefab data.
+    /// New runtime consumption uses WX.Foundation.UI.Binding.UiBindingEntry through UiReferenceCollector.
+    /// </summary>
     [Serializable]
     public sealed class UiBindingEntry
     {

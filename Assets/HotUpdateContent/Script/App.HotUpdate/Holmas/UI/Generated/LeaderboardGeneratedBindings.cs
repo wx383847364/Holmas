@@ -1,4 +1,4 @@
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using App.HotUpdate.Holmas.UI.Screens.Leaderboard;
 
 namespace App.HotUpdate.Holmas.UI.Generated
@@ -10,7 +10,12 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static readonly UiBindingManifest ManifestInstance = BuildManifest();
         private static readonly UiRuntimeScreenDescriptor DescriptorInstance =
-            new UiRuntimeScreenDescriptor(PrefabName, PrefabAssetPath, ManifestInstance);
+            new UiRuntimeScreenDescriptor
+            {
+                ScreenId = ManifestInstance.ScreenId,
+                PrefabLocation = PrefabAssetPath,
+                BindingManifest = ManifestInstance
+            };
 
         public static UiBindingManifest Manifest => ManifestInstance;
 
@@ -18,7 +23,12 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static UiBindingManifest BuildManifest()
         {
-            var manifest = new UiBindingManifest(LeaderboardScreenRegistration.ScreenId, PrefabName, PrefabAssetPath);
+            var manifest = new UiBindingManifest
+            {
+                ScreenId = LeaderboardScreenRegistration.ScreenId,
+                PrefabName = PrefabName,
+                PrefabAssetPath = PrefabAssetPath
+            };
             manifest.AddEntry(LeaderboardBindings.RootPanelKey, "RectTransform", LeaderboardBindings.RootNodePath, notes: "leaderboard_root");
             manifest.AddEntry(LeaderboardBindings.BackButtonKey, "Button", LeaderboardBindings.BackButtonNodePath, LeaderboardBindings.ButtonClickEvent, requiresManualWiring: true, notes: "controller_wires_back");
             manifest.AddEntry(LeaderboardBindings.RewardButtonKey, "Button", LeaderboardBindings.RewardButtonNodePath, LeaderboardBindings.ButtonClickEvent, requiresManualWiring: true, notes: "controller_wires_reward");

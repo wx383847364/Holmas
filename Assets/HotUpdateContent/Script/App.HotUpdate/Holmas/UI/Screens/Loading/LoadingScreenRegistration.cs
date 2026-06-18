@@ -10,10 +10,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 
         public static UiScreenDefinition CreateStartupPageDefinition()
         {
-            UiRuntimeScreenDescriptor descriptor = LoadingGeneratedBindings.Descriptor;
+            var descriptor = LoadingGeneratedBindings.Descriptor;
             return new UiScreenDefinition(
                 StartupPageScreenId,
-                descriptor.PrefabAssetPath,
+                descriptor.PrefabLocation,
                 UiScreenKind.Page,
                 typeof(LoadingPageController))
             {
@@ -26,10 +26,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Loading
 
         public static UiScreenDefinition CreateTransitionOverlayDefinition()
         {
-            UiRuntimeScreenDescriptor descriptor = LoadingGeneratedBindings.Descriptor;
+            var descriptor = LoadingGeneratedBindings.Descriptor;
             return new UiScreenDefinition(
                 TransitionOverlayScreenId,
-                descriptor.PrefabAssetPath,
+                descriptor.PrefabLocation,
                 UiScreenKind.Overlay,
                 typeof(LoadingOverlayController))
             {

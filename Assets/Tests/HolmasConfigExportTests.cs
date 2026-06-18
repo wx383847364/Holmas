@@ -170,7 +170,7 @@ namespace Holmas.Tests
 
             Assert.That(success, Is.True, report == null ? "catalog build failed" : string.Join(Environment.NewLine, report.Errors));
             Assert.That(bundle.Maps[0].BoardBackgroundPath, Is.EqualTo("Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang.png"));
-            Assert.That(bundle.Maps[0].BoardFrameOverlayPath, Is.Empty);
+            Assert.That(bundle.Maps[0].BoardFrameOverlayPath, Is.EqualTo("Assets/HotUpdateContent/Res/Textures/NewUIRes/kuang_frame_overlay.png"));
             Assert.That(bundle.Maps[0].BoardContentInset, Is.EqualTo(new Vector4(22f, 24f, 22f, 19f)));
             Assert.That(bundle.Maps[0].MinCellSpacing, Is.EqualTo(4f).Within(0.001f));
         }

@@ -9,10 +9,10 @@ namespace App.HotUpdate.Holmas.UI.Screens.Battle
 
         public static UiScreenDefinition CreateDefinition()
         {
-            UiRuntimeScreenDescriptor descriptor = BattleGeneratedBindings.Descriptor;
+            var descriptor = BattleGeneratedBindings.Descriptor;
             return new UiScreenDefinition(
                 ScreenId,
-                descriptor.PrefabAssetPath,
+                descriptor.PrefabLocation,
                 UiScreenKind.Page,
                 typeof(BattlePageController))
             {

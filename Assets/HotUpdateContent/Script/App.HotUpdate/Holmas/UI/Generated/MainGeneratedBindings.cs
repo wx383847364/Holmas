@@ -1,4 +1,4 @@
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 
 namespace App.HotUpdate.Holmas.UI.Generated
@@ -10,7 +10,12 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static readonly UiBindingManifest ManifestInstance = BuildManifest();
         private static readonly UiRuntimeScreenDescriptor DescriptorInstance =
-            new UiRuntimeScreenDescriptor(PrefabName, PrefabAssetPath, ManifestInstance);
+            new UiRuntimeScreenDescriptor
+            {
+                ScreenId = ManifestInstance.ScreenId,
+                PrefabLocation = PrefabAssetPath,
+                BindingManifest = ManifestInstance
+            };
 
         public static UiBindingManifest Manifest => ManifestInstance;
 
@@ -18,7 +23,12 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static UiBindingManifest BuildManifest()
         {
-            var manifest = new UiBindingManifest(MainScreenRegistration.ScreenId, PrefabName, PrefabAssetPath);
+            var manifest = new UiBindingManifest
+            {
+                ScreenId = MainScreenRegistration.ScreenId,
+                PrefabName = PrefabName,
+                PrefabAssetPath = PrefabAssetPath
+            };
             manifest.AddEntry(MainBindings.RootPanelKey, "RectTransform", MainBindings.RootNodePath, notes: "main_root");
             manifest.AddEntry(MainBindings.LevelTextKey, "TextMeshProUGUI", MainBindings.LevelTextNodePath, notes: "main_level");
             manifest.AddEntry(MainBindings.GoldTextKey, "TextMeshProUGUI", MainBindings.GoldTextNodePath, notes: "main_gold");

@@ -1,4 +1,4 @@
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using App.HotUpdate.Holmas.UI.Screens.Battle;
 
 namespace App.HotUpdate.Holmas.UI.Generated
@@ -10,7 +10,12 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static readonly UiBindingManifest ManifestInstance = BuildManifest();
         private static readonly UiRuntimeScreenDescriptor DescriptorInstance =
-            new UiRuntimeScreenDescriptor(PrefabName, PrefabAssetPath, ManifestInstance);
+            new UiRuntimeScreenDescriptor
+            {
+                ScreenId = ManifestInstance.ScreenId,
+                PrefabLocation = PrefabAssetPath,
+                BindingManifest = ManifestInstance
+            };
 
         public static UiBindingManifest Manifest => ManifestInstance;
 
@@ -18,7 +23,12 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static UiBindingManifest BuildManifest()
         {
-            var manifest = new UiBindingManifest(BattleScreenRegistration.ScreenId, PrefabName, PrefabAssetPath);
+            var manifest = new UiBindingManifest
+            {
+                ScreenId = BattleScreenRegistration.ScreenId,
+                PrefabName = PrefabName,
+                PrefabAssetPath = PrefabAssetPath
+            };
             manifest.AddEntry(BattleBindings.RootPanelKey, "RectTransform", BattleBindings.RootNodePath, notes: "battle_root");
             manifest.AddEntry(
                 BattleBindings.BackButtonKey,

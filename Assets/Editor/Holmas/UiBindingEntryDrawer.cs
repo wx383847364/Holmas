@@ -5,6 +5,8 @@ using App.HotUpdate.Holmas.UI.Generated;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using FoundationDescriptor = WX.Foundation.UI.Binding.UiRuntimeScreenDescriptor;
+using FoundationEntry = WX.Foundation.UI.Binding.UiBindingEntry;
 
 namespace Holmas.Editor
 {
@@ -13,7 +15,7 @@ namespace Holmas.Editor
     {
         private const float LineGap = 2f;
 
-        private static readonly UiRuntimeScreenDescriptor[] Descriptors =
+        private static readonly FoundationDescriptor[] Descriptors =
         {
             MainGeneratedBindings.Descriptor,
             BattleGeneratedBindings.Descriptor,
@@ -98,7 +100,7 @@ namespace Holmas.Editor
 
             if (IsTransformComponent(target) &&
                 !TryFindManifestEntry(collector, resolvedNodePath, resolvedComponentType, out _) &&
-                TryFindManifestEntry(collector, resolvedNodePath, out UiBindingManifestEntry componentMatch) &&
+                TryFindManifestEntry(collector, resolvedNodePath, out FoundationEntry componentMatch) &&
                 TryGetComponent(target, componentMatch.ComponentType, out Component resolvedTarget))
             {
                 target = resolvedTarget;
@@ -109,7 +111,7 @@ namespace Holmas.Editor
             componentType.stringValue = resolvedComponentType;
             nodePath.stringValue = resolvedNodePath;
 
-            if (TryFindManifestEntry(collector, resolvedNodePath, resolvedComponentType, out UiBindingManifestEntry manifestEntry))
+            if (TryFindManifestEntry(collector, resolvedNodePath, resolvedComponentType, out FoundationEntry manifestEntry))
             {
                 bindingKey.stringValue = manifestEntry.BindingKey;
                 eventName.stringValue = manifestEntry.EventName;
@@ -153,15 +155,15 @@ namespace Holmas.Editor
             UiReferenceCollector collector,
             string nodePath,
             string componentType,
-            out UiBindingManifestEntry match)
+            out FoundationEntry match)
         {
             string rootName = NormalizeObjectName(collector != null ? collector.name : string.Empty);
             match = null;
 
             for (int i = 0; i < Descriptors.Length; i++)
             {
-                UiRuntimeScreenDescriptor descriptor = Descriptors[i];
-                if (!string.IsNullOrWhiteSpace(rootName) && !string.Equals(descriptor.PrefabName, rootName, System.StringComparison.Ordinal))
+                FoundationDescriptor descriptor = Descriptors[i];
+                if (!string.IsNullOrWhiteSpace(rootName) && !string.Equals(descriptor.BindingManifest.PrefabName, rootName, System.StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -186,15 +188,15 @@ namespace Holmas.Editor
         private static bool TryFindManifestEntry(
             UiReferenceCollector collector,
             string nodePath,
-            out UiBindingManifestEntry match)
+            out FoundationEntry match)
         {
             string rootName = NormalizeObjectName(collector != null ? collector.name : string.Empty);
             match = null;
 
             for (int i = 0; i < Descriptors.Length; i++)
             {
-                UiRuntimeScreenDescriptor descriptor = Descriptors[i];
-                if (!string.IsNullOrWhiteSpace(rootName) && !string.Equals(descriptor.PrefabName, rootName, System.StringComparison.Ordinal))
+                FoundationDescriptor descriptor = Descriptors[i];
+                if (!string.IsNullOrWhiteSpace(rootName) && !string.Equals(descriptor.BindingManifest.PrefabName, rootName, System.StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -217,15 +219,15 @@ namespace Holmas.Editor
         }
 
         private static bool TryFindManifestEntry(
-            UiRuntimeScreenDescriptor descriptor,
+            FoundationDescriptor descriptor,
             string nodePath,
             string componentType,
-            out UiBindingManifestEntry match)
+            out FoundationEntry match)
         {
-            IReadOnlyList<UiBindingManifestEntry> entries = descriptor.BindingManifest.Entries;
+            IReadOnlyList<FoundationEntry> entries = descriptor.BindingManifest.Bindings;
             for (int i = 0; i < entries.Count; i++)
             {
-                UiBindingManifestEntry entry = entries[i];
+                FoundationEntry entry = entries[i];
                 if (entry != null &&
                     string.Equals(entry.NodePath, nodePath, System.StringComparison.Ordinal) &&
                     string.Equals(entry.ComponentType, componentType, System.StringComparison.Ordinal))
@@ -240,14 +242,14 @@ namespace Holmas.Editor
         }
 
         private static bool TryFindManifestEntry(
-            UiRuntimeScreenDescriptor descriptor,
+            FoundationDescriptor descriptor,
             string nodePath,
-            out UiBindingManifestEntry match)
+            out FoundationEntry match)
         {
-            IReadOnlyList<UiBindingManifestEntry> entries = descriptor.BindingManifest.Entries;
+            IReadOnlyList<FoundationEntry> entries = descriptor.BindingManifest.Bindings;
             for (int i = 0; i < entries.Count; i++)
             {
-                UiBindingManifestEntry entry = entries[i];
+                FoundationEntry entry = entries[i];
                 if (entry != null &&
                     string.Equals(entry.NodePath, nodePath, System.StringComparison.Ordinal))
                 {

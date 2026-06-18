@@ -1,4 +1,4 @@
-using App.HotUpdate.Holmas.UI.Binding;
+using WX.Foundation.UI.Binding;
 using App.HotUpdate.Holmas.UI.Screens.Loading;
 
 namespace App.HotUpdate.Holmas.UI.Generated
@@ -10,7 +10,12 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static readonly UiBindingManifest ManifestInstance = BuildManifest();
         private static readonly UiRuntimeScreenDescriptor DescriptorInstance =
-            new UiRuntimeScreenDescriptor(PrefabName, PrefabAssetPath, ManifestInstance);
+            new UiRuntimeScreenDescriptor
+            {
+                ScreenId = ManifestInstance.ScreenId,
+                PrefabLocation = PrefabAssetPath,
+                BindingManifest = ManifestInstance
+            };
 
         public static UiBindingManifest Manifest => ManifestInstance;
 
@@ -18,7 +23,12 @@ namespace App.HotUpdate.Holmas.UI.Generated
 
         private static UiBindingManifest BuildManifest()
         {
-            var manifest = new UiBindingManifest(LoadingScreenRegistration.TransitionOverlayScreenId, PrefabName, PrefabAssetPath);
+            var manifest = new UiBindingManifest
+            {
+                ScreenId = LoadingScreenRegistration.TransitionOverlayScreenId,
+                PrefabName = PrefabName,
+                PrefabAssetPath = PrefabAssetPath
+            };
             manifest.AddEntry(LoadingBindings.RootPanelKey, "RectTransform", LoadingBindings.RootNodePath, notes: "loading_root");
             manifest.AddEntry(LoadingBindings.LoadingBarKey, "Slider", LoadingBindings.LoadingBarNodePath, notes: "loading_bar");
             manifest.AddEntry(LoadingBindings.StatusTextKey, "TextMeshProUGUI", LoadingBindings.StatusTextNodePath, notes: "loading_status");

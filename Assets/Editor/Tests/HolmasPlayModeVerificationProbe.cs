@@ -10,6 +10,7 @@ using App.HotUpdate.Holmas.Board;
 using App.HotUpdate.Holmas.Bootstrap;
 using App.HotUpdate.Holmas.Levels;
 using App.HotUpdate.Holmas.Progression;
+using App.HotUpdate.Holmas.Tutorial;
 using App.HotUpdate.Holmas.UI.Core;
 using App.HotUpdate.Holmas.UI.Screens.Main;
 using App.Shared.Holmas.RuntimeData;
@@ -297,16 +298,14 @@ public static class HolmasPlayModeVerificationProbe
                     : null,
                 30f);
 
-            await DelayFramesAsync(6);
+            BoardRuntime startupBoard = await WaitForObjectAsync(
+                "startup board",
+                () => ResolveStartupBoard(root.Context),
+                30f);
 
             CaptureMainSnapshot("startup_main");
             CaptureScreenshot("startup_main.png");
-            if (root.Context == null ||
-                root.Context.GameplayRuntime == null ||
-                root.Context.GameplayRuntime.CurrentBoardRuntime == null)
-            {
-                throw new InvalidOperationException("Holmas probe: Main page did not auto-start an embedded board.");
-            }
+            Log($"Startup board ready: {startupBoard.Rows}x{startupBoard.Cols}, tutorial={IsTutorialBoardActive(root.Context)}.");
 
             root.Context.RefillAvailableTasks();
             await DelayFramesAsync(4);
@@ -480,6 +479,10 @@ public static class HolmasPlayModeVerificationProbe
             {
                 throw new InvalidOperationException("Holmas probe: missing context for promotion upgrade.");
             }
+
+            long goldBeforeGrant = context.CurrentGoldBalance;
+            context.AddGold();
+            Log($"Granted probe promotion gold {goldBeforeGrant}->{context.CurrentGoldBalance}.");
 
             var presenter = new MainPresenter(context);
             int safety = 0;
@@ -695,6 +698,28 @@ public static class HolmasPlayModeVerificationProbe
             }
 
             throw new TimeoutException("Holmas probe timed out waiting for " + name + ".");
+        }
+
+        private BoardRuntime ResolveStartupBoard(HolmasApplicationContext context)
+        {
+            if (context == null)
+            {
+                return null;
+            }
+
+            CoreFindCatTutorialSessionService tutorialSessionService = context.ServiceContainer != null
+                ? context.ServiceContainer.Get<CoreFindCatTutorialSessionService>()
+                : null;
+            return tutorialSessionService?.ActiveSession?.BoardRuntime ??
+                   context.GameplayRuntime?.CurrentBoardRuntime;
+        }
+
+        private bool IsTutorialBoardActive(HolmasApplicationContext context)
+        {
+            CoreFindCatTutorialSessionService tutorialSessionService = context?.ServiceContainer != null
+                ? context.ServiceContainer.Get<CoreFindCatTutorialSessionService>()
+                : null;
+            return tutorialSessionService?.ActiveSession?.BoardRuntime != null;
         }
 
         private async Task DelayFramesAsync(int frameCount)
